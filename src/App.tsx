@@ -12,6 +12,7 @@ import AthleteDashboard from "./pages/AthleteDashboard";
 import NotFound from "./pages/NotFound";
 import DelegateDashboard from "./pages/DelegateDashboard";
 import FinanceDashboard from "./pages/FinanceDashboard";
+import LeaderDashboard from "./pages/LeaderDashboard";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['gestor_financiero']}>
                 <FinanceDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/leader-dashboard" 
+            element={
+              <ProtectedRoute allowedRoles={['lider']}>
+                <LeaderDashboard />
               </ProtectedRoute>
             } 
           />
