@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +8,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import CoachDashboard from "./pages/CoachDashboard";
+import AthleteDashboard from "./pages/AthleteDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +50,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['entrenador']}>
                 <CoachDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/athlete-dashboard" 
+            element={
+              <ProtectedRoute allowedRoles={['deportista']}>
+                <AthleteDashboard />
               </ProtectedRoute>
             } 
           />
