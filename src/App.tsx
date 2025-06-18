@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +11,7 @@ import CoachDashboard from "./pages/CoachDashboard";
 import AthleteDashboard from "./pages/AthleteDashboard";
 import NotFound from "./pages/NotFound";
 import DelegateDashboard from "./pages/DelegateDashboard";
+import FinanceDashboard from "./pages/FinanceDashboard";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +68,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['delegado']}>
                 <DelegateDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/finance-dashboard" 
+            element={
+              <ProtectedRoute allowedRoles={['gestor_financiero']}>
+                <FinanceDashboard />
               </ProtectedRoute>
             } 
           />
