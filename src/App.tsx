@@ -14,6 +14,7 @@ import FinanceDashboard from "./pages/FinanceDashboard";
 import LeaderDashboard from "./pages/LeaderDashboard";
 import Athletes from "./pages/Athletes";
 import Training from "./pages/Training";
+import Competitions from "./pages/Competitions";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/athletes" element={<Athletes />} />
           <Route path="/training" element={<Training />} />
+          <Route path="/competitions" element={<Competitions />} />
           <Route 
             path="/admin-dashboard" 
             element={
