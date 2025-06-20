@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import DelegateDashboard from "./pages/DelegateDashboard";
 import FinanceDashboard from "./pages/FinanceDashboard";
 import LeaderDashboard from "./pages/LeaderDashboard";
+import Athletes from "./pages/Athletes";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/athletes" element={<Athletes />} />
           <Route 
             path="/admin-dashboard" 
             element={

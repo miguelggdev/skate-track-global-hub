@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -102,7 +101,7 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="argon-sidebar-item">
+            <div className="argon-sidebar-item" onClick={() => navigate('/athletes')}>
               <div className="flex items-center space-x-3">
                 <Users className="h-5 w-5" />
                 <span>Athletes</span>
