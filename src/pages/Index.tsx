@@ -17,7 +17,6 @@ import {
   BarChart3
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import DashboardLayout from '@/components/layout/DashboardLayout';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -29,7 +28,7 @@ const Index = () => {
       change: "+55%", 
       period: "since yesterday",
       icon: DollarSign,
-      bgColor: "bg-gradient-to-r from-blue-500 to-blue-600",
+      bgColor: "argon-gradient-blue",
       isPositive: true
     },
     { 
@@ -38,7 +37,7 @@ const Index = () => {
       change: "+3%", 
       period: "since last week",
       icon: Users,
-      bgColor: "bg-gradient-to-r from-red-500 to-red-600",
+      bgColor: "argon-gradient-red",
       isPositive: true
     },
     { 
@@ -47,7 +46,7 @@ const Index = () => {
       change: "-2%", 
       period: "since last quarter",
       icon: UserPlus,
-      bgColor: "bg-gradient-to-r from-green-500 to-green-600",
+      bgColor: "argon-gradient-green",
       isPositive: false
     },
     { 
@@ -56,7 +55,7 @@ const Index = () => {
       change: "+5%", 
       period: "than last month",
       icon: ShoppingCart,
-      bgColor: "bg-gradient-to-r from-orange-500 to-orange-600",
+      bgColor: "argon-gradient-orange",
       isPositive: true
     },
   ];
@@ -85,74 +84,67 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-50">
+      <div className="fixed left-0 top-0 h-full w-64 argon-sidebar z-50">
         <div className="p-6">
           <div className="flex items-center space-x-3 mb-8">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">A</span>
+            <div className="w-8 h-8 argon-gradient-blue rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">S</span>
             </div>
-            <span className="text-xl font-bold text-gray-800">Argon Dashboard 2 PRO</span>
+            <span className="text-xl font-bold text-gray-800">SpeedSkate Academy</span>
           </div>
           
           <nav className="space-y-2">
-            <div className="bg-blue-50 border-r-4 border-blue-500 px-4 py-3 rounded-l-lg">
+            <div className="argon-sidebar-item active">
               <div className="flex items-center space-x-3">
-                <BarChart3 className="h-5 w-5 text-blue-500" />
-                <span className="text-blue-700 font-medium">Dashboards</span>
+                <BarChart3 className="h-5 w-5" />
+                <span className="font-medium">Dashboard</span>
               </div>
             </div>
             
-            <div className="px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer">
+            <div className="argon-sidebar-item">
               <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                <span>Landing</span>
+                <Users className="h-5 w-5" />
+                <span>Athletes</span>
               </div>
             </div>
             
-            <div className="px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer">
+            <div className="argon-sidebar-item">
               <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                <span>Default</span>
+                <Calendar className="h-5 w-5" />
+                <span>Training</span>
               </div>
             </div>
             
-            <div className="px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer">
+            <div className="argon-sidebar-item">
               <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                <span>Automotive</span>
+                <Trophy className="h-5 w-5" />
+                <span>Competitions</span>
               </div>
             </div>
             
-            <div className="px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer">
+            <div className="argon-sidebar-item">
               <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                <span>Smart Home</span>
+                <DollarSign className="h-5 w-5" />
+                <span>Finance</span>
               </div>
             </div>
             
-            <div className="px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer">
+            <div className="argon-sidebar-item">
               <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                <span>Virtual Reality</span>
-              </div>
-            </div>
-            
-            <div className="px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer">
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                <span>CRM</span>
+                <Settings className="h-5 w-5" />
+                <span>Settings</span>
               </div>
             </div>
           </nav>
           
           <div className="mt-8 pt-4 border-t border-gray-200">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">PAGES</p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">ACCESS</p>
             <Button 
               onClick={() => navigate('/login')} 
-              className="w-full justify-start text-gray-600 bg-transparent hover:bg-gray-50"
+              className="w-full justify-start argon-gradient-blue text-white hover:opacity-90"
               variant="ghost"
             >
-              Login to Dashboards
+              Login to System
             </Button>
           </div>
         </div>
@@ -165,7 +157,7 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-800 mb-2">Dashboard</h1>
-              <p className="text-gray-600">Welcome to SpeedSkate Academy</p>
+              <p className="text-gray-600">Welcome to SpeedSkate Academy Management System</p>
             </div>
           </div>
         </div>
@@ -173,8 +165,7 @@ const Index = () => {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => (
-            <Card key={index} className="relative overflow-hidden border-0 shadow-lg">
-              <div className={`absolute inset-0 ${stat.bgColor} opacity-10`}></div>
+            <Card key={index} className="argon-card relative overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
                 <div>
                   <CardDescription className="text-xs font-medium text-gray-600 uppercase tracking-wider">
@@ -184,7 +175,7 @@ const Index = () => {
                     {stat.value}
                   </CardTitle>
                 </div>
-                <div className={`p-3 rounded-lg ${stat.bgColor} text-white`}>
+                <div className={`p-3 rounded-lg ${stat.bgColor} text-white shadow-lg`}>
                   <stat.icon className="h-6 w-6" />
                 </div>
               </CardHeader>
@@ -203,31 +194,35 @@ const Index = () => {
         {/* Main Dashboard Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Sales Overview */}
-          <Card className="lg:col-span-2 shadow-lg border-0">
+          <Card className="lg:col-span-2 argon-card">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold text-gray-800">Sales Overview</CardTitle>
-              <CardDescription className="text-sm text-gray-600">4% more in 2021</CardDescription>
+              <CardTitle className="text-lg font-semibold text-gray-800">Performance Overview</CardTitle>
+              <CardDescription className="text-sm text-gray-600">Athletes performance this season</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-64 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg flex items-center justify-center">
                 <div className="text-center">
                   <BarChart3 className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-                  <p className="text-gray-600">Chart visualization would go here</p>
+                  <p className="text-gray-600">Performance chart visualization</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Get Started Section */}
-          <Card className="shadow-lg border-0 bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+          <Card className="argon-card argon-gradient-purple text-white">
             <CardContent className="p-6">
               <div className="text-center">
-                <h3 className="text-xl font-bold mb-4">Get started with Argon</h3>
+                <h3 className="text-xl font-bold mb-4">SpeedSkate Academy</h3>
                 <p className="text-purple-100 mb-6">
-                  Manage your projects from the beginning to end and get amazing results
+                  Manage your athletic programs from training to competitions
                 </p>
-                <Button variant="secondary" className="bg-white text-purple-600 hover:bg-gray-100">
-                  Get Started
+                <Button 
+                  onClick={() => navigate('/login')}
+                  variant="secondary" 
+                  className="bg-white text-purple-600 hover:bg-gray-100"
+                >
+                  Access System
                 </Button>
               </div>
             </CardContent>
@@ -237,7 +232,7 @@ const Index = () => {
         {/* Bottom Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Team Members */}
-          <Card className="shadow-lg border-0">
+          <Card className="argon-card">
             <CardHeader>
               <CardTitle className="text-lg font-semibold text-gray-800">Team Members</CardTitle>
             </CardHeader>
@@ -259,16 +254,16 @@ const Index = () => {
                       </p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm">Add</Button>
+                  <Button variant="outline" size="sm">View</Button>
                 </div>
               ))}
             </CardContent>
           </Card>
 
           {/* To Do List */}
-          <Card className="shadow-lg border-0">
+          <Card className="argon-card">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold text-gray-800">To Do List</CardTitle>
+              <CardTitle className="text-lg font-semibold text-gray-800">Training Schedule</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {todoList.map((item, index) => (
@@ -290,9 +285,9 @@ const Index = () => {
           </Card>
 
           {/* Progress Track */}
-          <Card className="shadow-lg border-0">
+          <Card className="argon-card">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold text-gray-800">Progress Track</CardTitle>
+              <CardTitle className="text-lg font-semibold text-gray-800">Season Progress</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {progressProjects.map((project, index) => (
