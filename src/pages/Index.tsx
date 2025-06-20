@@ -122,7 +122,7 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="argon-sidebar-item">
+            <div className="argon-sidebar-item" onClick={() => navigate('/finance')}>
               <div className="flex items-center space-x-3">
                 <DollarSign className="h-5 w-5" />
                 <span>Finance</span>
