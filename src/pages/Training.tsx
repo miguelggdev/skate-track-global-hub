@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -380,8 +381,8 @@ const Training = () => {
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
         </Card>
       </div>
     </DashboardLayout>
