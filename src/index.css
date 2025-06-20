@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -37,19 +38,12 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -99,5 +93,84 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
+}
+
+/* Custom Argon Dashboard styles */
+@layer components {
+  .argon-card {
+    @apply bg-white rounded-xl shadow-lg border-0 overflow-hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  
+  .argon-gradient-blue {
+    background: linear-gradient(87deg, #5e72e4 0, #825ee4 100%);
+  }
+  
+  .argon-gradient-red {
+    background: linear-gradient(87deg, #f5365c 0, #f56036 100%);
+  }
+  
+  .argon-gradient-green {
+    background: linear-gradient(87deg, #2dce89 0, #2dcecc 100%);
+  }
+  
+  .argon-gradient-orange {
+    background: linear-gradient(87deg, #fb6340 0, #fbb140 100%);
+  }
+  
+  .argon-gradient-purple {
+    background: linear-gradient(87deg, #8965e0 0, #bc65e0 100%);
+  }
+  
+  .argon-sidebar {
+    @apply bg-white shadow-xl;
+    box-shadow: 0 0 2rem 0 rgba(136, 152, 170, 0.15);
+  }
+  
+  .argon-sidebar-item {
+    @apply px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer transition-all duration-200;
+  }
+  
+  .argon-sidebar-item.active {
+    @apply bg-blue-50 border-r-4 border-blue-500 text-blue-700;
+  }
+}
+
+/* Smooth animations */
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
