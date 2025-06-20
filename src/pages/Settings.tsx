@@ -14,8 +14,6 @@ import {
   Shield,
   Database,
   Palette,
-  Mail,
-  Phone,
   Lock,
   Globe,
   Download,
@@ -23,7 +21,12 @@ import {
   Trash2,
   Save,
   Eye,
-  EyeOff
+  EyeOff,
+  BarChart3,
+  Users,
+  Calendar,
+  Trophy,
+  DollarSign
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -90,7 +93,7 @@ const Settings = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-64 argon-sidebar z-50">
+      <div className="fixed left-0 top-0 h-full w-64 argon-sidebar z-50 hidden lg:block">
         <div className="p-6">
           <div className="flex items-center space-x-3 mb-8">
             <div className="w-8 h-8 argon-gradient-blue rounded-lg flex items-center justify-center">
@@ -102,35 +105,35 @@ const Settings = () => {
           <nav className="space-y-2">
             <div className="argon-sidebar-item" onClick={() => navigate('/')}>
               <div className="flex items-center space-x-3">
-                <SettingsIcon className="h-5 w-5" />
+                <BarChart3 className="h-5 w-5" />
                 <span>Dashboard</span>
               </div>
             </div>
             
             <div className="argon-sidebar-item" onClick={() => navigate('/athletes')}>
               <div className="flex items-center space-x-3">
-                <User className="h-5 w-5" />
+                <Users className="h-5 w-5" />
                 <span>Athletes</span>
               </div>
             </div>
             
             <div className="argon-sidebar-item" onClick={() => navigate('/training')}>
               <div className="flex items-center space-x-3">
-                <Database className="h-5 w-5" />
+                <Calendar className="h-5 w-5" />
                 <span>Training</span>
               </div>
             </div>
             
             <div className="argon-sidebar-item" onClick={() => navigate('/competitions')}>
               <div className="flex items-center space-x-3">
-                <Globe className="h-5 w-5" />
+                <Trophy className="h-5 w-5" />
                 <span>Competitions</span>
               </div>
             </div>
             
             <div className="argon-sidebar-item" onClick={() => navigate('/finance')}>
               <div className="flex items-center space-x-3">
-                <Database className="h-5 w-5" />
+                <DollarSign className="h-5 w-5" />
                 <span>Finance</span>
               </div>
             </div>
@@ -157,15 +160,15 @@ const Settings = () => {
       </div>
 
       {/* Main Content */}
-      <div className="ml-64 p-6">
+      <div className="lg:ml-64 p-4 lg:p-6">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-6 lg:mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-800 mb-2">Settings</h1>
               <p className="text-gray-600">Manage your account preferences and system configuration</p>
             </div>
-            <Button onClick={handleSaveSettings} className="argon-gradient-blue text-white">
+            <Button onClick={handleSaveSettings} className="argon-gradient-blue text-white w-full lg:w-auto">
               <Save className="h-4 w-4 mr-2" />
               Save Changes
             </Button>
@@ -173,20 +176,20 @@ const Settings = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
           {quickStats.map((stat, index) => (
             <Card key={index} className="argon-card relative overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-                <div>
+                <div className="min-w-0 flex-1">
                   <CardDescription className="text-xs font-medium text-gray-600 uppercase tracking-wider">
                     {stat.title}
                   </CardDescription>
-                  <CardTitle className="text-2xl font-bold text-gray-800">
+                  <CardTitle className="text-xl lg:text-2xl font-bold text-gray-800 truncate">
                     {stat.value}
                   </CardTitle>
                 </div>
-                <div className={`p-3 rounded-lg ${stat.bgColor} text-white shadow-lg`}>
-                  <stat.icon className="h-6 w-6" />
+                <div className={`p-2 lg:p-3 rounded-lg ${stat.bgColor} text-white shadow-lg flex-shrink-0`}>
+                  <stat.icon className="h-5 w-5 lg:h-6 lg:w-6" />
                 </div>
               </CardHeader>
               <CardContent className="relative z-10">
@@ -203,12 +206,12 @@ const Settings = () => {
 
         {/* Settings Tabs */}
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="preferences">Preferences</TabsTrigger>
-            <TabsTrigger value="system">System</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5 gap-1">
+            <TabsTrigger value="profile" className="text-xs lg:text-sm">Profile</TabsTrigger>
+            <TabsTrigger value="security" className="text-xs lg:text-sm">Security</TabsTrigger>
+            <TabsTrigger value="notifications" className="text-xs lg:text-sm">Notifications</TabsTrigger>
+            <TabsTrigger value="preferences" className="text-xs lg:text-sm hidden lg:block">Preferences</TabsTrigger>
+            <TabsTrigger value="system" className="text-xs lg:text-sm hidden lg:block">System</TabsTrigger>
           </TabsList>
 
           {/* Profile Settings */}
@@ -223,7 +226,7 @@ const Settings = () => {
                   <CardDescription>Update your personal details and contact information</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="firstName">First Name</Label>
                       <Input id="firstName" defaultValue="John" />
@@ -254,16 +257,16 @@ const Settings = () => {
                   <CardDescription>Upload and manage your profile image</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-4">
+                  <div className="flex flex-col lg:flex-row items-center space-y-4 lg:space-y-0 lg:space-x-4">
                     <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
                       <User className="h-8 w-8 text-gray-500" />
                     </div>
-                    <div className="space-y-2">
-                      <Button variant="outline" size="sm">
+                    <div className="flex flex-col space-y-2 w-full lg:w-auto">
+                      <Button variant="outline" size="sm" className="w-full lg:w-auto">
                         <Upload className="h-4 w-4 mr-2" />
                         Upload New
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="w-full lg:w-auto">
                         <Trash2 className="h-4 w-4 mr-2" />
                         Remove
                       </Button>
@@ -367,7 +370,7 @@ const Settings = () => {
                 <CardDescription>Choose how you want to be notified about important events</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="space-y-4">
                     <h4 className="font-medium">Email Notifications</h4>
                     <div className="space-y-3">
