@@ -108,7 +108,7 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="argon-sidebar-item">
+            <div className="argon-sidebar-item" onClick={() => navigate('/training')}>
               <div className="flex items-center space-x-3">
                 <Calendar className="h-5 w-5" />
                 <span>Training</span>
