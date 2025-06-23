@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +10,6 @@ import {
   MapPin,
   Users,
   Medal,
-  Clock,
   Search,
   Plus,
   Filter,
@@ -17,10 +17,8 @@ import {
   Edit,
   MoreHorizontal
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 const Competitions = () => {
-  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
 
   const stats = [
@@ -144,61 +142,8 @@ const Competitions = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-64 argon-sidebar z-50">
-        <div className="p-6">
-          <div className="flex items-center space-x-3 mb-8">
-            <div className="w-8 h-8 argon-gradient-blue rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">S</span>
-            </div>
-            <span className="text-xl font-bold text-gray-800">SpeedSkate Academy</span>
-          </div>
-          
-          <nav className="space-y-2">
-            <div className="argon-sidebar-item" onClick={() => navigate('/')}>
-              <div className="flex items-center space-x-3">
-                <Calendar className="h-5 w-5" />
-                <span>Dashboard</span>
-              </div>
-            </div>
-            
-            <div className="argon-sidebar-item" onClick={() => navigate('/athletes')}>
-              <div className="flex items-center space-x-3">
-                <Users className="h-5 w-5" />
-                <span>Athletes</span>
-              </div>
-            </div>
-            
-            <div className="argon-sidebar-item" onClick={() => navigate('/training')}>
-              <div className="flex items-center space-x-3">
-                <Clock className="h-5 w-5" />
-                <span>Training</span>
-              </div>
-            </div>
-            
-            <div className="argon-sidebar-item active">
-              <div className="flex items-center space-x-3">
-                <Trophy className="h-5 w-5" />
-                <span className="font-medium">Competitions</span>
-              </div>
-            </div>
-          </nav>
-          
-          <div className="mt-8 pt-4 border-t border-gray-200">
-            <Button 
-              onClick={() => navigate('/login')} 
-              className="w-full justify-start argon-gradient-blue text-white hover:opacity-90"
-              variant="ghost"
-            >
-              Login to System
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="ml-64 p-6">
+    <DashboardLayout title="Competitions">
+      <div className="space-y-6 max-w-none">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -402,7 +347,7 @@ const Competitions = () => {
           </Card>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 
