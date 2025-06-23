@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -106,7 +105,7 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex w-full">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div 
@@ -159,7 +158,7 @@ const Index = () => {
       </div>
 
       {/* Main Content */}
-      <div className="lg:ml-64">
+      <div className="flex-1 w-full lg:ml-0">
         {/* Header */}
         <div className="bg-white shadow-sm border-b">
           <div className="flex items-center justify-between px-4 lg:px-6 py-4">
@@ -173,33 +172,33 @@ const Index = () => {
                 <Menu className="h-5 w-5" />
               </Button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-                <p className="text-gray-600">Welcome to SpeedSkate Academy Management System</p>
+                <h1 className="text-xl lg:text-2xl font-bold text-gray-800">Dashboard</h1>
+                <p className="text-sm lg:text-base text-gray-600">Welcome to SpeedSkate Academy Management System</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="p-4 lg:p-6">
+        <div className="p-4 lg:p-6 w-full">
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
             {stats.map((stat, index) => (
               <Card key={index} className="argon-card relative overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <CardDescription className="text-xs font-medium text-gray-600 uppercase tracking-wider">
                       {stat.title}
                     </CardDescription>
-                    <CardTitle className="text-2xl font-bold text-gray-800">
+                    <CardTitle className="text-lg lg:text-2xl font-bold text-gray-800 truncate">
                       {stat.value}
                     </CardTitle>
                   </div>
-                  <div className={`p-3 rounded-lg ${stat.bgColor} text-white shadow-lg`}>
-                    <stat.icon className="h-6 w-6" />
+                  <div className={`p-2 lg:p-3 rounded-lg ${stat.bgColor} text-white shadow-lg flex-shrink-0`}>
+                    <stat.icon className="h-4 w-4 lg:h-6 lg:w-6" />
                   </div>
                 </CardHeader>
                 <CardContent className="relative z-10">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs lg:text-sm text-gray-600">
                     <span className={`font-semibold ${stat.isPositive ? 'text-green-600' : 'text-red-600'}`}>
                       {stat.change}
                     </span>{' '}
@@ -211,34 +210,34 @@ const Index = () => {
           </div>
 
           {/* Main Dashboard Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-6 lg:mb-8">
             {/* Performance Overview */}
             <Card className="lg:col-span-2 argon-card">
               <CardHeader>
-                <CardTitle className="text-lg font-semibold text-gray-800">Performance Overview</CardTitle>
+                <CardTitle className="text-base lg:text-lg font-semibold text-gray-800">Performance Overview</CardTitle>
                 <CardDescription className="text-sm text-gray-600">Athletes performance this season</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {/* Performance metrics */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div className="bg-blue-50 rounded-lg p-4 text-center">
-                      <div className="text-2xl font-bold text-blue-600 mb-1">156</div>
-                      <div className="text-sm text-gray-600">Active Athletes</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-4 mb-4 lg:mb-6">
+                    <div className="bg-blue-50 rounded-lg p-3 lg:p-4 text-center">
+                      <div className="text-xl lg:text-2xl font-bold text-blue-600 mb-1">156</div>
+                      <div className="text-xs lg:text-sm text-gray-600">Active Athletes</div>
                     </div>
-                    <div className="bg-green-50 rounded-lg p-4 text-center">
-                      <div className="text-2xl font-bold text-green-600 mb-1">24</div>
-                      <div className="text-sm text-gray-600">Training Sessions</div>
+                    <div className="bg-green-50 rounded-lg p-3 lg:p-4 text-center">
+                      <div className="text-xl lg:text-2xl font-bold text-green-600 mb-1">24</div>
+                      <div className="text-xs lg:text-sm text-gray-600">Training Sessions</div>
                     </div>
-                    <div className="bg-purple-50 rounded-lg p-4 text-center">
-                      <div className="text-2xl font-bold text-purple-600 mb-1">94%</div>
-                      <div className="text-sm text-gray-600">Completion Rate</div>
+                    <div className="bg-purple-50 rounded-lg p-3 lg:p-4 text-center">
+                      <div className="text-xl lg:text-2xl font-bold text-purple-600 mb-1">94%</div>
+                      <div className="text-xs lg:text-sm text-gray-600">Completion Rate</div>
                     </div>
                   </div>
                   
                   {/* Simple chart representation */}
                   <div className="space-y-3">
-                    <h4 className="font-medium text-gray-700">Monthly Progress</h4>
+                    <h4 className="font-medium text-gray-700 text-sm lg:text-base">Monthly Progress</h4>
                     {performanceData.slice(-3).map((data, index) => (
                       <div key={data.month} className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-600 w-12">{data.month}</span>
@@ -260,24 +259,24 @@ const Index = () => {
 
             {/* Get Started Section */}
             <Card className="argon-card argon-gradient-purple text-white">
-              <CardContent className="p-6">
+              <CardContent className="p-4 lg:p-6">
                 <div className="text-center">
-                  <Activity className="h-12 w-12 mx-auto mb-4 text-white" />
-                  <h3 className="text-xl font-bold mb-4">SpeedSkate Academy</h3>
-                  <p className="text-purple-100 mb-6">
+                  <Activity className="h-10 w-10 lg:h-12 lg:w-12 mx-auto mb-4 text-white" />
+                  <h3 className="text-lg lg:text-xl font-bold mb-4">SpeedSkate Academy</h3>
+                  <p className="text-purple-100 mb-6 text-sm lg:text-base">
                     Manage your athletic programs from training to competitions
                   </p>
                   <div className="space-y-3">
                     <Button 
                       onClick={() => navigate('/training')}
-                      className="w-full bg-white text-purple-600 hover:bg-gray-100"
+                      className="w-full bg-white text-purple-600 hover:bg-gray-100 text-sm lg:text-base"
                     >
                       View Training
                     </Button>
                     <Button 
                       onClick={() => navigate('/athletes')}
                       variant="outline" 
-                      className="w-full border-white text-white hover:bg-white hover:text-purple-600"
+                      className="w-full border-white text-white hover:bg-white hover:text-purple-600 text-sm lg:text-base"
                     >
                       Manage Athletes
                     </Button>
@@ -288,11 +287,11 @@ const Index = () => {
           </div>
 
           {/* Bottom Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
             {/* Team Members */}
             <Card className="argon-card">
               <CardHeader>
-                <CardTitle className="text-lg font-semibold text-gray-800">Team Members</CardTitle>
+                <CardTitle className="text-base lg:text-lg font-semibold text-gray-800">Team Members</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {teamMembers.map((member, index) => (
@@ -321,7 +320,7 @@ const Index = () => {
             {/* Training Schedule */}
             <Card className="argon-card">
               <CardHeader>
-                <CardTitle className="text-lg font-semibold text-gray-800">Training Schedule</CardTitle>
+                <CardTitle className="text-base lg:text-lg font-semibold text-gray-800">Training Schedule</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {todoList.map((item, index) => (
@@ -345,7 +344,7 @@ const Index = () => {
             {/* Season Progress */}
             <Card className="argon-card">
               <CardHeader>
-                <CardTitle className="text-lg font-semibold text-gray-800">Season Progress</CardTitle>
+                <CardTitle className="text-base lg:text-lg font-semibold text-gray-800">Season Progress</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 {progressProjects.map((project, index) => (
