@@ -17,7 +17,8 @@ import {
   BarChart3,
   Trophy,
   Menu,
-  Home
+  Home,
+  Activity
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -92,6 +93,16 @@ const Index = () => {
     { title: "Competitions", icon: Trophy, path: "/competitions" },
     { title: "Finance", icon: DollarSign, path: "/finance" },
     { title: "Settings", icon: Settings, path: "/settings" },
+  ];
+
+  // Mock performance data for the chart
+  const performanceData = [
+    { month: 'Jan', athletes: 45, sessions: 120, completion: 89 },
+    { month: 'Feb', athletes: 52, sessions: 140, completion: 92 },
+    { month: 'Mar', athletes: 48, sessions: 135, completion: 87 },
+    { month: 'Apr', athletes: 61, sessions: 165, completion: 94 },
+    { month: 'May', athletes: 58, sessions: 158, completion: 91 },
+    { month: 'Jun', athletes: 67, sessions: 180, completion: 96 }
   ];
 
   return (
@@ -208,10 +219,40 @@ const Index = () => {
                 <CardDescription className="text-sm text-gray-600">Athletes performance this season</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-64 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <BarChart3 className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-                    <p className="text-gray-600">Performance chart visualization</p>
+                <div className="space-y-4">
+                  {/* Performance metrics */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-blue-50 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-blue-600 mb-1">156</div>
+                      <div className="text-sm text-gray-600">Active Athletes</div>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-green-600 mb-1">24</div>
+                      <div className="text-sm text-gray-600">Training Sessions</div>
+                    </div>
+                    <div className="bg-purple-50 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-purple-600 mb-1">94%</div>
+                      <div className="text-sm text-gray-600">Completion Rate</div>
+                    </div>
+                  </div>
+                  
+                  {/* Simple chart representation */}
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-gray-700">Monthly Progress</h4>
+                    {performanceData.slice(-3).map((data, index) => (
+                      <div key={data.month} className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-600 w-12">{data.month}</span>
+                        <div className="flex-1 mx-4">
+                          <div className="bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-blue-500 h-2 rounded-full" 
+                              style={{ width: `${data.completion}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                        <span className="text-sm text-gray-600 w-12 text-right">{data.completion}%</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </CardContent>
@@ -221,17 +262,26 @@ const Index = () => {
             <Card className="argon-card argon-gradient-purple text-white">
               <CardContent className="p-6">
                 <div className="text-center">
+                  <Activity className="h-12 w-12 mx-auto mb-4 text-white" />
                   <h3 className="text-xl font-bold mb-4">SpeedSkate Academy</h3>
                   <p className="text-purple-100 mb-6">
                     Manage your athletic programs from training to competitions
                   </p>
-                  <Button 
-                    onClick={() => navigate('/login')}
-                    variant="secondary" 
-                    className="bg-white text-purple-600 hover:bg-gray-100"
-                  >
-                    Access System
-                  </Button>
+                  <div className="space-y-3">
+                    <Button 
+                      onClick={() => navigate('/training')}
+                      className="w-full bg-white text-purple-600 hover:bg-gray-100"
+                    >
+                      View Training
+                    </Button>
+                    <Button 
+                      onClick={() => navigate('/athletes')}
+                      variant="outline" 
+                      className="w-full border-white text-white hover:bg-white hover:text-purple-600"
+                    >
+                      Manage Athletes
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -300,13 +350,16 @@ const Index = () => {
               <CardContent className="space-y-6">
                 {progressProjects.map((project, index) => (
                   <div key={index} className="space-y-2">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-8 h-8 rounded-lg ${project.color} flex items-center justify-center`}>
-                        <span className="text-white text-xs font-bold">
-                          {project.name.charAt(0)}
-                        </span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-8 h-8 rounded-lg ${project.color} flex items-center justify-center`}>
+                          <span className="text-white text-xs font-bold">
+                            {project.name.charAt(0)}
+                          </span>
+                        </div>
+                        <span className="font-medium text-gray-800">{project.name}</span>
                       </div>
-                      <span className="font-medium text-gray-800">{project.name}</span>
+                      <span className="text-sm font-semibold text-gray-600">{project.progress}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
