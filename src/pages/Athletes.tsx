@@ -9,8 +9,7 @@ import AthletesHeader from '@/components/athletes/AthletesHeader';
 
 const Athletes = () => {
   const [searchTerm, setSearchTerm] = useState('');
-
-  const athletes = [
+  const [athletes, setAthletes] = useState([
     {
       id: 1,
       name: "Juan Pérez",
@@ -66,7 +65,11 @@ const Athletes = () => {
       performance: 85,
       avatar: "🏅"
     }
-  ];
+  ]);
+
+  const handleAthleteAdded = (newAthlete: any) => {
+    setAthletes(prevAthletes => [...prevAthletes, newAthlete]);
+  };
 
   const filteredAthletes = athletes.filter(athlete =>
     athlete.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -77,7 +80,7 @@ const Athletes = () => {
   return (
     <DashboardLayout title="Athletes Management">
       <div className="space-y-6 max-w-none">
-        <AthletesHeader />
+        <AthletesHeader onAthleteAdded={handleAthleteAdded} />
         <StatsCards />
         <SearchFilterBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         

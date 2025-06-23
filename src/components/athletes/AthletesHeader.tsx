@@ -1,9 +1,16 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { UserPlus } from 'lucide-react';
+import AddAthleteDialog from './AddAthleteDialog';
 
-const AthletesHeader = () => {
+interface AthletesHeaderProps {
+  onAthleteAdded: (athlete: any) => void;
+}
+
+const AthletesHeader = ({ onAthleteAdded }: AthletesHeaderProps) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   return (
     <div className="mb-4 md:mb-6">
       <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
@@ -11,12 +18,21 @@ const AthletesHeader = () => {
           <p className="text-sm text-gray-600 truncate">Manage and monitor athlete performance</p>
         </div>
         <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-3">
-          <Button className="argon-gradient-blue text-white hover:opacity-90 text-sm">
+          <Button 
+            className="argon-gradient-blue text-white hover:opacity-90 text-sm"
+            onClick={() => setIsDialogOpen(true)}
+          >
             <UserPlus className="h-4 w-4 mr-2" />
             Add New Athlete
           </Button>
         </div>
       </div>
+
+      <AddAthleteDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onAthleteAdded={onAthleteAdded}
+      />
     </div>
   );
 };
