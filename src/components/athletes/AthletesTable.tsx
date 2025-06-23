@@ -57,72 +57,74 @@ const AthletesTable = ({ athletes }: AthletesTableProps) => {
         <CardTitle className="text-lg font-semibold text-gray-800">Athletes List</CardTitle>
         <CardDescription>Manage your athletes and their information</CardDescription>
       </CardHeader>
-      <CardContent className="px-6">
+      <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="min-w-48">Athlete</TableHead>
-                <TableHead className="min-w-24">Category</TableHead>
-                <TableHead className="min-w-28">Level</TableHead>
-                <TableHead className="min-w-20">Status</TableHead>
-                <TableHead className="min-w-24">Performance</TableHead>
-                <TableHead className="text-right min-w-20">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {athletes.map((athlete) => (
-                <TableRow key={athlete.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-lg">{athlete.avatar}</span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-gray-800 truncate">{athlete.name}</p>
-                        <p className="text-sm text-gray-600 truncate">{athlete.email}</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm">{athlete.category}</TableCell>
-                  <TableCell className="text-sm">{athlete.level}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(athlete.status)}`}>
-                      {athlete.status}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className={`font-semibold text-sm ${getPerformanceColor(athlete.performance)}`}>
-                      {athlete.performance}%
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          <div className="min-w-full">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-64 px-6">Athlete</TableHead>
+                  <TableHead className="w-28 px-4">Category</TableHead>
+                  <TableHead className="w-32 px-4">Level</TableHead>
+                  <TableHead className="w-24 px-4">Status</TableHead>
+                  <TableHead className="w-28 px-4">Performance</TableHead>
+                  <TableHead className="w-20 text-right px-6">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {athletes.map((athlete) => (
+                  <TableRow key={athlete.id}>
+                    <TableCell className="w-64 px-6">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-lg">{athlete.avatar}</span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-gray-800 truncate max-w-40">{athlete.name}</p>
+                          <p className="text-sm text-gray-600 truncate max-w-40">{athlete.email}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="w-28 px-4 text-sm">{athlete.category}</TableCell>
+                    <TableCell className="w-32 px-4 text-sm">{athlete.level}</TableCell>
+                    <TableCell className="w-24 px-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(athlete.status)}`}>
+                        {athlete.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="w-28 px-4">
+                      <span className={`font-semibold text-sm ${getPerformanceColor(athlete.performance)}`}>
+                        {athlete.performance}%
+                      </span>
+                    </TableCell>
+                    <TableCell className="w-20 text-right px-6">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-red-600">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </CardContent>
     </Card>

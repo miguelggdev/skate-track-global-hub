@@ -76,17 +76,15 @@ const Athletes = () => {
 
   return (
     <DashboardLayout title="Athletes Management">
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="space-y-6">
-          <AthletesHeader />
-          <StatsCards />
-          <SearchFilterBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-          
-          {/* Main Content Grid */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <AthletesTable athletes={filteredAthletes} />
-            <RecentActivity />
-          </div>
+      <div className="space-y-6 w-full">
+        <AthletesHeader />
+        <StatsCards />
+        <SearchFilterBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+        
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 w-full">
+          <AthletesTable athletes={filteredAthletes} />
+          <RecentActivity />
         </div>
       </div>
     </DashboardLayout>

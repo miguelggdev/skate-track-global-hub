@@ -44,7 +44,7 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 w-full">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div 
@@ -97,9 +97,9 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
       </div>
 
       {/* Main Content Area */}
-      <div className="lg:ml-64">
+      <div className="lg:ml-64 min-h-screen flex flex-col w-full">
         {/* Header */}
-        <header className="bg-white shadow-sm border-b">
+        <header className="bg-white shadow-sm border-b flex-shrink-0">
           <div className="flex items-center justify-between px-4 lg:px-6 py-4">
             <div className="flex items-center space-x-4">
               <Button 
@@ -145,9 +145,11 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
           </div>
         </header>
 
-        {/* Main Content */}
-        <main className="p-4 lg:p-6">
-          {children}
+        {/* Main Content with proper responsive container */}
+        <main className="flex-1 p-4 lg:p-6 w-full overflow-hidden">
+          <div className="w-full max-w-none mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>
