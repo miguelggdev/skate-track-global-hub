@@ -76,13 +76,13 @@ const Athletes = () => {
 
   return (
     <DashboardLayout title="Athletes Management">
-      <div className="space-y-6 w-full">
+      <div className="space-y-6 max-w-none">
         <AthletesHeader />
         <StatsCards />
         <SearchFilterBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 w-full">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <AthletesTable athletes={filteredAthletes} />
           <RecentActivity />
         </div>

@@ -44,7 +44,7 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 w-full">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div 
@@ -54,36 +54,38 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
       )}
 
       {/* Sidebar */}
-      <div className={`fixed left-0 top-0 h-full w-64 argon-sidebar z-50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+      <div className={`fixed lg:static inset-y-0 left-0 z-50 w-64 argon-sidebar transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } lg:static lg:transform-none`}>
-        <div className="p-6">
-          <div className="flex items-center space-x-3 mb-8">
-            <div className="w-8 h-8 argon-gradient-blue rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">S</span>
+      }`}>
+        <div className="flex flex-col h-full">
+          <div className="p-6">
+            <div className="flex items-center space-x-3 mb-8">
+              <div className="w-8 h-8 argon-gradient-blue rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">S</span>
+              </div>
+              <span className="text-xl font-bold text-gray-800">SpeedSkate Academy</span>
             </div>
-            <span className="text-xl font-bold text-gray-800">SpeedSkate Academy</span>
+            
+            <nav className="space-y-2">
+              {navigationItems.map((item) => (
+                <div 
+                  key={item.title}
+                  className={`argon-sidebar-item ${window.location.pathname === item.path ? 'active' : ''}`}
+                  onClick={() => {
+                    navigate(item.path);
+                    setSidebarOpen(false);
+                  }}
+                >
+                  <div className="flex items-center space-x-3">
+                    <item.icon className="h-5 w-5" />
+                    <span className={window.location.pathname === item.path ? 'font-medium' : ''}>{item.title}</span>
+                  </div>
+                </div>
+              ))}
+            </nav>
           </div>
           
-          <nav className="space-y-2">
-            {navigationItems.map((item) => (
-              <div 
-                key={item.title}
-                className={`argon-sidebar-item ${window.location.pathname === item.path ? 'active' : ''}`}
-                onClick={() => {
-                  navigate(item.path);
-                  setSidebarOpen(false);
-                }}
-              >
-                <div className="flex items-center space-x-3">
-                  <item.icon className="h-5 w-5" />
-                  <span className={window.location.pathname === item.path ? 'font-medium' : ''}>{item.title}</span>
-                </div>
-              </div>
-            ))}
-          </nav>
-          
-          <div className="mt-8 pt-4 border-t border-gray-200">
+          <div className="mt-auto p-6 border-t border-gray-200">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">ACCESS</p>
             <Button 
               onClick={() => navigate('/login')} 
@@ -97,11 +99,11 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
       </div>
 
       {/* Main Content Area */}
-      <div className="lg:ml-64 min-h-screen flex flex-col w-full">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
-        <header className="bg-white shadow-sm border-b flex-shrink-0">
+        <header className="bg-white shadow-sm border-b flex-shrink-0 z-10">
           <div className="flex items-center justify-between px-4 lg:px-6 py-4">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 min-w-0">
               <Button 
                 variant="ghost" 
                 size="sm"
@@ -110,8 +112,8 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
               >
                 <Menu className="h-5 w-5" />
               </Button>
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
+              <div className="min-w-0">
+                <h1 className="text-xl font-semibold text-gray-900 truncate">{title}</h1>
                 <p className="text-sm text-gray-500">SpeedSkate Academy</p>
               </div>
             </div>
@@ -145,9 +147,9 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
           </div>
         </header>
 
-        {/* Main Content with proper responsive container */}
-        <main className="flex-1 p-4 lg:p-6 w-full overflow-hidden">
-          <div className="w-full max-w-none mx-auto">
+        {/* Main Content */}
+        <main className="flex-1 overflow-auto p-4 lg:p-6">
+          <div className="h-full">
             {children}
           </div>
         </main>
