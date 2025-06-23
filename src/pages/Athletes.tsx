@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,12 +14,9 @@ import {
   Trash2,
   Eye,
   Medal,
-  Calendar,
-  Clock,
   Star,
   TrendingUp
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -35,7 +33,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const Athletes = () => {
-  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
 
   const stats = [
@@ -166,229 +163,181 @@ const Athletes = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-64 argon-sidebar z-50">
-        <div className="p-6">
-          <div className="flex items-center space-x-3 mb-8">
-            <div className="w-8 h-8 argon-gradient-blue rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">S</span>
-            </div>
-            <span className="text-xl font-bold text-gray-800">SpeedSkate Academy</span>
-          </div>
-          
-          <nav className="space-y-2">
-            <div className="argon-sidebar-item" onClick={() => navigate('/')}>
-              <div className="flex items-center space-x-3">
-                <Users className="h-5 w-5" />
-                <span>Dashboard</span>
+      <DashboardLayout title="Athletes Management">
+        <div className="w-full max-w-none overflow-hidden">
+          {/* Header Actions */}
+          <div className="mb-4 md:mb-6">
+            <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+              <div className="min-w-0">
+                <p className="text-sm text-gray-600 truncate">Manage and monitor athlete performance</p>
               </div>
-            </div>
-            
-            <div className="argon-sidebar-item active">
-              <div className="flex items-center space-x-3">
-                <Users className="h-5 w-5" />
-                <span className="font-medium">Athletes</span>
-              </div>
-            </div>
-            
-            <div className="argon-sidebar-item">
-              <div className="flex items-center space-x-3">
-                <Calendar className="h-5 w-5" />
-                <span>Training</span>
-              </div>
-            </div>
-            
-            <div className="argon-sidebar-item">
-              <div className="flex items-center space-x-3">
-                <Medal className="h-5 w-5" />
-                <span>Competitions</span>
-              </div>
-            </div>
-          </nav>
-          
-          <div className="mt-8 pt-4 border-t border-gray-200">
-            <Button 
-              onClick={() => navigate('/login')} 
-              className="w-full justify-start argon-gradient-blue text-white hover:opacity-90"
-              variant="ghost"
-            >
-              Back to Login
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="ml-64 p-6">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">Athletes Management</h1>
-              <p className="text-gray-600">Manage and monitor athlete performance</p>
-            </div>
-            <Button className="argon-gradient-blue text-white hover:opacity-90">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add New Athlete
-            </Button>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => (
-            <Card key={index} className="argon-card relative overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-                <div>
-                  <CardDescription className="text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    {stat.title}
-                  </CardDescription>
-                  <CardTitle className="text-2xl font-bold text-gray-800">
-                    {stat.value}
-                  </CardTitle>
-                </div>
-                <div className={`p-3 rounded-lg ${stat.bgColor} text-white shadow-lg`}>
-                  <stat.icon className="h-6 w-6" />
-                </div>
-              </CardHeader>
-              <CardContent className="relative z-10">
-                <p className="text-sm text-gray-600">
-                  <span className={`font-semibold ${stat.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                    {stat.change}
-                  </span>{' '}
-                  {stat.period}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Search and Filter Bar */}
-        <Card className="argon-card mb-6">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between space-x-4">
-              <div className="flex items-center space-x-4 flex-1">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Search athletes..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                <Button variant="outline" className="flex items-center space-x-2">
-                  <Filter className="h-4 w-4" />
-                  <span>Filter</span>
+              <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-3">
+                <Button className="argon-gradient-blue text-white hover:opacity-90 text-sm">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Add New Athlete
                 </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Athletes Table */}
-          <Card className="lg:col-span-2 argon-card">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold text-gray-800">Athletes List</CardTitle>
-              <CardDescription>Manage your athletes and their information</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Athlete</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Level</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Performance</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAthletes.map((athlete) => (
-                    <TableRow key={athlete.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                            <span className="text-lg">{athlete.avatar}</span>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-800">{athlete.name}</p>
-                            <p className="text-sm text-gray-600">{athlete.email}</p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{athlete.category}</TableCell>
-                      <TableCell>{athlete.level}</TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(athlete.status)}`}>
-                          {athlete.status}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className={`font-semibold ${getPerformanceColor(athlete.performance)}`}>
-                          {athlete.performance}%
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Eye className="mr-2 h-4 w-4" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600">
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          {/* Recent Activity */}
-          <Card className="argon-card">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold text-gray-800">Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-3 h-3 rounded-full ${
-                      activity.type === 'training' ? 'bg-blue-500' :
-                      activity.type === 'achievement' ? 'bg-green-500' :
-                      activity.type === 'competition' ? 'bg-orange-500' :
-                      'bg-gray-500'
-                    }`}></div>
-                    <div>
-                      <p className="font-medium text-gray-800">{activity.athlete}</p>
-                      <p className="text-sm text-gray-600">{activity.action}</p>
-                    </div>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+            {stats.map((stat, index) => (
+              <Card key={index} className="argon-card relative overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <div className="min-w-0 flex-1 pr-2">
+                    <CardDescription className="text-xs font-medium text-gray-600 uppercase tracking-wider truncate">
+                      {stat.title}
+                    </CardDescription>
+                    <CardTitle className="text-xl font-bold text-gray-800 truncate">
+                      {stat.value}
+                    </CardTitle>
                   </div>
-                  <span className="text-xs text-gray-500">{activity.time}</span>
+                  <div className={`p-2 rounded-lg ${stat.bgColor} text-white shadow-lg flex-shrink-0`}>
+                    <stat.icon className="h-5 w-5" />
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <p className="text-xs text-gray-600 truncate">
+                    <span className={`font-semibold ${stat.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                      {stat.change}
+                    </span>{' '}
+                    {stat.period}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Search and Filter Bar */}
+          <Card className="argon-card mb-6">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 sm:space-x-4">
+                <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4 flex-1">
+                  <div className="relative flex-1 max-w-md">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      placeholder="Search athletes..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 text-sm"
+                    />
+                  </div>
+                  <Button variant="outline" className="flex items-center space-x-2 text-sm">
+                    <Filter className="h-4 w-4" />
+                    <span>Filter</span>
+                  </Button>
                 </div>
-              ))}
+              </div>
             </CardContent>
           </Card>
+
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            {/* Athletes Table */}
+            <Card className="xl:col-span-2 argon-card">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-gray-800">Athletes List</CardTitle>
+                <CardDescription>Manage your athletes and their information</CardDescription>
+              </CardHeader>
+              <CardContent className="px-6">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="min-w-48">Athlete</TableHead>
+                        <TableHead className="min-w-24">Category</TableHead>
+                        <TableHead className="min-w-28">Level</TableHead>
+                        <TableHead className="min-w-20">Status</TableHead>
+                        <TableHead className="min-w-24">Performance</TableHead>
+                        <TableHead className="text-right min-w-20">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredAthletes.map((athlete) => (
+                        <TableRow key={athlete.id}>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span className="text-lg">{athlete.avatar}</span>
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium text-gray-800 truncate">{athlete.name}</p>
+                                <p className="text-sm text-gray-600 truncate">{athlete.email}</p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm">{athlete.category}</TableCell>
+                          <TableCell className="text-sm">{athlete.level}</TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(athlete.status)}`}>
+                              {athlete.status}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className={`font-semibold text-sm ${getPerformanceColor(athlete.performance)}`}>
+                              {athlete.performance}%
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem>
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-red-600">
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recent Activity */}
+            <Card className="xl:col-span-1 argon-card">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-gray-800">Recent Activity</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 px-6">
+                {recentActivity.map((activity, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3 min-w-0 flex-1">
+                      <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
+                        activity.type === 'training' ? 'bg-blue-500' :
+                        activity.type === 'achievement' ? 'bg-green-500' :
+                        activity.type === 'competition' ? 'bg-orange-500' :
+                        'bg-gray-500'
+                      }`}></div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-gray-800 text-sm truncate">{activity.athlete}</p>
+                        <p className="text-sm text-gray-600 truncate">{activity.action}</p>
+                      </div>
+                    </div>
+                    <span className="text-xs text-gray-500 flex-shrink-0 ml-2">{activity.time}</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     </div>
   );
 };
