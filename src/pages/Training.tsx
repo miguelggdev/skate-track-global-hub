@@ -154,21 +154,21 @@ const Training = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 w-full">
+    <div className="min-h-screen bg-gray-50">
       <DashboardLayout title="Training Management">
-        <div className="w-full max-w-full">
+        <div className="w-full max-w-none overflow-hidden">
           {/* Header Actions */}
-          <div className="mb-6 lg:mb-8">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <p className="text-sm lg:text-base text-gray-600">Manage training sessions and programs</p>
+          <div className="mb-4 md:mb-6">
+            <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+              <div className="min-w-0">
+                <p className="text-sm text-gray-600 truncate">Manage training sessions and programs</p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button className="argon-gradient-blue text-white hover:opacity-90 text-sm lg:text-base">
+              <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-3">
+                <Button className="argon-gradient-blue text-white hover:opacity-90 text-sm">
                   <Plus className="h-4 w-4 mr-2" />
                   New Session
                 </Button>
-                <Button variant="outline" className="text-sm lg:text-base">
+                <Button variant="outline" className="text-sm">
                   <Download className="h-4 w-4 mr-2" />
                   Export
                 </Button>
@@ -177,24 +177,24 @@ const Training = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
             {stats.map((stat, index) => (
               <Card key={index} className="argon-card relative overflow-hidden">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-                  <div className="min-w-0 flex-1">
-                    <CardDescription className="text-xs font-medium text-gray-600 uppercase tracking-wider">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <div className="min-w-0 flex-1 pr-2">
+                    <CardDescription className="text-xs font-medium text-gray-600 uppercase tracking-wider truncate">
                       {stat.title}
                     </CardDescription>
-                    <CardTitle className="text-lg lg:text-2xl font-bold text-gray-800 truncate">
+                    <CardTitle className="text-xl font-bold text-gray-800 truncate">
                       {stat.value}
                     </CardTitle>
                   </div>
-                  <div className={`p-2 lg:p-3 rounded-lg ${stat.bgColor} text-white shadow-lg flex-shrink-0`}>
-                    <stat.icon className="h-4 w-4 lg:h-6 lg:w-6" />
+                  <div className={`p-2 rounded-lg ${stat.bgColor} text-white shadow-lg flex-shrink-0`}>
+                    <stat.icon className="h-5 w-5" />
                   </div>
                 </CardHeader>
-                <CardContent className="relative z-10">
-                  <p className="text-xs lg:text-sm text-gray-600">
+                <CardContent className="pt-0">
+                  <p className="text-xs text-gray-600 truncate">
                     <span className={`font-semibold ${stat.isPositive ? 'text-green-600' : 'text-red-600'}`}>
                       {stat.change}
                     </span>{' '}
@@ -206,145 +206,149 @@ const Training = () => {
           </div>
 
           {/* Main Content */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6 mb-6 lg:mb-8">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
             {/* Training Sessions */}
-            <Card className="xl:col-span-2 argon-card">
-              <CardHeader>
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                  <div>
-                    <CardTitle className="text-base lg:text-lg font-semibold text-gray-800">Training Sessions</CardTitle>
-                    <CardDescription className="text-sm text-gray-600">Today's schedule and upcoming sessions</CardDescription>
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                      <Input
-                        placeholder="Search sessions..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 w-full sm:w-48 lg:w-64 text-sm"
-                      />
+            <div className="xl:col-span-2">
+              <Card className="argon-card h-full">
+                <CardHeader className="pb-4">
+                  <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="text-lg font-semibold text-gray-800 truncate">Training Sessions</CardTitle>
+                      <CardDescription className="text-sm text-gray-600">Today's schedule and upcoming sessions</CardDescription>
                     </div>
-                    <select 
-                      value={filterStatus}
-                      onChange={(e) => setFilterStatus(e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-md text-sm w-full sm:w-auto"
-                    >
-                      <option value="all">All Status</option>
-                      <option value="scheduled">Scheduled</option>
-                      <option value="in-progress">In Progress</option>
-                      <option value="completed">Completed</option>
-                    </select>
+                    <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 lg:flex-shrink-0">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                        <Input
+                          placeholder="Search..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10 w-full sm:w-40 lg:w-48 text-sm"
+                        />
+                      </div>
+                      <select 
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white min-w-0"
+                      >
+                        <option value="all">All Status</option>
+                        <option value="scheduled">Scheduled</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                      </select>
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {filteredSessions.map((session) => (
-                    <div key={session.id} className="bg-gray-50 rounded-lg p-3 lg:p-4 hover:bg-gray-100 transition-colors">
-                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                        <div className="flex items-start lg:items-center space-x-3 lg:space-x-4 min-w-0 flex-1">
-                          <div className={`p-2 rounded-lg ${session.type === 'speed' ? 'argon-gradient-blue' : 
-                                        session.type === 'technique' ? 'argon-gradient-purple' :
-                                        session.type === 'endurance' ? 'argon-gradient-green' : 'argon-gradient-orange'} text-white flex-shrink-0`}>
-                            {getTypeIcon(session.type)}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <h4 className="font-semibold text-gray-800 text-sm lg:text-base truncate">{session.title}</h4>
-                            <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2 sm:gap-4 text-xs lg:text-sm text-gray-600 mt-1">
-                              <span className="flex items-center">
-                                <Clock className="h-3 w-3 lg:h-4 lg:w-4 mr-1" />
-                                {session.time} - {session.duration}
-                              </span>
-                              <span className="flex items-center">
-                                <Users className="h-3 w-3 lg:h-4 lg:w-4 mr-1" />
-                                {session.athletes} athletes
-                              </span>
-                              <span className="flex items-center">
-                                <MapPin className="h-3 w-3 lg:h-4 lg:w-4 mr-1" />
-                                {session.location}
-                              </span>
+                </CardHeader>
+                <CardContent className="px-6">
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                    {filteredSessions.map((session) => (
+                      <div key={session.id} className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                        <div className="flex flex-col space-y-3 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
+                          <div className="flex items-start space-x-3 min-w-0 flex-1">
+                            <div className={`p-2 rounded-lg ${session.type === 'speed' ? 'argon-gradient-blue' : 
+                                          session.type === 'technique' ? 'argon-gradient-purple' :
+                                          session.type === 'endurance' ? 'argon-gradient-green' : 'argon-gradient-orange'} text-white flex-shrink-0`}>
+                              {getTypeIcon(session.type)}
                             </div>
-                            <p className="text-xs lg:text-sm text-gray-500 mt-1">Coach: {session.coach}</p>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="font-semibold text-gray-800 text-sm truncate">{session.title}</h4>
+                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600 mt-1">
+                                <span className="flex items-center flex-shrink-0">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  {session.time}
+                                </span>
+                                <span className="flex items-center flex-shrink-0">
+                                  <Users className="h-3 w-3 mr-1" />
+                                  {session.athletes}
+                                </span>
+                                <span className="flex items-center flex-shrink-0">
+                                  <MapPin className="h-3 w-3 mr-1" />
+                                  <span className="truncate max-w-20">{session.location}</span>
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1 truncate">Coach: {session.coach}</p>
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0">
-                          <span className={`px-2 lg:px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(session.status)}`}>
-                            {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
-                          </span>
-                          <div className="flex gap-1">
-                            {session.status === 'scheduled' && (
-                              <Button size="sm" variant="outline">
-                                <Play className="h-3 w-3 lg:h-4 lg:w-4" />
+                          <div className="flex items-center justify-between lg:justify-end gap-3 flex-shrink-0">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(session.status)}`}>
+                              {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+                            </span>
+                            <div className="flex gap-1 flex-shrink-0">
+                              {session.status === 'scheduled' && (
+                                <Button size="sm" variant="outline" className="p-2">
+                                  <Play className="h-3 w-3" />
+                                </Button>
+                              )}
+                              {session.status === 'in-progress' && (
+                                <Button size="sm" variant="outline" className="p-2">
+                                  <Pause className="h-3 w-3" />
+                                </Button>
+                              )}
+                              <Button size="sm" variant="outline" className="p-2">
+                                <Edit className="h-3 w-3" />
                               </Button>
-                            )}
-                            {session.status === 'in-progress' && (
-                              <Button size="sm" variant="outline">
-                                <Pause className="h-3 w-3 lg:h-4 lg:w-4" />
-                              </Button>
-                            )}
-                            <Button size="sm" variant="outline">
-                              <Edit className="h-3 w-3 lg:h-4 lg:w-4" />
-                            </Button>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Quick Actions */}
-            <Card className="argon-card argon-gradient-purple text-white">
-              <CardContent className="p-4 lg:p-6">
-                <div className="text-center">
-                  <h3 className="text-lg lg:text-xl font-bold mb-2">Training Control</h3>
-                  <p className="text-purple-100 mb-4 lg:mb-6 text-sm lg:text-base">Quick actions for training management</p>
-                  <div className="space-y-3">
-                    <Button className="w-full bg-white text-purple-600 hover:bg-gray-100 text-sm lg:text-base">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Schedule Session
-                    </Button>
-                    <Button variant="outline" className="w-full border-white text-white hover:bg-white hover:text-purple-600 text-sm lg:text-base">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      View Calendar
-                    </Button>
-                    <Button variant="outline" className="w-full border-white text-white hover:bg-white hover:text-purple-600 text-sm lg:text-base">
-                      <Activity className="h-4 w-4 mr-2" />
-                      Performance Reports
-                    </Button>
-                    <Button variant="outline" className="w-full border-white text-white hover:bg-white hover:text-purple-600 text-sm lg:text-base">
-                      <Trophy className="h-4 w-4 mr-2" />
-                      Competition Prep
-                    </Button>
+            <div className="xl:col-span-1">
+              <Card className="argon-card argon-gradient-purple text-white h-full">
+                <CardContent className="p-6">
+                  <div className="text-center">
+                    <h3 className="text-xl font-bold mb-2">Training Control</h3>
+                    <p className="text-purple-100 mb-6 text-sm">Quick actions for training management</p>
+                    <div className="space-y-3">
+                      <Button className="w-full bg-white text-purple-600 hover:bg-gray-100 text-sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Schedule Session
+                      </Button>
+                      <Button variant="outline" className="w-full border-white text-white hover:bg-white hover:text-purple-600 text-sm">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        View Calendar
+                      </Button>
+                      <Button variant="outline" className="w-full border-white text-white hover:bg-white hover:text-purple-600 text-sm">
+                        <Activity className="h-4 w-4 mr-2" />
+                        Performance Reports
+                      </Button>
+                      <Button variant="outline" className="w-full border-white text-white hover:bg-white hover:text-purple-600 text-sm">
+                        <Trophy className="h-4 w-4 mr-2" />
+                        Competition Prep
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           {/* Bottom Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Training Programs Progress */}
             <Card className="argon-card">
               <CardHeader>
-                <CardTitle className="text-base lg:text-lg font-semibold text-gray-800">Training Programs</CardTitle>
+                <CardTitle className="text-lg font-semibold text-gray-800">Training Programs</CardTitle>
                 <CardDescription className="text-sm text-gray-600">Current program progress and participation</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4 lg:space-y-6">
+              <CardContent className="space-y-6">
                 {trainingPrograms.map((program, index) => (
                   <div key={index} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3 min-w-0 flex-1">
-                        <div className={`w-6 h-6 lg:w-8 lg:h-8 rounded-lg ${program.color} flex items-center justify-center flex-shrink-0`}>
-                          <span className="text-white text-xs font-bold">
+                        <div className={`w-8 h-8 rounded-lg ${program.color} flex items-center justify-center flex-shrink-0`}>
+                          <span className="text-white text-sm font-bold">
                             {program.name.charAt(0)}
                           </span>
                         </div>
                         <div className="min-w-0 flex-1">
-                          <span className="font-medium text-gray-800 text-sm lg:text-base block truncate">{program.name}</span>
-                          <p className="text-xs lg:text-sm text-gray-500">{program.athletes} athletes enrolled</p>
+                          <span className="font-medium text-gray-800 text-sm block truncate">{program.name}</span>
+                          <p className="text-xs text-gray-500">{program.athletes} athletes enrolled</p>
                         </div>
                       </div>
                       <span className="text-sm font-semibold text-gray-600 flex-shrink-0">{program.progress}%</span>
@@ -363,22 +367,22 @@ const Training = () => {
             {/* Weekly Overview */}
             <Card className="argon-card">
               <CardHeader>
-                <CardTitle className="text-base lg:text-lg font-semibold text-gray-800">Weekly Overview</CardTitle>
+                <CardTitle className="text-lg font-semibold text-gray-800">Weekly Overview</CardTitle>
                 <CardDescription className="text-sm text-gray-600">Training statistics for this week</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-48 lg:h-64 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg flex items-center justify-center">
+                <div className="h-64 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg flex items-center justify-center">
                   <div className="text-center">
-                    <TrendingUp className="h-12 w-12 lg:h-16 lg:w-16 text-blue-500 mx-auto mb-4" />
-                    <p className="text-gray-600 mb-4 text-sm lg:text-base">Performance Analytics</p>
+                    <TrendingUp className="h-16 w-16 text-blue-500 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-4">Performance Analytics</p>
                     <div className="grid grid-cols-2 gap-4 text-center">
                       <div>
-                        <p className="text-xl lg:text-2xl font-bold text-blue-600">24</p>
-                        <p className="text-xs lg:text-sm text-gray-500">Sessions</p>
+                        <p className="text-2xl font-bold text-blue-600">24</p>
+                        <p className="text-sm text-gray-500">Sessions</p>
                       </div>
                       <div>
-                        <p className="text-xl lg:text-2xl font-bold text-green-600">92%</p>
-                        <p className="text-xs lg:text-sm text-gray-500">Attendance</p>
+                        <p className="text-2xl font-bold text-green-600">92%</p>
+                        <p className="text-sm text-gray-500">Attendance</p>
                       </div>
                     </div>
                   </div>
