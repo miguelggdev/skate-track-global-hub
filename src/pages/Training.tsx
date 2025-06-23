@@ -154,30 +154,28 @@ const Training = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardLayout title="Training Management">
-        <div className="w-full max-w-none overflow-hidden">
+    <DashboardLayout title="Training Management">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="space-y-6">
           {/* Header Actions */}
-          <div className="mb-4 md:mb-6">
-            <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-              <div className="min-w-0">
-                <p className="text-sm text-gray-600 truncate">Manage training sessions and programs</p>
-              </div>
-              <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-3">
-                <Button className="argon-gradient-blue text-white hover:opacity-90 text-sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Session
-                </Button>
-                <Button variant="outline" className="text-sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
-              </div>
+          <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+            <div className="min-w-0">
+              <p className="text-sm text-gray-600 truncate">Manage training sessions and programs</p>
+            </div>
+            <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-3">
+              <Button className="argon-gradient-blue text-white hover:opacity-90 text-sm">
+                <Plus className="h-4 w-4 mr-2" />
+                New Session
+              </Button>
+              <Button variant="outline" className="text-sm">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
             </div>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             {stats.map((stat, index) => (
               <Card key={index} className="argon-card relative overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -206,7 +204,7 @@ const Training = () => {
           </div>
 
           {/* Main Content */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {/* Training Sessions */}
             <div className="xl:col-span-2">
               <Card className="argon-card h-full">
@@ -391,8 +389,8 @@ const Training = () => {
             </Card>
           </div>
         </div>
-      </DashboardLayout>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

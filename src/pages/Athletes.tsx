@@ -75,9 +75,9 @@ const Athletes = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardLayout title="Athletes Management">
-        <div className="w-full max-w-none overflow-hidden">
+    <DashboardLayout title="Athletes Management">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="space-y-6">
           <AthletesHeader />
           <StatsCards />
           <SearchFilterBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
@@ -88,8 +88,8 @@ const Athletes = () => {
             <RecentActivity />
           </div>
         </div>
-      </DashboardLayout>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 
