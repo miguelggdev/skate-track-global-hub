@@ -83,6 +83,63 @@ export type Database = {
           },
         ]
       }
+      club_settings: {
+        Row: {
+          address: string | null
+          club_description: string | null
+          club_logo_url: string | null
+          club_name: string
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          currency: string | null
+          id: string
+          language: string | null
+          social_facebook: string | null
+          social_instagram: string | null
+          social_twitter: string | null
+          timezone: string | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          address?: string | null
+          club_description?: string | null
+          club_logo_url?: string | null
+          club_name?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          language?: string | null
+          social_facebook?: string | null
+          social_instagram?: string | null
+          social_twitter?: string | null
+          timezone?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          address?: string | null
+          club_description?: string | null
+          club_logo_url?: string | null
+          club_name?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          language?: string | null
+          social_facebook?: string | null
+          social_instagram?: string | null
+          social_twitter?: string | null
+          timezone?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       coach_athletes: {
         Row: {
           athlete_id: string
@@ -508,6 +565,39 @@ export type Database = {
           last_name?: string
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      system_settings: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          setting_key: string
+          setting_type: string
+          setting_value: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_type?: string
+          setting_value?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_type?: string
+          setting_value?: string | null
           updated_at?: string
         }
         Relationships: []

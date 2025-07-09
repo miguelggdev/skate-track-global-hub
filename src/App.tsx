@@ -18,6 +18,7 @@ import Competitions from "./pages/Competitions";
 import Finance from "./pages/Finance";
 import Settings from "./pages/Settings";
 import UserManagement from "./pages/UserManagement";
+import ClubConfig from "./pages/ClubConfig";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,14 @@ const App = () => (
           <Route path="/competitions" element={<Competitions />} />
           <Route path="/finance" element={<Finance />} />
           <Route path="/settings" element={<Settings />} />
+          <Route 
+            path="/club-config" 
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'leader']}>
+                <ClubConfig />
+              </ProtectedRoute>
+            } 
+          />
           <Route 
             path="/user-management" 
             element={

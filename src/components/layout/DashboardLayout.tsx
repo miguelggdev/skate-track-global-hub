@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Bell, Menu, User, LogOut, Home, Users, Calendar, Trophy, DollarSign, Settings } from 'lucide-react';
+import { Bell, Menu, User, LogOut, Home, Users, Calendar, Trophy, DollarSign, Settings, Cog } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +40,7 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
     { title: "Training", icon: Calendar, path: "/training" },
     { title: "Competitions", icon: Trophy, path: "/competitions" },
     { title: "Finance", icon: DollarSign, path: "/finance" },
+    { title: "Configurar Club", icon: Cog, path: "/club-config" },
     { title: "Settings", icon: Settings, path: "/settings" },
   ];
 
