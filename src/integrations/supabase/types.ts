@@ -14,7 +14,641 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      athletes: {
+        Row: {
+          achievements: string | null
+          athlete_number: string | null
+          category: Database["public"]["Enums"]["athlete_category"]
+          created_at: string
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          id: string
+          join_date: string
+          level: Database["public"]["Enums"]["athlete_level"]
+          medical_notes: string | null
+          performance_score: number | null
+          status: Database["public"]["Enums"]["athlete_status"]
+          team_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          achievements?: string | null
+          athlete_number?: string | null
+          category: Database["public"]["Enums"]["athlete_category"]
+          created_at?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          id?: string
+          join_date?: string
+          level: Database["public"]["Enums"]["athlete_level"]
+          medical_notes?: string | null
+          performance_score?: number | null
+          status?: Database["public"]["Enums"]["athlete_status"]
+          team_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          achievements?: string | null
+          athlete_number?: string | null
+          category?: Database["public"]["Enums"]["athlete_category"]
+          created_at?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          id?: string
+          join_date?: string
+          level?: Database["public"]["Enums"]["athlete_level"]
+          medical_notes?: string | null
+          performance_score?: number | null
+          status?: Database["public"]["Enums"]["athlete_status"]
+          team_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athletes_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athletes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_athletes: {
+        Row: {
+          athlete_id: string
+          coach_id: string
+          created_at: string
+          end_date: string | null
+          id: string
+          is_primary: boolean | null
+          start_date: string
+        }
+        Insert: {
+          athlete_id: string
+          coach_id: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          is_primary?: boolean | null
+          start_date?: string
+        }
+        Update: {
+          athlete_id?: string
+          coach_id?: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          is_primary?: boolean | null
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_athletes_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_athletes_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "coaches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coaches: {
+        Row: {
+          certification_level: string | null
+          created_at: string
+          hourly_rate: number | null
+          id: string
+          license_number: string | null
+          specialization: string | null
+          team_id: string | null
+          updated_at: string
+          user_id: string | null
+          years_experience: number | null
+        }
+        Insert: {
+          certification_level?: string | null
+          created_at?: string
+          hourly_rate?: number | null
+          id?: string
+          license_number?: string | null
+          specialization?: string | null
+          team_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+          years_experience?: number | null
+        }
+        Update: {
+          certification_level?: string | null
+          created_at?: string
+          hourly_rate?: number | null
+          id?: string
+          license_number?: string | null
+          specialization?: string | null
+          team_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+          years_experience?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaches_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      competition_registrations: {
+        Row: {
+          athlete_id: string
+          competition_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          registration_date: string
+        }
+        Insert: {
+          athlete_id: string
+          competition_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          registration_date?: string
+        }
+        Update: {
+          athlete_id?: string
+          competition_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          registration_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competition_registrations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competition_registrations_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "competitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      competition_results: {
+        Row: {
+          athlete_id: string
+          competition_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          points: number | null
+          position: number | null
+          score: number | null
+        }
+        Insert: {
+          athlete_id: string
+          competition_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          points?: number | null
+          position?: number | null
+          score?: number | null
+        }
+        Update: {
+          athlete_id?: string
+          competition_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          points?: number | null
+          position?: number | null
+          score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competition_results_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competition_results_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "competitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      competitions: {
+        Row: {
+          category: Database["public"]["Enums"]["athlete_category"] | null
+          created_at: string
+          description: string | null
+          end_date: string
+          entry_fee: number | null
+          id: string
+          level: Database["public"]["Enums"]["athlete_level"] | null
+          location: string
+          max_participants: number | null
+          name: string
+          organizer_id: string | null
+          prize_pool: number | null
+          registration_deadline: string | null
+          start_date: string
+          status: Database["public"]["Enums"]["competition_status"]
+          updated_at: string
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["athlete_category"] | null
+          created_at?: string
+          description?: string | null
+          end_date: string
+          entry_fee?: number | null
+          id?: string
+          level?: Database["public"]["Enums"]["athlete_level"] | null
+          location: string
+          max_participants?: number | null
+          name: string
+          organizer_id?: string | null
+          prize_pool?: number | null
+          registration_deadline?: string | null
+          start_date: string
+          status?: Database["public"]["Enums"]["competition_status"]
+          updated_at?: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["athlete_category"] | null
+          created_at?: string
+          description?: string | null
+          end_date?: string
+          entry_fee?: number | null
+          id?: string
+          level?: Database["public"]["Enums"]["athlete_level"] | null
+          location?: string
+          max_participants?: number | null
+          name?: string
+          organizer_id?: string | null
+          prize_pool?: number | null
+          registration_deadline?: string | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["competition_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitions_organizer_id_fkey"
+            columns: ["organizer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      equipment: {
+        Row: {
+          assigned_to: string | null
+          brand: string | null
+          category: string
+          condition: string | null
+          cost: number | null
+          created_at: string
+          id: string
+          model: string | null
+          name: string
+          purchase_date: string | null
+          team_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          brand?: string | null
+          category: string
+          condition?: string | null
+          cost?: number | null
+          created_at?: string
+          id?: string
+          model?: string | null
+          name: string
+          purchase_date?: string | null
+          team_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          brand?: string | null
+          category?: string
+          condition?: string | null
+          cost?: number | null
+          created_at?: string
+          id?: string
+          model?: string | null
+          name?: string
+          purchase_date?: string | null
+          team_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipment_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_transactions: {
+        Row: {
+          amount: number
+          athlete_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          due_date: string | null
+          id: string
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          receipt_url: string | null
+          team_id: string | null
+          transaction_date: string
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          athlete_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          due_date?: string | null
+          id?: string
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          receipt_url?: string | null
+          team_id?: string | null
+          transaction_date?: string
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          athlete_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          due_date?: string | null
+          id?: string
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          receipt_url?: string | null
+          team_id?: string | null
+          transaction_date?: string
+          transaction_type?: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_transactions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          date_of_birth: string | null
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      teams: {
+        Row: {
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          description: string | null
+          founded_date: string | null
+          id: string
+          location: string | null
+          logo_url: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          founded_date?: string | null
+          id?: string
+          location?: string | null
+          logo_url?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          founded_date?: string | null
+          id?: string
+          location?: string | null
+          logo_url?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      training_attendance: {
+        Row: {
+          athlete_id: string
+          attended: boolean | null
+          created_at: string
+          id: string
+          notes: string | null
+          performance_rating: number | null
+          training_session_id: string
+        }
+        Insert: {
+          athlete_id: string
+          attended?: boolean | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          performance_rating?: number | null
+          training_session_id: string
+        }
+        Update: {
+          athlete_id?: string
+          attended?: boolean | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          performance_rating?: number | null
+          training_session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_attendance_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_attendance_training_session_id_fkey"
+            columns: ["training_session_id"]
+            isOneToOne: false
+            referencedRelation: "training_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_sessions: {
+        Row: {
+          coach_id: string | null
+          created_at: string
+          date: string
+          description: string | null
+          end_time: string
+          id: string
+          location: string | null
+          max_participants: number | null
+          name: string
+          start_time: string
+          training_type: Database["public"]["Enums"]["training_type"]
+          updated_at: string
+        }
+        Insert: {
+          coach_id?: string | null
+          created_at?: string
+          date: string
+          description?: string | null
+          end_time: string
+          id?: string
+          location?: string | null
+          max_participants?: number | null
+          name: string
+          start_time: string
+          training_type: Database["public"]["Enums"]["training_type"]
+          updated_at?: string
+        }
+        Update: {
+          coach_id?: string | null
+          created_at?: string
+          date?: string
+          description?: string | null
+          end_time?: string
+          id?: string
+          location?: string | null
+          max_participants?: number | null
+          name?: string
+          start_time?: string
+          training_type?: Database["public"]["Enums"]["training_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_sessions_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "coaches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +657,25 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      athlete_category: "youth" | "junior" | "senior" | "masters"
+      athlete_level: "beginner" | "intermediate" | "advanced" | "professional"
+      athlete_status: "active" | "inactive" | "injured" | "suspended"
+      competition_status: "upcoming" | "ongoing" | "completed" | "cancelled"
+      payment_status: "pending" | "paid" | "overdue" | "cancelled"
+      training_type: "technical" | "physical" | "mental" | "recovery"
+      transaction_type:
+        | "registration_fee"
+        | "equipment"
+        | "travel"
+        | "coaching"
+        | "other"
+      user_role:
+        | "admin"
+        | "coach"
+        | "athlete"
+        | "delegate"
+        | "leader"
+        | "finance"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +802,21 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      athlete_category: ["youth", "junior", "senior", "masters"],
+      athlete_level: ["beginner", "intermediate", "advanced", "professional"],
+      athlete_status: ["active", "inactive", "injured", "suspended"],
+      competition_status: ["upcoming", "ongoing", "completed", "cancelled"],
+      payment_status: ["pending", "paid", "overdue", "cancelled"],
+      training_type: ["technical", "physical", "mental", "recovery"],
+      transaction_type: [
+        "registration_fee",
+        "equipment",
+        "travel",
+        "coaching",
+        "other",
+      ],
+      user_role: ["admin", "coach", "athlete", "delegate", "leader", "finance"],
+    },
   },
 } as const
