@@ -19,6 +19,7 @@ import Finance from "./pages/Finance";
 import Settings from "./pages/Settings";
 import UserManagement from "./pages/UserManagement";
 import ClubConfig from "./pages/ClubConfig";
+import Reports from "./pages/Reports";
 
 const queryClient = new QueryClient();
 
@@ -112,6 +113,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['lider']}>
                 <LeaderDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/reports" 
+            element={
+              <ProtectedRoute allowedRoles={['administrador', 'lider']}>
+                <Reports />
               </ProtectedRoute>
             } 
           />
