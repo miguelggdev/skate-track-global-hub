@@ -4,6 +4,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { AddCompetitionDialog } from '@/components/competitions/AddCompetitionDialog';
 import { 
   Trophy,
   Calendar,
@@ -11,7 +12,6 @@ import {
   Users,
   Medal,
   Search,
-  Plus,
   Filter,
   Eye,
   Edit,
@@ -151,10 +151,7 @@ const Competitions = () => {
               <h1 className="text-2xl font-bold text-gray-800 mb-2">Competitions</h1>
               <p className="text-gray-600">Manage competitions, events and track results</p>
             </div>
-            <Button className="argon-gradient-blue text-white hover:opacity-90">
-              <Plus className="h-4 w-4 mr-2" />
-              New Competition
-            </Button>
+            <AddCompetitionDialog />
           </div>
         </div>
 
