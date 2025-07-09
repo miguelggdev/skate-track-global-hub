@@ -66,36 +66,62 @@ const AddUserDialog = ({ open, onOpenChange, onUserAdded }: AddUserDialogProps) 
   const onSubmit = async (data: UserFormData) => {
     try {
       setLoading(true);
+      console.log('Starting user creation process...');
+      console.log('Form data:', data);
 
-      // Create auth user first
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // Use regular signup with email redirect - this works with anon key
+      console.log('Attempting to create auth user...');
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
-        user_metadata: {
-          first_name: data.first_name,
-          last_name: data.last_name,
-          role: data.role,
+        options: {
+          data: {
+            first_name: data.first_name,
+            last_name: data.last_name,
+            role: data.role,
+            phone: data.phone,
+            date_of_birth: data.date_of_birth,
+            bio: data.bio,
+          },
+          emailRedirectTo: `${window.location.origin}/`,
         }
       });
 
-      if (authError) throw authError;
+      console.log('Auth response:', { authData, authError });
+      
+      if (authError) {
+        console.error('Auth error details:', authError);
+        throw authError;
+      }
 
-      // Update the profile with additional data
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          phone: data.phone,
-          date_of_birth: data.date_of_birth,
-          bio: data.bio,
-          role: data.role,
-        })
-        .eq('id', authData.user.id);
+      if (!authData.user) {
+        throw new Error('No se pudo crear el usuario');
+      }
 
-      if (profileError) throw profileError;
+      // The profile will be created automatically by the trigger
+      // But we can update it with additional data if needed
+      if (authData.user.id) {
+        console.log('Attempting to update profile with additional data...');
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            phone: data.phone,
+            date_of_birth: data.date_of_birth,
+            bio: data.bio,
+            role: data.role,
+          })
+          .eq('id', authData.user.id);
+
+        console.log('Profile update error:', profileError);
+        // Don't throw error here as the user is already created
+        if (profileError) {
+          console.warn('Profile update failed, but user was created:', profileError);
+        }
+      }
 
       toast({
         title: "Éxito",
-        description: "Usuario creado exitosamente",
+        description: "Usuario creado exitosamente. Se ha enviado un email de confirmación.",
       });
 
       form.reset();
