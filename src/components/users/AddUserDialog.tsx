@@ -69,7 +69,7 @@ const AddUserDialog = ({ open, onOpenChange, onUserAdded }: AddUserDialogProps) 
       console.log('Starting user creation process...');
       console.log('Form data:', data);
 
-      // Use regular signup with email redirect - this works with anon key
+      // Use regular signup - this works with anon key
       console.log('Attempting to create auth user...');
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
@@ -78,12 +78,8 @@ const AddUserDialog = ({ open, onOpenChange, onUserAdded }: AddUserDialogProps) 
           data: {
             first_name: data.first_name,
             last_name: data.last_name,
-            role: data.role,
-            phone: data.phone,
-            date_of_birth: data.date_of_birth,
-            bio: data.bio,
+            role: data.role, // This will be passed to the trigger
           },
-          emailRedirectTo: `${window.location.origin}/`,
         }
       });
 
@@ -91,37 +87,39 @@ const AddUserDialog = ({ open, onOpenChange, onUserAdded }: AddUserDialogProps) 
       
       if (authError) {
         console.error('Auth error details:', authError);
-        throw authError;
+        throw new Error(`Error de autenticación: ${authError.message}`);
       }
 
       if (!authData.user) {
         throw new Error('No se pudo crear el usuario');
       }
 
-      // The profile will be created automatically by the trigger
-      // But we can update it with additional data if needed
-      if (authData.user.id) {
-        console.log('Attempting to update profile with additional data...');
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            phone: data.phone,
-            date_of_birth: data.date_of_birth,
-            bio: data.bio,
-            role: data.role,
-          })
-          .eq('id', authData.user.id);
+      // Wait a bit for the trigger to complete
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-        console.log('Profile update error:', profileError);
+      // Now update the profile with additional data
+      console.log('Attempting to update profile with additional data...');
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          phone: data.phone || null,
+          date_of_birth: data.date_of_birth || null,
+          bio: data.bio || null,
+          role: data.role,
+        })
+        .eq('id', authData.user.id);
+
+      console.log('Profile update error:', profileError);
+      
+      if (profileError) {
+        console.error('Profile update failed:', profileError);
         // Don't throw error here as the user is already created
-        if (profileError) {
-          console.warn('Profile update failed, but user was created:', profileError);
-        }
+        console.warn('Profile update failed, but user was created:', profileError);
       }
 
       toast({
         title: "Éxito",
-        description: "Usuario creado exitosamente. Se ha enviado un email de confirmación.",
+        description: "Usuario creado exitosamente",
       });
 
       form.reset();
@@ -129,9 +127,22 @@ const AddUserDialog = ({ open, onOpenChange, onUserAdded }: AddUserDialogProps) 
       onUserAdded();
     } catch (error: any) {
       console.error('Error creating user:', error);
+      
+      // Provide more specific error messages
+      let errorMessage = "No se pudo crear el usuario";
+      if (error.message?.includes('already registered')) {
+        errorMessage = "Este email ya está registrado";
+      } else if (error.message?.includes('invalid email')) {
+        errorMessage = "Email inválido";
+      } else if (error.message?.includes('weak password')) {
+        errorMessage = "La contraseña es muy débil";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: "Error",
-        description: error.message || "No se pudo crear el usuario",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
