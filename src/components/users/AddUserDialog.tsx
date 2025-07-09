@@ -71,6 +71,15 @@ const AddUserDialog = ({ open, onOpenChange, onUserAdded }: AddUserDialogProps) 
 
       // Use regular signup - this works with anon key
       console.log('Attempting to create auth user...');
+      console.log('User data being sent:', {
+        email: data.email,
+        metadata: {
+          first_name: data.first_name,
+          last_name: data.last_name,
+          role: data.role
+        }
+      });
+      
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -84,6 +93,11 @@ const AddUserDialog = ({ open, onOpenChange, onUserAdded }: AddUserDialogProps) 
       });
 
       console.log('Auth response:', { authData, authError });
+      
+      if (authData.user) {
+        console.log('User created with ID:', authData.user.id);
+        console.log('User metadata:', authData.user.user_metadata);
+      }
       
       if (authError) {
         console.error('Auth error details:', authError);
