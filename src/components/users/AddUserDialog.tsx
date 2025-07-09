@@ -69,7 +69,7 @@ const AddUserDialog = ({ open, onOpenChange, onUserAdded }: AddUserDialogProps) 
       console.log('Starting user creation process...');
       console.log('Form data:', data);
 
-      // Use regular signup - this works with anon key
+      // Use regular signup with email confirmation disabled
       console.log('Attempting to create auth user...');
       console.log('User data being sent:', {
         email: data.email,
@@ -84,6 +84,7 @@ const AddUserDialog = ({ open, onOpenChange, onUserAdded }: AddUserDialogProps) 
         email: data.email,
         password: data.password,
         options: {
+          emailRedirectTo: undefined, // Disable email confirmation
           data: {
             first_name: data.first_name,
             last_name: data.last_name,
