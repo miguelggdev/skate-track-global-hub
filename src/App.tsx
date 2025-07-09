@@ -54,7 +54,7 @@ const App = () => (
           <Route 
             path="/club-config" 
             element={
-              <ProtectedRoute allowedRoles={['admin', 'leader']}>
+              <ProtectedRoute allowedRoles={['administrador', 'lider']}>
                 <ClubConfig />
               </ProtectedRoute>
             } 
