@@ -17,7 +17,7 @@ const AdminDashboard = () => {
   ];
 
   const quickActions = [
-    { title: "Gestionar Usuarios", description: "Crear y administrar perfiles", action: () => navigate('/users') },
+    { title: "Gestionar Usuarios", description: "Crear y administrar perfiles", action: () => navigate('/user-management') },
     { title: "Configurar Club", description: "Logo, colores y datos", action: () => navigate('/club-config') },
     { title: "Crear Competencia", description: "Nueva competencia", action: () => navigate('/competitions') },
     { title: "Reportes", description: "Generar reportes", action: () => navigate('/reports') },
