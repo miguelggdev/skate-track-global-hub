@@ -66,20 +66,11 @@ const AddUserDialog = ({ open, onOpenChange, onUserAdded }: AddUserDialogProps) 
   const onSubmit = async (data: UserFormData) => {
     try {
       setLoading(true);
-      console.log('Starting user creation process...');
-      console.log('Form data:', data);
+      console.log('🚀 Starting user creation process...');
+      console.log('📝 Form data:', data);
 
-      // Use regular signup with email confirmation disabled
-      console.log('Attempting to create auth user...');
-      console.log('User data being sent:', {
-        email: data.email,
-        metadata: {
-          first_name: data.first_name,
-          last_name: data.last_name,
-          role: data.role
-        }
-      });
-      
+      // Create auth user with email confirmation disabled
+      console.log('🔐 Creating authentication user...');
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -88,20 +79,20 @@ const AddUserDialog = ({ open, onOpenChange, onUserAdded }: AddUserDialogProps) 
           data: {
             first_name: data.first_name,
             last_name: data.last_name,
-            role: data.role, // This will be passed to the trigger
+            role: data.role,
           },
         }
       });
 
-      console.log('Auth response:', { authData, authError });
-      
-      if (authData.user) {
-        console.log('User created with ID:', authData.user.id);
-        console.log('User metadata:', authData.user.user_metadata);
-      }
+      console.log('🔐 Auth result:', { 
+        userId: authData.user?.id, 
+        userExists: !!authData.user,
+        needsConfirmation: !authData.user?.email_confirmed_at,
+        error: authError 
+      });
       
       if (authError) {
-        console.error('Auth error details:', authError);
+        console.error('❌ Auth error:', authError);
         throw new Error(`Error de autenticación: ${authError.message}`);
       }
 
@@ -109,28 +100,75 @@ const AddUserDialog = ({ open, onOpenChange, onUserAdded }: AddUserDialogProps) 
         throw new Error('No se pudo crear el usuario');
       }
 
-      // Wait a bit for the trigger to complete
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Check if profile was created by trigger
+      console.log('🔍 Checking if profile was created by trigger...');
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Wait for trigger
 
-      // Now update the profile with additional data
-      console.log('Attempting to update profile with additional data...');
-      const { error: profileError } = await supabase
+      const { data: profileCheck, error: profileCheckError } = await supabase
         .from('profiles')
-        .update({
-          phone: data.phone || null,
-          date_of_birth: data.date_of_birth || null,
-          bio: data.bio || null,
-          role: data.role,
-        })
-        .eq('id', authData.user.id);
+        .select('*')
+        .eq('id', authData.user.id)
+        .single();
 
-      console.log('Profile update error:', profileError);
-      
-      if (profileError) {
-        console.error('Profile update failed:', profileError);
-        // Don't throw error here as the user is already created
-        console.warn('Profile update failed, but user was created:', profileError);
+      console.log('🔍 Profile check result:', { 
+        profileExists: !!profileCheck, 
+        profileData: profileCheck,
+        error: profileCheckError 
+      });
+
+      // If profile doesn't exist, create it manually (fallback)
+      if (!profileCheck && profileCheckError) {
+        console.log('🔧 Profile not found, creating manually...');
+        const { error: manualProfileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            email: data.email,
+            first_name: data.first_name,
+            last_name: data.last_name,
+            role: data.role,
+            phone: data.phone || null,
+            date_of_birth: data.date_of_birth || null,
+            bio: data.bio || null,
+          });
+
+        if (manualProfileError) {
+          console.error('❌ Manual profile creation failed:', manualProfileError);
+          throw new Error('No se pudo crear el perfil del usuario');
+        }
+        console.log('✅ Profile created manually');
+      } else {
+        // Update profile with additional data
+        console.log('🔄 Updating profile with additional data...');
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            phone: data.phone || null,
+            date_of_birth: data.date_of_birth || null,
+            bio: data.bio || null,
+          })
+          .eq('id', authData.user.id);
+
+        if (updateError) {
+          console.error('⚠️ Profile update failed:', updateError);
+          // Don't throw error as basic profile exists
+        } else {
+          console.log('✅ Profile updated successfully');
+        }
       }
+
+      // Final verification
+      const { data: finalCheck } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authData.user.id)
+        .single();
+
+      console.log('✅ Final verification - User created successfully:', {
+        authUserId: authData.user.id,
+        profileExists: !!finalCheck,
+        profileData: finalCheck
+      });
 
       toast({
         title: "Éxito",
@@ -140,17 +178,17 @@ const AddUserDialog = ({ open, onOpenChange, onUserAdded }: AddUserDialogProps) 
       form.reset();
       onOpenChange(false);
       onUserAdded();
+
     } catch (error: any) {
-      console.error('Error creating user:', error);
+      console.error('❌ User creation failed:', error);
       
-      // Provide more specific error messages
       let errorMessage = "No se pudo crear el usuario";
-      if (error.message?.includes('already registered')) {
+      if (error.message?.includes('already registered') || error.message?.includes('User already registered')) {
         errorMessage = "Este email ya está registrado";
       } else if (error.message?.includes('invalid email')) {
         errorMessage = "Email inválido";
-      } else if (error.message?.includes('weak password')) {
-        errorMessage = "La contraseña es muy débil";
+      } else if (error.message?.includes('weak password') || error.message?.includes('Password should be')) {
+        errorMessage = "La contraseña es muy débil (mínimo 6 caracteres)";
       } else if (error.message) {
         errorMessage = error.message;
       }
