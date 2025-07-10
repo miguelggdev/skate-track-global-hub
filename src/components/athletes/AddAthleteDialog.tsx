@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -32,11 +32,12 @@ import { toast } from '@/components/ui/sonner';
 interface AddAthleteDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAthleteAdded: (athlete: any) => void;
+  onAthleteAdded: () => void;
 }
 
 interface AthleteFormData {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   category: string;
   level: string;
@@ -47,7 +48,8 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
 
   const form = useForm<AthleteFormData>({
     defaultValues: {
-      name: '',
+      firstName: '',
+      lastName: '',
       email: '',
       category: '',
       level: '',
@@ -58,21 +60,39 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
     setIsSubmitting(true);
     
     try {
-      // Create new athlete object
-      const newAthlete = {
-        id: Date.now(), // Temporary ID generation
-        name: data.name,
-        email: data.email,
-        category: data.category,
-        level: data.level,
-        joinDate: new Date().toISOString().split('T')[0],
-        status: 'Active',
-        performance: 0,
-        avatar: '👤'
-      };
+      // Generate a UUID for the profile
+      const profileId = crypto.randomUUID();
+      
+      // First create the user profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: profileId,
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: data.email,
+          role: 'athlete'
+        })
+        .select()
+        .single();
 
-      // Add athlete to the list
-      onAthleteAdded(newAthlete);
+      if (profileError) throw profileError;
+
+      // Then create the athlete record
+      const { error: athleteError } = await supabase
+        .from('athletes')
+        .insert({
+          user_id: profile.id,
+          category: data.category.toLowerCase() as 'youth' | 'junior' | 'senior' | 'masters',
+          level: data.level.toLowerCase() as 'beginner' | 'intermediate' | 'advanced' | 'professional',
+          status: 'active',
+          performance_score: 0
+        });
+
+      if (athleteError) throw athleteError;
+
+      // Notify parent component to refresh data
+      onAthleteAdded();
       
       // Show success message
       toast.success('Athlete added successfully!');
@@ -81,6 +101,7 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
       form.reset();
       onOpenChange(false);
     } catch (error) {
+      console.error('Error adding athlete:', error);
       toast.error('Failed to add athlete. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -101,13 +122,28 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="name"
-              rules={{ required: 'Name is required' }}
+              name="firstName"
+              rules={{ required: 'First name is required' }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel>First Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter athlete's full name" {...field} />
+                    <Input placeholder="Enter athlete's first name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="lastName"
+              rules={{ required: 'Last name is required' }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Last Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter athlete's last name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -149,9 +185,10 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Youth">Youth</SelectItem>
-                      <SelectItem value="Junior">Junior</SelectItem>
-                      <SelectItem value="Senior">Senior</SelectItem>
+                      <SelectItem value="youth">Youth</SelectItem>
+                      <SelectItem value="junior">Junior</SelectItem>
+                      <SelectItem value="senior">Senior</SelectItem>
+                      <SelectItem value="masters">Masters</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -173,10 +210,10 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Beginner">Beginner</SelectItem>
-                      <SelectItem value="Intermediate">Intermediate</SelectItem>
-                      <SelectItem value="Advanced">Advanced</SelectItem>
-                      <SelectItem value="Professional">Professional</SelectItem>
+                      <SelectItem value="beginner">Beginner</SelectItem>
+                      <SelectItem value="intermediate">Intermediate</SelectItem>
+                      <SelectItem value="advanced">Advanced</SelectItem>
+                      <SelectItem value="professional">Professional</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

@@ -5,7 +5,7 @@ import { UserPlus } from 'lucide-react';
 import AddAthleteDialog from './AddAthleteDialog';
 
 interface AthletesHeaderProps {
-  onAthleteAdded: (athlete: any) => void;
+  onAthleteAdded: () => void;
 }
 
 const AthletesHeader = ({ onAthleteAdded }: AthletesHeaderProps) => {
