@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreVertical, Edit, Trash2, Eye, Shield } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, Eye, Shield, Lock, Unlock, KeyRound } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -35,9 +35,11 @@ interface UsersTableProps {
   loading: boolean;
   onUserUpdated: () => void;
   onUserDeleted: (userId: string) => void;
+  onUserBlocked: (userId: string, blocked: boolean) => void;
+  onPasswordReset: (email: string) => void;
 }
 
-const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted }: UsersTableProps) => {
+const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted, onUserBlocked, onPasswordReset }: UsersTableProps) => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
 
@@ -102,6 +104,7 @@ const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted }: UsersTable
                 <TableRow>
                   <TableHead className="min-w-[250px] px-6">Usuario</TableHead>
                   <TableHead className="min-w-[120px] px-4">Rol</TableHead>
+                  <TableHead className="min-w-[100px] px-4">Estado</TableHead>
                   <TableHead className="min-w-[100px] px-4">Teléfono</TableHead>
                   <TableHead className="min-w-[120px] px-4">Fecha Registro</TableHead>
                   <TableHead className="min-w-[80px] text-right px-6">Acciones</TableHead>
@@ -136,6 +139,11 @@ const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted }: UsersTable
                     <TableCell className="px-4">
                       {getRoleBadge(user.role)}
                     </TableCell>
+                    <TableCell className="px-4">
+                      <Badge className={user.blocked ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}>
+                        {user.blocked ? 'Bloqueado' : 'Activo'}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="px-4 text-sm">
                       {user.phone || 'No registrado'}
                     </TableCell>
@@ -161,6 +169,23 @@ const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted }: UsersTable
                           <DropdownMenuItem onClick={() => console.log('Gestionar roles', user.id)}>
                             <Shield className="mr-2 h-4 w-4" />
                             Gestionar Roles
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onUserBlocked(user.id, user.blocked || false)}>
+                            {user.blocked ? (
+                              <>
+                                <Unlock className="mr-2 h-4 w-4" />
+                                Desbloquear Usuario
+                              </>
+                            ) : (
+                              <>
+                                <Lock className="mr-2 h-4 w-4" />
+                                Bloquear Usuario
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onPasswordReset(user.email)}>
+                            <KeyRound className="mr-2 h-4 w-4" />
+                            Restablecer Contraseña
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             className="text-red-600"

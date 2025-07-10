@@ -18,6 +18,7 @@ export interface User {
   role: 'admin' | 'coach' | 'athlete' | 'delegate' | 'leader' | 'finance';
   created_at: string;
   updated_at: string;
+  blocked?: boolean;
 }
 
 const UserManagement = () => {
@@ -92,6 +93,58 @@ const UserManagement = () => {
     }
   };
 
+  const handleUserBlocked = async (userId: string, blocked: boolean) => {
+    try {
+      // Block/unblock in auth system
+      if (blocked) {
+        const { error } = await supabase.auth.admin.updateUserById(userId, {
+          ban_duration: 'none'
+        });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.auth.admin.updateUserById(userId, {
+          ban_duration: '24h'
+        });
+        if (error) throw error;
+      }
+      
+      fetchUsers();
+      toast({
+        title: "Éxito",
+        description: blocked ? "Usuario desbloqueado exitosamente" : "Usuario bloqueado exitosamente",
+      });
+    } catch (error) {
+      console.error('Error blocking/unblocking user:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo cambiar el estado del usuario",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePasswordReset = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+      
+      toast({
+        title: "Éxito",
+        description: "Se ha enviado un correo para restablecer la contraseña",
+      });
+    } catch (error) {
+      console.error('Error sending password reset:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo enviar el correo de restablecimiento",
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredUsers = users.filter(user =>
     user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -126,6 +179,8 @@ const UserManagement = () => {
             loading={loading}
             onUserUpdated={handleUserUpdated}
             onUserDeleted={handleUserDeleted}
+            onUserBlocked={handleUserBlocked}
+            onPasswordReset={handlePasswordReset}
           />
         </div>
       </div>
