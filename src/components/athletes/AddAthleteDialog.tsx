@@ -60,17 +60,17 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
     setIsSubmitting(true);
     
     try {
-      // Create the athlete record directly without creating a profile
-      // The profiles table has RLS policies that prevent creation without proper authentication
+      // Create the athlete record with personal information
       const { error: athleteError } = await supabase
         .from('athletes')
         .insert({
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: data.email,
           category: data.category.toLowerCase() as 'youth' | 'junior' | 'senior' | 'masters',
           level: data.level.toLowerCase() as 'beginner' | 'intermediate' | 'advanced' | 'professional',
           status: 'active',
-          performance_score: 0,
-          // Store athlete info directly in the athletes table for now
-          // We'll add these fields to the athletes table
+          performance_score: 0
         });
 
       if (athleteError) {

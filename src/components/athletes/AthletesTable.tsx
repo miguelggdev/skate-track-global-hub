@@ -21,16 +21,14 @@ import {
 interface Athlete {
   id: string;
   user_id?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
   category: string;
   level: string;
   join_date: string;
   status: string;
   performance_score?: number;
-  profiles?: {
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
 }
 
 interface AthletesTableProps {
@@ -93,8 +91,8 @@ const AthletesTable = ({ athletes, loading = false }: AthletesTableProps) => {
                 </TableRow>
               ) : (
                 athletes.map((athlete) => {
-                  const fullName = athlete.profiles ? `${athlete.profiles.first_name} ${athlete.profiles.last_name}` : 'Unknown';
-                  const email = athlete.profiles?.email || 'No email';
+                  const fullName = athlete.first_name && athlete.last_name ? `${athlete.first_name} ${athlete.last_name}` : 'Unknown';
+                  const email = athlete.email || 'No email';
                   const performanceScore = athlete.performance_score || 0;
                   
                   return (

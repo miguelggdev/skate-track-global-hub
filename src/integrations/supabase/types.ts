@@ -20,10 +20,13 @@ export type Database = {
           athlete_number: string | null
           category: Database["public"]["Enums"]["athlete_category"]
           created_at: string
+          email: string | null
           emergency_contact_name: string | null
           emergency_contact_phone: string | null
+          first_name: string | null
           id: string
           join_date: string
+          last_name: string | null
           level: Database["public"]["Enums"]["athlete_level"]
           medical_notes: string | null
           performance_score: number | null
@@ -37,10 +40,13 @@ export type Database = {
           athlete_number?: string | null
           category: Database["public"]["Enums"]["athlete_category"]
           created_at?: string
+          email?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
+          first_name?: string | null
           id?: string
           join_date?: string
+          last_name?: string | null
           level: Database["public"]["Enums"]["athlete_level"]
           medical_notes?: string | null
           performance_score?: number | null
@@ -54,10 +60,13 @@ export type Database = {
           athlete_number?: string | null
           category?: Database["public"]["Enums"]["athlete_category"]
           created_at?: string
+          email?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
+          first_name?: string | null
           id?: string
           join_date?: string
+          last_name?: string | null
           level?: Database["public"]["Enums"]["athlete_level"]
           medical_notes?: string | null
           performance_score?: number | null

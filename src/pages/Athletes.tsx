@@ -12,16 +12,14 @@ import { useToast } from '@/hooks/use-toast';
 interface Athlete {
   id: string;
   user_id?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
   category: string;
   level: string;
   join_date: string;
   status: string;
   performance_score?: number;
-  profiles?: {
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
 }
 
 const Athletes = () => {
@@ -35,14 +33,7 @@ const Athletes = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('athletes')
-        .select(`
-          *,
-          profiles:user_id (
-            first_name,
-            last_name,
-            email
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -72,8 +63,8 @@ const Athletes = () => {
   };
 
   const filteredAthletes = athletes.filter(athlete => {
-    const fullName = athlete.profiles ? `${athlete.profiles.first_name} ${athlete.profiles.last_name}` : '';
-    const email = athlete.profiles?.email || '';
+    const fullName = athlete.first_name && athlete.last_name ? `${athlete.first_name} ${athlete.last_name}` : '';
+    const email = athlete.email || '';
     return (
       fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       email.toLowerCase().includes(searchTerm.toLowerCase()) ||
