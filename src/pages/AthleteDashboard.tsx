@@ -312,19 +312,19 @@ const AthleteDashboard = () => {
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="school">Colegio Actual</Label>
-                    <Input id="school" placeholder="Nombre del colegio" />
+                    <Label htmlFor="school">Institución educativa Actual</Label>
+                    <Input id="school" placeholder="Nombre de la institución educativa" />
                   </div>
                   <div>
-                    <Label htmlFor="schoolAddress">Dirección del Colegio</Label>
+                    <Label htmlFor="schoolAddress">Dirección de la Institución educativa</Label>
                     <Input id="schoolAddress" placeholder="Dirección" />
                   </div>
                   <div>
-                    <Label htmlFor="schoolPhone">Teléfono del Colegio</Label>
+                    <Label htmlFor="schoolPhone">Teléfono de la Institución educativa</Label>
                     <Input id="schoolPhone" placeholder="Teléfono" />
                   </div>
                   <div>
-                    <Label htmlFor="schoolEmail">Correo del Colegio</Label>
+                    <Label htmlFor="schoolEmail">Correo de la Institución educativa</Label>
                     <Input id="schoolEmail" type="email" placeholder="Email" />
                   </div>
                 </div>
