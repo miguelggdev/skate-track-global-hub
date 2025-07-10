@@ -17,14 +17,26 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { CreateUserData } from '@/hooks/useCreateUser';
+import { PhotoUpload } from './PhotoUpload';
 
 interface UserFormFieldsProps {
   form: UseFormReturn<CreateUserData>;
+  photoUrl?: string;
+  onPhotoChange?: (url: string | null) => void;
 }
 
-export const UserFormFields = ({ form }: UserFormFieldsProps) => {
+export const UserFormFields = ({ form, photoUrl, onPhotoChange }: UserFormFieldsProps) => {
   return (
     <>
+      {/* Photo Upload */}
+      {onPhotoChange && (
+        <PhotoUpload
+          currentPhotoUrl={photoUrl}
+          onPhotoChange={onPhotoChange}
+          className="mb-4"
+        />
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         <FormField
           control={form.control}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreVertical, Edit, Trash2, Eye, Shield, Lock, Unlock, KeyRound } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, Eye, Shield, Lock, Unlock, KeyRound, User as UserIcon } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -115,19 +115,17 @@ const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted, onUserBlocke
                   <TableRow key={user.id}>
                     <TableCell className="px-6">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                          {user.avatar_url ? (
-                            <img 
-                              src={user.avatar_url} 
-                              alt={`${user.first_name} ${user.last_name}`}
-                              className="w-full h-full rounded-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-white text-sm font-medium">
-                              {getInitials(user.first_name, user.last_name)}
-                            </span>
-                          )}
-                        </div>
+                         <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex items-center justify-center border-2 border-border flex-shrink-0">
+                           {user.avatar_url ? (
+                             <img 
+                               src={user.avatar_url} 
+                               alt={`${user.first_name} ${user.last_name}`}
+                               className="w-full h-full object-cover"
+                             />
+                           ) : (
+                             <UserIcon className="h-5 w-5 text-muted-foreground" />
+                           )}
+                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="font-medium text-gray-800 truncate">
                             {user.first_name} {user.last_name}

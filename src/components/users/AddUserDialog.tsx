@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -12,6 +12,7 @@ import { Form } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { useCreateUser, CreateUserData } from '@/hooks/useCreateUser';
 import { UserFormFields } from './UserFormFields';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AddUserDialogProps {
   open: boolean;
@@ -21,6 +22,7 @@ interface AddUserDialogProps {
 
 const AddUserDialog = ({ open, onOpenChange, onUserAdded }: AddUserDialogProps) => {
   const { createUser, loading } = useCreateUser();
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   
   const form = useForm<CreateUserData>({
     defaultValues: {
@@ -40,6 +42,7 @@ const AddUserDialog = ({ open, onOpenChange, onUserAdded }: AddUserDialogProps) 
     
     if (result.success) {
       form.reset();
+      setPhotoUrl(null);
       onOpenChange(false);
       onUserAdded();
     }
@@ -57,7 +60,11 @@ const AddUserDialog = ({ open, onOpenChange, onUserAdded }: AddUserDialogProps) 
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <UserFormFields form={form} />
+            <UserFormFields 
+              form={form} 
+              photoUrl={photoUrl}
+              onPhotoChange={setPhotoUrl}
+            />
 
             <DialogFooter>
               <Button

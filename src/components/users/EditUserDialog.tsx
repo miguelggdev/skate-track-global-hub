@@ -29,6 +29,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/pages/UserManagement';
+import { PhotoUpload } from './PhotoUpload';
 
 interface EditUserDialogProps {
   user: User | null;
@@ -49,6 +50,7 @@ interface EditUserFormData {
 
 const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDialogProps) => {
   const [loading, setLoading] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const { toast } = useToast();
   
   const form = useForm<EditUserFormData>({
@@ -74,6 +76,7 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
         role: user.role,
         bio: user.bio || '',
       });
+      setPhotoUrl(user.avatar_url || null);
     }
   }, [user, form]);
 
@@ -82,6 +85,30 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
 
     try {
       setLoading(true);
+
+      // Handle photo upload if there's a new photo
+      let finalPhotoUrl = photoUrl;
+      if (photoUrl && photoUrl.startsWith('blob:')) {
+        try {
+          const response = await fetch(photoUrl);
+          const blob = await response.blob();
+          const file = new File([blob], 'profile.jpg', { type: 'image/jpeg' });
+          
+          const fileName = `${user.id}/profile.jpg`;
+          const { error: uploadError } = await supabase.storage
+            .from('profiles')
+            .upload(fileName, file, { upsert: true });
+
+          if (!uploadError) {
+            const { data: urlData } = supabase.storage
+              .from('profiles')
+              .getPublicUrl(fileName);
+            finalPhotoUrl = urlData.publicUrl;
+          }
+        } catch (uploadError) {
+          console.error('Error uploading photo:', uploadError);
+        }
+      }
 
       const { error } = await supabase
         .from('profiles')
@@ -93,6 +120,7 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
           date_of_birth: data.date_of_birth,
           role: data.role,
           bio: data.bio,
+          avatar_url: finalPhotoUrl,
         })
         .eq('id', user.id);
 
@@ -131,6 +159,14 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Photo Upload */}
+            <PhotoUpload
+              currentPhotoUrl={photoUrl}
+              onPhotoChange={setPhotoUrl}
+              userId={user.id}
+              className="mb-4"
+            />
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
