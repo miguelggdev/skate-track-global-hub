@@ -98,12 +98,28 @@ export type Database = {
           club_description: string | null
           club_logo_url: string | null
           club_name: string
+          coach_email: string | null
+          coach_name: string | null
+          coach_phone: string | null
           contact_email: string | null
           contact_phone: string | null
+          country: string | null
           created_at: string
           currency: string | null
+          delegate_email: string | null
+          delegate_name: string | null
+          delegate_phone: string | null
+          doctor_name: string | null
+          doctor_phone: string | null
           id: string
           language: string | null
+          league: string | null
+          physiotherapist_name: string | null
+          physiotherapist_phone: string | null
+          president_email: string | null
+          president_id: string | null
+          president_name: string | null
+          president_phone: string | null
           social_facebook: string | null
           social_instagram: string | null
           social_twitter: string | null
@@ -116,12 +132,28 @@ export type Database = {
           club_description?: string | null
           club_logo_url?: string | null
           club_name?: string
+          coach_email?: string | null
+          coach_name?: string | null
+          coach_phone?: string | null
           contact_email?: string | null
           contact_phone?: string | null
+          country?: string | null
           created_at?: string
           currency?: string | null
+          delegate_email?: string | null
+          delegate_name?: string | null
+          delegate_phone?: string | null
+          doctor_name?: string | null
+          doctor_phone?: string | null
           id?: string
           language?: string | null
+          league?: string | null
+          physiotherapist_name?: string | null
+          physiotherapist_phone?: string | null
+          president_email?: string | null
+          president_id?: string | null
+          president_name?: string | null
+          president_phone?: string | null
           social_facebook?: string | null
           social_instagram?: string | null
           social_twitter?: string | null
@@ -134,12 +166,28 @@ export type Database = {
           club_description?: string | null
           club_logo_url?: string | null
           club_name?: string
+          coach_email?: string | null
+          coach_name?: string | null
+          coach_phone?: string | null
           contact_email?: string | null
           contact_phone?: string | null
+          country?: string | null
           created_at?: string
           currency?: string | null
+          delegate_email?: string | null
+          delegate_name?: string | null
+          delegate_phone?: string | null
+          doctor_name?: string | null
+          doctor_phone?: string | null
           id?: string
           language?: string | null
+          league?: string | null
+          physiotherapist_name?: string | null
+          physiotherapist_phone?: string | null
+          president_email?: string | null
+          president_id?: string | null
+          president_name?: string | null
+          president_phone?: string | null
           social_facebook?: string | null
           social_instagram?: string | null
           social_twitter?: string | null

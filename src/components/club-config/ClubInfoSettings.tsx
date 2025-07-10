@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ClubSettings } from '@/pages/ClubConfig';
-import { Building2, Globe, Mail, Phone, MapPin } from 'lucide-react';
+import { Building2, Globe, Mail, Phone, MapPin, User, Crown, Stethoscope, Trophy, Users } from 'lucide-react';
 
 interface ClubInfoSettingsProps {
   clubSettings: ClubSettings | null;
@@ -30,6 +30,22 @@ const ClubInfoSettings = ({ clubSettings, onUpdate }: ClubInfoSettingsProps) => 
       timezone: clubSettings?.timezone || 'Europe/Madrid',
       currency: clubSettings?.currency || 'EUR',
       language: clubSettings?.language || 'es',
+      delegate_name: clubSettings?.delegate_name || '',
+      delegate_phone: clubSettings?.delegate_phone || '',
+      delegate_email: clubSettings?.delegate_email || '',
+      president_name: clubSettings?.president_name || '',
+      president_phone: clubSettings?.president_phone || '',
+      president_email: clubSettings?.president_email || '',
+      president_id: clubSettings?.president_id || '',
+      doctor_name: clubSettings?.doctor_name || '',
+      doctor_phone: clubSettings?.doctor_phone || '',
+      physiotherapist_name: clubSettings?.physiotherapist_name || '',
+      physiotherapist_phone: clubSettings?.physiotherapist_phone || '',
+      league: clubSettings?.league || '',
+      country: clubSettings?.country || '',
+      coach_name: clubSettings?.coach_name || '',
+      coach_phone: clubSettings?.coach_phone || '',
+      coach_email: clubSettings?.coach_email || '',
     },
   });
 
@@ -48,6 +64,22 @@ const ClubInfoSettings = ({ clubSettings, onUpdate }: ClubInfoSettingsProps) => 
         timezone: clubSettings.timezone || 'Europe/Madrid',
         currency: clubSettings.currency || 'EUR',
         language: clubSettings.language || 'es',
+        delegate_name: clubSettings.delegate_name || '',
+        delegate_phone: clubSettings.delegate_phone || '',
+        delegate_email: clubSettings.delegate_email || '',
+        president_name: clubSettings.president_name || '',
+        president_phone: clubSettings.president_phone || '',
+        president_email: clubSettings.president_email || '',
+        president_id: clubSettings.president_id || '',
+        doctor_name: clubSettings.doctor_name || '',
+        doctor_phone: clubSettings.doctor_phone || '',
+        physiotherapist_name: clubSettings.physiotherapist_name || '',
+        physiotherapist_phone: clubSettings.physiotherapist_phone || '',
+        league: clubSettings.league || '',
+        country: clubSettings.country || '',
+        coach_name: clubSettings.coach_name || '',
+        coach_phone: clubSettings.coach_phone || '',
+        coach_email: clubSettings.coach_email || '',
       });
     }
   }, [clubSettings, form]);
@@ -266,6 +298,299 @@ const ClubInfoSettings = ({ clubSettings, onUpdate }: ClubInfoSettingsProps) => 
                     </FormItem>
                   )}
                 />
+              </div>
+
+              {/* Información del Delegado */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Información del Delegado
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="delegate_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nombre del Delegado</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nombre completo" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="delegate_phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Phone className="h-4 w-4" />
+                          Teléfono
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="+34 600 000 000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="delegate_email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Mail className="h-4 w-4" />
+                          Correo
+                        </FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="delegado@miclub.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Información del Presidente */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium flex items-center gap-2">
+                  <Crown className="h-5 w-5" />
+                  Información del Presidente
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="president_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nombre del Presidente</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nombre completo" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="president_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>ID del Presidente</FormLabel>
+                        <FormControl>
+                          <Input placeholder="DNI/NIE/CIF" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="president_phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Phone className="h-4 w-4" />
+                          Teléfono
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="+34 600 000 000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="president_email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Mail className="h-4 w-4" />
+                          Correo
+                        </FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="presidente@miclub.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Personal Médico */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium flex items-center gap-2">
+                  <Stethoscope className="h-5 w-5" />
+                  Personal Médico
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="doctor_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nombre del Médico</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Dr. Nombre completo" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="doctor_phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Phone className="h-4 w-4" />
+                          Teléfono del Médico
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="+34 600 000 000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="physiotherapist_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nombre del Fisioterapeuta</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nombre completo" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="physiotherapist_phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Phone className="h-4 w-4" />
+                          Teléfono del Fisioterapeuta
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="+34 600 000 000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Liga y País */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium flex items-center gap-2">
+                  <Trophy className="h-5 w-5" />
+                  Liga y País
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="league"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Liga a la que pertenece</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nombre de la liga" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="country"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>País</FormLabel>
+                        <FormControl>
+                          <Input placeholder="España" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Información del Entrenador */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Información del Entrenador
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="coach_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nombre del Entrenador</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nombre completo" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="coach_phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Phone className="h-4 w-4" />
+                          Teléfono
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="+34 600 000 000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="coach_email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Mail className="h-4 w-4" />
+                          Correo
+                        </FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="entrenador@miclub.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
               <div className="space-y-4">

@@ -25,6 +25,22 @@ export interface ClubSettings {
   timezone: string;
   currency: string;
   language: string;
+  delegate_name?: string;
+  delegate_phone?: string;
+  delegate_email?: string;
+  president_name?: string;
+  president_phone?: string;
+  president_email?: string;
+  president_id?: string;
+  doctor_name?: string;
+  doctor_phone?: string;
+  physiotherapist_name?: string;
+  physiotherapist_phone?: string;
+  league?: string;
+  country?: string;
+  coach_name?: string;
+  coach_phone?: string;
+  coach_email?: string;
   created_at: string;
   updated_at: string;
 }
