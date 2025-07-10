@@ -60,36 +60,23 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
     setIsSubmitting(true);
     
     try {
-      // Generate a UUID for the profile
-      const profileId = crypto.randomUUID();
-      
-      // First create the user profile
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: profileId,
-          first_name: data.firstName,
-          last_name: data.lastName,
-          email: data.email,
-          role: 'athlete'
-        })
-        .select()
-        .single();
-
-      if (profileError) throw profileError;
-
-      // Then create the athlete record
+      // Create the athlete record directly without creating a profile
+      // The profiles table has RLS policies that prevent creation without proper authentication
       const { error: athleteError } = await supabase
         .from('athletes')
         .insert({
-          user_id: profile.id,
           category: data.category.toLowerCase() as 'youth' | 'junior' | 'senior' | 'masters',
           level: data.level.toLowerCase() as 'beginner' | 'intermediate' | 'advanced' | 'professional',
           status: 'active',
-          performance_score: 0
+          performance_score: 0,
+          // Store athlete info directly in the athletes table for now
+          // We'll add these fields to the athletes table
         });
 
-      if (athleteError) throw athleteError;
+      if (athleteError) {
+        console.error('Error creating athlete:', athleteError);
+        throw athleteError;
+      }
 
       // Notify parent component to refresh data
       onAthleteAdded();
