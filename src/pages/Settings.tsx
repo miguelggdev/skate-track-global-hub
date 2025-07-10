@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,11 +30,15 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { PhotoUpload } from '@/components/users/PhotoUpload';
+import { supabase } from '@/integrations/supabase/client';
 
 const Settings = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   const [notifications, setNotifications] = useState({
     email: true,
     push: false,
@@ -44,7 +48,39 @@ const Settings = () => {
     finance: true
   });
 
-  const handleSaveSettings = () => {
+  // Fetch current user profile
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile) {
+          setCurrentUser(profile);
+          setProfilePhotoUrl(profile.avatar_url);
+        }
+      }
+    };
+    
+    fetchCurrentUser();
+  }, []);
+
+  const handleSaveSettings = async () => {
+    if (currentUser && profilePhotoUrl && profilePhotoUrl !== currentUser.avatar_url) {
+      try {
+        await supabase
+          .from('profiles')
+          .update({ avatar_url: profilePhotoUrl })
+          .eq('id', currentUser.id);
+      } catch (error) {
+        console.error('Error updating profile photo:', error);
+      }
+    }
+    
     toast({
       title: "Settings saved",
       description: "Your preferences have been updated successfully",
@@ -256,25 +292,13 @@ const Settings = () => {
                   <CardTitle>Profile Picture</CardTitle>
                   <CardDescription>Upload and manage your profile image</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex flex-col lg:flex-row items-center space-y-4 lg:space-y-0 lg:space-x-4">
-                    <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
-                      <User className="h-8 w-8 text-gray-500" />
-                    </div>
-                    <div className="flex flex-col space-y-2 w-full lg:w-auto">
-                      <Button variant="outline" size="sm" className="w-full lg:w-auto">
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload New
-                      </Button>
-                      <Button variant="outline" size="sm" className="w-full lg:w-auto">
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Remove
-                      </Button>
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-500">
-                    Recommended: Square image, at least 400x400px
-                  </p>
+                <CardContent>
+                  <PhotoUpload
+                    currentPhotoUrl={profilePhotoUrl}
+                    onPhotoChange={setProfilePhotoUrl}
+                    userId={currentUser?.id}
+                    className="flex justify-center"
+                  />
                 </CardContent>
               </Card>
             </div>
