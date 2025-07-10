@@ -70,17 +70,6 @@ const Settings = () => {
   }, []);
 
   const handleSaveSettings = async () => {
-    if (currentUser && profilePhotoUrl && profilePhotoUrl !== currentUser.avatar_url) {
-      try {
-        await supabase
-          .from('profiles')
-          .update({ avatar_url: profilePhotoUrl })
-          .eq('id', currentUser.id);
-      } catch (error) {
-        console.error('Error updating profile photo:', error);
-      }
-    }
-    
     toast({
       title: "Settings saved",
       description: "Your preferences have been updated successfully",

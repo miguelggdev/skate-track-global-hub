@@ -77,6 +77,17 @@ export const PhotoUpload = ({ currentPhotoUrl, onPhotoChange, userId, className 
           .from('profiles')
           .getPublicUrl(fileName);
 
+        // Update the profile in the database immediately
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ avatar_url: data.publicUrl })
+          .eq('id', userId);
+
+        if (updateError) {
+          console.error('Error updating profile:', updateError);
+          throw new Error('No se pudo actualizar el perfil en la base de datos');
+        }
+
         onPhotoChange(data.publicUrl);
         
         toast({
@@ -108,6 +119,17 @@ export const PhotoUpload = ({ currentPhotoUrl, onPhotoChange, userId, className 
         await supabase.storage
           .from('profiles')
           .remove([fileName]);
+
+        // Update profile in database to remove avatar_url
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ avatar_url: null })
+          .eq('id', userId);
+
+        if (updateError) {
+          console.error('Error updating profile:', updateError);
+          throw new Error('No se pudo actualizar el perfil en la base de datos');
+        }
       }
 
       setPreviewUrl(null);
