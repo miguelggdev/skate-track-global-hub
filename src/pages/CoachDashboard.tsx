@@ -19,6 +19,7 @@ import {
   Mail
 } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import CreateTrainingDialog from '@/components/training/CreateTrainingDialog';
 
 const CoachDashboard = () => {
   const [filterCategory, setFilterCategory] = useState('all');
@@ -226,9 +227,11 @@ const CoachDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Button className="w-full">
-                Nuevo Entrenamiento
-              </Button>
+              <CreateTrainingDialog>
+                <Button className="w-full">
+                  Nuevo Entrenamiento
+                </Button>
+              </CreateTrainingDialog>
             </CardContent>
           </Card>
 
