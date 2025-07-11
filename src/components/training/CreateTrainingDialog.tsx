@@ -6,9 +6,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Clock, Users, Target, Activity, MapPin, Calendar } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Plus, Clock, Users, Target, Activity, MapPin, Calendar as CalendarIcon, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface CreateTrainingDialogProps {
   children: React.ReactNode;
@@ -29,7 +33,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    date: '',
+    date: new Date(),
     start_time: '',
     end_time: '',
     location: '',
@@ -227,7 +231,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
       setFormData({
         name: '',
         description: '',
-        date: '',
+        date: new Date(),
         start_time: '',
         end_time: '',
         location: '',
@@ -278,7 +282,34 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
               <CardTitle className="text-lg">Información General</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label>Fecha de Programación</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !formData.date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {formData.date ? format(formData.date, "PPP") : <span>Seleccionar fecha</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={formData.date}
+                        onSelect={(date) => setFormData({...formData, date: date || new Date()})}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
                 <div>
                   <Label htmlFor="category">Categoría</Label>
                   <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
@@ -438,14 +469,105 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                 </div>
               </div>
 
-              {/* Current Schedule */}
+              {/* Visual Weekly Calendar */}
+              {weeklySchedule.length > 0 && (
+                <div className="space-y-4">
+                  <Label className="text-base font-medium">Programación Visual Semanal:</Label>
+                  
+                  {/* Calendar Header */}
+                  <div className="bg-yellow-400 text-black p-3 rounded-t-lg text-center font-bold">
+                    PROGRAMACIÓN DE ENTRENAMIENTO {format(formData.date, "d/M")} - {format(new Date(formData.date.getTime() + 6 * 24 * 60 * 60 * 1000), "d/M yyyy")}
+                  </div>
+                  
+                  {/* Calendar Grid */}
+                  <div className="border border-gray-400 rounded-b-lg overflow-hidden">
+                    {/* Days Header */}
+                    <div className="grid grid-cols-8 bg-gray-200 border-b border-gray-400">
+                      <div className="p-2 border-r border-gray-400 text-center font-semibold text-sm">JORNADA</div>
+                      {days.map(day => (
+                        <div key={day.value} className="p-2 border-r border-gray-400 text-center font-semibold text-sm bg-green-600 text-white last:border-r-0">
+                          {day.label.toUpperCase()}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* AM Row */}
+                    <div className="grid grid-cols-8 border-b border-gray-400 min-h-[60px]">
+                      <div className="p-2 border-r border-gray-400 bg-gray-100 flex items-center justify-center font-medium">
+                        AM
+                      </div>
+                      {days.map(day => {
+                        const amTrainings = weeklySchedule.filter(item => 
+                          item.day === day.value && 
+                          parseInt(item.start_time.split(':')[0]) < 12
+                        );
+                        return (
+                          <div key={day.value} className="p-1 border-r border-gray-400 last:border-r-0 min-h-[60px] bg-gray-50">
+                            {amTrainings.map((training, idx) => (
+                              <div key={idx} className="text-xs mb-1 p-1 bg-blue-100 rounded text-center">
+                                {trainingTypes.find(t => t.value === training.training_type)?.label}
+                                <br />
+                                {training.start_time}
+                              </div>
+                            ))}
+                            {day.value === 'sunday' && amTrainings.length === 0 && (
+                              <div className="text-xs text-center text-gray-500 mt-4">Descanso</div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* PM Row */}
+                    <div className="grid grid-cols-8 min-h-[100px]">
+                      <div className="p-2 border-r border-gray-400 bg-gray-100 flex items-center justify-center font-medium">
+                        PM
+                      </div>
+                      {days.map(day => {
+                        const pmTrainings = weeklySchedule.filter(item => 
+                          item.day === day.value && 
+                          parseInt(item.start_time.split(':')[0]) >= 12
+                        );
+                        return (
+                          <div key={day.value} className="p-1 border-r border-gray-400 last:border-r-0 min-h-[100px] bg-gray-50">
+                            {pmTrainings.map((training, idx) => {
+                              const typeLabel = trainingTypes.find(t => t.value === training.training_type)?.label;
+                              const categoryLabel = categories.find(c => c.value === training.category)?.label;
+                              const levelLabel = levels.find(l => l.value === training.level)?.label;
+                              
+                              return (
+                                <div key={idx} className="text-xs mb-2 p-2 bg-green-100 rounded text-center border">
+                                  <div className="font-medium">{typeLabel}</div>
+                                  <div className="text-gray-600">{training.start_time}</div>
+                                  <div className="text-gray-500">{categoryLabel}</div>
+                                  <div className="text-gray-500">{levelLabel}</div>
+                                  {training.location && (
+                                    <div className="text-gray-500">{training.location}</div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  
+                  {/* Footer */}
+                  <div className="bg-yellow-400 text-black p-2 rounded text-center font-bold text-sm">
+                    Respeto / Amistad / Excelencia
+                  </div>
+                </div>
+              )}
+
+              {/* Schedule List */}
               {weeklySchedule.length > 0 && (
                 <div className="space-y-2">
-                  <Label className="text-base font-medium">Horario Programado:</Label>
+                  <Label className="text-base font-medium">Lista de Entrenamientos:</Label>
                   {weeklySchedule.map((item, index) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                       <div className="flex items-center space-x-4">
-                        <Calendar className="h-4 w-4" />
+                        <CalendarIcon className="h-4 w-4" />
                         <span className="font-medium">
                           {days.find(d => d.value === item.day)?.label}
                         </span>
@@ -456,11 +578,11 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                       </div>
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="destructive"
                         size="sm"
                         onClick={() => removeFromSchedule(index)}
                       >
-                        Eliminar
+                        <X className="h-4 w-4" />
                       </Button>
                     </div>
                   ))}
