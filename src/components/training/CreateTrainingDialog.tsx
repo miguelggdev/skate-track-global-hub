@@ -141,8 +141,15 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
       return;
     }
 
+    // Calculate the actual date for the selected day within the week
+    const selectedDate = new Date(formData.date);
+    const dayOfWeek = days.findIndex(d => d.value === selectedDay);
+    const startOfWeek = new Date(selectedDate);
+    startOfWeek.setDate(selectedDate.getDate() - selectedDate.getDay() + dayOfWeek);
+
     const newScheduleItem = {
       day: selectedDay,
+      date: startOfWeek.toISOString().split('T')[0],
       start_time: formData.start_time,
       end_time: formData.end_time,
       training_type: formData.training_type as 'technical' | 'physical' | 'mental' | 'recovery',
@@ -197,13 +204,6 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
 
       // Create training sessions for each item in weekly schedule
       const trainingPromises = weeklySchedule.map(async (item) => {
-        // Calculate date for next occurrence of this day
-        const today = new Date();
-        const dayOfWeek = days.findIndex(d => d.value === item.day);
-        const daysUntilTarget = (dayOfWeek - today.getDay() + 7) % 7 || 7;
-        const targetDate = new Date(today);
-        targetDate.setDate(today.getDate() + daysUntilTarget);
-
         const trainingTypes = getTrainingTypes(item.category, item.level);
         const selectedType = trainingTypes.find(t => t.value === item.training_type);
 
@@ -211,7 +211,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
           coach_id: coach.id,
           name: `${selectedType?.label} - ${categories.find(c => c.value === item.category)?.label} ${levels.find(l => l.value === item.level)?.label}`,
           description: selectedType?.description || formData.description || '',
-          date: targetDate.toISOString().split('T')[0],
+          date: item.date,
           start_time: item.start_time,
           end_time: item.end_time,
           location: item.location || null,
@@ -476,7 +476,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                   
                   {/* Calendar Header */}
                   <div className="bg-yellow-400 text-black p-3 text-center font-bold text-sm border border-gray-800">
-                    PROGRAMACIÓN DE TRANSICIÓN {format(formData.date, 'dd/MM')} - {format(new Date(formData.date.getTime() + 6 * 24 * 60 * 60 * 1000), 'dd/MM')} julio
+                    PROGRAMACIÓN DE ENTRENAMIENTO SEMANA {format(formData.date, 'dd/MM')} - {format(new Date(formData.date.getTime() + 6 * 24 * 60 * 60 * 1000), 'dd/MM')} {format(formData.date, 'MMMM yyyy')}
                   </div>
                   
                   {/* Calendar Grid */}
@@ -501,17 +501,35 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                           item.day === day.value && 
                           parseInt(item.start_time.split(':')[0]) < 12
                         );
+                        
+                        // Calculate the actual date for this day
+                        const selectedDate = new Date(formData.date);
+                        const dayOfWeek = days.findIndex(d => d.value === day.value);
+                        const dayDate = new Date(selectedDate);
+                        dayDate.setDate(selectedDate.getDate() - selectedDate.getDay() + dayOfWeek);
+                        const dayNumber = dayDate.getDate();
+                        
                         return (
-                          <div key={day.value} className="border border-gray-800 p-2 bg-gray-50 min-h-[80px] flex flex-col justify-center">
+                          <div key={day.value} className="border border-gray-800 p-2 bg-gray-50 min-h-[80px] flex flex-col justify-start">
+                            <div className="text-xs text-center font-bold text-gray-600 mb-1">
+                              {dayNumber}
+                            </div>
                             {amTrainings.length > 0 ? (
-                              amTrainings.map((training, idx) => (
-                                <div key={idx} className="text-xs text-center font-semibold text-gray-800">
-                                  {training.location || 'Gym'}
-                                </div>
-                              ))
+                              amTrainings.map((training, idx) => {
+                                const typeColor = training.training_type === 'technical' ? 'bg-blue-500' :
+                                                training.training_type === 'physical' ? 'bg-red-500' :
+                                                training.training_type === 'mental' ? 'bg-purple-500' : 'bg-green-500';
+                                
+                                return (
+                                  <div key={idx} className={`text-xs text-center font-semibold text-white p-1 rounded mb-1 ${typeColor}`}>
+                                    <div>{training.start_time}</div>
+                                    <div className="text-xs">{training.location || 'Gym'}</div>
+                                  </div>
+                                );
+                              })
                             ) : (
                               day.value === 'sunday' ? (
-                                <div className="text-xs text-center text-gray-600 italic">
+                                <div className="text-xs text-center text-gray-600 italic mt-4">
                                   Descanso
                                 </div>
                               ) : null
@@ -533,14 +551,26 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                           parseInt(item.start_time.split(':')[0]) < 18
                         );
                         return (
-                          <div key={day.value} className="border border-gray-800 p-2 bg-gray-50 min-h-[80px] flex flex-col justify-center">
-                            {pmTrainings.map((training, idx) => (
-                              <div key={idx} className="text-xs text-center">
-                                <div className="font-semibold text-gray-800">
-                                  {training.location || 'Salitre'} {training.start_time}
+                          <div key={day.value} className="border border-gray-800 p-2 bg-gray-50 min-h-[80px] flex flex-col justify-start">
+                            {pmTrainings.map((training, idx) => {
+                              const typeColor = training.training_type === 'technical' ? 'bg-blue-500' :
+                                              training.training_type === 'physical' ? 'bg-red-500' :
+                                              training.training_type === 'mental' ? 'bg-purple-500' : 'bg-green-500';
+                              
+                              return (
+                                <div key={idx} className={`text-xs text-center text-white p-1 rounded mb-1 ${typeColor}`}>
+                                  <div className="font-semibold">
+                                    {training.start_time} - {training.end_time}
+                                  </div>
+                                  <div className="text-xs">
+                                    {training.location || 'Club'}
+                                  </div>
+                                  <div className="text-xs opacity-90">
+                                    {trainingTypes.find(t => t.value === training.training_type)?.label}
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         );
                       })}
@@ -556,16 +586,26 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                           parseInt(item.start_time.split(':')[0]) >= 18
                         );
                         return (
-                          <div key={day.value} className="border border-gray-800 p-2 bg-gray-50 min-h-[80px] flex flex-col justify-center">
+                          <div key={day.value} className="border border-gray-800 p-2 bg-gray-50 min-h-[80px] flex flex-col justify-start">
                             {eveningTrainings.map((training, idx) => {
-                              const levelText = training.level === 'beginner' ? 'libre' : 
-                                               training.level === 'intermediate' ? 'negra' : 
-                                               training.level === 'advanced' ? '15 años' : 'libre';
+                              const typeColor = training.training_type === 'technical' ? 'bg-blue-500' :
+                                              training.training_type === 'physical' ? 'bg-red-500' :
+                                              training.training_type === 'mental' ? 'bg-purple-500' : 'bg-green-500';
+                              
+                              const levelText = training.level === 'beginner' ? 'Principiante' : 
+                                               training.level === 'intermediate' ? 'Intermedio' : 
+                                               training.level === 'advanced' ? 'Avanzado' : 'Profesional';
                               
                               return (
-                                <div key={idx} className="text-xs text-center">
-                                  <div className="font-semibold text-gray-800">
-                                    Licra {levelText}
+                                <div key={idx} className={`text-xs text-center text-white p-1 rounded mb-1 ${typeColor}`}>
+                                  <div className="font-semibold">
+                                    {training.start_time} - {training.end_time}
+                                  </div>
+                                  <div className="text-xs">
+                                    {training.location || 'Club'}
+                                  </div>
+                                  <div className="text-xs opacity-90">
+                                    {levelText}
                                   </div>
                                 </div>
                               );
