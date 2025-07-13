@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -90,71 +91,64 @@ const Finance = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Gestión Financiera</h1>
-            <p className="text-gray-600">Control integral de ingresos, gastos y presupuestos</p>
-          </div>
-          <div className="flex gap-3">
-            <Button className="argon-gradient-blue text-white">
-              <Plus className="h-4 w-4 mr-2" />
-              Nueva Transacción
-            </Button>
-            <Button variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Exportar
-            </Button>
-          </div>
+    <DashboardLayout title="Gestión Financiera" userRole="Gestor Financiero">
+      <div className="space-y-6">
+        {/* Header Actions */}
+        <div className="flex justify-end gap-3">
+          <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Plus className="h-4 w-4 mr-2" />
+            Nueva Transacción
+          </Button>
+          <Button variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Exportar
+          </Button>
         </div>
-      </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat, index) => (
-          <Card key={index} className="argon-card relative overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-              <div>
-                <CardDescription className="text-xs font-medium text-gray-600 uppercase tracking-wider">
-                  {stat.title}
-                </CardDescription>
-                <CardTitle className="text-2xl font-bold text-gray-800">
-                  {stat.value}
-                </CardTitle>
-              </div>
-              <div className={`p-3 rounded-lg ${stat.bgColor} text-white shadow-lg`}>
-                <stat.icon className="h-6 w-6" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              <p className="text-sm text-gray-600">
-                <span className={`font-semibold ${stat.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                  {stat.change}
-                </span>{' '}
-                {stat.period}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {stats.map((stat, index) => (
+            <Card key={index} className="relative overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div>
+                  <CardDescription className="text-xs font-medium uppercase tracking-wider">
+                    {stat.title}
+                  </CardDescription>
+                  <CardTitle className="text-2xl font-bold">
+                    {stat.value}
+                  </CardTitle>
+                </div>
+                <div className="p-3 rounded-lg bg-primary text-primary-foreground">
+                  <stat.icon className="h-6 w-6" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  <span className={`font-semibold ${stat.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    {stat.change}
+                  </span>{' '}
+                  {stat.period}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-      {/* Main Content Tabs */}
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6 argon-card">
-          <TabsTrigger value="overview">Resumen</TabsTrigger>
-          <TabsTrigger value="transactions">Transacciones</TabsTrigger>
-          <TabsTrigger value="budgets">Presupuestos</TabsTrigger>
-          <TabsTrigger value="reports">Informes</TabsTrigger>
-          <TabsTrigger value="payments">Pagos</TabsTrigger>
-          <TabsTrigger value="settings">Configuración</TabsTrigger>
-        </TabsList>
+        {/* Main Content Tabs */}
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="overview">Resumen</TabsTrigger>
+            <TabsTrigger value="transactions">Transacciones</TabsTrigger>
+            <TabsTrigger value="budgets">Presupuestos</TabsTrigger>
+            <TabsTrigger value="reports">Informes</TabsTrigger>
+            <TabsTrigger value="payments">Pagos</TabsTrigger>
+            <TabsTrigger value="settings">Configuración</TabsTrigger>
+          </TabsList>
 
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="argon-card">
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <PieChart className="h-5 w-5" />
@@ -188,7 +182,7 @@ const Finance = () => {
               </CardContent>
             </Card>
 
-            <Card className="argon-card">
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Calendar className="h-5 w-5" />
@@ -224,9 +218,9 @@ const Finance = () => {
           </div>
         </TabsContent>
 
-        {/* Transactions Tab */}
-        <TabsContent value="transactions" className="space-y-6">
-          <Card className="argon-card">
+          {/* Transactions Tab */}
+          <TabsContent value="transactions" className="space-y-6">
+            <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Receipt className="h-5 w-5" />
@@ -297,9 +291,9 @@ const Finance = () => {
           </Card>
         </TabsContent>
 
-        {/* Budgets Tab */}
-        <TabsContent value="budgets" className="space-y-6">
-          <Card className="argon-card">
+          {/* Budgets Tab */}
+          <TabsContent value="budgets" className="space-y-6">
+            <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calculator className="h-5 w-5" />
@@ -370,9 +364,9 @@ const Finance = () => {
           </Card>
         </TabsContent>
 
-        {/* Reports Tab */}
-        <TabsContent value="reports" className="space-y-6">
-          <Card className="argon-card">
+          {/* Reports Tab */}
+          <TabsContent value="reports" className="space-y-6">
+            <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
@@ -426,9 +420,9 @@ const Finance = () => {
           </Card>
         </TabsContent>
 
-        {/* Payments Tab */}
-        <TabsContent value="payments" className="space-y-6">
-          <Card className="argon-card">
+          {/* Payments Tab */}
+          <TabsContent value="payments" className="space-y-6">
+            <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5" />
@@ -481,9 +475,9 @@ const Finance = () => {
           </Card>
         </TabsContent>
 
-        {/* Settings Tab */}
-        <TabsContent value="settings" className="space-y-6">
-          <Card className="argon-card">
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="space-y-6">
+            <Card>
             <CardHeader>
               <CardTitle>Configuración Financiera</CardTitle>
               <CardDescription>
@@ -513,8 +507,9 @@ const Finance = () => {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
-    </div>
+        </Tabs>
+      </div>
+    </DashboardLayout>
   );
 };
 
