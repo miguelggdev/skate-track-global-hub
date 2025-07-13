@@ -92,6 +92,54 @@ export type Database = {
           },
         ]
       }
+      awards: {
+        Row: {
+          athlete_id: string | null
+          award_date: string
+          award_name: string
+          award_type: string
+          competition_id: string | null
+          created_at: string
+          id: string
+          points_earned: number | null
+        }
+        Insert: {
+          athlete_id?: string | null
+          award_date: string
+          award_name: string
+          award_type: string
+          competition_id?: string | null
+          created_at?: string
+          id?: string
+          points_earned?: number | null
+        }
+        Update: {
+          athlete_id?: string | null
+          award_date?: string
+          award_name?: string
+          award_type?: string
+          competition_id?: string | null
+          created_at?: string
+          id?: string
+          points_earned?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "awards_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "awards_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "competitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       club_settings: {
         Row: {
           address: string | null
@@ -514,6 +562,50 @@ export type Database = {
           },
         ]
       }
+      equipment_maintenance: {
+        Row: {
+          cost: number | null
+          created_at: string
+          description: string | null
+          equipment_id: string | null
+          id: string
+          maintenance_date: string
+          maintenance_type: string
+          next_maintenance_date: string | null
+          status: string
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          equipment_id?: string | null
+          id?: string
+          maintenance_date: string
+          maintenance_type: string
+          next_maintenance_date?: string | null
+          status?: string
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          equipment_id?: string | null
+          id?: string
+          maintenance_date?: string
+          maintenance_type?: string
+          next_maintenance_date?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_maintenance_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_transactions: {
         Row: {
           amount: number
@@ -584,6 +676,80 @@ export type Database = {
           },
         ]
       }
+      member_retention: {
+        Row: {
+          athlete_id: string | null
+          churn_reason: string | null
+          created_at: string
+          end_date: string | null
+          id: string
+          retention_period: string
+          start_date: string
+          status: string
+        }
+        Insert: {
+          athlete_id?: string | null
+          churn_reason?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          retention_period: string
+          start_date: string
+          status?: string
+        }
+        Update: {
+          athlete_id?: string | null
+          churn_reason?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          retention_period?: string
+          start_date?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_retention_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monthly_targets: {
+        Row: {
+          athlete_target: number
+          attendance_target: number
+          created_at: string
+          id: string
+          month: string
+          retention_target: number
+          revenue_target: number
+          updated_at: string
+        }
+        Insert: {
+          athlete_target?: number
+          attendance_target?: number
+          created_at?: string
+          id?: string
+          month: string
+          retention_target?: number
+          revenue_target?: number
+          updated_at?: string
+        }
+        Update: {
+          athlete_target?: number
+          attendance_target?: number
+          created_at?: string
+          id?: string
+          month?: string
+          retention_target?: number
+          revenue_target?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -622,6 +788,51 @@ export type Database = {
           last_name?: string
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sponsorships: {
+        Row: {
+          contact_email: string | null
+          contact_person: string | null
+          contract_value: number
+          created_at: string
+          end_date: string
+          id: string
+          roi_metrics: Json | null
+          sponsor_name: string
+          sponsor_type: string
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_person?: string | null
+          contract_value?: number
+          created_at?: string
+          end_date: string
+          id?: string
+          roi_metrics?: Json | null
+          sponsor_name: string
+          sponsor_type: string
+          start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          contact_email?: string | null
+          contact_person?: string | null
+          contract_value?: number
+          created_at?: string
+          end_date?: string
+          id?: string
+          roi_metrics?: Json | null
+          sponsor_name?: string
+          sponsor_type?: string
+          start_date?: string
+          status?: string
           updated_at?: string
         }
         Relationships: []
