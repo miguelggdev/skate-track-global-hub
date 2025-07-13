@@ -1,12 +1,43 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis } from 'recharts';
+import { Users, BarChart3 } from 'lucide-react';
 
+// Age-based categories as specified in requirements
 const categoryData = [
-  { name: 'Youth', value: 45, color: 'hsl(var(--chart-1))' },
-  { name: 'Junior', value: 38, color: 'hsl(var(--chart-2))' },
-  { name: 'Senior', value: 52, color: 'hsl(var(--chart-3))' },
-  { name: 'Masters', value: 21, color: 'hsl(var(--chart-4))' }
+  { 
+    name: 'School (6-12)', 
+    shortName: 'School',
+    value: 5, 
+    color: 'hsl(var(--chart-1))',
+    ageRange: '6-12 años',
+    level: 'Iniciación'
+  },
+  { 
+    name: 'Juniors (13-15)', 
+    shortName: 'Juniors',
+    value: 5, 
+    color: 'hsl(var(--chart-2))',
+    ageRange: '13-15 años',
+    level: 'Intermedio/Avanzado'
+  },
+  { 
+    name: 'Transition (16-17)', 
+    shortName: 'Transition',
+    value: 5, 
+    color: 'hsl(var(--chart-3))',
+    ageRange: '16-17 años',
+    level: 'Avanzado/Pro'
+  },
+  { 
+    name: 'Seniors (18+)', 
+    shortName: 'Seniors',
+    value: 7, 
+    color: 'hsl(var(--chart-4))',
+    ageRange: '18+ años',
+    level: 'Profesional'
+  }
 ];
 
 const attendanceData = [
@@ -20,12 +51,17 @@ const attendanceData = [
 ];
 
 const AthleteDistribution: React.FC = () => {
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <Card className="animate-slide-up" style={{ animationDelay: '0.1s' }}>
         <CardHeader>
-          <CardTitle>Distribución por Categoría</CardTitle>
-          <CardDescription>Deportistas activos por categoría</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-dashboard-primary" />
+            Distribución por Edad
+          </CardTitle>
+          <CardDescription>Deportistas activos segmentados por grupos de edad</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-64">
@@ -41,7 +77,12 @@ const AthleteDistribution: React.FC = () => {
                   dataKey="value"
                 >
                   {categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.color}
+                      className="cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => setSelectedCategory(selectedCategory === entry.name ? null : entry.name)}
+                    />
                   ))}
                 </Pie>
                 <Tooltip 
@@ -55,17 +96,29 @@ const AthleteDistribution: React.FC = () => {
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="grid grid-cols-2 gap-2 mt-4">
+          <div className="space-y-3 mt-4">
             {categoryData.map((item) => (
-              <div key={item.name} className="flex items-center gap-2">
-                <div 
-                  className="w-3 h-3 rounded-full" 
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className="text-sm text-muted-foreground">
-                  {item.name}: {item.value}
-                </span>
-              </div>
+              <Button
+                key={item.name}
+                variant={selectedCategory === item.name ? "default" : "ghost"}
+                className="w-full justify-start p-3 h-auto"
+                onClick={() => setSelectedCategory(selectedCategory === item.name ? null : item.name)}
+              >
+                <div className="flex items-center gap-3 w-full">
+                  <div 
+                    className="w-4 h-4 rounded-full flex-shrink-0" 
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <div className="flex-1 text-left">
+                    <div className="font-medium">{item.shortName}</div>
+                    <div className="text-xs text-muted-foreground">{item.ageRange}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold">{item.value}</div>
+                    <div className="text-xs text-muted-foreground">{item.level}</div>
+                  </div>
+                </div>
+              </Button>
             ))}
           </div>
         </CardContent>
@@ -73,8 +126,11 @@ const AthleteDistribution: React.FC = () => {
 
       <Card className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
         <CardHeader>
-          <CardTitle>Asistencia Semanal</CardTitle>
-          <CardDescription>Porcentaje de asistencia por día</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-dashboard-secondary" />
+            Asistencia Semanal
+          </CardTitle>
+          <CardDescription>Porcentaje de asistencia por día con comparación semanal</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-64">
@@ -105,6 +161,7 @@ const AthleteDistribution: React.FC = () => {
                   dataKey="attendance" 
                   fill="hsl(var(--dashboard-secondary))"
                   radius={[4, 4, 0, 0]}
+                  className="cursor-pointer hover:opacity-80 transition-opacity"
                 />
               </BarChart>
             </ResponsiveContainer>

@@ -9,6 +9,9 @@ import PerformanceCard from '@/components/dashboard/PerformanceCard';
 import RevenueChart from '@/components/dashboard/RevenueChart';
 import AthleteDistribution from '@/components/dashboard/AthleteDistribution';
 import HighlightsSection from '@/components/dashboard/HighlightsSection';
+import MedalPodium from '@/components/dashboard/MedalPodium';
+import TrainingHeatmap from '@/components/dashboard/TrainingHeatmap';
+import CompetitionTimeline from '@/components/dashboard/CompetitionTimeline';
 import { supabase } from '@/integrations/supabase/client';
 
 const AdminDashboard = () => {
@@ -145,8 +148,17 @@ const AdminDashboard = () => {
         {/* Financial Analysis Chart */}
         <RevenueChart />
 
-        {/* Athletic Performance & Distribution */}
-        <AthleteDistribution />
+        {/* Athletic Performance Metrics Section */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <AthleteDistribution />
+          <MedalPodium />
+        </div>
+
+        {/* Training Analytics */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <TrainingHeatmap />
+          <CompetitionTimeline />
+        </div>
 
         {/* Highlights & Equipment Status */}
         <HighlightsSection />
