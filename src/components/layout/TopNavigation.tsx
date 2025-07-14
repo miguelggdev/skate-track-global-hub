@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Moon, Sun, Search, User, LogOut, Settings, ChevronDown } from 'lucide-react';
+import { Bell, Moon, Sun, Search, User, LogOut, Settings, ChevronDown, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -42,9 +42,10 @@ interface TopNavigationProps {
   userRole?: string;
   userEmail?: string;
   userAvatar?: string;
+  onMenuToggle?: () => void;
 }
 
-const TopNavigation = ({ userRole = 'User', userEmail, userAvatar }: TopNavigationProps) => {
+const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle }: TopNavigationProps) => {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -237,9 +238,29 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar }: TopNavigati
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border shadow-md transition-all duration-300 dark:bg-gray-900/95">
-      <div className="flex items-center justify-between px-4 lg:px-6 py-3">
-        {/* Search Bar - 60% width, responsive */}
+    <header className="fixed top-0 left-0 right-0 z-50 w-full bg-white dark:bg-gray-900 border-b border-border shadow-md transition-all duration-200">
+      <div className="flex items-center px-4 lg:px-6 py-3">
+        {/* Hamburger Menu - Mobile Only */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onMenuToggle}
+          className="lg:hidden mr-3 transition-all duration-200 hover:scale-110"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+
+        {/* Club Logo */}
+        <div className="flex-shrink-0 mr-4">
+          <img
+            src="/logo.svg"
+            alt="SpeedSkate Academy logo"
+            className="h-10 lg:h-12 w-auto cursor-pointer transition-all duration-200"
+            onClick={() => navigate('/')}
+          />
+        </div>
+
+        {/* Search Bar - Desktop */}
         <div className="flex-1 max-w-[60%] mr-4 hidden lg:block" ref={searchRef}>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -288,7 +309,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar }: TopNavigati
         <Button
           variant="ghost"
           size="sm"
-          className="lg:hidden transition-all hover:scale-110"
+          className="lg:hidden mr-2 transition-all duration-200 hover:scale-110"
           onClick={() => {/* Toggle mobile search */}}
         >
           <Search className="h-5 w-5" />

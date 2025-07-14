@@ -100,24 +100,12 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
         <TopNavigation 
           userRole={userRole}
           userEmail={localStorage.getItem('userEmail') || undefined}
+          onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
         />
 
-        {/* Mobile Header with Sidebar Toggle */}
-        <div className="flex items-center justify-between p-4 lg:hidden bg-background dark:bg-gray-900 border-b border-border dark:border-gray-700 mt-16">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-lg font-semibold text-foreground dark:text-gray-100">{title}</h1>
-          </div>
-        </div>
 
         {/* Main Content with proper top padding for fixed header */}
-        <main className="flex-1 overflow-auto p-4 lg:p-6 pt-20 lg:pt-24">
+        <main className="flex-1 overflow-auto p-4 lg:p-6 pt-20 lg:pt-20">
           <div className="h-full">
             {children}
           </div>
