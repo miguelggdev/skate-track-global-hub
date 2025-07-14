@@ -38,7 +38,7 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-background dark:bg-gray-900 overflow-hidden">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div 
@@ -48,42 +48,44 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
       )}
 
       {/* Sidebar */}
-      <div className={`fixed lg:static inset-y-0 left-0 z-50 w-64 argon-sidebar transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+      <div className={`fixed lg:static inset-y-0 left-0 z-40 w-64 pt-16 bg-white dark:bg-gray-800 border-r border-border dark:border-gray-700 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="flex flex-col h-full">
           <div className="p-6">
             <div className="flex items-center space-x-3 mb-8">
-              <div className="w-8 h-8 argon-gradient-blue rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">S</span>
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-sm">S</span>
               </div>
-              <span className="text-xl font-bold text-gray-800">SpeedSkate Academy</span>
+              <span className="text-xl font-bold text-foreground dark:text-gray-100">SpeedSkate Academy</span>
             </div>
             
             <nav className="space-y-2">
               {navigationItems.map((item) => (
                 <div 
                   key={item.title}
-                  className={`argon-sidebar-item ${window.location.pathname === item.path ? 'active' : ''}`}
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-muted dark:hover:bg-gray-700 ${
+                    window.location.pathname === item.path 
+                      ? 'bg-primary text-primary-foreground shadow-md' 
+                      : 'text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-gray-200'
+                  }`}
                   onClick={() => {
                     navigate(item.path);
                     setSidebarOpen(false);
                   }}
                 >
-                  <div className="flex items-center space-x-3">
-                    <item.icon className="h-5 w-5" />
-                    <span className={window.location.pathname === item.path ? 'font-medium' : ''}>{item.title}</span>
-                  </div>
+                  <item.icon className="h-5 w-5" />
+                  <span className={window.location.pathname === item.path ? 'font-medium' : ''}>{item.title}</span>
                 </div>
               ))}
             </nav>
           </div>
           
-          <div className="mt-auto p-6 border-t border-gray-200">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">ACCESS</p>
+          <div className="mt-auto p-6 border-t border-border dark:border-gray-700">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">ACCESS</p>
             <Button 
               onClick={() => navigate('/login')} 
-              className="w-full justify-start argon-gradient-blue text-white hover:opacity-90"
+              className="w-full justify-start bg-primary text-primary-foreground hover:bg-primary/90"
               variant="ghost"
             >
               Login to System
@@ -94,8 +96,14 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Header with Enhanced Navigation */}
-        <div className="flex items-center justify-between p-4 lg:hidden bg-background border-b">
+        {/* Top Navigation - Fixed */}
+        <TopNavigation 
+          userRole={userRole}
+          userEmail={localStorage.getItem('userEmail') || undefined}
+        />
+
+        {/* Mobile Header with Sidebar Toggle */}
+        <div className="flex items-center justify-between p-4 lg:hidden bg-background dark:bg-gray-900 border-b border-border dark:border-gray-700 mt-16">
           <Button 
             variant="ghost" 
             size="sm"
@@ -104,17 +112,12 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
             <Menu className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-lg font-semibold">{title}</h1>
+            <h1 className="text-lg font-semibold text-foreground dark:text-gray-100">{title}</h1>
           </div>
         </div>
-        
-        <TopNavigation 
-          userRole={userRole}
-          userEmail={localStorage.getItem('userEmail') || undefined}
-        />
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-auto p-4 lg:p-6">
+        {/* Main Content with proper top padding for fixed header */}
+        <main className="flex-1 overflow-auto p-4 lg:p-6 pt-20 lg:pt-24">
           <div className="h-full">
             {children}
           </div>

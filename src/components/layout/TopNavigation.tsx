@@ -237,10 +237,10 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar }: TopNavigati
   };
 
   return (
-    <header className="bg-background border-b border-border shadow-md transition-all duration-300">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border shadow-md transition-all duration-300 dark:bg-gray-900/95">
       <div className="flex items-center justify-between px-4 lg:px-6 py-3">
-        {/* Search Bar - 60% width */}
-        <div className="flex-1 max-w-[60%] mr-4" ref={searchRef}>
+        {/* Search Bar - 60% width, responsive */}
+        <div className="flex-1 max-w-[60%] mr-4 hidden lg:block" ref={searchRef}>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -249,16 +249,16 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar }: TopNavigati
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="pl-10 pr-4 bg-muted/50 border-border focus:bg-background transition-all"
+              className="pl-10 pr-4 bg-muted/50 dark:bg-gray-800/50 border-border focus:bg-background dark:focus:bg-gray-800 transition-all"
             />
             
             {/* Search Results Dropdown */}
             {isSearchOpen && searchResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg z-50 max-h-80 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-background dark:bg-gray-800 border border-border dark:border-gray-700 rounded-md shadow-lg z-50 max-h-80 overflow-y-auto">
                 {searchResults.map((result) => (
                   <div
                     key={result.id}
-                    className="px-4 py-3 hover:bg-muted cursor-pointer transition-colors border-b border-border last:border-b-0"
+                    className="px-4 py-3 hover:bg-muted dark:hover:bg-gray-700 cursor-pointer transition-colors border-b border-border dark:border-gray-700 last:border-b-0"
                     onClick={() => handleSearchResultClick(result)}
                   >
                     <div className="flex items-center space-x-3">
@@ -283,6 +283,16 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar }: TopNavigati
             )}
           </div>
         </div>
+
+        {/* Mobile Search Icon */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="lg:hidden transition-all hover:scale-110"
+          onClick={() => {/* Toggle mobile search */}}
+        >
+          <Search className="h-5 w-5" />
+        </Button>
 
         {/* Right Side Actions */}
         <div className="flex items-center space-x-2">
@@ -315,9 +325,9 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar }: TopNavigati
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-0" align="end">
-              <div className="p-4 border-b border-border">
-                <h4 className="font-semibold">Notificaciones</h4>
+            <PopoverContent className="w-80 p-0 bg-background dark:bg-gray-800 border-border dark:border-gray-700" align="end">
+              <div className="p-4 border-b border-border dark:border-gray-700">
+                <h4 className="font-semibold text-foreground dark:text-gray-100">Notificaciones</h4>
               </div>
               <div className="max-h-80 overflow-y-auto">
                 {notifications.length === 0 ? (
@@ -326,8 +336,8 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar }: TopNavigati
                   notifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className={`p-4 border-b border-border last:border-b-0 hover:bg-muted cursor-pointer transition-colors ${
-                        !notification.read ? 'bg-muted/50' : ''
+                      className={`p-4 border-b border-border dark:border-gray-700 last:border-b-0 hover:bg-muted dark:hover:bg-gray-700 cursor-pointer transition-colors ${
+                        !notification.read ? 'bg-muted/50 dark:bg-gray-700/50' : ''
                       }`}
                       onClick={() => markNotificationAsRead(notification.id)}
                     >
@@ -337,9 +347,9 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar }: TopNavigati
                           notification.type === 'warning' ? 'bg-yellow-500' : 'bg-green-500'
                         }`} />
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm">{notification.title}</p>
-                          <p className="text-sm text-muted-foreground mt-1">{notification.message}</p>
-                          <p className="text-xs text-muted-foreground mt-2">
+                          <p className="font-medium text-sm text-foreground dark:text-gray-100">{notification.title}</p>
+                          <p className="text-sm text-muted-foreground dark:text-gray-300 mt-1">{notification.message}</p>
+                          <p className="text-xs text-muted-foreground dark:text-gray-400 mt-2">
                             {formatTimestamp(notification.timestamp)}
                           </p>
                         </div>
@@ -373,7 +383,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar }: TopNavigati
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-56 bg-background dark:bg-gray-800 border-border dark:border-gray-700">
               <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate('/settings')}>

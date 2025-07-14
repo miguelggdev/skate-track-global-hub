@@ -32,6 +32,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { PhotoUpload } from '@/components/users/PhotoUpload';
 import { supabase } from '@/integrations/supabase/client';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -116,88 +117,14 @@ const Settings = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-64 argon-sidebar z-50 hidden lg:block">
-        <div className="p-6">
-          <div className="flex items-center space-x-3 mb-8">
-            <div className="w-8 h-8 argon-gradient-blue rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">S</span>
-            </div>
-            <span className="text-xl font-bold text-gray-800">SpeedSkate Academy</span>
-          </div>
-          
-          <nav className="space-y-2">
-            <div className="argon-sidebar-item" onClick={() => navigate('/')}>
-              <div className="flex items-center space-x-3">
-                <BarChart3 className="h-5 w-5" />
-                <span>Dashboard</span>
-              </div>
-            </div>
-            
-            <div className="argon-sidebar-item" onClick={() => navigate('/athletes')}>
-              <div className="flex items-center space-x-3">
-                <Users className="h-5 w-5" />
-                <span>Athletes</span>
-              </div>
-            </div>
-            
-            <div className="argon-sidebar-item" onClick={() => navigate('/training')}>
-              <div className="flex items-center space-x-3">
-                <Calendar className="h-5 w-5" />
-                <span>Training</span>
-              </div>
-            </div>
-            
-            <div className="argon-sidebar-item" onClick={() => navigate('/competitions')}>
-              <div className="flex items-center space-x-3">
-                <Trophy className="h-5 w-5" />
-                <span>Competitions</span>
-              </div>
-            </div>
-            
-            <div className="argon-sidebar-item" onClick={() => navigate('/finance')}>
-              <div className="flex items-center space-x-3">
-                <DollarSign className="h-5 w-5" />
-                <span>Finance</span>
-              </div>
-            </div>
-            
-            <div className="argon-sidebar-item active">
-              <div className="flex items-center space-x-3">
-                <SettingsIcon className="h-5 w-5" />
-                <span className="font-medium">Settings</span>
-              </div>
-            </div>
-          </nav>
-          
-          <div className="mt-8 pt-4 border-t border-gray-200">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">ACCESS</p>
-            <Button 
-              onClick={() => navigate('/login')} 
-              className="w-full justify-start argon-gradient-blue text-white hover:opacity-90"
-              variant="ghost"
-            >
-              Login to System
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="lg:ml-64 p-4 lg:p-6">
-        {/* Header */}
-        <div className="mb-6 lg:mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">Settings</h1>
-              <p className="text-gray-600">Manage your account preferences and system configuration</p>
-            </div>
-            <Button onClick={handleSaveSettings} className="argon-gradient-blue text-white w-full lg:w-auto">
-              <Save className="h-4 w-4 mr-2" />
-              Save Changes
-            </Button>
-          </div>
+    <DashboardLayout title="Settings">
+      <div className="space-y-6">
+        {/* Header Actions */}
+        <div className="flex justify-end">
+          <Button onClick={handleSaveSettings} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Save className="h-4 w-4 mr-2" />
+            Save Changes
+          </Button>
         </div>
 
         {/* Stats Cards */}
@@ -607,7 +534,7 @@ const Settings = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

@@ -132,8 +132,12 @@
 /* Custom Argon Dashboard styles */
 @layer components {
   .argon-card {
-    @apply bg-white rounded-xl shadow-lg border-0 overflow-hidden;
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-lg border-0 overflow-hidden transition-colors duration-300;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  
+  .dark .argon-card {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
   }
   
   .argon-gradient-blue {
@@ -157,16 +161,20 @@
   }
   
   .argon-sidebar {
-    @apply bg-white shadow-xl;
+    @apply bg-white dark:bg-gray-800 shadow-xl transition-colors duration-300;
     box-shadow: 0 0 2rem 0 rgba(136, 152, 170, 0.15);
   }
   
+  .dark .argon-sidebar {
+    box-shadow: 0 0 2rem 0 rgba(0, 0, 0, 0.3);
+  }
+  
   .argon-sidebar-item {
-    @apply px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer transition-all duration-200;
+    @apply px-4 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg cursor-pointer transition-all duration-200;
   }
   
   .argon-sidebar-item.active {
-    @apply bg-blue-50 border-r-4 border-blue-500 text-blue-700;
+    @apply bg-blue-50 dark:bg-gray-700 border-r-4 border-blue-500 dark:border-blue-400 text-blue-700 dark:text-blue-300;
   }
 }
 
@@ -239,15 +247,15 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: hsl(var(--muted));
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: hsl(var(--muted-foreground) / 0.3);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: hsl(var(--muted-foreground) / 0.5);
 }

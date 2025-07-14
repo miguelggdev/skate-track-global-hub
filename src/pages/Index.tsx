@@ -20,10 +20,10 @@ import {
   Activity
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 const Index = () => {
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
   const stats = [
     { 
@@ -85,14 +85,6 @@ const Index = () => {
     { name: "Soft UI Dashboard", progress: 25, color: "bg-purple-500" },
   ];
 
-  const navigationItems = [
-    { title: "Dashboard", icon: Home, path: "/" },
-    { title: "Athletes", icon: Users, path: "/athletes" },
-    { title: "Training", icon: Calendar, path: "/training" },
-    { title: "Competitions", icon: Trophy, path: "/competitions" },
-    { title: "Finance", icon: DollarSign, path: "/finance" },
-    { title: "Settings", icon: Settings, path: "/settings" },
-  ];
 
   // Mock performance data for the chart
   const performanceData = [
@@ -105,81 +97,8 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex w-full">
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <div className={`fixed left-0 top-0 h-full w-64 argon-sidebar z-50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } lg:static lg:transform-none`}>
-        <div className="p-6">
-          <div className="flex items-center space-x-3 mb-8">
-            <div className="w-8 h-8 argon-gradient-blue rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">S</span>
-            </div>
-            <span className="text-xl font-bold text-gray-800">SpeedSkate Academy</span>
-          </div>
-          
-          <nav className="space-y-2">
-            {navigationItems.map((item) => (
-              <div 
-                key={item.title}
-                className={`argon-sidebar-item ${item.path === '/' ? 'active' : ''}`}
-                onClick={() => {
-                  navigate(item.path);
-                  setSidebarOpen(false);
-                }}
-              >
-                <div className="flex items-center space-x-3">
-                  <item.icon className="h-5 w-5" />
-                  <span className={item.path === '/' ? 'font-medium' : ''}>{item.title}</span>
-                </div>
-              </div>
-            ))}
-          </nav>
-          
-          <div className="mt-8 pt-4 border-t border-gray-200">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">ACCESS</p>
-            <Button 
-              onClick={() => navigate('/login')} 
-              className="w-full justify-start argon-gradient-blue text-white hover:opacity-90"
-              variant="ghost"
-            >
-              Login to System
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 w-full lg:ml-0">
-        {/* Header */}
-        <div className="bg-white shadow-sm border-b">
-          <div className="flex items-center justify-between px-4 lg:px-6 py-4">
-            <div className="flex items-center space-x-4">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                className="lg:hidden"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-              <div>
-                <h1 className="text-xl lg:text-2xl font-bold text-gray-800">Dashboard</h1>
-                <p className="text-sm lg:text-base text-gray-600">Welcome to SpeedSkate Academy Management System</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4 lg:p-6 w-full">
+    <DashboardLayout title="Dashboard">
+      <div className="space-y-6">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
             {stats.map((stat, index) => (
@@ -371,9 +290,8 @@ const Index = () => {
               </CardContent>
             </Card>
           </div>
-        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 
