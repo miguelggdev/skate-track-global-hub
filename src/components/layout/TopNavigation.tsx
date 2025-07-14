@@ -240,12 +240,12 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full bg-white dark:bg-gray-900 border-b border-border shadow-md transition-all duration-200">
       <div className="flex items-center px-4 lg:px-6 py-3">
-        {/* Hamburger Menu - Mobile Only */}
+        {/* Hamburger Menu - Always Visible */}
         <Button
           variant="ghost"
           size="sm"
           onClick={onMenuToggle}
-          className="lg:hidden mr-3 transition-all duration-200 hover:scale-110"
+          className="mr-3 transition-all duration-200 hover:scale-110"
         >
           <Menu className="h-5 w-5" />
         </Button>
@@ -260,8 +260,8 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
           />
         </div>
 
-        {/* Search Bar - Desktop */}
-        <div className="flex-1 max-w-[60%] mr-4 hidden lg:block" ref={searchRef}>
+        {/* Search Bar */}
+        <div className="flex-1 max-w-[60%] mr-4" ref={searchRef}>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -305,15 +305,6 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
           </div>
         </div>
 
-        {/* Mobile Search Icon */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="lg:hidden mr-2 transition-all duration-200 hover:scale-110"
-          onClick={() => {/* Toggle mobile search */}}
-        >
-          <Search className="h-5 w-5" />
-        </Button>
 
         {/* Right Side Actions */}
         <div className="flex items-center space-x-2">
