@@ -1,17 +1,10 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Bell, Menu, User, LogOut, Home, Users, Calendar, Trophy, DollarSign, Settings, Cog } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Menu, Home, Users, Calendar, Trophy, DollarSign, Settings, Cog } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import TopNavigation from './TopNavigation';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -101,52 +94,24 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b flex-shrink-0 z-10">
-          <div className="flex items-center justify-between px-4 lg:px-6 py-4">
-            <div className="flex items-center space-x-4 min-w-0">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                className="lg:hidden"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-              <div className="min-w-0">
-                <h1 className="text-xl font-semibold text-gray-900 truncate">{title}</h1>
-                <p className="text-sm text-gray-500">SpeedSkate Academy</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm">
-                <Bell className="h-5 w-5" />
-              </Button>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="flex items-center space-x-2">
-                    <User className="h-5 w-5" />
-                    <span className="hidden sm:inline">{userRole}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-white">
-                  <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
-                    Perfil
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Cerrar Sesión
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+        {/* Header with Enhanced Navigation */}
+        <div className="flex items-center justify-between p-4 lg:hidden bg-background border-b">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-lg font-semibold">{title}</h1>
           </div>
-        </header>
+        </div>
+        
+        <TopNavigation 
+          userRole={userRole}
+          userEmail={localStorage.getItem('userEmail') || undefined}
+        />
 
         {/* Main Content */}
         <main className="flex-1 overflow-auto p-4 lg:p-6">
