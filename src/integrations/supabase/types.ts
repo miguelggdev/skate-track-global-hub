@@ -750,6 +750,66 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_read: boolean
+          message: string
+          notification_type: string
+          recipient_id: string | null
+          related_entity_id: string | null
+          related_entity_type: string | null
+          sender_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_read?: boolean
+          message: string
+          notification_type?: string
+          recipient_id?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          sender_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_read?: boolean
+          message?: string
+          notification_type?: string
+          recipient_id?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          sender_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1012,7 +1072,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      send_notification_to_athletes: {
+        Args: {
+          sender_id_param: string
+          title_param: string
+          message_param: string
+          notification_type_param?: string
+          related_entity_id_param?: string
+          related_entity_type_param?: string
+        }
+        Returns: number
+      }
     }
     Enums: {
       athlete_category: "youth" | "junior" | "senior" | "masters"
