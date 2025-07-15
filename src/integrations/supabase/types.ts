@@ -1016,7 +1016,14 @@ export type Database = {
     }
     Enums: {
       athlete_category: "youth" | "junior" | "senior" | "masters"
-      athlete_level: "beginner" | "intermediate" | "advanced" | "professional"
+      athlete_level:
+        | "beginner"
+        | "intermediate"
+        | "advanced"
+        | "professional"
+        | "escuela_menores"
+        | "transicion"
+        | "mayores"
       athlete_status: "active" | "inactive" | "injured" | "suspended"
       competition_status: "upcoming" | "ongoing" | "completed" | "cancelled"
       payment_status: "pending" | "paid" | "overdue" | "cancelled"
@@ -1162,7 +1169,15 @@ export const Constants = {
   public: {
     Enums: {
       athlete_category: ["youth", "junior", "senior", "masters"],
-      athlete_level: ["beginner", "intermediate", "advanced", "professional"],
+      athlete_level: [
+        "beginner",
+        "intermediate",
+        "advanced",
+        "professional",
+        "escuela_menores",
+        "transicion",
+        "mayores",
+      ],
       athlete_status: ["active", "inactive", "injured", "suspended"],
       competition_status: ["upcoming", "ongoing", "completed", "cancelled"],
       payment_status: ["pending", "paid", "overdue", "cancelled"],
