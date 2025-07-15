@@ -14,6 +14,7 @@ import MedicalStaff from './sections/MedicalStaff';
 import LeagueCountryInfo from './sections/LeagueCountryInfo';
 import CoachInfo from './sections/CoachInfo';
 import SocialMediaLinks from './sections/SocialMediaLinks';
+import LogoUpload from './LogoUpload';
 
 interface ClubInfoSettingsProps {
   clubSettings: ClubSettings | null;
@@ -21,6 +22,18 @@ interface ClubInfoSettingsProps {
 }
 
 const ClubInfoSettings = ({ clubSettings, onUpdate }: ClubInfoSettingsProps) => {
+  const [logoUrl, setLogoUrl] = React.useState(clubSettings?.club_logo_url || '');
+
+  
+  React.useEffect(() => {
+    setLogoUrl(clubSettings?.club_logo_url || '');
+  }, [clubSettings?.club_logo_url]);
+
+  const handleLogoUpdate = (newLogoUrl: string) => {
+    setLogoUrl(newLogoUrl);
+    onUpdate();
+  };
+
   const form = useForm({
     defaultValues: {
       club_name: clubSettings?.club_name || '',
@@ -116,6 +129,11 @@ const ClubInfoSettings = ({ clubSettings, onUpdate }: ClubInfoSettingsProps) => 
 
   return (
     <div className="space-y-6">
+      <LogoUpload 
+        currentLogoUrl={logoUrl}
+        onLogoUpdate={handleLogoUpdate}
+      />
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

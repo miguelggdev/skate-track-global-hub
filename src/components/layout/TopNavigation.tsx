@@ -54,7 +54,28 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [clubLogo, setClubLogo] = useState<string>('');
   const searchRef = useRef<HTMLDivElement>(null);
+
+  // Fetch club logo on component mount
+  useEffect(() => {
+    const fetchClubLogo = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('club_settings')
+          .select('club_logo_url')
+          .single();
+        
+        if (data?.club_logo_url) {
+          setClubLogo(data.club_logo_url);
+        }
+      } catch (error) {
+        console.error('Error fetching club logo:', error);
+      }
+    };
+    
+    fetchClubLogo();
+  }, []);
 
   // Mock notifications data
   useEffect(() => {
@@ -252,12 +273,21 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
 
         {/* Club Logo */}
         <div className="flex-shrink-0 mr-4">
-          <img
-            src="/logo.svg"
-            alt="SpeedSkate Academy logo"
-            className="h-10 lg:h-12 w-auto cursor-pointer transition-all duration-200"
-            onClick={() => navigate('/')}
-          />
+          {clubLogo ? (
+            <img
+              src={clubLogo}
+              alt="Club logo"
+              className="h-10 lg:h-12 w-auto object-contain cursor-pointer transition-all duration-200"
+              onClick={() => navigate('/')}
+            />
+          ) : (
+            <img
+              src="/logo.svg"
+              alt="SpeedSkate Academy logo"
+              className="h-10 lg:h-12 w-auto cursor-pointer transition-all duration-200"
+              onClick={() => navigate('/')}
+            />
+          )}
         </div>
 
         {/* Search Bar */}
