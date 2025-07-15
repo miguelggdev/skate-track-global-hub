@@ -57,7 +57,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
 
     // Customize training focus based on category and level
     if (category === 'youth') {
-      if (level === 'beginner') {
+      if (level === 'escuela_menores') {
         return [
           { value: 'technical', label: 'Técnica Básica', icon: Target, description: 'Fundamentos y postura' },
           { value: 'physical', label: 'Acondicionamiento Lúdico', icon: Activity, description: 'Ejercicios divertidos' },
@@ -119,10 +119,9 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
   ];
 
   const levels = [
-    { value: 'beginner', label: 'Principiante' },
-    { value: 'intermediate', label: 'Intermedio' },
-    { value: 'advanced', label: 'Avanzado' },
-    { value: 'professional', label: 'Profesional' }
+    { value: 'escuela_menores', label: 'Escuela Menores' },
+    { value: 'transicion', label: 'Transición' },
+    { value: 'mayores', label: 'Mayores' }
   ];
 
   const timeSlots = [
@@ -592,9 +591,8 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                                               training.training_type === 'physical' ? 'bg-red-500' :
                                               training.training_type === 'mental' ? 'bg-purple-500' : 'bg-green-500';
                               
-                              const levelText = training.level === 'beginner' ? 'Principiante' : 
-                                               training.level === 'intermediate' ? 'Intermedio' : 
-                                               training.level === 'advanced' ? 'Avanzado' : 'Profesional';
+                              const levelText = training.level === 'escuela_menores' ? 'Escuela Menores' : 
+                                               training.level === 'transicion' ? 'Transición' : 'Mayores';
                               
                               return (
                                 <div key={idx} className={`text-xs text-center text-white p-1 rounded mb-1 ${typeColor}`}>

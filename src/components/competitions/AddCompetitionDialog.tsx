@@ -53,7 +53,7 @@ const competitionSchema = z.object({
     required_error: 'End date is required',
   }),
   category: z.enum(['youth', 'junior', 'senior', 'masters']).optional(),
-  level: z.enum(['beginner', 'intermediate', 'advanced', 'professional']).optional(),
+  level: z.enum(['escuela_menores', 'transicion', 'mayores']).optional(),
   entry_fee: z.string().optional(),
   prize_pool: z.string().optional(),
   max_participants: z.string().optional(),
@@ -326,10 +326,9 @@ export function AddCompetitionDialog({ onCompetitionAdded }: AddCompetitionDialo
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="beginner">Beginner</SelectItem>
-                        <SelectItem value="intermediate">Intermediate</SelectItem>
-                        <SelectItem value="advanced">Advanced</SelectItem>
-                        <SelectItem value="professional">Professional</SelectItem>
+                        <SelectItem value="escuela_menores">Escuela Menores</SelectItem>
+                        <SelectItem value="transicion">Transición</SelectItem>
+                        <SelectItem value="mayores">Mayores</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

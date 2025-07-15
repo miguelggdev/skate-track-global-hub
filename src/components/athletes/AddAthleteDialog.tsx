@@ -68,7 +68,7 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
           last_name: data.lastName,
           email: data.email,
           category: data.category.toLowerCase() as 'youth' | 'junior' | 'senior' | 'masters',
-          level: data.level.toLowerCase() as 'beginner' | 'intermediate' | 'advanced' | 'professional',
+          level: data.level as 'escuela_menores' | 'transicion' | 'mayores',
           status: 'active',
           performance_score: 0
         });
@@ -197,10 +197,9 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="beginner">Beginner</SelectItem>
-                      <SelectItem value="intermediate">Intermediate</SelectItem>
-                      <SelectItem value="advanced">Advanced</SelectItem>
-                      <SelectItem value="professional">Professional</SelectItem>
+                      <SelectItem value="escuela_menores">Escuela Menores</SelectItem>
+                      <SelectItem value="transicion">Transición</SelectItem>
+                      <SelectItem value="mayores">Mayores</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
