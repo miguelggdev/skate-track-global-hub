@@ -172,10 +172,9 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="youth">Juvenil</SelectItem>
-                      <SelectItem value="junior">Junior</SelectItem>
-                      <SelectItem value="senior">Senior</SelectItem>
-                      <SelectItem value="masters">Másters</SelectItem>
+                      <SelectItem value="escuela_menores">Escuela Menores</SelectItem>
+                      <SelectItem value="transicion">Transición</SelectItem>
+                      <SelectItem value="mayores">Mayores</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
