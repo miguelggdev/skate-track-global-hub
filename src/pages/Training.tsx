@@ -306,9 +306,13 @@ const Training = () => {
                       <Plus className="h-4 w-4 mr-2" />
                       Schedule Session
                     </Button>
-                    <Button variant="outline" className="w-full border-white text-white hover:bg-white hover:text-purple-600 text-sm">
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-white text-white hover:bg-white hover:text-purple-600 text-sm"
+                      onClick={() => window.location.href = '/training/calendar'}
+                    >
                       <Calendar className="h-4 w-4 mr-2" />
-                      View Calendar
+                      Ver Calendario
                     </Button>
                     <Button variant="outline" className="w-full border-white text-white hover:bg-white hover:text-purple-600 text-sm">
                       <Activity className="h-4 w-4 mr-2" />

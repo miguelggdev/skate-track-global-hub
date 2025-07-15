@@ -15,6 +15,7 @@ import FinanceDashboard from "./pages/FinanceDashboard";
 import LeaderDashboard from "./pages/LeaderDashboard";
 import Athletes from "./pages/Athletes";
 import Training from "./pages/Training";
+import TrainingCalendar from "./pages/TrainingCalendar";
 import Competitions from "./pages/Competitions";
 import Finance from "./pages/Finance";
 import Settings from "./pages/Settings";
@@ -57,6 +58,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/athletes" element={<Athletes />} />
           <Route path="/training" element={<Training />} />
+          <Route path="/training/calendar" element={<TrainingCalendar />} />
           <Route path="/competitions" element={<Competitions />} />
           <Route path="/finance" element={<Finance />} />
           <Route path="/settings" element={<Settings />} />
