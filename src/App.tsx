@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import { AuthProvider } from "@/providers/AuthProvider";
+import { useAuth } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -27,32 +29,34 @@ const queryClient = new QueryClient();
 
 // Componente para proteger rutas
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
-  const userRole = localStorage.getItem('userRole');
+  const { user, loading } = useAuth();
   
-  if (!userRole) {
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Cargando...</div>;
+  }
+  
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(userRole)) {
-    return <Navigate to="/login" replace />;
-  }
-
+  // For now, allow all authenticated users - roles will be checked via database
   return <>{children}</>;
 };
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange={false}
-    >
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
-          <BrowserRouter>
+    <AuthProvider>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange={false}
+      >
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
+            <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
@@ -65,7 +69,7 @@ const App = () => (
           <Route 
             path="/club-config" 
             element={
-              <ProtectedRoute allowedRoles={['administrador', 'lider']}>
+              <ProtectedRoute>
                 <ClubConfig />
               </ProtectedRoute>
             } 
@@ -73,7 +77,7 @@ const App = () => (
           <Route 
             path="/user-management" 
             element={
-              <ProtectedRoute allowedRoles={['administrador', 'admin']}>
+              <ProtectedRoute>
                 <UserManagement />
               </ProtectedRoute>
             } 
@@ -81,7 +85,7 @@ const App = () => (
           <Route 
             path="/admin-dashboard" 
             element={
-              <ProtectedRoute allowedRoles={['administrador']}>
+              <ProtectedRoute>
                 <AdminDashboard />
               </ProtectedRoute>
             } 
@@ -89,7 +93,7 @@ const App = () => (
           <Route 
             path="/coach-dashboard" 
             element={
-              <ProtectedRoute allowedRoles={['entrenador']}>
+              <ProtectedRoute>
                 <CoachDashboard />
               </ProtectedRoute>
             } 
@@ -97,7 +101,7 @@ const App = () => (
           <Route 
             path="/athlete-dashboard" 
             element={
-              <ProtectedRoute allowedRoles={['deportista']}>
+              <ProtectedRoute>
                 <AthleteDashboard />
               </ProtectedRoute>
             } 
@@ -105,7 +109,7 @@ const App = () => (
           <Route 
             path="/delegate-dashboard" 
             element={
-              <ProtectedRoute allowedRoles={['delegado']}>
+              <ProtectedRoute>
                 <DelegateDashboard />
               </ProtectedRoute>
             } 
@@ -113,7 +117,7 @@ const App = () => (
           <Route 
             path="/finance-dashboard" 
             element={
-              <ProtectedRoute allowedRoles={['gestor_financiero']}>
+              <ProtectedRoute>
                 <FinanceDashboard />
               </ProtectedRoute>
             } 
@@ -121,7 +125,7 @@ const App = () => (
           <Route 
             path="/leader-dashboard" 
             element={
-              <ProtectedRoute allowedRoles={['lider']}>
+              <ProtectedRoute>
                 <LeaderDashboard />
               </ProtectedRoute>
             } 
@@ -129,7 +133,7 @@ const App = () => (
           <Route 
             path="/reports" 
             element={
-              <ProtectedRoute allowedRoles={['administrador', 'lider']}>
+              <ProtectedRoute>
                 <Reports />
               </ProtectedRoute>
             } 
@@ -137,10 +141,11 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
-          </BrowserRouter>
-        </div>
-      </TooltipProvider>
-    </ThemeProvider>
+            </BrowserRouter>
+          </div>
+        </TooltipProvider>
+      </ThemeProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

@@ -1,9 +1,10 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu, Home, Users, Calendar, Trophy, DollarSign, Settings, Cog } from 'lucide-react';
+import { Menu, Home, Users, Calendar, Trophy, DollarSign, Settings, Cog, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import TopNavigation from './TopNavigation';
 
 interface DashboardLayoutProps {
@@ -15,11 +16,11 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signOut, user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
-  const handleLogout = () => {
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userEmail');
+  const handleLogout = async () => {
+    await signOut();
     toast({
       title: "Sesión cerrada",
       description: "Has cerrado sesión correctamente",
@@ -82,13 +83,16 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
           </div>
           
           <div className="mt-auto p-6 border-t border-border dark:border-gray-700">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">ACCESS</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              {user?.email}
+            </p>
             <Button 
-              onClick={() => navigate('/login')} 
-              className="w-full justify-start bg-primary text-primary-foreground hover:bg-primary/90"
-              variant="ghost"
+              onClick={handleLogout} 
+              className="w-full justify-start"
+              variant="outline"
             >
-              Login to System
+              <LogOut className="h-4 w-4 mr-2" />
+              Cerrar Sesión
             </Button>
           </div>
         </div>
@@ -99,7 +103,7 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
         {/* Top Navigation - Fixed */}
         <TopNavigation 
           userRole={userRole}
-          userEmail={localStorage.getItem('userEmail') || undefined}
+          userEmail={user?.email || undefined}
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
         />
 
