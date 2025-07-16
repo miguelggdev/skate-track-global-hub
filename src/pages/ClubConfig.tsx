@@ -68,7 +68,7 @@ const ClubConfig = () => {
         .from('club_settings')
         .select('*')
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       setClubSettings(data);

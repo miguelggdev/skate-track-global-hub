@@ -47,13 +47,36 @@ const LogoUpload = ({ currentLogoUrl, onLogoUpdate }: LogoUploadProps) => {
         .from('club-logos')
         .getPublicUrl(data.path);
 
-      // Update club settings
-      const { error: updateError } = await supabase
+      // Update or create club settings
+      const { data: existingSettings, error: selectError } = await supabase
         .from('club_settings')
-        .update({ club_logo_url: publicUrl })
-        .eq('id', (await supabase.from('club_settings').select('id').single()).data?.id);
+        .select('id')
+        .maybeSingle();
 
-      if (updateError) throw updateError;
+      if (selectError) throw selectError;
+
+      if (existingSettings) {
+        // Update existing settings
+        const { error: updateError } = await supabase
+          .from('club_settings')
+          .update({ club_logo_url: publicUrl })
+          .eq('id', existingSettings.id);
+
+        if (updateError) throw updateError;
+      } else {
+        // Create new settings if none exist
+        const { error: insertError } = await supabase
+          .from('club_settings')
+          .insert({ 
+            club_name: 'Mi Club',
+            club_logo_url: publicUrl,
+            timezone: 'Europe/Madrid',
+            currency: 'EUR',
+            language: 'es'
+          });
+
+        if (insertError) throw insertError;
+      }
 
       onLogoUpdate(publicUrl);
       
@@ -103,19 +126,28 @@ const LogoUpload = ({ currentLogoUrl, onLogoUpdate }: LogoUploadProps) => {
 
   const removeLogo = async () => {
     try {
-      const { error } = await supabase
+      const { data: existingSettings, error: selectError } = await supabase
         .from('club_settings')
-        .update({ club_logo_url: null })
-        .eq('id', (await supabase.from('club_settings').select('id').single()).data?.id);
+        .select('id')
+        .maybeSingle();
 
-      if (error) throw error;
+      if (selectError) throw selectError;
 
-      onLogoUpdate('');
-      
-      toast({
-        title: "Éxito",
-        description: "Logo del club eliminado",
-      });
+      if (existingSettings) {
+        const { error } = await supabase
+          .from('club_settings')
+          .update({ club_logo_url: null })
+          .eq('id', existingSettings.id);
+
+        if (error) throw error;
+
+        onLogoUpdate('');
+        
+        toast({
+          title: "Éxito",
+          description: "Logo del club eliminado",
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Error",
@@ -144,7 +176,7 @@ const LogoUpload = ({ currentLogoUrl, onLogoUpdate }: LogoUploadProps) => {
               <img
                 src={currentLogoUrl}
                 alt="Logo actual del club"
-                className="h-12 w-auto object-contain rounded"
+                className="club-logo-preview"
               />
               <span className="text-sm text-muted-foreground">Logo actual</span>
             </div>
@@ -162,11 +194,7 @@ const LogoUpload = ({ currentLogoUrl, onLogoUpdate }: LogoUploadProps) => {
 
         {/* Upload Area */}
         <div
-          className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-            dragActive 
-              ? 'border-primary bg-primary/5' 
-              : 'border-muted-foreground/25 hover:border-muted-foreground/50'
-          }`}
+          className={`club-logo-upload-area ${dragActive ? 'active' : ''}`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}

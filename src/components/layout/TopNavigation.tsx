@@ -64,7 +64,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
         const { data, error } = await supabase
           .from('club_settings')
           .select('club_logo_url')
-          .single();
+          .maybeSingle();
         
         if (data?.club_logo_url) {
           setClubLogo(data.club_logo_url);
@@ -277,14 +277,14 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
             <img
               src={clubLogo}
               alt="Club logo"
-              className="h-10 lg:h-12 w-auto object-contain cursor-pointer transition-all duration-200"
+              className="club-logo-header"
               onClick={() => navigate('/')}
             />
           ) : (
             <img
               src="/logo.svg"
               alt="SpeedSkate Academy logo"
-              className="h-10 lg:h-12 w-auto cursor-pointer transition-all duration-200"
+              className="club-logo-header"
               onClick={() => navigate('/')}
             />
           )}

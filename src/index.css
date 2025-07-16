@@ -241,6 +241,34 @@
   }
 }
 
+/* Club Logo Styles */
+@layer components {
+  .club-logo {
+    @apply max-h-12 w-auto object-contain transition-all duration-300 hover:scale-105;
+    max-width: 180px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  }
+  
+  .club-logo-header {
+    @apply h-10 lg:h-12 w-auto object-contain cursor-pointer transition-all duration-200;
+    max-width: 160px;
+  }
+  
+  .club-logo-preview {
+    @apply h-12 w-auto object-contain rounded border border-border;
+    max-width: 120px;
+  }
+  
+  .club-logo-upload-area {
+    @apply border-2 border-dashed rounded-lg p-8 text-center transition-colors hover:border-primary/50;
+    min-height: 120px;
+  }
+  
+  .club-logo-upload-area.active {
+    @apply border-primary bg-primary/5;
+  }
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
