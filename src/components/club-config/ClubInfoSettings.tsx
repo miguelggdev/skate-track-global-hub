@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
 import { ClubSettings } from '@/pages/ClubConfig';
-import { Building2 } from 'lucide-react';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { useToast } from '@/hooks/use-toast';
+import { Building2, ShieldAlert } from 'lucide-react';
 import BasicClubInfo from './sections/BasicClubInfo';
 import ClubConfiguration from './sections/ClubConfiguration';
 import DelegateInfo from './sections/DelegateInfo';
@@ -23,8 +25,9 @@ interface ClubInfoSettingsProps {
 
 const ClubInfoSettings = ({ clubSettings, onUpdate }: ClubInfoSettingsProps) => {
   const [logoUrl, setLogoUrl] = React.useState(clubSettings?.club_logo_url || '');
+  const { isAdmin, loading: profileLoading } = useUserProfile();
+  const { toast } = useToast();
 
-  
   React.useEffect(() => {
     setLogoUrl(clubSettings?.club_logo_url || '');
   }, [clubSettings?.club_logo_url]);
@@ -121,11 +124,43 @@ const ClubInfoSettings = ({ clubSettings, onUpdate }: ClubInfoSettingsProps) => 
         if (error) throw error;
       }
       
+      toast({
+        title: "Éxito",
+        description: "Configuración del club actualizada correctamente",
+      });
+      
       onUpdate();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating club settings:', error);
+      toast({
+        title: "Error",
+        description: error.message?.includes('insufficient_privilege') || error.message?.includes('policy') 
+          ? "No tienes permisos para modificar la configuración del club"
+          : "No se pudo actualizar la configuración del club",
+        variant: "destructive",
+      });
     }
   };
+
+  if (profileLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">Cargando...</div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <ShieldAlert className="h-16 w-16 text-muted-foreground" />
+        <h2 className="text-xl font-semibold text-foreground">Acceso Denegado</h2>
+        <p className="text-muted-foreground text-center">
+          Solo los administradores pueden modificar la configuración del club.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

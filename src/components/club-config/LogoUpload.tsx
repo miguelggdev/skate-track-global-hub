@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, X, Image } from 'lucide-react';
+import { Upload, X, Image, ShieldAlert } from 'lucide-react';
 
 interface LogoUploadProps {
   currentLogoUrl?: string;
@@ -13,6 +14,7 @@ interface LogoUploadProps {
 const LogoUpload = ({ currentLogoUrl, onLogoUpdate }: LogoUploadProps) => {
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const { isAdmin, loading: profileLoading } = useUserProfile();
   const { toast } = useToast();
 
   const uploadLogo = async (file: File) => {
@@ -88,7 +90,9 @@ const LogoUpload = ({ currentLogoUrl, onLogoUpdate }: LogoUploadProps) => {
       console.error('Error uploading logo:', error);
       toast({
         title: "Error",
-        description: error.message || "No se pudo subir el logo",
+        description: error.message?.includes('insufficient_privilege') || error.message?.includes('policy')
+          ? "No tienes permisos para subir el logo del club"
+          : error.message || "No se pudo subir el logo",
         variant: "destructive",
       });
     } finally {
@@ -151,11 +155,52 @@ const LogoUpload = ({ currentLogoUrl, onLogoUpdate }: LogoUploadProps) => {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "No se pudo eliminar el logo",
+        description: error.message?.includes('insufficient_privilege') || error.message?.includes('policy')
+          ? "No tienes permisos para eliminar el logo del club"
+          : "No se pudo eliminar el logo",
         variant: "destructive",
       });
     }
   };
+
+  if (profileLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Image className="h-5 w-5" />
+            Logo del Club
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-32">
+            <div className="text-center">Cargando...</div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Image className="h-5 w-5" />
+            Logo del Club
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center h-32 space-y-4">
+            <ShieldAlert className="h-8 w-8 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground text-center">
+              Solo los administradores pueden modificar el logo del club.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
