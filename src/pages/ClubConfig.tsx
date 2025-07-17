@@ -3,12 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import ClubInfoSettings from '@/components/club-config/ClubInfoSettings';
 import SystemSettings from '@/components/club-config/SystemSettings';
 import PaymentSettings from '@/components/club-config/PaymentSettings';
 import TrainingSettings from '@/components/club-config/TrainingSettings';
 import NotificationSettings from '@/components/club-config/NotificationSettings';
-import { Settings, Building2, CreditCard, Dumbbell, Bell } from 'lucide-react';
+import { Settings, Building2, CreditCard, Dumbbell, Bell, ShieldAlert } from 'lucide-react';
 
 export interface ClubSettings {
   id: string;
@@ -61,6 +62,7 @@ const ClubConfig = () => {
   const [systemSettings, setSystemSettings] = useState<SystemSetting[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { isAdmin, loading: profileLoading } = useUserProfile();
 
   const fetchClubSettings = async () => {
     try {
@@ -130,11 +132,25 @@ const ClubConfig = () => {
     return systemSettings.filter(setting => setting.category === category);
   };
 
-  if (loading) {
+  if (profileLoading || loading) {
     return (
       <DashboardLayout title="Configurar Club">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <DashboardLayout title="Configurar Club">
+        <div className="flex flex-col items-center justify-center h-64 space-y-4">
+          <ShieldAlert className="h-16 w-16 text-muted-foreground" />
+          <h2 className="text-xl font-semibold text-foreground">Acceso Denegado</h2>
+          <p className="text-muted-foreground text-center">
+            Solo los administradores pueden acceder a la configuración del club.
+          </p>
         </div>
       </DashboardLayout>
     );
