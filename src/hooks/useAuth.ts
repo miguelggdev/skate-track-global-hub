@@ -51,6 +51,12 @@ export const useAuthState = () => {
       email,
       password,
     });
+    
+    // Handle email not confirmed error with better message
+    if (error?.message === 'Email not confirmed') {
+      return { error: { ...error, message: 'Por favor confirma tu email antes de iniciar sesión. Revisa tu bandeja de entrada.' } };
+    }
+    
     return { error };
   };
 
