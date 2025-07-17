@@ -11,7 +11,7 @@ interface AthletesHeaderProps {
 
 const AthletesHeader = ({ onAthleteAdded }: AthletesHeaderProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { isAdmin } = useUserProfile();
+  const { isAdmin, isCoach } = useUserProfile();
 
   return (
     <div className="mb-4 md:mb-6">
@@ -20,7 +20,7 @@ const AthletesHeader = ({ onAthleteAdded }: AthletesHeaderProps) => {
           <p className="text-sm text-gray-600 truncate">Manage and monitor athlete performance</p>
         </div>
         <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-3">
-          {isAdmin && (
+          {(isAdmin || isCoach) && (
             <Button 
               className="argon-gradient-blue text-white hover:opacity-90 text-sm"
               onClick={() => setIsDialogOpen(true)}
@@ -32,7 +32,7 @@ const AthletesHeader = ({ onAthleteAdded }: AthletesHeaderProps) => {
         </div>
       </div>
 
-      {isAdmin && (
+      {(isAdmin || isCoach) && (
         <AddAthleteDialog
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
