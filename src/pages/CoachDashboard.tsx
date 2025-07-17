@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { 
   Users, 
   Calendar, 
@@ -24,6 +25,7 @@ import CreateTrainingDialog from '@/components/training/CreateTrainingDialog';
 const CoachDashboard = () => {
   const [filterCategory, setFilterCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const { isAdmin } = useUserProfile();
 
   // KPIs del entrenador
   const kpis = [
@@ -219,21 +221,23 @@ const CoachDashboard = () => {
 
         {/* Herramientas del Entrenador */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Plus className="h-5 w-5" />
-                Crear Entrenamiento
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CreateTrainingDialog>
-                <Button className="w-full">
-                  Nuevo Entrenamiento
-                </Button>
-              </CreateTrainingDialog>
-            </CardContent>
-          </Card>
+          {isAdmin && (
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Plus className="h-5 w-5" />
+                  Crear Entrenamiento
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CreateTrainingDialog>
+                  <Button className="w-full">
+                    Nuevo Entrenamiento
+                  </Button>
+                </CreateTrainingDialog>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="cursor-pointer hover:shadow-lg transition-shadow">
             <CardHeader>

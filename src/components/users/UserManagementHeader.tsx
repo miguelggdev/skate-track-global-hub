@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { UserPlus, Download, Upload } from 'lucide-react';
 import AddUserDialog from './AddUserDialog';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 interface UserManagementHeaderProps {
   onUserAdded: () => void;
@@ -9,6 +10,7 @@ interface UserManagementHeaderProps {
 
 const UserManagementHeader = ({ onUserAdded }: UserManagementHeaderProps) => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const { isAdmin } = useUserProfile();
 
   return (
     <div className="mb-4 md:mb-6">
@@ -32,21 +34,25 @@ const UserManagementHeader = ({ onUserAdded }: UserManagementHeaderProps) => {
             <Upload className="h-4 w-4 mr-2" />
             Importar
           </Button>
-          <Button 
-            className="argon-gradient-blue text-white hover:opacity-90 text-sm"
-            onClick={() => setIsAddDialogOpen(true)}
-          >
-            <UserPlus className="h-4 w-4 mr-2" />
-            Agregar Usuario
-          </Button>
+          {isAdmin && (
+            <Button 
+              className="argon-gradient-blue text-white hover:opacity-90 text-sm"
+              onClick={() => setIsAddDialogOpen(true)}
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Agregar Usuario
+            </Button>
+          )}
         </div>
       </div>
 
-      <AddUserDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        onUserAdded={onUserAdded}
-      />
+      {isAdmin && (
+        <AddUserDialog
+          open={isAddDialogOpen}
+          onOpenChange={setIsAddDialogOpen}
+          onUserAdded={onUserAdded}
+        />
+      )}
     </div>
   );
 };

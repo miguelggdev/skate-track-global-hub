@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { CalendarHeader } from '@/components/training/calendar/CalendarHeader';
 import { CalendarGrid } from '@/components/training/calendar/CalendarGrid';
 import { EventModal } from '@/components/training/calendar/EventModal';
@@ -45,6 +46,7 @@ const TrainingCalendar = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [filterType, setFilterType] = useState<string>('all');
   const { toast } = useToast();
+  const { isAdmin } = useUserProfile();
 
   // Load training sessions
   useEffect(() => {
@@ -208,10 +210,12 @@ const TrainingCalendar = () => {
               <option value="recovery">Recuperación</option>
             </select>
 
-            <Button className="bg-primary text-primary-foreground">
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Entrenamiento
-            </Button>
+            {isAdmin && (
+              <Button className="bg-primary text-primary-foreground">
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Entrenamiento
+              </Button>
+            )}
           </div>
         </div>
 
