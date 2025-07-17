@@ -36,6 +36,7 @@ import {
   getCategoryDisplayName,
   getLevelDisplayName
 } from '@/utils/ageCalculations';
+import DatePickerWithYearMonth from '@/components/ui/date-picker-with-year-month';
 
 interface AddAthleteDialogProps {
   open: boolean;
@@ -222,15 +223,12 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
                       </FormControl>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
+                      <DatePickerWithYearMonth
                         selected={field.value}
                         onSelect={field.onChange}
                         disabled={(date) =>
                           date > new Date() || date < new Date("1900-01-01")
                         }
-                        initialFocus
-                        className="pointer-events-auto"
                       />
                     </PopoverContent>
                   </Popover>
