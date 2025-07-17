@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,15 +18,24 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Calendar } from '@/components/ui/calendar';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { useForm } from 'react-hook-form';
 import { toast } from '@/components/ui/sonner';
+import { CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { 
+  calculateAge, 
+  getCategoryFromAge, 
+  getLevelFromCategoryAndAge,
+  getCategoryDisplayName,
+  getLevelDisplayName
+} from '@/utils/ageCalculations';
 
 interface AddAthleteDialogProps {
   open: boolean;
@@ -39,24 +47,49 @@ interface AthleteFormData {
   firstName: string;
   lastName: string;
   email: string;
-  category: string;
-  level: string;
+  dateOfBirth: Date | undefined;
 }
 
 const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [calculatedAge, setCalculatedAge] = useState<number | null>(null);
+  const [calculatedCategory, setCalculatedCategory] = useState<string>('');
+  const [calculatedLevel, setCalculatedLevel] = useState<string>('');
 
   const form = useForm<AthleteFormData>({
     defaultValues: {
       firstName: '',
       lastName: '',
       email: '',
-      category: '',
-      level: '',
+      dateOfBirth: undefined,
     },
   });
 
+  const dateOfBirth = form.watch('dateOfBirth');
+
+  // Calculate age, category, and level when date of birth changes
+  useEffect(() => {
+    if (dateOfBirth) {
+      const age = calculateAge(dateOfBirth);
+      const category = getCategoryFromAge(age);
+      const level = getLevelFromCategoryAndAge(category, age);
+      
+      setCalculatedAge(age);
+      setCalculatedCategory(category);
+      setCalculatedLevel(level);
+    } else {
+      setCalculatedAge(null);
+      setCalculatedCategory('');
+      setCalculatedLevel('');
+    }
+  }, [dateOfBirth]);
+
   const onSubmit = async (data: AthleteFormData) => {
+    if (!data.dateOfBirth) {
+      toast.error('Date of birth is required');
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
@@ -67,8 +100,9 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
           first_name: data.firstName,
           last_name: data.lastName,
           email: data.email,
-          category: data.category.toLowerCase() as 'youth' | 'junior' | 'senior' | 'masters',
-          level: data.level as 'escuela_menores' | 'transicion' | 'mayores',
+          date_of_birth: format(data.dateOfBirth, 'yyyy-MM-dd'),
+          category: calculatedCategory as any,
+          level: calculatedLevel as any,
           status: 'active',
           performance_score: 0
         });
@@ -86,6 +120,9 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
       
       // Reset form and close dialog
       form.reset();
+      setCalculatedAge(null);
+      setCalculatedCategory('');
+      setCalculatedLevel('');
       onOpenChange(false);
     } catch (error) {
       console.error('Error adding athlete:', error);
@@ -97,11 +134,11 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Athlete</DialogTitle>
+          <DialogTitle>Agregar Nuevo Atleta</DialogTitle>
           <DialogDescription>
-            Enter the athlete's information below to add them to your roster.
+            Ingrese la información del atleta. La categoría y nivel se calcularán automáticamente según la fecha de nacimiento.
           </DialogDescription>
         </DialogHeader>
         
@@ -110,12 +147,12 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
             <FormField
               control={form.control}
               name="firstName"
-              rules={{ required: 'First name is required' }}
+              rules={{ required: 'El nombre es requerido' }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>First Name</FormLabel>
+                  <FormLabel>Nombre</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter athlete's first name" {...field} />
+                    <Input placeholder="Ingrese el nombre del atleta" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -125,12 +162,12 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
             <FormField
               control={form.control}
               name="lastName"
-              rules={{ required: 'Last name is required' }}
+              rules={{ required: 'El apellido es requerido' }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Last Name</FormLabel>
+                  <FormLabel>Apellido</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter athlete's last name" {...field} />
+                    <Input placeholder="Ingrese el apellido del atleta" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -141,17 +178,17 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
               control={form.control}
               name="email"
               rules={{ 
-                required: 'Email is required',
+                required: 'El email es requerido',
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Invalid email address'
+                  message: 'Dirección de email inválida'
                 }
               }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="Enter athlete's email" {...field} />
+                    <Input type="email" placeholder="Ingrese el email del atleta" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -160,51 +197,68 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
 
             <FormField
               control={form.control}
-              name="category"
-              rules={{ required: 'Category is required' }}
+              name="dateOfBirth"
+              rules={{ required: 'La fecha de nacimiento es requerida' }}
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="escuela_menores">Escuela Menores</SelectItem>
-                      <SelectItem value="transicion">Transición</SelectItem>
-                      <SelectItem value="mayores">Mayores</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <FormItem className="flex flex-col">
+                  <FormLabel>Fecha de Nacimiento</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "dd/MM/yyyy")
+                          ) : (
+                            <span>Seleccionar fecha</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date > new Date() || date < new Date("1900-01-01")
+                        }
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="level"
-              rules={{ required: 'Level is required' }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Level</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select level" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="escuela_menores">Escuela Menores</SelectItem>
-                      <SelectItem value="transicion">Transición</SelectItem>
-                      <SelectItem value="mayores">Mayores</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Calculated Age, Category, and Level Display */}
+            {calculatedAge !== null && (
+              <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
+                <h4 className="text-sm font-medium">Información Calculada:</h4>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Edad:</span>
+                    <p className="font-medium">{calculatedAge} años</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Categoría:</span>
+                    <p className="font-medium">{getCategoryDisplayName(calculatedCategory)}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Nivel:</span>
+                    <p className="font-medium">{getLevelDisplayName(calculatedLevel)}</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <DialogFooter>
               <Button 
@@ -213,10 +267,10 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
                 onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
               >
-                Cancel
+                Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Adding...' : 'Add Athlete'}
+              <Button type="submit" disabled={isSubmitting || !dateOfBirth}>
+                {isSubmitting ? 'Agregando...' : 'Agregar Atleta'}
               </Button>
             </DialogFooter>
           </form>

@@ -20,6 +20,7 @@ export type Database = {
           athlete_number: string | null
           category: Database["public"]["Enums"]["athlete_category"]
           created_at: string
+          date_of_birth: string | null
           email: string | null
           emergency_contact_name: string | null
           emergency_contact_phone: string | null
@@ -40,6 +41,7 @@ export type Database = {
           athlete_number?: string | null
           category: Database["public"]["Enums"]["athlete_category"]
           created_at?: string
+          date_of_birth?: string | null
           email?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
@@ -60,6 +62,7 @@ export type Database = {
           athlete_number?: string | null
           category?: Database["public"]["Enums"]["athlete_category"]
           created_at?: string
+          date_of_birth?: string | null
           email?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
@@ -1085,7 +1088,17 @@ export type Database = {
       }
     }
     Enums: {
-      athlete_category: "youth" | "junior" | "senior" | "masters"
+      athlete_category:
+        | "youth"
+        | "junior"
+        | "senior"
+        | "masters"
+        | "escuela"
+        | "menores"
+        | "transicion"
+        | "prejuvenil"
+        | "juvenil"
+        | "mayores"
       athlete_level:
         | "beginner"
         | "intermediate"
@@ -1094,6 +1107,17 @@ export type Database = {
         | "escuela_menores"
         | "transicion"
         | "mayores"
+        | "escuela"
+        | "mini_infantil"
+        | "pre_infantil"
+        | "infantil"
+        | "junior"
+        | "pre_juvenil"
+        | "prejuveniles"
+        | "juvenil_primer_ano"
+        | "juvenil_segundo_ano"
+        | "juvenil_tercer_ano"
+        | "mayores_unica"
       athlete_status: "active" | "inactive" | "injured" | "suspended"
       competition_status: "upcoming" | "ongoing" | "completed" | "cancelled"
       payment_status: "pending" | "paid" | "overdue" | "cancelled"
@@ -1238,7 +1262,18 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      athlete_category: ["youth", "junior", "senior", "masters"],
+      athlete_category: [
+        "youth",
+        "junior",
+        "senior",
+        "masters",
+        "escuela",
+        "menores",
+        "transicion",
+        "prejuvenil",
+        "juvenil",
+        "mayores",
+      ],
       athlete_level: [
         "beginner",
         "intermediate",
@@ -1247,6 +1282,17 @@ export const Constants = {
         "escuela_menores",
         "transicion",
         "mayores",
+        "escuela",
+        "mini_infantil",
+        "pre_infantil",
+        "infantil",
+        "junior",
+        "pre_juvenil",
+        "prejuveniles",
+        "juvenil_primer_ano",
+        "juvenil_segundo_ano",
+        "juvenil_tercer_ano",
+        "mayores_unica",
       ],
       athlete_status: ["active", "inactive", "injured", "suspended"],
       competition_status: ["upcoming", "ongoing", "completed", "cancelled"],
