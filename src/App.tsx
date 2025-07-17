@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -27,11 +28,12 @@ import Reports from "./pages/Reports";
 
 const queryClient = new QueryClient();
 
-// Componente para proteger rutas
-const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
+// Componente para redirigir usuarios según su rol
+const RoleBasedRedirect = () => {
   const { user, loading } = useAuth();
+  const { profile, loading: profileLoading } = useUserProfile();
   
-  if (loading) {
+  if (loading || profileLoading) {
     return <div className="flex items-center justify-center min-h-screen">Cargando...</div>;
   }
   
@@ -39,7 +41,64 @@ const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode,
     return <Navigate to="/login" replace />;
   }
 
-  // For now, allow all authenticated users - roles will be checked via database
+  // Redirect based on user role
+  if (profile?.role) {
+    switch (profile.role) {
+      case 'admin':
+        return <Navigate to="/admin-dashboard" replace />;
+      case 'coach':
+        return <Navigate to="/coach-dashboard" replace />;
+      case 'athlete':
+        return <Navigate to="/athlete-dashboard" replace />;
+      case 'delegate':
+        return <Navigate to="/delegate-dashboard" replace />;
+      case 'leader':
+        return <Navigate to="/leader-dashboard" replace />;
+      case 'finance':
+        return <Navigate to="/finance-dashboard" replace />;
+      default:
+        return <Navigate to="/athlete-dashboard" replace />;
+    }
+  }
+  
+  // Default fallback
+  return <Navigate to="/athlete-dashboard" replace />;
+};
+
+// Componente para proteger rutas
+const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
+  const { user, loading } = useAuth();
+  const { profile, loading: profileLoading } = useUserProfile();
+  
+  if (loading || profileLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Cargando...</div>;
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Check role-based access if allowedRoles is specified
+  if (allowedRoles && profile?.role && !allowedRoles.includes(profile.role)) {
+    // Redirect to user's appropriate dashboard
+    switch (profile.role) {
+      case 'admin':
+        return <Navigate to="/admin-dashboard" replace />;
+      case 'coach':
+        return <Navigate to="/coach-dashboard" replace />;
+      case 'athlete':
+        return <Navigate to="/athlete-dashboard" replace />;
+      case 'delegate':
+        return <Navigate to="/delegate-dashboard" replace />;
+      case 'leader':
+        return <Navigate to="/leader-dashboard" replace />;
+      case 'finance':
+        return <Navigate to="/finance-dashboard" replace />;
+      default:
+        return <Navigate to="/athlete-dashboard" replace />;
+    }
+  }
+
   return <>{children}</>;
 };
 
@@ -58,18 +117,60 @@ const App = () => (
           <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
             <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<RoleBasedRedirect />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/athletes" element={<Athletes />} />
-          <Route path="/training" element={<Training />} />
-          <Route path="/training/calendar" element={<TrainingCalendar />} />
-          <Route path="/competitions" element={<Competitions />} />
-          <Route path="/finance" element={<Finance />} />
-          <Route path="/settings" element={<Settings />} />
+          <Route 
+            path="/athletes" 
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'coach', 'leader']}>
+                <Athletes />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/training" 
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'coach', 'athlete', 'leader']}>
+                <Training />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/training/calendar" 
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'coach', 'athlete', 'leader']}>
+                <TrainingCalendar />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/competitions" 
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'delegate', 'coach', 'athlete', 'leader']}>
+                <Competitions />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/finance" 
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'finance', 'leader']}>
+                <Finance />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/settings" 
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            } 
+          />
           <Route 
             path="/club-config" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'leader']}>
                 <ClubConfig />
               </ProtectedRoute>
             } 
@@ -77,7 +178,7 @@ const App = () => (
           <Route 
             path="/user-management" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'leader']}>
                 <UserManagement />
               </ProtectedRoute>
             } 
@@ -85,7 +186,7 @@ const App = () => (
           <Route 
             path="/admin-dashboard" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin']}>
                 <AdminDashboard />
               </ProtectedRoute>
             } 
@@ -93,7 +194,7 @@ const App = () => (
           <Route 
             path="/coach-dashboard" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['coach']}>
                 <CoachDashboard />
               </ProtectedRoute>
             } 
@@ -101,7 +202,7 @@ const App = () => (
           <Route 
             path="/athlete-dashboard" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['athlete']}>
                 <AthleteDashboard />
               </ProtectedRoute>
             } 
@@ -109,7 +210,7 @@ const App = () => (
           <Route 
             path="/delegate-dashboard" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['delegate']}>
                 <DelegateDashboard />
               </ProtectedRoute>
             } 
@@ -117,7 +218,7 @@ const App = () => (
           <Route 
             path="/finance-dashboard" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['finance']}>
                 <FinanceDashboard />
               </ProtectedRoute>
             } 
@@ -125,7 +226,7 @@ const App = () => (
           <Route 
             path="/leader-dashboard" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['leader']}>
                 <LeaderDashboard />
               </ProtectedRoute>
             } 
@@ -133,7 +234,7 @@ const App = () => (
           <Route 
             path="/reports" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['admin', 'leader', 'finance']}>
                 <Reports />
               </ProtectedRoute>
             } 

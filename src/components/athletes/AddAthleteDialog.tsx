@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -18,7 +17,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Calendar } from '@/components/ui/calendar';
 import {
   Popover,
   PopoverContent,
@@ -37,6 +35,7 @@ import {
   getLevelDisplayName
 } from '@/utils/ageCalculations';
 import DatePickerWithYearMonth from '@/components/ui/date-picker-with-year-month';
+import { useCreateUser, CreateUserData } from '@/hooks/useCreateUser';
 
 interface AddAthleteDialogProps {
   open: boolean;
@@ -48,11 +47,12 @@ interface AthleteFormData {
   firstName: string;
   lastName: string;
   email: string;
+  password: string;
   dateOfBirth: Date | undefined;
 }
 
 const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDialogProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { createUser, loading } = useCreateUser();
   const [calculatedAge, setCalculatedAge] = useState<number | null>(null);
   const [calculatedCategory, setCalculatedCategory] = useState<string>('');
   const [calculatedLevel, setCalculatedLevel] = useState<string>('');
@@ -62,6 +62,7 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
       firstName: '',
       lastName: '',
       email: '',
+      password: '',
       dateOfBirth: undefined,
     },
   });
@@ -91,45 +92,30 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
       return;
     }
 
-    setIsSubmitting(true);
+    // Create a full user account with athlete role
+    const createUserData: CreateUserData = {
+      email: data.email,
+      password: data.password,
+      first_name: data.firstName,
+      last_name: data.lastName,
+      role: 'athlete',
+      date_of_birth: format(data.dateOfBirth, 'yyyy-MM-dd'),
+    };
+
+    const result = await createUser(createUserData);
     
-    try {
-      // Create the athlete record with personal information
-      const { error: athleteError } = await supabase
-        .from('athletes')
-        .insert({
-          first_name: data.firstName,
-          last_name: data.lastName,
-          email: data.email,
-          date_of_birth: format(data.dateOfBirth, 'yyyy-MM-dd'),
-          category: calculatedCategory as any,
-          level: calculatedLevel as any,
-          status: 'active',
-          performance_score: 0
-        });
-
-      if (athleteError) {
-        console.error('Error creating athlete:', athleteError);
-        throw athleteError;
-      }
-
-      // Notify parent component to refresh data
-      onAthleteAdded();
-      
-      // Show success message
-      toast.success('Athlete added successfully!');
-      
+    if (result.success) {
       // Reset form and close dialog
       form.reset();
       setCalculatedAge(null);
       setCalculatedCategory('');
       setCalculatedLevel('');
       onOpenChange(false);
-    } catch (error) {
-      console.error('Error adding athlete:', error);
-      toast.error('Failed to add athlete. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+      
+      // Notify parent component to refresh data
+      onAthleteAdded();
+      
+      toast.success('Atleta creado exitosamente con cuenta de acceso');
     }
   };
 
@@ -190,6 +176,27 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
                   <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input type="email" placeholder="Ingrese el email del atleta" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="password"
+              rules={{ 
+                required: 'La contraseña es requerida',
+                minLength: {
+                  value: 6,
+                  message: 'La contraseña debe tener al menos 6 caracteres'
+                }
+              }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contraseña</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="Contraseña para acceso del atleta" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -263,12 +270,12 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
                 type="button" 
                 variant="outline" 
                 onClick={() => onOpenChange(false)}
-                disabled={isSubmitting}
+                disabled={loading}
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting || !dateOfBirth}>
-                {isSubmitting ? 'Agregando...' : 'Agregar Atleta'}
+              <Button type="submit" disabled={loading || !dateOfBirth}>
+                {loading ? 'Creando...' : 'Crear Atleta'}
               </Button>
             </DialogFooter>
           </form>
