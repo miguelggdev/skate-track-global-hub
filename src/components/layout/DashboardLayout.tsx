@@ -42,7 +42,8 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
 
   // Filter navigation items based on user role
   const getVisibleNavigationItems = () => {
-    if (!profile) return allNavigationItems;
+    // Hide "Configurar Club" during loading and for restricted roles
+    if (!profile) return allNavigationItems.filter(item => item.title !== "Configurar Club");
 
     // Hide "Configurar Club" for athlete, delegate, and finance roles
     const restrictedRoles = ['athlete', 'delegate', 'finance'];
