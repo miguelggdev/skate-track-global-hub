@@ -5,6 +5,7 @@ import { Menu, Home, Users, Calendar, Trophy, DollarSign, Settings, Cog, LogOut 
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import TopNavigation from './TopNavigation';
 
 interface DashboardLayoutProps {
@@ -17,6 +18,7 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signOut, user } = useAuth();
+  const { profile } = useUserProfile();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
   const handleLogout = async () => {
@@ -28,7 +30,7 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
     navigate('/login');
   };
 
-  const navigationItems = [
+  const allNavigationItems = [
     { title: "Dashboard", icon: Home, path: "/" },
     { title: "Athletes", icon: Users, path: "/athletes" },
     { title: "Training", icon: Calendar, path: "/training" },
@@ -37,6 +39,22 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
     { title: "Configurar Club", icon: Cog, path: "/club-config" },
     { title: "Settings", icon: Settings, path: "/settings" },
   ];
+
+  // Filter navigation items based on user role
+  const getVisibleNavigationItems = () => {
+    if (!profile) return allNavigationItems;
+
+    // Hide "Configurar Club" for athlete, delegate, and finance roles
+    const restrictedRoles = ['athlete', 'delegate', 'finance'];
+    
+    if (restrictedRoles.includes(profile.role)) {
+      return allNavigationItems.filter(item => item.title !== "Configurar Club");
+    }
+    
+    return allNavigationItems;
+  };
+
+  const navigationItems = getVisibleNavigationItems();
 
   return (
     <div className="flex h-screen bg-background dark:bg-gray-900 overflow-hidden">
