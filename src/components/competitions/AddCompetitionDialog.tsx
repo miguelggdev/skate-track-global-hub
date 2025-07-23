@@ -54,18 +54,18 @@ const CATEGORY_OPTIONS = [
 const LEVEL_OPTIONS = {
   escuela: [{ value: 'escuela', label: 'Escuela' }],
   menores: [
-    { value: '7_anos', label: '7 años' },
-    { value: '8_anos', label: '8 años' },
-    { value: '9_anos', label: '9 años' },
-    { value: '10_anos', label: '10 años' }
+    { value: 'mini_infantil', label: '7 años' },
+    { value: 'pre_infantil', label: '8 años' },
+    { value: 'infantil', label: '9 años' },
+    { value: 'infantil', label: '10 años' }
   ],
   transicion: [
-    { value: '11_anos', label: '11 años' },
-    { value: '12_anos', label: '12 años' },
-    { value: '13_anos', label: '13 años' }
+    { value: 'junior', label: '11 años' },
+    { value: 'pre_juvenil', label: '12 años' },
+    { value: 'prejuveniles', label: '13 años' }
   ],
   mayores: [
-    { value: 'prejuvenil', label: 'Prejuvenil' },
+    { value: 'prejuveniles', label: 'Prejuvenil' },
     { value: 'juvenil_primer_ano', label: 'Juvenil 1' },
     { value: 'juvenil_segundo_ano', label: 'Juvenil 2' },
     { value: 'juvenil_tercer_ano', label: 'Juvenil 3' },
