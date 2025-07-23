@@ -1,28 +1,27 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
-interface UpcomingEvent {
-  name: string;
-  date: string;
-  time: string;
-  priority: 'high' | 'medium' | 'low';
-}
+import { useUpcomingCompetitions } from '@/hooks/useCompetitions';
+import { format } from 'date-fns';
+import { Loader2 } from 'lucide-react';
 
 const UpcomingEvents = () => {
-  const upcomingEvents: UpcomingEvent[] = [
-    { name: "Winter Speed Championship", date: "Feb 15", time: "09:00 AM", priority: "high" },
-    { name: "Regional Speed Trials", date: "Jan 28", time: "10:30 AM", priority: "medium" },
-    { name: "Training Camp Selection", date: "Feb 01", time: "02:00 PM", priority: "high" },
-    { name: "Equipment Check", date: "Jan 25", time: "08:00 AM", priority: "low" },
-  ];
+  const { data: competitions = [], isLoading, error } = useUpcomingCompetitions();
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'bg-red-500';
-      case 'medium': return 'bg-yellow-500';
-      case 'low': return 'bg-blue-500';
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'registration-open': return 'bg-green-500';
+      case 'upcoming': return 'bg-blue-500';
+      case 'ongoing': return 'bg-orange-500';
       default: return 'bg-gray-500';
     }
+  };
+
+  const getDaysUntil = (startDate: string) => {
+    const today = new Date();
+    const eventDate = new Date(startDate);
+    const diffTime = eventDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
   };
 
   return (
@@ -31,17 +30,37 @@ const UpcomingEvents = () => {
         <CardTitle className="text-lg font-semibold text-gray-800">Upcoming Events</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {upcomingEvents.map((event, index) => (
-          <div key={index} className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className={`w-3 h-3 rounded-full ${getPriorityColor(event.priority)}`}></div>
-              <div>
-                <p className="font-medium text-gray-800">{event.name}</p>
-                <p className="text-sm text-gray-600">{event.date} at {event.time}</p>
-              </div>
-            </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
-        ))}
+        ) : error ? (
+          <div className="flex items-center justify-center h-32">
+            <p className="text-red-500 text-sm">Error loading events</p>
+          </div>
+        ) : competitions.length === 0 ? (
+          <div className="flex items-center justify-center h-32">
+            <p className="text-gray-500 text-sm">No upcoming events</p>
+          </div>
+        ) : (
+          competitions.slice(0, 5).map((competition) => {
+            const daysUntil = getDaysUntil(competition.start_date);
+            return (
+              <div key={competition.id} className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-3 h-3 rounded-full ${getStatusColor(competition.status)}`}></div>
+                  <div>
+                    <p className="font-medium text-gray-800">{competition.name}</p>
+                    <p className="text-sm text-gray-600">
+                      {format(new Date(competition.start_date), 'MMM dd')} 
+                      {daysUntil >= 0 ? ` (${daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `in ${daysUntil} days`})` : ' (Past)'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
       </CardContent>
     </Card>
   );

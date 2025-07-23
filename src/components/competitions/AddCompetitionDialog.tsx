@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { CalendarIcon, Plus } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { useCreateCompetition } from '@/hooks/useCompetitions';
 import { useToast } from '@/hooks/use-toast';
 
 import {
@@ -102,7 +102,7 @@ interface AddCompetitionDialogProps {
 
 export function AddCompetitionDialog({ onCompetitionAdded }: AddCompetitionDialogProps) {
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const createCompetitionMutation = useCreateCompetition();
   const { toast } = useToast();
 
   const form = useForm<CompetitionFormValues>({
@@ -123,8 +123,6 @@ export function AddCompetitionDialog({ onCompetitionAdded }: AddCompetitionDialo
 
   const onSubmit = async (values: CompetitionFormValues) => {
     try {
-      setLoading(true);
-      
       const competitionData = {
         name: values.name,
         description: values.description || null,
@@ -141,31 +139,14 @@ export function AddCompetitionDialog({ onCompetitionAdded }: AddCompetitionDialo
         status: 'upcoming' as const,
       };
 
-      const { error } = await supabase
-        .from('competitions')
-        .insert([competitionData]);
-
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: 'Success',
-        description: 'Competition created successfully',
-      });
+      await createCompetitionMutation.mutateAsync(competitionData);
 
       form.reset();
       setOpen(false);
       onCompetitionAdded?.();
     } catch (error) {
+      // Error handling is done in the mutation hook
       console.error('Error creating competition:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to create competition. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -504,16 +485,16 @@ export function AddCompetitionDialog({ onCompetitionAdded }: AddCompetitionDialo
                 type="button"
                 variant="outline"
                 onClick={() => setOpen(false)}
-                disabled={loading}
+                disabled={createCompetitionMutation.isPending}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={createCompetitionMutation.isPending}
                 className="argon-gradient-blue text-white hover:opacity-90"
               >
-                {loading ? 'Creating...' : 'Create Competition'}
+                {createCompetitionMutation.isPending ? 'Creating...' : 'Create Competition'}
               </Button>
             </DialogFooter>
           </form>

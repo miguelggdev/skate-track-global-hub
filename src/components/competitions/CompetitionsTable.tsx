@@ -2,89 +2,51 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MapPin, Search, Filter, Edit, MoreHorizontal } from 'lucide-react';
+import { MapPin, Search, Filter, Edit, MoreHorizontal, Loader2 } from 'lucide-react';
+import { useCompetitions, useCompetitionRegistrations } from '@/hooks/useCompetitions';
+import { format } from 'date-fns';
 
-interface Competition {
-  id: number;
-  name: string;
-  date: string;
-  location: string;
-  category: string;
-  participants: number;
-  status: string;
-  type: string;
-}
 
 const CompetitionsTable = () => {
   const [searchTerm, setSearchTerm] = useState('');
-
-  const competitions: Competition[] = [
-    {
-      id: 1,
-      name: "Winter Speed Championship",
-      date: "2024-02-15",
-      location: "Olympic Ice Rink",
-      category: "Senior",
-      participants: 45,
-      status: "Upcoming",
-      type: "Championship"
-    },
-    {
-      id: 2,
-      name: "Regional Speed Trials",
-      date: "2024-01-28",
-      location: "City Ice Arena",
-      category: "Junior",
-      participants: 32,
-      status: "Registration Open",
-      type: "Regional"
-    },
-    {
-      id: 3,
-      name: "International Speed Cup",
-      date: "2024-03-10",
-      location: "National Stadium",
-      category: "Elite",
-      participants: 78,
-      status: "Upcoming",
-      type: "International"
-    },
-    {
-      id: 4,
-      name: "Youth Development Meet",
-      date: "2024-01-20",
-      location: "Training Center",
-      category: "Youth",
-      participants: 28,
-      status: "Completed",
-      type: "Development"
-    },
-    {
-      id: 5,
-      name: "Spring Sprint Series",
-      date: "2024-04-05",
-      location: "Sports Complex",
-      category: "Open",
-      participants: 56,
-      status: "Registration Open",
-      type: "Series"
-    }
-  ];
+  const { data: competitions = [], isLoading, error } = useCompetitions();
+  const { data: registrationCounts = {} } = useCompetitionRegistrations();
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Upcoming': return 'bg-blue-100 text-blue-800';
-      case 'Registration Open': return 'bg-green-100 text-green-800';
-      case 'Completed': return 'bg-gray-100 text-gray-800';
+      case 'upcoming': return 'bg-blue-100 text-blue-800';
+      case 'registration-open': return 'bg-green-100 text-green-800';
+      case 'ongoing': return 'bg-orange-100 text-orange-800';
+      case 'completed': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'upcoming': return 'Upcoming';
+      case 'registration-open': return 'Registration Open';
+      case 'ongoing': return 'Ongoing';
+      case 'completed': return 'Completed';
+      default: return status;
     }
   };
 
   const filteredCompetitions = competitions.filter(competition =>
     competition.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     competition.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    competition.category.toLowerCase().includes(searchTerm.toLowerCase())
+    (competition.category && competition.category.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  if (error) {
+    return (
+      <Card className="lg:col-span-2 argon-card">
+        <CardContent className="flex items-center justify-center h-64">
+          <p className="text-red-500">Error loading competitions. Please try again.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="lg:col-span-2 argon-card">
@@ -109,57 +71,73 @@ const CompetitionsTable = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 font-medium text-gray-600">Competition</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600">Date</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600">Category</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600">Participants</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600">Status</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredCompetitions.map((competition) => (
-                <tr key={competition.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-3 px-4">
-                    <div>
-                      <p className="font-medium text-gray-800">{competition.name}</p>
-                      <p className="text-sm text-gray-600 flex items-center">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        {competition.location}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-gray-600">{competition.date}</td>
-                  <td className="py-3 px-4">
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                      {competition.category}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-gray-600">{competition.participants}</td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(competition.status)}`}>
-                      {competition.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center space-x-2">
-                      <Button variant="outline" size="sm">
-                        <Edit className="h-3 w-3" />
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <MoreHorizontal className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </td>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : filteredCompetitions.length === 0 ? (
+          <div className="flex items-center justify-center h-64">
+            <p className="text-gray-500">No competitions found.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Competition</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Date</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Category</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Participants</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Status</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filteredCompetitions.map((competition) => (
+                  <tr key={competition.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="py-3 px-4">
+                      <div>
+                        <p className="font-medium text-gray-800">{competition.name}</p>
+                        <p className="text-sm text-gray-600 flex items-center">
+                          <MapPin className="h-3 w-3 mr-1" />
+                          {competition.location}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-gray-600">
+                      {format(new Date(competition.start_date), 'MMM dd, yyyy')}
+                    </td>
+                    <td className="py-3 px-4">
+                      {competition.category && (
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                          {competition.category}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-gray-600">
+                      {registrationCounts[competition.id] || 0}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(competition.status)}`}>
+                        {getStatusLabel(competition.status)}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center space-x-2">
+                        <Button variant="outline" size="sm">
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <MoreHorizontal className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
