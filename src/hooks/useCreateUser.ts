@@ -34,6 +34,7 @@ export const useCreateUser = () => {
             first_name: data.first_name,
             last_name: data.last_name,
             role: data.role,
+            date_of_birth: data.date_of_birth,
           },
         }
       });
