@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/AdminDashboard";
 import CoachDashboard from "./pages/CoachDashboard";
 import AthleteDashboard from "./pages/AthleteDashboard";
@@ -119,6 +120,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<RoleBasedRedirect />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route 
             path="/athletes" 
             element={
