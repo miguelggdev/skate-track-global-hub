@@ -11,7 +11,7 @@ export interface Competition {
   location: string;
   category?: string;
   level?: string;
-  status: 'upcoming' | 'ongoing' | 'completed' | 'registration-open';
+  status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
   max_participants?: number;
   entry_fee?: number;
   prize_pool?: number;
@@ -66,7 +66,7 @@ export const useUpcomingCompetitions = () => {
       const { data, error } = await supabase
         .from('competitions')
         .select('*')
-        .or(`start_date.gte.${today},status.eq.registration-open`)
+        .gte('start_date', today)
         .order('start_date', { ascending: true })
         .limit(10);
 
