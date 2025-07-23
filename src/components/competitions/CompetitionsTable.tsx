@@ -2,22 +2,37 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MapPin, Search, Filter, Edit, MoreHorizontal, Loader2 } from 'lucide-react';
-import { useCompetitions, useCompetitionRegistrations } from '@/hooks/useCompetitions';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { MapPin, Search, Filter, Edit, MoreHorizontal, Loader2, Trash2 } from 'lucide-react';
+import { useCompetitions, useCompetitionRegistrations, useDeleteCompetition } from '@/hooks/useCompetitions';
 import { format } from 'date-fns';
+import { EditCompetitionDialog } from './EditCompetitionDialog';
+import { CompetitionPDFReport } from './CompetitionPDFReport';
 
 
 const CompetitionsTable = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [deletingCompetition, setDeletingCompetition] = useState<string | null>(null);
   const { data: competitions = [], isLoading, error } = useCompetitions();
   const { data: registrationCounts = {} } = useCompetitionRegistrations();
+  const deleteCompetition = useDeleteCompetition();
+
+  const handleDeleteCompetition = async (competitionId: string) => {
+    try {
+      await deleteCompetition.mutateAsync(competitionId);
+      setDeletingCompetition(null);
+    } catch (error) {
+      console.error('Error deleting competition:', error);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'upcoming': return 'bg-blue-100 text-blue-800';
-      case 'registration-open': return 'bg-green-100 text-green-800';
       case 'ongoing': return 'bg-orange-100 text-orange-800';
       case 'completed': return 'bg-gray-100 text-gray-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -25,9 +40,9 @@ const CompetitionsTable = () => {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'upcoming': return 'Upcoming';
-      case 'registration-open': return 'Registration Open';
       case 'ongoing': return 'Ongoing';
       case 'completed': return 'Completed';
+      case 'cancelled': return 'Cancelled';
       default: return status;
     }
   };
@@ -124,12 +139,27 @@ const CompetitionsTable = () => {
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <MoreHorizontal className="h-3 w-3" />
-                        </Button>
+                        <EditCompetitionDialog competition={competition} />
+                        <CompetitionPDFReport 
+                          competitionId={competition.id} 
+                          competitionName={competition.name}
+                        />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <MoreHorizontal className="h-3 w-3" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => setDeletingCompetition(competition.id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Competition
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </td>
                   </tr>
@@ -139,6 +169,29 @@ const CompetitionsTable = () => {
           </div>
         )}
       </CardContent>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingCompetition} onOpenChange={() => setDeletingCompetition(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Competition</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this competition? This action cannot be undone.
+              All associated registrations will also be deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingCompetition && handleDeleteCompetition(deletingCompetition)}
+              disabled={deleteCompetition.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteCompetition.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };

@@ -162,6 +162,64 @@ export const useCreateCompetitionWithParticipants = () => {
   });
 };
 
+// Hook to update a competition
+export const useUpdateCompetition = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...competitionData }: CompetitionFormData & { id: string }) => {
+      const { data, error } = await supabase
+        .from('competitions')
+        .update(competitionData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating competition:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['competitions'] });
+      toast.success('Competition updated successfully!');
+    },
+    onError: (error: any) => {
+      console.error('Failed to update competition:', error);
+      toast.error('Failed to update competition. Please try again.');
+    },
+  });
+};
+
+// Hook to delete a competition
+export const useDeleteCompetition = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (competitionId: string) => {
+      const { error } = await supabase
+        .from('competitions')
+        .delete()
+        .eq('id', competitionId);
+
+      if (error) {
+        console.error('Error deleting competition:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['competitions'] });
+      toast.success('Competition deleted successfully!');
+    },
+    onError: (error: any) => {
+      console.error('Failed to delete competition:', error);
+      toast.error('Failed to delete competition. Please try again.');
+    },
+  });
+};
+
 // Hook to get competition registration counts
 export const useCompetitionRegistrations = () => {
   return useQuery({
@@ -187,5 +245,87 @@ export const useCompetitionRegistrations = () => {
 
       return registrationCounts;
     },
+  });
+};
+
+// Hook to get competition PDF data
+export const useCompetitionPDFData = (competitionId: string) => {
+  return useQuery({
+    queryKey: ['competition-pdf-data', competitionId],
+    queryFn: async () => {
+      // Fetch competition data
+      const { data: competition, error: competitionError } = await supabase
+        .from('competitions')
+        .select('*')
+        .eq('id', competitionId)
+        .single();
+
+      if (competitionError) {
+        throw competitionError;
+      }
+
+      // Fetch club settings
+      const { data: clubSettings, error: clubError } = await supabase
+        .from('club_settings')
+        .select('*')
+        .limit(1)
+        .single();
+
+      if (clubError) {
+        throw clubError;
+      }
+
+      // Fetch registered athletes with gender and age calculation
+      const { data: registrations, error: registrationError } = await supabase
+        .from('competition_registrations')
+        .select(`
+          athlete_id,
+          athletes!inner(
+            id,
+            first_name,
+            last_name,
+            date_of_birth,
+            gender,
+            category,
+            level
+          )
+        `)
+        .eq('competition_id', competitionId);
+
+      if (registrationError) {
+        throw registrationError;
+      }
+
+      // Process athletes data
+      const athletes = registrations.map(reg => {
+        const athlete = reg.athletes;
+        const age = athlete.date_of_birth 
+          ? new Date().getFullYear() - new Date(athlete.date_of_birth).getFullYear()
+          : 0;
+        
+        return {
+          ...athlete,
+          age,
+          gender: athlete.gender || 'masculino' // default if null
+        };
+      });
+
+      // Separate and sort by gender and age
+      const damas = athletes
+        .filter(a => a.gender === 'femenino')
+        .sort((a, b) => a.age - b.age);
+      
+      const varones = athletes
+        .filter(a => a.gender === 'masculino')
+        .sort((a, b) => a.age - b.age);
+
+      return {
+        competition,
+        clubSettings,
+        damas,
+        varones
+      };
+    },
+    enabled: !!competitionId,
   });
 };

@@ -25,6 +25,7 @@ export type Database = {
           emergency_contact_name: string | null
           emergency_contact_phone: string | null
           first_name: string | null
+          gender: Database["public"]["Enums"]["athlete_gender"] | null
           id: string
           join_date: string
           last_name: string | null
@@ -46,6 +47,7 @@ export type Database = {
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
           first_name?: string | null
+          gender?: Database["public"]["Enums"]["athlete_gender"] | null
           id?: string
           join_date?: string
           last_name?: string | null
@@ -67,6 +69,7 @@ export type Database = {
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
           first_name?: string | null
+          gender?: Database["public"]["Enums"]["athlete_gender"] | null
           id?: string
           join_date?: string
           last_name?: string | null
@@ -1099,6 +1102,7 @@ export type Database = {
         | "prejuvenil"
         | "juvenil"
         | "mayores"
+      athlete_gender: "masculino" | "femenino"
       athlete_level:
         | "beginner"
         | "intermediate"
@@ -1274,6 +1278,7 @@ export const Constants = {
         "juvenil",
         "mayores",
       ],
+      athlete_gender: ["masculino", "femenino"],
       athlete_level: [
         "beginner",
         "intermediate",
