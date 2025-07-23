@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User } from 'lucide-react';
+import { User, Loader2 } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { useCurrentAthlete } from '@/hooks/useCurrentAthlete';
 
 // Import tab components
 import { ProfileTab } from '@/components/athletes/dashboard/ProfileTab';
@@ -20,16 +21,32 @@ import { HobbiesTab } from '@/components/athletes/dashboard/HobbiesTab';
 
 const AthleteDashboard = () => {
   const [activeTab, setActiveTab] = useState('profile');
+  const { athlete, loading, error } = useCurrentAthlete();
 
-  // Mock data for the athlete
-  const athleteData = {
-    name: "Juan Pérez",
-    age: 16,
-    category: "Juvenil",
-    club: "SpeedSkate Academy",
-    email: "juan.perez@email.com",
-    phone: "3001234567"
-  };
+  if (loading) {
+    return (
+      <DashboardLayout title="Mi Perfil Deportivo" userRole="Deportista">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error || !athlete) {
+    return (
+      <DashboardLayout title="Mi Perfil Deportivo" userRole="Deportista">
+        <Card>
+          <CardHeader>
+            <CardTitle>Error</CardTitle>
+            <CardDescription>
+              {error || 'No se encontró información del deportista'}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout title="Mi Perfil Deportivo" userRole="Deportista">
@@ -42,9 +59,11 @@ const AthleteDashboard = () => {
                 <User className="h-8 w-8 text-blue-600" />
               </div>
               <div>
-                <CardTitle className="text-2xl">¡Hola, {athleteData.name}!</CardTitle>
+                <CardTitle className="text-2xl">
+                  ¡Hola, {athlete.first_name} {athlete.last_name}!
+                </CardTitle>
                 <CardDescription>
-                  {athleteData.category} • {athleteData.club}
+                  {athlete.category} • {athlete.level}
                 </CardDescription>
               </div>
             </div>
@@ -68,7 +87,7 @@ const AthleteDashboard = () => {
           </TabsList>
 
           <TabsContent value="profile">
-            <ProfileTab athleteData={athleteData} />
+            <ProfileTab athlete={athlete} />
           </TabsContent>
 
           <TabsContent value="body">
@@ -76,7 +95,7 @@ const AthleteDashboard = () => {
           </TabsContent>
 
           <TabsContent value="contact">
-            <ContactTab athleteData={athleteData} />
+            <ContactTab athlete={athlete} />
           </TabsContent>
 
           <TabsContent value="studies">
