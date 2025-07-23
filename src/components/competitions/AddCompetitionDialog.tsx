@@ -41,6 +41,37 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
+
+// Category and level mappings
+const CATEGORY_OPTIONS = [
+  { value: 'escuela', label: 'Escuela' },
+  { value: 'menores', label: 'Menores' },
+  { value: 'transicion', label: 'Transición' },
+  { value: 'mayores', label: 'Mayores' }
+] as const;
+
+const LEVEL_OPTIONS = {
+  escuela: [{ value: 'escuela', label: 'Escuela' }],
+  menores: [
+    { value: '7_anos', label: '7 años' },
+    { value: '8_anos', label: '8 años' },
+    { value: '9_anos', label: '9 años' },
+    { value: '10_anos', label: '10 años' }
+  ],
+  transicion: [
+    { value: '11_anos', label: '11 años' },
+    { value: '12_anos', label: '12 años' },
+    { value: '13_anos', label: '13 años' }
+  ],
+  mayores: [
+    { value: 'prejuvenil', label: 'Prejuvenil' },
+    { value: 'juvenil_primer_ano', label: 'Juvenil 1' },
+    { value: 'juvenil_segundo_ano', label: 'Juvenil 2' },
+    { value: 'juvenil_tercer_ano', label: 'Juvenil 3' },
+    { value: 'mayores_unica', label: 'Mayores' }
+  ]
+} as const;
 
 const competitionSchema = z.object({
   name: z.string().min(1, 'Competition name is required'),
@@ -52,8 +83,8 @@ const competitionSchema = z.object({
   end_date: z.date({
     required_error: 'End date is required',
   }),
-  category: z.enum(['youth', 'junior', 'senior', 'masters']).optional(),
-  level: z.enum(['escuela_menores', 'transicion', 'mayores']).optional(),
+  category: z.enum(['escuela', 'menores', 'transicion', 'mayores']).optional(),
+  level: z.array(z.string()).optional(),
   entry_fee: z.string().optional(),
   prize_pool: z.string().optional(),
   max_participants: z.string().optional(),
@@ -83,8 +114,12 @@ export function AddCompetitionDialog({ onCompetitionAdded }: AddCompetitionDialo
       entry_fee: '',
       prize_pool: '',
       max_participants: '',
+      level: [],
     },
   });
+
+  // Watch category changes to reset levels
+  const selectedCategory = form.watch('category');
 
   const onSubmit = async (values: CompetitionFormValues) => {
     try {
@@ -97,7 +132,7 @@ export function AddCompetitionDialog({ onCompetitionAdded }: AddCompetitionDialo
         start_date: values.start_date.toISOString().split('T')[0],
         end_date: values.end_date.toISOString().split('T')[0],
         category: values.category || null,
-        level: values.level || null,
+        level: values.level && values.level.length > 0 ? values.level[0] as any : null,
         entry_fee: values.entry_fee ? parseFloat(values.entry_fee) : null,
         prize_pool: values.prize_pool ? parseFloat(values.prize_pool) : null,
         max_participants: values.max_participants ? parseInt(values.max_participants) : null,
@@ -295,17 +330,25 @@ export function AddCompetitionDialog({ onCompetitionAdded }: AddCompetitionDialo
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select 
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        // Reset levels when category changes
+                        form.setValue('level', []);
+                      }} 
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="youth">Youth</SelectItem>
-                        <SelectItem value="junior">Junior</SelectItem>
-                        <SelectItem value="senior">Senior</SelectItem>
-                        <SelectItem value="masters">Masters</SelectItem>
+                        {CATEGORY_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -319,18 +362,36 @@ export function AddCompetitionDialog({ onCompetitionAdded }: AddCompetitionDialo
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Level</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select level" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="escuela_menores">Escuela Menores</SelectItem>
-                        <SelectItem value="transicion">Transición</SelectItem>
-                        <SelectItem value="mayores">Mayores</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <div className="space-y-2">
+                        {selectedCategory && LEVEL_OPTIONS[selectedCategory as keyof typeof LEVEL_OPTIONS] ? (
+                          LEVEL_OPTIONS[selectedCategory as keyof typeof LEVEL_OPTIONS].map((option) => (
+                            <div key={option.value} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={option.value}
+                                checked={field.value?.includes(option.value) || false}
+                                onCheckedChange={(checked) => {
+                                  const updatedLevels = checked
+                                    ? [...(field.value || []), option.value]
+                                    : (field.value || []).filter((value) => value !== option.value);
+                                  field.onChange(updatedLevels);
+                                }}
+                              />
+                              <label
+                                htmlFor={option.value}
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              >
+                                {option.label}
+                              </label>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            Please select a category first
+                          </p>
+                        )}
+                      </div>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
