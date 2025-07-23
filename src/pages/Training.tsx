@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import CreateTrainingDialog from '@/components/training/CreateTrainingDialog';
 import { 
   Calendar,
   Clock,
@@ -165,10 +166,12 @@ const Training = () => {
           </div>
           <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-3">
             {isAdmin && (
-              <Button className="argon-gradient-blue text-white hover:opacity-90 text-sm">
-                <Plus className="h-4 w-4 mr-2" />
-                New Session
-              </Button>
+              <CreateTrainingDialog>
+                <Button className="argon-gradient-blue text-white hover:opacity-90 text-sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Session
+                </Button>
+              </CreateTrainingDialog>
             )}
             <Button variant="outline" className="text-sm">
               <Download className="h-4 w-4 mr-2" />
@@ -305,12 +308,14 @@ const Training = () => {
                 <div className="text-center">
                   <h3 className="text-xl font-bold mb-2">Training Control</h3>
                   <p className="text-purple-100 mb-6 text-sm">Quick actions for training management</p>
-                   <div className="space-y-3">
+                    <div className="space-y-3">
                      {isAdmin && (
-                       <Button className="w-full bg-white text-purple-600 hover:bg-gray-100 text-sm">
-                         <Plus className="h-4 w-4 mr-2" />
-                         Schedule Session
-                       </Button>
+                       <CreateTrainingDialog>
+                         <Button className="w-full bg-white text-purple-600 hover:bg-gray-100 text-sm">
+                           <Plus className="h-4 w-4 mr-2" />
+                           Schedule Session
+                         </Button>
+                       </CreateTrainingDialog>
                      )}
                     <Button 
                       variant="outline" 

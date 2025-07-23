@@ -8,6 +8,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { CalendarHeader } from '@/components/training/calendar/CalendarHeader';
 import { CalendarGrid } from '@/components/training/calendar/CalendarGrid';
 import { EventModal } from '@/components/training/calendar/EventModal';
+import CreateTrainingDialog from '@/components/training/CreateTrainingDialog';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -211,10 +212,12 @@ const TrainingCalendar = () => {
             </select>
 
             {isAdmin && (
-              <Button className="bg-primary text-primary-foreground">
-                <Plus className="h-4 w-4 mr-2" />
-                Nuevo Entrenamiento
-              </Button>
+              <CreateTrainingDialog>
+                <Button className="bg-primary text-primary-foreground">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nuevo Entrenamiento
+                </Button>
+              </CreateTrainingDialog>
             )}
           </div>
         </div>
