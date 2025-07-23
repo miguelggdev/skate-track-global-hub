@@ -4,7 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { CalendarIcon, Plus } from 'lucide-react';
-import { useCreateCompetition } from '@/hooks/useCompetitions';
+import { useCreateCompetitionWithParticipants } from '@/hooks/useCompetitions';
+import { useAthletesByCategory } from '@/hooks/useAthletes';
 import { useToast } from '@/hooks/use-toast';
 
 import {
@@ -89,6 +90,7 @@ const competitionSchema = z.object({
   prize_pool: z.string().optional(),
   max_participants: z.string().optional(),
   registration_deadline: z.date().optional(),
+  participants: z.array(z.string()).optional(),
 }).refine((data) => data.end_date >= data.start_date, {
   message: "End date must be after start date",
   path: ["end_date"],
@@ -102,7 +104,7 @@ interface AddCompetitionDialogProps {
 
 export function AddCompetitionDialog({ onCompetitionAdded }: AddCompetitionDialogProps) {
   const [open, setOpen] = useState(false);
-  const createCompetitionMutation = useCreateCompetition();
+  const createCompetitionMutation = useCreateCompetitionWithParticipants();
   const { toast } = useToast();
 
   const form = useForm<CompetitionFormValues>({
@@ -115,11 +117,19 @@ export function AddCompetitionDialog({ onCompetitionAdded }: AddCompetitionDialo
       prize_pool: '',
       max_participants: '',
       level: [],
+      participants: [],
     },
   });
 
   // Watch category changes to reset levels
   const selectedCategory = form.watch('category');
+  const selectedLevels = form.watch('level');
+  
+  // Fetch athletes based on selected category and levels
+  const { data: athletes = [], isLoading: athletesLoading } = useAthletesByCategory(
+    selectedCategory, 
+    selectedLevels
+  );
 
   const onSubmit = async (values: CompetitionFormValues) => {
     try {
@@ -139,7 +149,10 @@ export function AddCompetitionDialog({ onCompetitionAdded }: AddCompetitionDialo
         status: 'upcoming' as const,
       };
 
-      await createCompetitionMutation.mutateAsync(competitionData);
+      await createCompetitionMutation.mutateAsync({
+        competition: competitionData,
+        participants: values.participants || []
+      });
 
       form.reset();
       setOpen(false);
@@ -475,6 +488,69 @@ export function AddCompetitionDialog({ onCompetitionAdded }: AddCompetitionDialo
                       />
                     </PopoverContent>
                   </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Participants Selection */}
+            <FormField
+              control={form.control}
+              name="participants"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Participants</FormLabel>
+                  <FormControl>
+                    <div className="space-y-2">
+                      {selectedCategory ? (
+                        athletesLoading ? (
+                          <p className="text-sm text-muted-foreground">Loading athletes...</p>
+                        ) : athletes.length > 0 ? (
+                          <>
+                            <div className="mb-2">
+                              <p className="text-sm text-muted-foreground">
+                                {athletes.length} athlete{athletes.length !== 1 ? 's' : ''} found in {selectedCategory}
+                                {selectedLevels && selectedLevels.length > 0 && ` (${selectedLevels.join(', ')})`}
+                              </p>
+                            </div>
+                            <div className="max-h-32 overflow-y-auto space-y-2 border rounded p-2">
+                              {athletes.map((athlete) => (
+                                <div key={athlete.id} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={athlete.id}
+                                    checked={field.value?.includes(athlete.id) || false}
+                                    onCheckedChange={(checked) => {
+                                      const updatedParticipants = checked
+                                        ? [...(field.value || []), athlete.id]
+                                        : (field.value || []).filter((id) => id !== athlete.id);
+                                      field.onChange(updatedParticipants);
+                                    }}
+                                  />
+                                  <label
+                                    htmlFor={athlete.id}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1"
+                                  >
+                                    {athlete.first_name} {athlete.last_name}
+                                    <span className="text-muted-foreground ml-2">
+                                      ({athlete.level})
+                                    </span>
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            No athletes found in the selected category and level(s)
+                          </p>
+                        )
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          Please select a category to view available athletes
+                        </p>
+                      )}
+                    </div>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

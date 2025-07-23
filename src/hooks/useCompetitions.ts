@@ -111,6 +111,57 @@ export const useCreateCompetition = () => {
   });
 };
 
+// Hook to create competition with participants
+export const useCreateCompetitionWithParticipants = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { competition: CompetitionFormData; participants: string[] }) => {
+      // First create the competition
+      const { data: competitionData, error: competitionError } = await supabase
+        .from('competitions')
+        .insert(data.competition)
+        .select()
+        .single();
+
+      if (competitionError) {
+        console.error('Error creating competition:', competitionError);
+        throw competitionError;
+      }
+
+      // Then create registrations for each participant
+      if (data.participants.length > 0) {
+        const registrations = data.participants.map(athleteId => ({
+          competition_id: competitionData.id,
+          athlete_id: athleteId,
+          payment_status: 'pending' as const,
+        }));
+
+        const { error: registrationError } = await supabase
+          .from('competition_registrations')
+          .insert(registrations);
+
+        if (registrationError) {
+          console.error('Error creating registrations:', registrationError);
+          throw registrationError;
+        }
+      }
+
+      return competitionData;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch competitions data
+      queryClient.invalidateQueries({ queryKey: ['competitions'] });
+      queryClient.invalidateQueries({ queryKey: ['competition-registrations'] });
+      toast.success('Competition created successfully with participants!');
+    },
+    onError: (error: any) => {
+      console.error('Failed to create competition:', error);
+      toast.error('Failed to create competition. Please try again.');
+    },
+  });
+};
+
 // Hook to get competition registration counts
 export const useCompetitionRegistrations = () => {
   return useQuery({
