@@ -1132,6 +1132,10 @@ export type Database = {
         | "travel"
         | "coaching"
         | "other"
+        | "mensualidad"
+        | "poliza_deportiva"
+        | "anualidad"
+        | "psicologia"
       user_role:
         | "admin"
         | "coach"
@@ -1309,6 +1313,10 @@ export const Constants = {
         "travel",
         "coaching",
         "other",
+        "mensualidad",
+        "poliza_deportiva",
+        "anualidad",
+        "psicologia",
       ],
       user_role: ["admin", "coach", "athlete", "delegate", "leader", "finance"],
     },

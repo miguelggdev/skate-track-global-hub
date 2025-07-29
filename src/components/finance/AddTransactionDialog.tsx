@@ -38,7 +38,7 @@ const transactionSchema = z.object({
   amount: z.string().refine((val) => !isNaN(Number(val)) && Number(val) !== 0, {
     message: "La cantidad debe ser un número válido y no puede ser cero",
   }),
-  transaction_type: z.enum(['registration_fee', 'equipment', 'travel', 'coaching', 'other'], {
+  transaction_type: z.enum(['registration_fee', 'equipment', 'travel', 'coaching', 'other', 'mensualidad', 'poliza_deportiva', 'anualidad', 'psicologia'], {
     required_error: "Selecciona un tipo de transacción",
   }),
   description: z.string().min(1, "La descripción es requerida"),
@@ -64,6 +64,10 @@ const transactionTypeLabels: Record<string, string> = {
   travel: 'Viajes',
   coaching: 'Entrenamiento',
   other: 'Otros',
+  mensualidad: 'Mensualidad',
+  poliza_deportiva: 'Póliza deportiva',
+  anualidad: 'Anualidad',
+  psicologia: 'Psicología',
 };
 
 const paymentStatusLabels: Record<string, string> = {
