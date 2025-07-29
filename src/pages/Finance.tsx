@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import AddTransactionDialog from '@/components/finance/AddTransactionDialog';
+import { TransactionReceiptGenerator } from '@/components/finance/TransactionReceiptGenerator';
+import { useTransactions, useFinancialStats, useUpdateTransaction } from '@/hooks/useTransactions';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -36,12 +38,33 @@ import {
 const Finance = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTransactionType, setSelectedTransactionType] = useState('all');
 
+  // Use real data from hooks
+  const { data: transactions = [], isLoading: transactionsLoading } = useTransactions();
+  const { data: financialStats, isLoading: statsLoading } = useFinancialStats();
+  const updateTransactionMutation = useUpdateTransaction();
+
+  // Filter transactions based on search and type
+  const filteredTransactions = transactions.filter(transaction => {
+    const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         transaction.payer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         transaction.athletes?.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         transaction.athletes?.last_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesType = selectedTransactionType === 'all' || 
+                       (selectedTransactionType === 'income' && transaction.transaction_type === 'income') ||
+                       (selectedTransactionType === 'expense' && transaction.transaction_type === 'expense');
+    
+    return matchesSearch && matchesType;
+  });
+
+  // Format stats for display
   const stats = [
     { 
       title: "INGRESOS TOTALES", 
-      value: "€45,231.89", 
-      change: "+20.1%", 
+      value: financialStats ? `€${financialStats.totalIncome.toFixed(2)}` : "€0.00", 
+      change: financialStats?.incomeChange ? `${financialStats.incomeChange > 0 ? '+' : ''}${financialStats.incomeChange.toFixed(1)}%` : "0%", 
       period: "desde el mes pasado",
       icon: DollarSign,
       bgColor: "argon-gradient-blue",
@@ -49,40 +72,43 @@ const Finance = () => {
     },
     { 
       title: "GASTOS TOTALES", 
-      value: "€23,456.78", 
-      change: "-5.2%", 
+      value: financialStats ? `€${Math.abs(financialStats.totalExpenses).toFixed(2)}` : "€0.00", 
+      change: financialStats?.expensesChange ? `${financialStats.expensesChange > 0 ? '+' : ''}${financialStats.expensesChange.toFixed(1)}%` : "0%", 
       period: "desde el mes pasado",
       icon: TrendingDown,
       bgColor: "argon-gradient-red",
-      isPositive: true
+      isPositive: financialStats ? financialStats.expensesChange <= 0 : true
     },
     { 
       title: "PAGOS PENDIENTES", 
-      value: "€8,924.00", 
-      change: "24 facturas", 
-      period: "pendientes de cobro",
+      value: financialStats ? `€${financialStats.pendingPayments.toFixed(2)}` : "€0.00", 
+      change: "Pendientes", 
+      period: "por cobrar",
       icon: AlertCircle,
       bgColor: "argon-gradient-orange",
       isPositive: false
     },
     { 
       title: "BENEFICIO NETO", 
-      value: "€21,775.11", 
-      change: "+15.3%", 
-      period: "comparado con anterior",
+      value: financialStats ? `€${financialStats.netProfit.toFixed(2)}` : "€0.00", 
+      change: financialStats?.netProfit > 0 ? "+Positivo" : "Negativo", 
+      period: "balance actual",
       icon: TrendingUp,
       bgColor: "argon-gradient-green",
-      isPositive: true
+      isPositive: financialStats ? financialStats.netProfit > 0 : false
     },
   ];
 
-  const transactions = [
-    { id: 1, date: '2024-01-15', concept: 'Cuota Enero - Ana García', type: 'Ingreso', amount: 85.00, status: 'Completado', category: 'Cuotas' },
-    { id: 2, date: '2024-01-14', concept: 'Mantenimiento pista', type: 'Gasto', amount: -450.00, status: 'Pagado', category: 'Instalaciones' },
-    { id: 3, date: '2024-01-12', concept: 'Inscripción competición', type: 'Ingreso', amount: 150.00, status: 'Pendiente', category: 'Competiciones' },
-    { id: 4, date: '2024-01-10', concept: 'Uniformes nuevos', type: 'Gasto', amount: -1250.00, status: 'Pagado', category: 'Equipamiento' },
-    { id: 5, date: '2024-01-08', concept: 'Cuota Enero - Carlos Ruiz', type: 'Ingreso', amount: 85.00, status: 'Vencido', category: 'Cuotas' },
-  ];
+  const handleReceiptGenerated = async (transactionId: string, receiptUrl: string) => {
+    try {
+      await updateTransactionMutation.mutateAsync({
+        id: transactionId,
+        receipt_url: receiptUrl
+      });
+    } catch (error) {
+      console.error('Error updating transaction with receipt URL:', error);
+    }
+  };
 
   const budgetCategories = [
     { name: 'Personal y Entrenadores', budget: 60000, spent: 45000, color: 'bg-blue-500' },
@@ -244,7 +270,7 @@ const Finance = () => {
                       className="w-full"
                     />
                   </div>
-                  <Select>
+                  <Select value={selectedTransactionType} onValueChange={setSelectedTransactionType}>
                     <SelectTrigger className="w-48">
                       <SelectValue placeholder="Filtrar por tipo" />
                     </SelectTrigger>
@@ -260,34 +286,57 @@ const Finance = () => {
                 </div>
 
                 <div className="border rounded-lg overflow-hidden">
-                  <div className="grid grid-cols-6 gap-4 p-4 font-medium border-b bg-gray-50">
+                  <div className="grid grid-cols-7 gap-4 p-4 font-medium border-b bg-gray-50">
                     <span>Fecha</span>
                     <span>Concepto</span>
+                    <span>Pagador</span>
                     <span>Tipo</span>
                     <span>Cantidad</span>
                     <span>Estado</span>
                     <span>Acciones</span>
                   </div>
                   
-                  {transactions.map((transaction) => (
-                    <div key={transaction.id} className="grid grid-cols-6 gap-4 p-4 border-b hover:bg-gray-50">
-                      <span className="text-sm">{transaction.date}</span>
-                      <span className="font-medium">{transaction.concept}</span>
-                      <Badge variant={transaction.type === 'Ingreso' ? 'default' : 'secondary'}>
-                        {transaction.type}
-                      </Badge>
-                      <span className={`font-bold ${transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        €{Math.abs(transaction.amount).toFixed(2)}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        {transaction.status === 'Completado' && <CheckCircle className="h-4 w-4 text-green-500" />}
-                        {transaction.status === 'Pendiente' && <Clock className="h-4 w-4 text-yellow-500" />}
-                        {transaction.status === 'Vencido' && <AlertCircle className="h-4 w-4 text-red-500" />}
-                        <span className="text-sm">{transaction.status}</span>
-                      </div>
-                      <Button variant="outline" size="sm">Ver Detalles</Button>
+                  {transactionsLoading ? (
+                    <div className="p-8 text-center">Cargando transacciones...</div>
+                  ) : filteredTransactions.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground">
+                      {searchTerm || selectedTransactionType !== 'all' ? 'No se encontraron transacciones con los filtros aplicados' : 'No hay transacciones registradas'}
                     </div>
-                  ))}
+                  ) : (
+                    filteredTransactions.map((transaction) => (
+                      <div key={transaction.id} className="grid grid-cols-7 gap-4 p-4 border-b hover:bg-gray-50">
+                        <span className="text-sm">{new Date(transaction.transaction_date).toLocaleDateString('es-ES')}</span>
+                        <div className="space-y-1">
+                          <span className="font-medium block">{transaction.description}</span>
+                          {transaction.athletes && (
+                            <span className="text-xs text-muted-foreground block">
+                              {transaction.athletes.first_name} {transaction.athletes.last_name}
+                            </span>
+                          )}
+                        </div>
+                        <div className="space-y-1">
+                          {transaction.payer_name && <span className="text-sm block">{transaction.payer_name}</span>}
+                          {transaction.payer_identification && <span className="text-xs text-muted-foreground block">{transaction.payer_identification}</span>}
+                        </div>
+                        <Badge variant={transaction.transaction_type === 'income' ? 'default' : 'secondary'}>
+                          {transaction.transaction_type === 'income' ? 'Ingreso' : 'Gasto'}
+                        </Badge>
+                        <span className={`font-bold ${transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          €{Math.abs(transaction.amount).toFixed(2)}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          {transaction.payment_status === 'paid' && <CheckCircle className="h-4 w-4 text-green-500" />}
+                          {transaction.payment_status === 'pending' && <Clock className="h-4 w-4 text-yellow-500" />}
+                          {transaction.payment_status === 'overdue' && <AlertCircle className="h-4 w-4 text-red-500" />}
+                          <span className="text-sm capitalize">{transaction.payment_status}</span>
+                        </div>
+                        <TransactionReceiptGenerator 
+                          transaction={transaction}
+                          onReceiptGenerated={(receiptUrl) => handleReceiptGenerated(transaction.id, receiptUrl)}
+                        />
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </CardContent>
