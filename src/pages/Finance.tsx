@@ -53,8 +53,8 @@ const Finance = () => {
                          transaction.athletes?.last_name?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesType = selectedTransactionType === 'all' || 
-                       (selectedTransactionType === 'income' && transaction.transaction_type === 'income') ||
-                       (selectedTransactionType === 'expense' && transaction.transaction_type === 'expense');
+                       (selectedTransactionType === 'income' && ['mensualidad', 'anualidad', 'registration_fee'].includes(transaction.transaction_type)) ||
+                       (selectedTransactionType === 'expense' && ['equipment', 'travel', 'coaching', 'other', 'poliza_deportiva', 'psicologia'].includes(transaction.transaction_type));
     
     return matchesSearch && matchesType;
   });
@@ -103,7 +103,7 @@ const Finance = () => {
     try {
       await updateTransactionMutation.mutateAsync({
         id: transactionId,
-        receipt_url: receiptUrl
+        updates: { receipt_url: receiptUrl }
       });
     } catch (error) {
       console.error('Error updating transaction with receipt URL:', error);
@@ -318,8 +318,8 @@ const Finance = () => {
                           {transaction.payer_name && <span className="text-sm block">{transaction.payer_name}</span>}
                           {transaction.payer_identification && <span className="text-xs text-muted-foreground block">{transaction.payer_identification}</span>}
                         </div>
-                        <Badge variant={transaction.transaction_type === 'income' ? 'default' : 'secondary'}>
-                          {transaction.transaction_type === 'income' ? 'Ingreso' : 'Gasto'}
+                        <Badge variant={['mensualidad', 'anualidad', 'registration_fee'].includes(transaction.transaction_type) ? 'default' : 'secondary'}>
+                          {['mensualidad', 'anualidad', 'registration_fee'].includes(transaction.transaction_type) ? 'Ingreso' : 'Gasto'}
                         </Badge>
                         <span className={`font-bold ${transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
                           €{Math.abs(transaction.amount).toFixed(2)}
