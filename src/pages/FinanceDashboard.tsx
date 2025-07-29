@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import AddTransactionDialog from '@/components/finance/AddTransactionDialog';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -450,7 +451,9 @@ const FinanceDashboard = () => {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <h3 className="text-lg font-semibold">Registrar Nuevo Gasto</h3>
-                    <Button>+ Nuevo Gasto</Button>
+                    <AddTransactionDialog>
+                      <Button>+ Nuevo Gasto</Button>
+                    </AddTransactionDialog>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

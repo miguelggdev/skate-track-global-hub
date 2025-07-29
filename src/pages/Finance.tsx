@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import AddTransactionDialog from '@/components/finance/AddTransactionDialog';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -95,10 +96,12 @@ const Finance = () => {
       <div className="space-y-6">
         {/* Header Actions */}
         <div className="flex justify-end gap-3">
-          <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-            <Plus className="h-4 w-4 mr-2" />
-            Nueva Transacción
-          </Button>
+          <AddTransactionDialog>
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Plus className="h-4 w-4 mr-2" />
+              Nueva Transacción
+            </Button>
+          </AddTransactionDialog>
           <Button variant="outline">
             <Download className="h-4 w-4 mr-2" />
             Exportar
