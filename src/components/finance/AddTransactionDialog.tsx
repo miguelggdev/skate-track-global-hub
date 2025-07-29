@@ -461,26 +461,13 @@ export default function AddTransactionDialog({ children }: AddTransactionDialogP
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="receipt_url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>URL del Recibo (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="url"
-                        placeholder="https://ejemplo.com/recibo.pdf"
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Enlace al recibo o comprobante de la transacción
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Recibo</Label>
+              <div className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">
+                El recibo se generará automáticamente después de crear la transacción. 
+                Podrá descargarlo desde la lista de transacciones usando el botón "Descargar Recibo".
+              </div>
+            </div>
             </div>
 
             <DialogFooter>
