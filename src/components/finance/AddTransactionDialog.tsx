@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/form';
 import { useCreateTransaction } from '@/hooks/useTransactions';
 import { useAuth } from '@/hooks/useAuth';
+import { useAthletes } from '@/hooks/useAthletes';
 import { toast } from '@/hooks/use-toast';
 
 const transactionSchema = z.object({
@@ -47,9 +48,14 @@ const transactionSchema = z.object({
   }),
   payment_status: z.enum(['pending', 'paid', 'overdue', 'cancelled']).default('pending'),
   due_date: z.date().optional(),
-  athlete_id: z.string().optional(),
+  athlete_id: z.string().min(1, "Selecciona un atleta"),
   team_id: z.string().optional(),
   receipt_url: z.string().url().optional().or(z.literal('')),
+  // New payer information fields
+  payer_name: z.string().min(1, "El nombre de quien paga es requerido"),
+  payer_identification: z.string().min(1, "La identificación es requerida"),
+  payer_phone: z.string().min(1, "El teléfono es requerido"),
+  payer_email: z.string().email("Ingresa un email válido"),
 });
 
 type TransactionFormValues = z.infer<typeof transactionSchema>;
@@ -80,6 +86,7 @@ const paymentStatusLabels: Record<string, string> = {
 export default function AddTransactionDialog({ children }: AddTransactionDialogProps) {
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
+  const { data: athletes, isLoading: athletesLoading } = useAthletes();
   const createTransactionMutation = useCreateTransaction();
 
   const form = useForm<TransactionFormValues>({
@@ -111,9 +118,13 @@ export default function AddTransactionDialog({ children }: AddTransactionDialogP
         transaction_date: format(values.transaction_date, 'yyyy-MM-dd'),
         payment_status: values.payment_status,
         due_date: values.due_date ? format(values.due_date, 'yyyy-MM-dd') : undefined,
-        athlete_id: values.athlete_id || undefined,
+        athlete_id: values.athlete_id,
         team_id: values.team_id || undefined,
         receipt_url: values.receipt_url || undefined,
+        payer_name: values.payer_name,
+        payer_identification: values.payer_identification,
+        payer_phone: values.payer_phone,
+        payer_email: values.payer_email,
         created_by: user.id,
       };
 
@@ -150,84 +161,268 @@ export default function AddTransactionDialog({ children }: AddTransactionDialogP
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Athlete & Transaction Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Información del Atleta y Transacción</h3>
+              
               <FormField
                 control={form.control}
-                name="amount"
+                name="athlete_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cantidad *</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">€</span>
-                        <Input
-                          {...field}
-                          type="number"
-                          step="0.01"
-                          placeholder="0.00"
-                          className="pl-8"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormDescription>
-                      Ingresa valores positivos para ingresos, negativos para gastos
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="transaction_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de Transacción *</FormLabel>
+                    <FormLabel>Seleccionar Atleta *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecciona el tipo" />
+                          <SelectValue placeholder="Selecciona un atleta" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {Object.entries(transactionTypeLabels).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>
-                            {label}
+                        {athletesLoading ? (
+                          <SelectItem value="" disabled>
+                            Cargando atletas...
                           </SelectItem>
-                        ))}
+                        ) : (
+                          athletes?.map((athlete) => (
+                            <SelectItem key={athlete.id} value={athlete.id}>
+                              {athlete.first_name} {athlete.last_name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="amount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cantidad *</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">€</span>
+                          <Input
+                            {...field}
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            className="pl-8"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        Ingresa valores positivos para ingresos, negativos para gastos
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="transaction_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de Transacción *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona el tipo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.entries(transactionTypeLabels).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descripción *</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder="Describe la transacción..."
-                      className="min-h-[80px]"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Payer Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Información de Quien Paga</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="payer_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre de quien paga *</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Nombre completo"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="payer_identification"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Identificación *</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="DNI, NIE, etc."
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="payer_phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Teléfono *</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="tel"
+                          placeholder="+34 600 000 000"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="payer_email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email *</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="email"
+                          placeholder="email@ejemplo.com"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Payment Details */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Detalles del Pago</h3>
+              
               <FormField
                 control={form.control}
-                name="transaction_date"
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descripción *</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        placeholder="Describe la transacción..."
+                        className="min-h-[80px]"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="transaction_date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Fecha de Transacción *</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "dd/MM/yyyy")
+                              ) : (
+                                <span>Selecciona fecha</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => date > new Date()}
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="payment_status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Estado del Pago</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.entries(paymentStatusLabels).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="due_date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Fecha de Transacción *</FormLabel>
+                    <FormLabel>Fecha de Vencimiento (Opcional)</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -241,7 +436,7 @@ export default function AddTransactionDialog({ children }: AddTransactionDialogP
                             {field.value ? (
                               format(field.value, "dd/MM/yyyy")
                             ) : (
-                              <span>Selecciona fecha</span>
+                              <span>Selecciona fecha de vencimiento</span>
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
@@ -252,12 +447,15 @@ export default function AddTransactionDialog({ children }: AddTransactionDialogP
                           mode="single"
                           selected={field.value}
                           onSelect={field.onChange}
-                          disabled={(date) => date > new Date()}
+                          disabled={(date) => date < new Date()}
                           initialFocus
                           className="pointer-events-auto"
                         />
                       </PopoverContent>
                     </Popover>
+                    <FormDescription>
+                      Solo requerido para pagos pendientes o facturas
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -265,94 +463,25 @@ export default function AddTransactionDialog({ children }: AddTransactionDialogP
 
               <FormField
                 control={form.control}
-                name="payment_status"
+                name="receipt_url"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Estado del Pago</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {Object.entries(paymentStatusLabels).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>URL del Recibo (Opcional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="url"
+                        placeholder="https://ejemplo.com/recibo.pdf"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Enlace al recibo o comprobante de la transacción
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="due_date"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Fecha de Vencimiento (Opcional)</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "dd/MM/yyyy")
-                          ) : (
-                            <span>Selecciona fecha de vencimiento</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) => date < new Date()}
-                        initialFocus
-                        className="pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormDescription>
-                    Solo requerido para pagos pendientes o facturas
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="receipt_url"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>URL del Recibo (Opcional)</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="url"
-                      placeholder="https://ejemplo.com/recibo.pdf"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Enlace al recibo o comprobante de la transacción
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <DialogFooter>
               <Button

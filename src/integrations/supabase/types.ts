@@ -621,6 +621,10 @@ export type Database = {
           description: string
           due_date: string | null
           id: string
+          payer_email: string | null
+          payer_identification: string | null
+          payer_name: string | null
+          payer_phone: string | null
           payment_status: Database["public"]["Enums"]["payment_status"]
           receipt_url: string | null
           team_id: string | null
@@ -636,6 +640,10 @@ export type Database = {
           description: string
           due_date?: string | null
           id?: string
+          payer_email?: string | null
+          payer_identification?: string | null
+          payer_name?: string | null
+          payer_phone?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           receipt_url?: string | null
           team_id?: string | null
@@ -651,6 +659,10 @@ export type Database = {
           description?: string
           due_date?: string | null
           id?: string
+          payer_email?: string | null
+          payer_identification?: string | null
+          payer_name?: string | null
+          payer_phone?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           receipt_url?: string | null
           team_id?: string | null

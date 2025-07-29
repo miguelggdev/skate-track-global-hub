@@ -17,7 +17,8 @@ export const useTransactions = () => {
           athletes:athlete_id (
             id,
             first_name,
-            last_name
+            last_name,
+            email
           ),
           teams:team_id (
             id,
@@ -98,13 +99,44 @@ export const useUpdateTransaction = () => {
   });
 };
 
+// Hook to get transactions for a specific athlete
+export const useAthleteTransactions = (athleteId?: string) => {
+  return useQuery({
+    queryKey: ['athlete-transactions', athleteId],
+    queryFn: async () => {
+      if (!athleteId) return [];
+      
+      const { data, error } = await supabase
+        .from('financial_transactions')
+        .select(`
+          *,
+          athletes:athlete_id (
+            id,
+            first_name,
+            last_name,
+            email
+          )
+        `)
+        .eq('athlete_id', athleteId)
+        .order('transaction_date', { ascending: false });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data;
+    },
+    enabled: !!athleteId,
+  });
+};
+
 export const useFinancialStats = () => {
   return useQuery({
     queryKey: ['financial-stats'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('financial_transactions')
-        .select('amount, transaction_type, payment_status, transaction_date');
+        .select('amount, transaction_type, payment_status, transaction_date, payer_name, payer_email');
 
       if (error) {
         throw new Error(error.message);
