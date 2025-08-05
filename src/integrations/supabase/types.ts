@@ -98,6 +98,60 @@ export type Database = {
           },
         ]
       }
+      attendance_summaries: {
+        Row: {
+          athlete_id: string | null
+          attendance_rate: number | null
+          attended_sessions: number | null
+          created_at: string
+          id: string
+          period_end: string
+          period_start: string
+          total_sessions: number | null
+          training_session_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          athlete_id?: string | null
+          attendance_rate?: number | null
+          attended_sessions?: number | null
+          created_at?: string
+          id?: string
+          period_end: string
+          period_start: string
+          total_sessions?: number | null
+          training_session_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          athlete_id?: string | null
+          attendance_rate?: number | null
+          attended_sessions?: number | null
+          created_at?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          total_sessions?: number | null
+          training_session_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_summaries_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_summaries_training_session_id_fkey"
+            columns: ["training_session_id"]
+            isOneToOne: false
+            referencedRelation: "training_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       awards: {
         Row: {
           athlete_id: string | null
@@ -1032,6 +1086,57 @@ export type Database = {
           },
         ]
       }
+      training_kpis: {
+        Row: {
+          athlete_id: string | null
+          attendance_percentage: number | null
+          coach_id: string | null
+          created_at: string
+          id: string
+          month: string
+          total_hours: number | null
+          training_type_distribution: Json | null
+          updated_at: string
+        }
+        Insert: {
+          athlete_id?: string | null
+          attendance_percentage?: number | null
+          coach_id?: string | null
+          created_at?: string
+          id?: string
+          month: string
+          total_hours?: number | null
+          training_type_distribution?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          athlete_id?: string | null
+          attendance_percentage?: number | null
+          coach_id?: string | null
+          created_at?: string
+          id?: string
+          month?: string
+          total_hours?: number | null
+          training_type_distribution?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_kpis_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_kpis_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "coaches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       training_sessions: {
         Row: {
           coach_id: string | null
@@ -1090,6 +1195,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_training_duration: {
+        Args: { start_time: string; end_time: string }
+        Returns: number
+      }
       send_notification_to_athletes: {
         Args: {
           sender_id_param: string
@@ -1137,7 +1246,17 @@ export type Database = {
       athlete_status: "active" | "inactive" | "injured" | "suspended"
       competition_status: "upcoming" | "ongoing" | "completed" | "cancelled"
       payment_status: "pending" | "paid" | "overdue" | "cancelled"
-      training_type: "technical" | "physical" | "mental" | "recovery"
+      training_type:
+        | "technical"
+        | "physical"
+        | "mental"
+        | "recovery"
+        | "gym"
+        | "road_skating"
+        | "track_skating"
+        | "bicycle"
+        | "static_bicycle"
+        | "simulator"
       transaction_type:
         | "registration_fee"
         | "equipment"
@@ -1318,7 +1437,18 @@ export const Constants = {
       athlete_status: ["active", "inactive", "injured", "suspended"],
       competition_status: ["upcoming", "ongoing", "completed", "cancelled"],
       payment_status: ["pending", "paid", "overdue", "cancelled"],
-      training_type: ["technical", "physical", "mental", "recovery"],
+      training_type: [
+        "technical",
+        "physical",
+        "mental",
+        "recovery",
+        "gym",
+        "road_skating",
+        "track_skating",
+        "bicycle",
+        "static_bicycle",
+        "simulator",
+      ],
       transaction_type: [
         "registration_fee",
         "equipment",
