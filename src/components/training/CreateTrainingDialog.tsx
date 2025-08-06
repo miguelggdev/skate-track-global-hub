@@ -19,7 +19,7 @@ interface CreateTrainingDialogProps {
 }
 
 interface TrainingType {
-  value: 'technical' | 'physical' | 'mental' | 'recovery';
+  value: 'technical' | 'physical' | 'mental' | 'recovery' | 'gym' | 'road_skating' | 'track_skating' | 'bicycle' | 'static_bicycle' | 'simulator';
   label: string;
   icon: any;
   description?: string;
@@ -52,7 +52,13 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
       { value: 'technical', label: 'Técnica', icon: Target },
       { value: 'physical', label: 'Físico', icon: Activity },
       { value: 'mental', label: 'Mental', icon: Users },
-      { value: 'recovery', label: 'Recuperación', icon: Clock }
+      { value: 'recovery', label: 'Recuperación', icon: Clock },
+      { value: 'gym', label: 'Gimnasio', icon: Activity },
+      { value: 'road_skating', label: 'Patinaje en Ruta', icon: MapPin },
+      { value: 'track_skating', label: 'Patinaje en Pista', icon: Target },
+      { value: 'bicycle', label: 'Bicicleta', icon: Activity },
+      { value: 'static_bicycle', label: 'Bicicleta Estática', icon: Activity },
+      { value: 'simulator', label: 'Simulador', icon: Target }
     ];
 
     // Customize training focus based on category and level

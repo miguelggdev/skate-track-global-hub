@@ -14,7 +14,7 @@ interface TrainingSession {
   end_time: string;
   location?: string;
   max_participants?: number;
-  training_type: 'technical' | 'physical' | 'mental' | 'recovery';
+  training_type: 'technical' | 'physical' | 'mental' | 'recovery' | 'gym' | 'road_skating' | 'track_skating' | 'bicycle' | 'static_bicycle' | 'simulator';
   coach_id: string;
 }
 

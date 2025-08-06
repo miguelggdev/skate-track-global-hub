@@ -31,7 +31,7 @@ interface TrainingSession {
   end_time: string;
   location?: string;
   max_participants?: number;
-  training_type: 'technical' | 'physical' | 'mental' | 'recovery';
+  training_type: 'technical' | 'physical' | 'mental' | 'recovery' | 'gym' | 'road_skating' | 'track_skating' | 'bicycle' | 'static_bicycle' | 'simulator';
   coach_id: string;
   created_at: string;
   updated_at: string;
@@ -99,6 +99,12 @@ const TrainingCalendar = () => {
       case 'physical': return 'bg-green-500';
       case 'mental': return 'bg-purple-500';
       case 'recovery': return 'bg-orange-500';
+      case 'gym': return 'bg-red-500';
+      case 'road_skating': return 'bg-cyan-500';
+      case 'track_skating': return 'bg-indigo-500';
+      case 'bicycle': return 'bg-yellow-500';
+      case 'static_bicycle': return 'bg-amber-500';
+      case 'simulator': return 'bg-pink-500';
       default: return 'bg-gray-500';
     }
   };
@@ -109,6 +115,12 @@ const TrainingCalendar = () => {
       case 'physical': return 'Físico';
       case 'mental': return 'Mental';
       case 'recovery': return 'Recuperación';
+      case 'gym': return 'Gimnasio';
+      case 'road_skating': return 'Patinaje en Ruta';
+      case 'track_skating': return 'Patinaje en Pista';
+      case 'bicycle': return 'Bicicleta';
+      case 'static_bicycle': return 'Bicicleta Estática';
+      case 'simulator': return 'Simulador';
       default: return type;
     }
   };
@@ -209,6 +221,12 @@ const TrainingCalendar = () => {
               <option value="physical">Físico</option>
               <option value="mental">Mental</option>
               <option value="recovery">Recuperación</option>
+              <option value="gym">Gimnasio</option>
+              <option value="road_skating">Patinaje en Ruta</option>
+              <option value="track_skating">Patinaje en Pista</option>
+              <option value="bicycle">Bicicleta</option>
+              <option value="static_bicycle">Bicicleta Estática</option>
+              <option value="simulator">Simulador</option>
             </select>
 
             {isAdmin && (
@@ -241,6 +259,30 @@ const TrainingCalendar = () => {
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-orange-500 rounded"></div>
                 <span className="text-sm">Recuperación</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-red-500 rounded"></div>
+                <span className="text-sm">Gimnasio</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-cyan-500 rounded"></div>
+                <span className="text-sm">Patinaje en Ruta</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-indigo-500 rounded"></div>
+                <span className="text-sm">Patinaje en Pista</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-yellow-500 rounded"></div>
+                <span className="text-sm">Bicicleta</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-amber-500 rounded"></div>
+                <span className="text-sm">Bicicleta Estática</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-pink-500 rounded"></div>
+                <span className="text-sm">Simulador</span>
               </div>
             </div>
           </CardContent>

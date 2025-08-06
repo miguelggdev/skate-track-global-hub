@@ -27,7 +27,7 @@ interface TrainingSession {
   end_time: string;
   location?: string;
   max_participants?: number;
-  training_type: 'technical' | 'physical' | 'mental' | 'recovery';
+  training_type: 'technical' | 'physical' | 'mental' | 'recovery' | 'gym' | 'road_skating' | 'track_skating' | 'bicycle' | 'static_bicycle' | 'simulator';
   coach_id: string;
 }
 
@@ -55,6 +55,12 @@ export const EventModal: React.FC<EventModalProps> = ({
       case 'physical': return 'bg-green-500';
       case 'mental': return 'bg-purple-500';
       case 'recovery': return 'bg-orange-500';
+      case 'gym': return 'bg-red-500';
+      case 'road_skating': return 'bg-cyan-500';
+      case 'track_skating': return 'bg-indigo-500';
+      case 'bicycle': return 'bg-yellow-500';
+      case 'static_bicycle': return 'bg-amber-500';
+      case 'simulator': return 'bg-pink-500';
       default: return 'bg-gray-500';
     }
   };
@@ -65,6 +71,12 @@ export const EventModal: React.FC<EventModalProps> = ({
       case 'physical': return 'Físico';
       case 'mental': return 'Mental';
       case 'recovery': return 'Recuperación';
+      case 'gym': return 'Gimnasio';
+      case 'road_skating': return 'Patinaje en Ruta';
+      case 'track_skating': return 'Patinaje en Pista';
+      case 'bicycle': return 'Bicicleta';
+      case 'static_bicycle': return 'Bicicleta Estática';
+      case 'simulator': return 'Simulador';
       default: return type;
     }
   };
