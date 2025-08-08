@@ -18,6 +18,7 @@ import { SkatesTab } from '@/components/athletes/dashboard/SkatesTab';
 import { MaintenanceTab } from '@/components/athletes/dashboard/MaintenanceTab';
 import { HistoryTab } from '@/components/athletes/dashboard/HistoryTab';
 import { HobbiesTab } from '@/components/athletes/dashboard/HobbiesTab';
+import { TrainingTab } from '@/components/athletes/dashboard/TrainingTab';
 
 const AthleteDashboard = () => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -72,8 +73,9 @@ const AthleteDashboard = () => {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-6 lg:grid-cols-11">
+          <TabsList className="grid w-full grid-cols-6 lg:grid-cols-12">
             <TabsTrigger value="profile">Perfil</TabsTrigger>
+            <TabsTrigger value="training">Entrenamientos</TabsTrigger>
             <TabsTrigger value="body">Mi Cuerpo</TabsTrigger>
             <TabsTrigger value="contact">Contacto</TabsTrigger>
             <TabsTrigger value="studies">Estudios</TabsTrigger>
@@ -88,6 +90,10 @@ const AthleteDashboard = () => {
 
           <TabsContent value="profile">
             <ProfileTab athlete={athlete} />
+          </TabsContent>
+
+          <TabsContent value="training">
+            <TrainingTab />
           </TabsContent>
 
           <TabsContent value="body">
