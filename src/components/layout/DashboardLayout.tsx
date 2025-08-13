@@ -40,19 +40,77 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
     { title: "Settings", icon: Settings, path: "/settings" },
   ];
 
+  // Map role to dashboard path and role label
+  const getDashboardPath = (role?: string) => {
+    switch (role) {
+      case 'admin':
+        return '/admin-dashboard';
+      case 'coach':
+        return '/coach-dashboard';
+      case 'athlete':
+        return '/athlete-dashboard';
+      case 'delegate':
+        return '/delegate-dashboard';
+      case 'leader':
+        return '/leader-dashboard';
+      case 'finance':
+        return '/finance-dashboard';
+      default:
+        return '/';
+    }
+  };
+
+  const getRoleLabel = (role?: string) => {
+    switch (role) {
+      case 'admin':
+        return 'Administrador';
+      case 'coach':
+        return 'Entrenador';
+      case 'athlete':
+        return 'Deportista';
+      case 'delegate':
+        return 'Delegado';
+      case 'leader':
+        return 'Líder';
+      case 'finance':
+        return 'Finanzas';
+      default:
+        return 'Usuario';
+    }
+  };
+
   // Filter navigation items based on user role
   const getVisibleNavigationItems = () => {
-    // Hide "Configurar Club" during loading and for restricted roles
-    if (!profile) return allNavigationItems.filter(item => item.title !== "Configurar Club");
+    const role = profile?.role;
 
-    // Hide "Configurar Club" for athlete, delegate, and finance roles
-    const restrictedRoles = ['athlete', 'delegate', 'finance'];
-    
-    if (restrictedRoles.includes(profile.role)) {
-      return allNavigationItems.filter(item => item.title !== "Configurar Club");
-    }
-    
-    return allNavigationItems;
+    // Determine which items are allowed per role
+    const allowedByRole: Record<string, string[]> = {
+      admin: [
+        'Dashboard', 'Athletes', 'Training', 'Competitions', 'Finance', 'Configurar Club', 'Settings'
+      ],
+      coach: [
+        'Dashboard', 'Athletes', 'Training', 'Competitions', 'Settings'
+      ],
+      athlete: [
+        'Dashboard', 'Training', 'Competitions', 'Settings'
+      ],
+      delegate: [
+        'Dashboard', 'Competitions', 'Settings'
+      ],
+      leader: [
+        'Dashboard', 'Athletes', 'Training', 'Competitions', 'Finance', 'Configurar Club', 'Settings'
+      ],
+      finance: [
+        'Dashboard', 'Finance', 'Settings'
+      ],
+    } as const;
+
+    const titles = role ? allowedByRole[role as keyof typeof allowedByRole] : allNavigationItems.map(i => i.title).filter(t => t !== 'Configurar Club');
+
+    // Apply role-based dashboard path and filter by allowed titles
+    return allNavigationItems
+      .map((item) => item.title === 'Dashboard' ? { ...item, path: getDashboardPath(role) } : item)
+      .filter((item) => titles.includes(item.title));
   };
 
   const navigationItems = getVisibleNavigationItems();
@@ -121,7 +179,7 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Navigation - Fixed */}
         <TopNavigation 
-          userRole={userRole}
+          userRole={getRoleLabel(profile?.role)}
           userEmail={user?.email || undefined}
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
         />

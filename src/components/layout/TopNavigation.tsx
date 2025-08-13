@@ -21,6 +21,7 @@ import { useTheme } from 'next-themes';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 interface SearchResult {
   id: string;
@@ -56,6 +57,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
   const [unreadCount, setUnreadCount] = useState(0);
   const [clubLogo, setClubLogo] = useState<string>('');
   const searchRef = useRef<HTMLDivElement>(null);
+  const { profile } = useUserProfile();
 
   // Fetch club logo on component mount
   useEffect(() => {
@@ -109,7 +111,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
     setUnreadCount(mockNotifications.filter(n => !n.read).length);
   }, []);
 
-  // Search functionality
+  // Search functionality (role-aware)
   useEffect(() => {
     const searchDatabase = async () => {
       if (searchQuery.length < 2) {
@@ -120,15 +122,43 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
 
       try {
         const results: SearchResult[] = [];
+        const role = profile?.role;
 
-        // Search athletes
-        const { data: athletes } = await supabase
-          .from('athletes')
-          .select('id, first_name, last_name, athlete_number')
-          .or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,athlete_number.ilike.%${searchQuery}%`)
-          .limit(5);
+        const canSearchAthletes = role === 'admin' || role === 'coach' || role === 'leader';
+        const canSearchCompetitions = role === 'admin' || role === 'coach' || role === 'athlete' || role === 'leader' || role === 'delegate';
+        const canSearchTraining = role === 'admin' || role === 'coach' || role === 'athlete' || role === 'leader';
 
-        athletes?.forEach(athlete => {
+        const athletePromise = canSearchAthletes
+          ? supabase
+              .from('athletes')
+              .select('id, first_name, last_name, athlete_number')
+              .or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,athlete_number.ilike.%${searchQuery}%`)
+              .limit(5)
+          : Promise.resolve({ data: [] as any[] });
+
+        const competitionPromise = canSearchCompetitions
+          ? supabase
+              .from('competitions')
+              .select('id, name, location')
+              .ilike('name', `%${searchQuery}%`)
+              .limit(3)
+          : Promise.resolve({ data: [] as any[] });
+
+        const trainingPromise = canSearchTraining
+          ? supabase
+              .from('training_sessions')
+              .select('id, name, date')
+              .ilike('name', `%${searchQuery}%`)
+              .limit(3)
+          : Promise.resolve({ data: [] as any[] });
+
+        const [athletesRes, competitionsRes, trainingRes] = await Promise.all([
+          athletePromise,
+          competitionPromise,
+          trainingPromise,
+        ]);
+
+        (athletesRes as any)?.data?.forEach((athlete: any) => {
           results.push({
             id: athlete.id,
             title: `${athlete.first_name} ${athlete.last_name}`,
@@ -137,14 +167,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
           });
         });
 
-        // Search competitions
-        const { data: competitions } = await supabase
-          .from('competitions')
-          .select('id, name, location')
-          .ilike('name', `%${searchQuery}%`)
-          .limit(3);
-
-        competitions?.forEach(competition => {
+        (competitionsRes as any)?.data?.forEach((competition: any) => {
           results.push({
             id: competition.id,
             title: competition.name,
@@ -153,14 +176,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
           });
         });
 
-        // Search training sessions
-        const { data: trainingSessions } = await supabase
-          .from('training_sessions')
-          .select('id, name, date')
-          .ilike('name', `%${searchQuery}%`)
-          .limit(3);
-
-        trainingSessions?.forEach(session => {
+        (trainingRes as any)?.data?.forEach((session: any) => {
           results.push({
             id: session.id,
             title: session.name,
@@ -178,7 +194,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
 
     const debounceTimer = setTimeout(searchDatabase, 300);
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery]);
+  }, [searchQuery, profile]);
 
   // Click outside to close search
   useEffect(() => {
