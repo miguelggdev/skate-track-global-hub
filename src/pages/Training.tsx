@@ -26,6 +26,8 @@ import {
   MapPin,
   Timer
 } from 'lucide-react';
+import QuickAttendanceDialog from '@/components/training/QuickAttendanceDialog';
+import DailyAttendanceIndicator from '@/components/training/DailyAttendanceIndicator';
 
 const Training = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -165,7 +167,7 @@ const Training = () => {
             <p className="text-sm text-gray-600 truncate">Manage training sessions and programs</p>
           </div>
           <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-3">
-            {isAdmin && (
+            {(isAdmin) && (
               <CreateTrainingDialog>
                 <Button className="argon-gradient-blue text-white hover:opacity-90 text-sm">
                   <Plus className="h-4 w-4 mr-2" />
@@ -173,6 +175,12 @@ const Training = () => {
                 </Button>
               </CreateTrainingDialog>
             )}
+            <QuickAttendanceDialog>
+              <Button className="argon-gradient-green text-white hover:opacity-90 text-sm">
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Register Attendance
+              </Button>
+            </QuickAttendanceDialog>
             <Button variant="outline" className="text-sm">
               <Download className="h-4 w-4 mr-2" />
               Export
@@ -181,6 +189,7 @@ const Training = () => {
         </div>
 
         {/* Stats Cards */}
+        <DailyAttendanceIndicator />
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {stats.map((stat, index) => (
             <Card key={index} className="argon-card relative overflow-hidden">
@@ -308,15 +317,21 @@ const Training = () => {
                 <div className="text-center">
                   <h3 className="text-xl font-bold mb-2">Training Control</h3>
                   <p className="text-purple-100 mb-6 text-sm">Quick actions for training management</p>
-                    <div className="space-y-3">
-                     {isAdmin && (
-                       <CreateTrainingDialog>
-                         <Button className="w-full bg-white text-purple-600 hover:bg-gray-100 text-sm">
-                           <Plus className="h-4 w-4 mr-2" />
-                           Schedule Session
-                         </Button>
-                       </CreateTrainingDialog>
-                     )}
+                  <div className="space-y-3">
+                    {(isAdmin) && (
+                      <CreateTrainingDialog>
+                        <Button className="w-full bg-white text-purple-600 hover:bg-gray-100 text-sm">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Schedule Session
+                        </Button>
+                      </CreateTrainingDialog>
+                    )}
+                    <QuickAttendanceDialog>
+                      <Button className="w-full bg-white text-purple-600 hover:bg-gray-100 text-sm">
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Register Attendance
+                      </Button>
+                    </QuickAttendanceDialog>
                     <Button 
                       variant="outline" 
                       className="w-full border-white text-white hover:bg-white hover:text-purple-600 text-sm"
