@@ -81,7 +81,7 @@ const Athletes = () => {
         
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <AthletesTable athletes={filteredAthletes} loading={loading} />
+          <AthletesTable athletes={filteredAthletes} loading={loading} onActionCompleted={fetchAthletes} />
           <RecentActivity />
         </div>
       </div>
