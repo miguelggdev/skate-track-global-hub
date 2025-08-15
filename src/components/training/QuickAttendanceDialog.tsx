@@ -27,7 +27,7 @@ const workoutOptions = [
   { value: 'bicycle', label: 'Bike' },
   { value: 'static_bicycle', label: 'Stationary bike' },
   { value: 'simulator', label: 'Simulator' },
-];
+] as const;
 
 export default function QuickAttendanceDialog({ children }: QuickAttendanceDialogProps) {
   const [open, setOpen] = useState(false);
@@ -103,7 +103,8 @@ export default function QuickAttendanceDialog({ children }: QuickAttendanceDialo
           date: todaysStr,
           start_time: startTime,
           end_time: endTime,
-          training_type: trainingType,
+          training_type: trainingType as any,
+          description: `${workoutOptions.find(o => o.value === trainingType)?.label} Training`,
         })
         .select()
         .single();
