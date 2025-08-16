@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -1196,17 +1196,17 @@ export type Database = {
     }
     Functions: {
       calculate_training_duration: {
-        Args: { start_time: string; end_time: string }
+        Args: { end_time: string; start_time: string }
         Returns: number
       }
       send_notification_to_athletes: {
         Args: {
-          sender_id_param: string
-          title_param: string
           message_param: string
           notification_type_param?: string
           related_entity_id_param?: string
           related_entity_type_param?: string
+          sender_id_param: string
+          title_param: string
         }
         Returns: number
       }
