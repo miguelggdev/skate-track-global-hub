@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { useUserProfile } from './useUserProfile';
 
 interface AthleteData {
   id: string;
@@ -21,6 +22,7 @@ interface AthleteData {
 
 export const useCurrentAthlete = () => {
   const { user } = useAuth();
+  const { profile } = useUserProfile();
   const [athlete, setAthlete] = useState<AthleteData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +32,19 @@ export const useCurrentAthlete = () => {
       if (!user) {
         setAthlete(null);
         setLoading(false);
+        return;
+      }
+
+      // Only fetch athlete data if user is actually an athlete
+      if (profile && profile.role !== 'athlete') {
+        setAthlete(null);
+        setError(null); // Clear any previous errors
+        setLoading(false);
+        return;
+      }
+
+      // Don't fetch if we don't have profile data yet
+      if (!profile) {
         return;
       }
 
@@ -59,7 +74,7 @@ export const useCurrentAthlete = () => {
     };
 
     fetchAthlete();
-  }, [user]);
+  }, [user, profile]);
 
   const refreshAthlete = async () => {
     if (!user) return;

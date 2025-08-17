@@ -5,6 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User, Loader2 } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useCurrentAthlete } from '@/hooks/useCurrentAthlete';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { Navigate } from 'react-router-dom';
 
 // Import tab components
 import { ProfileTab } from '@/components/athletes/dashboard/ProfileTab';
@@ -23,8 +25,27 @@ import { TrainingTab } from '@/components/athletes/dashboard/TrainingTab';
 const AthleteDashboard = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const { athlete, loading, error } = useCurrentAthlete();
+  const { profile, loading: profileLoading } = useUserProfile();
 
-  if (loading) {
+  // Redirect non-athletes to their appropriate dashboard
+  if (!profileLoading && profile && profile.role !== 'athlete') {
+    switch (profile.role) {
+      case 'admin':
+        return <Navigate to="/admin-dashboard" replace />;
+      case 'coach':
+        return <Navigate to="/coach-dashboard" replace />;
+      case 'delegate':
+        return <Navigate to="/delegate-dashboard" replace />;
+      case 'leader':
+        return <Navigate to="/leader-dashboard" replace />;
+      case 'finance':
+        return <Navigate to="/finance-dashboard" replace />;
+      default:
+        return <Navigate to="/login" replace />;
+    }
+  }
+
+  if (loading || profileLoading) {
     return (
       <DashboardLayout title="Mi Perfil Deportivo" userRole="Deportista">
         <div className="flex items-center justify-center min-h-[400px]">
