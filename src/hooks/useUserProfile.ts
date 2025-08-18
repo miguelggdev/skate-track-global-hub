@@ -24,14 +24,32 @@ export const useUserProfile = () => {
       }
 
       try {
-        const { data, error } = await supabase
+        // Fetch profile data
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .single();
 
-        if (error) throw error;
-        setProfile(data);
+        if (profileError) throw profileError;
+
+        // Fetch user role from user_roles table
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (roleError) throw roleError;
+
+        // Combine profile and role data
+        const userRole = roleData?.[0]?.role || 'athlete';
+        
+        setProfile({
+          ...profileData,
+          role: userRole
+        });
       } catch (error) {
         console.error('Error fetching user profile:', error);
         setProfile(null);
