@@ -17,7 +17,10 @@ export const useUserProfile = () => {
 
   useEffect(() => {
     const fetchProfile = async () => {
+      console.log('useUserProfile: Starting profile fetch for user:', user?.id);
+      
       if (!user) {
+        console.log('useUserProfile: No user found, clearing profile');
         setProfile(null);
         setLoading(false);
         return;
@@ -31,6 +34,11 @@ export const useUserProfile = () => {
           .eq('id', user.id)
           .single();
 
+        console.log('useUserProfile: Profile data fetch result:', { 
+          data: profileData, 
+          error: profileError 
+        });
+
         if (profileError) throw profileError;
 
         // Fetch user role from user_roles table
@@ -41,17 +49,33 @@ export const useUserProfile = () => {
           .order('created_at', { ascending: false })
           .limit(1);
 
-        if (roleError) throw roleError;
+        console.log('useUserProfile: Role data fetch result:', { 
+          data: roleData, 
+          error: roleError 
+        });
 
-        // Combine profile and role data
-        const userRole = roleData?.[0]?.role || 'athlete';
+        if (roleError) {
+          console.warn('useUserProfile: Role fetch error (non-fatal):', roleError);
+        }
+
+        // Prefer profile role if it exists, fallback to user_roles
+        const userRole = profileData?.role || roleData?.[0]?.role || 'athlete';
         
-        setProfile({
+        console.log('useUserProfile: Final role determined:', {
+          profileRole: profileData?.role,
+          userRolesRole: roleData?.[0]?.role,
+          finalRole: userRole
+        });
+        
+        const finalProfile = {
           ...profileData,
           role: userRole
-        });
+        };
+
+        console.log('useUserProfile: Setting final profile:', finalProfile);
+        setProfile(finalProfile);
       } catch (error) {
-        console.error('Error fetching user profile:', error);
+        console.error('useUserProfile: Error fetching user profile:', error);
         setProfile(null);
       } finally {
         setLoading(false);

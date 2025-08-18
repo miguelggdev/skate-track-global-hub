@@ -31,6 +31,12 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { profile, isAdmin, isCoach } = useUserProfile();
+
+  console.log('CreateTrainingDialog: User permissions', { 
+    isAdmin, 
+    isCoach, 
+    userRole: profile?.role 
+  });
   
   const [formData, setFormData] = useState({
     name: '',

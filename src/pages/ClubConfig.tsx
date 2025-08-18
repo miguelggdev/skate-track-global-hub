@@ -64,6 +64,12 @@ const ClubConfig = () => {
   const { toast } = useToast();
   const { isAdmin, loading: profileLoading } = useUserProfile();
 
+  console.log('ClubConfig: Component rendering', { 
+    isAdmin, 
+    profileLoading, 
+    pathname: window.location.pathname 
+  });
+
   const fetchClubSettings = async () => {
     try {
       const { data, error } = await supabase
@@ -132,17 +138,20 @@ const ClubConfig = () => {
     return systemSettings.filter(setting => setting.category === category);
   };
 
-  if (profileLoading || loading) {
+  if (profileLoading) {
+    console.log('ClubConfig: Profile still loading...');
     return (
       <DashboardLayout title="Configurar Club">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+          <span className="ml-2">Cargando perfil...</span>
         </div>
       </DashboardLayout>
     );
   }
 
   if (!isAdmin) {
+    console.log('ClubConfig: Access denied - user is not admin');
     return (
       <DashboardLayout title="Configurar Club">
         <div className="flex flex-col items-center justify-center h-64 space-y-4">
@@ -151,6 +160,18 @@ const ClubConfig = () => {
           <p className="text-muted-foreground text-center">
             Solo los administradores pueden acceder a la configuración del club.
           </p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (loading) {
+    console.log('ClubConfig: Settings data still loading...');
+    return (
+      <DashboardLayout title="Configurar Club">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+          <span className="ml-2">Cargando configuración...</span>
         </div>
       </DashboardLayout>
     );

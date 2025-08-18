@@ -14,10 +14,18 @@ import TrainingHeatmap from '@/components/dashboard/TrainingHeatmap';
 import CompetitionTimeline from '@/components/dashboard/CompetitionTimeline';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isAdmin, loading: profileLoading } = useUserProfile();
+
+  console.log('AdminDashboard: Component rendering', { 
+    isAdmin, 
+    profileLoading, 
+    pathname: window.location.pathname 
+  });
   const [dashboardData, setDashboardData] = useState({
     athletes: { total: 0, target: 175 },
     revenue: { current: 0, target: 52000 },
@@ -126,11 +134,41 @@ const AdminDashboard = () => {
     },
   ];
 
-  if (dashboardData.loading) {
+  // Show loading state if profile is still loading
+  if (profileLoading) {
+    console.log('AdminDashboard: Profile still loading...');
     return (
       <DashboardLayout title="Dashboard Administrador" userRole="Administrador">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <span className="ml-2">Cargando perfil...</span>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Check admin access
+  if (!isAdmin) {
+    console.log('AdminDashboard: Access denied - user is not admin');
+    return (
+      <DashboardLayout title="Dashboard Administrador" userRole="Administrador">
+        <div className="flex flex-col items-center justify-center h-64 space-y-4">
+          <h2 className="text-xl font-semibold text-foreground">Acceso Denegado</h2>
+          <p className="text-muted-foreground text-center">
+            Solo los administradores pueden acceder a este dashboard.
+          </p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (dashboardData.loading) {
+    console.log('AdminDashboard: Dashboard data still loading...');
+    return (
+      <DashboardLayout title="Dashboard Administrador" userRole="Administrador">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <span className="ml-2">Cargando datos...</span>
         </div>
       </DashboardLayout>
     );

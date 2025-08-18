@@ -18,8 +18,14 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signOut, user } = useAuth();
-  const { profile } = useUserProfile();
+  const { profile, loading: profileLoading } = useUserProfile();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+
+  console.log('DashboardLayout: Rendering with profile:', {
+    profile,
+    profileLoading,
+    userEmail: user?.email
+  });
 
   const handleLogout = async () => {
     await signOut();
@@ -83,6 +89,8 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
   const getVisibleNavigationItems = () => {
     const role = profile?.role;
 
+    console.log('DashboardLayout: Getting navigation items for role:', role);
+
     // Determine which items are allowed per role
     const allowedByRole: Record<string, string[]> = {
       admin: [
@@ -107,11 +115,27 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
 
     const titles = role ? allowedByRole[role as keyof typeof allowedByRole] : allNavigationItems.map(i => i.title).filter(t => t !== 'Configurar Club');
 
+    console.log('DashboardLayout: Allowed titles for role:', { role, titles });
+
     // Apply role-based dashboard path and filter by allowed titles
-    return allNavigationItems
+    const items = allNavigationItems
       .map((item) => item.title === 'Dashboard' ? { ...item, path: getDashboardPath(role) } : item)
       .filter((item) => titles.includes(item.title));
+
+    console.log('DashboardLayout: Final navigation items:', items);
+    return items;
   };
+
+  // Show loading state if profile is still loading
+  if (profileLoading) {
+    return (
+      <div className="flex h-screen bg-background dark:bg-gray-900 overflow-hidden">
+        <div className="flex items-center justify-center w-full">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
 
   const navigationItems = getVisibleNavigationItems();
 
