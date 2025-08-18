@@ -13,9 +13,11 @@ import MedalPodium from '@/components/dashboard/MedalPodium';
 import TrainingHeatmap from '@/components/dashboard/TrainingHeatmap';
 import CompetitionTimeline from '@/components/dashboard/CompetitionTimeline';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [dashboardData, setDashboardData] = useState({
     athletes: { total: 0, target: 175 },
     revenue: { current: 0, target: 52000 },
@@ -24,9 +26,14 @@ const AdminDashboard = () => {
     loading: true
   });
 
+  console.log('AdminDashboard: Component rendering, current route:', window.location.pathname);
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
+        console.log('AdminDashboard: Starting data fetch...');
+        setDashboardData(prev => ({ ...prev, loading: true }));
+        
         // Fetch real data from database
         const [athletesRes, revenueRes, attendanceRes] = await Promise.all([
           supabase.from('athletes').select('*', { count: 'exact' }),
@@ -38,25 +45,52 @@ const AdminDashboard = () => {
             .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
         ]);
 
+        console.log('AdminDashboard: Data fetch results:', {
+          athletes: { count: athletesRes.count, error: athletesRes.error },
+          revenue: { dataLength: revenueRes.data?.length, error: revenueRes.error },
+          attendance: { dataLength: attendanceRes.data?.length, error: attendanceRes.error }
+        });
+
+        // Check for specific errors
+        if (athletesRes.error) {
+          console.error('Athletes fetch error:', athletesRes.error);
+          throw new Error(`Athletes: ${athletesRes.error.message}`);
+        }
+        if (revenueRes.error) {
+          console.error('Revenue fetch error:', revenueRes.error);
+        }
+        if (attendanceRes.error) {
+          console.error('Attendance fetch error:', attendanceRes.error);
+        }
+
         const totalRevenue = revenueRes.data?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
         const attendanceRate = attendanceRes.data?.length > 0 
           ? (attendanceRes.data.filter(a => a.attended).length / attendanceRes.data.length) * 100 
           : 87.5;
 
-        setDashboardData({
-          athletes: { total: athletesRes.count || 156, target: 175 },
-          revenue: { current: totalRevenue || 48500, target: 52000 },
+        const newData = {
+          athletes: { total: athletesRes.count || 0, target: 175 },
+          revenue: { current: totalRevenue, target: 52000 },
           attendance: { rate: attendanceRate, target: 90 },
           retention: { rate: 93.2, target: 95 },
           loading: false
-        });
+        };
+
+        console.log('AdminDashboard: Setting data:', newData);
+        setDashboardData(newData);
+
       } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        console.error('AdminDashboard: Error fetching dashboard data:', error);
+        
+        // Show toast error to user
+        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+        
+        // Use fallback data but show error
         setDashboardData({
-          athletes: { total: 156, target: 175 },
-          revenue: { current: 48500, target: 52000 },
-          attendance: { rate: 87.5, target: 90 },
-          retention: { rate: 93.2, target: 95 },
+          athletes: { total: 0, target: 175 },
+          revenue: { current: 0, target: 52000 },
+          attendance: { rate: 0, target: 90 },
+          retention: { rate: 0, target: 95 },
           loading: false
         });
       }
