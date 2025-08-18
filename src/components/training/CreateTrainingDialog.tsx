@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Plus, Clock, Users, Target, Activity, MapPin, Calendar as CalendarIcon, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -29,6 +30,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { profile, isAdmin, isCoach } = useUserProfile();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -40,11 +42,40 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
     max_participants: '',
     training_type: '',
     category: '',
-    level: ''
+    level: '',
+    coach_id: ''
   });
 
   const [selectedDay, setSelectedDay] = useState('');
   const [weeklySchedule, setWeeklySchedule] = useState<any[]>([]);
+  const [coaches, setCoaches] = useState<Array<{id: string, name: string}>>([]);
+
+  // Fetch coaches for admin users
+  useEffect(() => {
+    const fetchCoaches = async () => {
+      if (isAdmin) {
+        const { data } = await supabase
+          .from('coaches')
+          .select(`
+            id,
+            user_id,
+            profiles:user_id (first_name, last_name)
+          `);
+        
+        if (data) {
+          const coachOptions = data.map(coach => ({
+            id: coach.id,
+            name: coach.profiles ? `${coach.profiles.first_name} ${coach.profiles.last_name}`.trim() : 'Coach'
+          }));
+          setCoaches(coachOptions);
+        }
+      }
+    };
+
+    if (open) {
+      fetchCoaches();
+    }
+  }, [open, isAdmin]);
 
   // Training types based on category and level
   const getTrainingTypes = (category: string, level: string): TrainingType[] => {
@@ -161,7 +192,8 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
       category: formData.category,
       level: formData.level,
       max_participants: formData.max_participants,
-      location: formData.location
+      location: formData.location,
+      coach_id: formData.coach_id
     };
 
     setWeeklySchedule([...weeklySchedule, newScheduleItem]);
@@ -195,17 +227,28 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
     setLoading(true);
 
     try {
-      // Get current user's coach profile
+      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuario no autenticado');
 
-      const { data: coach } = await supabase
-        .from('coaches')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
+      let coachId = null;
 
-      if (!coach) throw new Error('Perfil de entrenador no encontrado');
+      if (isAdmin) {
+        // Admin can assign specific coach or leave unassigned
+        coachId = formData.coach_id || null;
+      } else if (isCoach) {
+        // Coach must use their own profile
+        const { data: coach } = await supabase
+          .from('coaches')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!coach) throw new Error('Perfil de entrenador no encontrado');
+        coachId = coach.id;
+      } else {
+        throw new Error('No tienes permisos para crear entrenamientos');
+      }
 
       // Create training sessions for each item in weekly schedule
       const trainingPromises = weeklySchedule.map(async (item) => {
@@ -213,7 +256,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
         const selectedType = trainingTypes.find(t => t.value === item.training_type);
 
         return supabase.from('training_sessions').insert({
-          coach_id: coach.id,
+          coach_id: item.coach_id || coachId,
           name: `${selectedType?.label} - ${categories.find(c => c.value === item.category)?.label} ${levels.find(l => l.value === item.level)?.label}`,
           description: selectedType?.description || formData.description || '',
           date: item.date,
@@ -243,7 +286,8 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
         max_participants: '',
         training_type: '',
         category: '',
-        level: ''
+        level: '',
+        coach_id: ''
       });
       setWeeklySchedule([]);
       setOpen(false);
@@ -363,6 +407,23 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                     placeholder="Ej: 15"
                   />
                 </div>
+
+                {isAdmin && (
+                  <div>
+                    <Label htmlFor="coach_id">Entrenador Asignado</Label>
+                    <Select value={formData.coach_id} onValueChange={(value) => setFormData({...formData, coach_id: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar entrenador (opcional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Sin asignar</SelectItem>
+                        {coaches.map(coach => (
+                          <SelectItem key={coach.id} value={coach.id}>{coach.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
 
               <div>
