@@ -58,7 +58,7 @@ export const useAthleteTraining = () => {
         .from('training_attendance')
         .select(`
           *,
-          training_sessions (*)
+          training_sessions!training_attendance_training_session_id_fkey (*)
         `)
         .eq('athlete_id', athlete.id)
         .order('created_at', { ascending: false });
