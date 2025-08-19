@@ -121,7 +121,7 @@ export default function QuickAttendanceDialog({ children }: QuickAttendanceDialo
       const { error: attError } = await supabase
         .from('training_attendance')
         .upsert(rows, { 
-          onConflict: 'training_attendance_session_athlete_unique',
+          onConflict: 'training_session_id,athlete_id',
           ignoreDuplicates: false 
         });
       
