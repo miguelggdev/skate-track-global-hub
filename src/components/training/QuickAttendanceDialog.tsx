@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -111,7 +112,7 @@ export default function QuickAttendanceDialog({ children }: QuickAttendanceDialo
 
       if (sessionError || !session) throw sessionError || new Error('No session created');
 
-      // Insert attendance for selected athletes using the constraint name
+      // Insert attendance for selected athletes using the correct constraint columns
       const rows = selectedIds.map(athlete_id => ({
         training_session_id: session.id,
         athlete_id,
@@ -121,7 +122,7 @@ export default function QuickAttendanceDialog({ children }: QuickAttendanceDialo
       const { error: attError } = await supabase
         .from('training_attendance')
         .upsert(rows, { 
-          onConflict: 'training_attendance_session_athlete_unique',
+          onConflict: 'training_session_id,athlete_id',
           ignoreDuplicates: false 
         });
       
