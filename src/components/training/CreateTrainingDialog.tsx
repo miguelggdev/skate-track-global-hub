@@ -280,7 +280,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
 
       if (isAdmin) {
         // Admin can assign specific coach or leave unassigned
-        coachId = formData.coach_id || null;
+        coachId = formData.coach_id === 'unassigned' || !formData.coach_id ? null : formData.coach_id;
       } else if (isCoach) {
         // Coach must use their own profile
         const { data: coach } = await supabase
@@ -301,7 +301,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
         const selectedType = trainingTypes.find(t => t.value === item.training_type);
 
         return supabase.from('training_sessions').insert({
-          coach_id: item.coach_id || coachId,
+          coach_id: (item.coach_id === 'unassigned' || !item.coach_id) ? coachId : item.coach_id,
           name: `${selectedType?.label} - ${categories.find(c => c.value === item.category)?.label} ${levels.find(l => l.value === item.level)?.label}`,
           description: selectedType?.description || formData.description || '',
           date: item.date,
@@ -551,7 +551,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                           <SelectValue placeholder="Seleccionar entrenador (opcional)" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Sin asignar</SelectItem>
+                          <SelectItem value="unassigned">Sin asignar</SelectItem>
                           {coaches.map(coach => (
                             <SelectItem key={coach.id} value={coach.id}>{coach.name}</SelectItem>
                           ))}
