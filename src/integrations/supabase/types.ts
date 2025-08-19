@@ -1071,24 +1071,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "training_attendance_athlete_fk"
-            columns: ["athlete_id"]
-            isOneToOne: false
-            referencedRelation: "athletes"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "training_attendance_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
             referencedRelation: "athletes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "training_attendance_training_session_fk"
-            columns: ["training_session_id"]
-            isOneToOne: false
-            referencedRelation: "training_sessions"
             referencedColumns: ["id"]
           },
           {
