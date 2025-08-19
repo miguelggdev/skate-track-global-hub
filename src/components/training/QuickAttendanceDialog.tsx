@@ -111,7 +111,7 @@ export default function QuickAttendanceDialog({ children }: QuickAttendanceDialo
 
       if (sessionError || !session) throw sessionError || new Error('No session created');
 
-      // Insert attendance for selected athletes using named constraint
+      // Insert attendance for selected athletes using the constraint name
       const rows = selectedIds.map(athlete_id => ({
         training_session_id: session.id,
         athlete_id,
@@ -121,7 +121,7 @@ export default function QuickAttendanceDialog({ children }: QuickAttendanceDialo
       const { error: attError } = await supabase
         .from('training_attendance')
         .upsert(rows, { 
-          onConflict: 'training_session_id,athlete_id',
+          onConflict: 'training_attendance_session_athlete_unique',
           ignoreDuplicates: false 
         });
       

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -43,11 +44,11 @@ export const useAttendanceManagement = () => {
   // Register attendance mutation
   const registerAttendanceMutation = useMutation({
     mutationFn: async (attendanceData: AttendanceFormData) => {
-      // Use UPSERT with column names for onConflict
+      // Use UPSERT with the unique constraint name
       const { data, error } = await supabase
         .from('training_attendance')
         .upsert([attendanceData], { 
-          onConflict: 'training_session_id,athlete_id',
+          onConflict: 'training_attendance_session_athlete_unique',
           ignoreDuplicates: false 
         })
         .select()
