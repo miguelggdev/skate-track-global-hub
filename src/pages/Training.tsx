@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useTrainingSessions } from '@/hooks/useTrainingSessions';
 import CreateTrainingDialog from '@/components/training/CreateTrainingDialog';
 import { 
   Calendar,
@@ -33,11 +34,17 @@ const Training = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const { isAdmin } = useUserProfile();
+  
+  // Fetch training sessions from database
+  const { trainingSessions, isLoading } = useTrainingSessions({
+    includeCoachInfo: true,
+    dateFilter: 'all'
+  });
 
   const stats = [
     { 
       title: "ACTIVE SESSIONS", 
-      value: "12", 
+      value: trainingSessions.length.toString(), 
       change: "+8%", 
       period: "from last week",
       icon: Activity,
@@ -73,57 +80,6 @@ const Training = () => {
     },
   ];
 
-  const upcomingSessions = [
-    {
-      id: 1,
-      title: "Speed Training - Group A",
-      time: "08:00 AM",
-      date: "2024-06-21",
-      duration: "2 hours",
-      athletes: 12,
-      coach: "Maria Rodriguez",
-      location: "Main Rink",
-      status: "scheduled",
-      type: "speed"
-    },
-    {
-      id: 2,
-      title: "Technique Workshop",
-      time: "10:30 AM",
-      date: "2024-06-21",
-      duration: "1.5 hours",
-      athletes: 8,
-      coach: "Carlos Mendez",
-      location: "Training Hall",
-      status: "in-progress",
-      type: "technique"
-    },
-    {
-      id: 3,
-      title: "Endurance Training",
-      time: "02:00 PM",
-      date: "2024-06-21",
-      duration: "3 hours",
-      athletes: 15,
-      coach: "Ana Silva",
-      location: "Main Rink",
-      status: "scheduled",
-      type: "endurance"
-    },
-    {
-      id: 4,
-      title: "Competition Prep",
-      time: "04:30 PM",
-      date: "2024-06-21",
-      duration: "2.5 hours",
-      athletes: 6,
-      coach: "Luis Garcia",
-      location: "Competition Track",
-      status: "completed",
-      type: "competition"
-    }
-  ];
-
   const trainingPrograms = [
     { name: "Sprint Development", progress: 75, color: "bg-blue-500", athletes: 24 },
     { name: "Endurance Building", progress: 60, color: "bg-green-500", athletes: 18 },
@@ -143,17 +99,30 @@ const Training = () => {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'speed': return <Target className="h-4 w-4" />;
-      case 'technique': return <Trophy className="h-4 w-4" />;
-      case 'endurance': return <Activity className="h-4 w-4" />;
-      case 'competition': return <CheckCircle className="h-4 w-4" />;
+      case 'physical': return <Target className="h-4 w-4" />;
+      case 'technical': return <Trophy className="h-4 w-4" />;
+      case 'mental': return <Activity className="h-4 w-4" />;
+      case 'track_skating': return <CheckCircle className="h-4 w-4" />;
+      case 'road_skating': return <Activity className="h-4 w-4" />;
       default: return <Clock className="h-4 w-4" />;
     }
   };
 
-  const filteredSessions = upcomingSessions.filter(session => {
-    const matchesSearch = session.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         session.coach.toLowerCase().includes(searchTerm.toLowerCase());
+  const getTypeGradient = (type: string) => {
+    switch (type) {
+      case 'physical': return 'argon-gradient-blue';
+      case 'technical': return 'argon-gradient-purple';
+      case 'mental': return 'argon-gradient-green';
+      case 'track_skating': return 'argon-gradient-orange';
+      case 'road_skating': return 'argon-gradient-red';
+      default: return 'argon-gradient-blue';
+    }
+  };
+
+  const filteredSessions = trainingSessions.filter(session => {
+    const matchesSearch = session.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         session.coach.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         session.location?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
     const matchesFilter = filterStatus === 'all' || session.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
@@ -252,61 +221,73 @@ const Training = () => {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="px-6">
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {filteredSessions.map((session) => (
-                    <div key={session.id} className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
-                      <div className="flex flex-col space-y-3 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
-                        <div className="flex items-start space-x-3 min-w-0 flex-1">
-                          <div className={`p-2 rounded-lg ${session.type === 'speed' ? 'argon-gradient-blue' : 
-                                        session.type === 'technique' ? 'argon-gradient-purple' :
-                                        session.type === 'endurance' ? 'argon-gradient-green' : 'argon-gradient-orange'} text-white flex-shrink-0`}>
-                            {getTypeIcon(session.type)}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <h4 className="font-semibold text-gray-800 text-sm truncate">{session.title}</h4>
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600 mt-1">
-                              <span className="flex items-center flex-shrink-0">
-                                <Clock className="h-3 w-3 mr-1" />
-                                {session.time}
-                              </span>
-                              <span className="flex items-center flex-shrink-0">
-                                <Users className="h-3 w-3 mr-1" />
-                                {session.athletes}
-                              </span>
-                              <span className="flex items-center flex-shrink-0">
-                                <MapPin className="h-3 w-3 mr-1" />
-                                <span className="truncate max-w-20">{session.location}</span>
-                              </span>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1 truncate">Coach: {session.coach}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between lg:justify-end gap-3 flex-shrink-0">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(session.status)}`}>
-                            {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
-                          </span>
-                          <div className="flex gap-1 flex-shrink-0">
-                            {session.status === 'scheduled' && (
-                              <Button size="sm" variant="outline" className="p-2">
-                                <Play className="h-3 w-3" />
-                              </Button>
-                            )}
-                            {session.status === 'in-progress' && (
-                              <Button size="sm" variant="outline" className="p-2">
-                                <Pause className="h-3 w-3" />
-                              </Button>
-                            )}
-                            <Button size="sm" variant="outline" className="p-2">
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
+               <CardContent className="px-6">
+                 {isLoading ? (
+                   <div className="flex justify-center items-center h-32">
+                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                   </div>
+                 ) : (
+                   <div className="space-y-4 max-h-96 overflow-y-auto">
+                     {filteredSessions.length === 0 ? (
+                       <div className="text-center py-8 text-gray-500">
+                         <Activity className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                         <p className="text-lg font-semibold">No hay sesiones de entrenamiento</p>
+                         <p className="text-sm">Crea una nueva sesión para comenzar</p>
+                       </div>
+                     ) : (
+                       filteredSessions.map((session) => (
+                         <div key={session.id} className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                           <div className="flex flex-col space-y-3 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
+                             <div className="flex items-start space-x-3 min-w-0 flex-1">
+                               <div className={`p-2 rounded-lg ${getTypeGradient(session.training_type)} text-white flex-shrink-0`}>
+                                 {getTypeIcon(session.training_type)}
+                               </div>
+                               <div className="min-w-0 flex-1">
+                                 <h4 className="font-semibold text-gray-800 text-sm truncate">{session.name}</h4>
+                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600 mt-1">
+                                   <span className="flex items-center flex-shrink-0">
+                                     <Clock className="h-3 w-3 mr-1" />
+                                     {session.start_time} - {session.end_time}
+                                   </span>
+                                   <span className="flex items-center flex-shrink-0">
+                                     <Calendar className="h-3 w-3 mr-1" />
+                                     {new Date(session.date).toLocaleDateString('es-ES')}
+                                   </span>
+                                   <span className="flex items-center flex-shrink-0">
+                                     <MapPin className="h-3 w-3 mr-1" />
+                                     <span className="truncate max-w-20">{session.location || 'No especificado'}</span>
+                                   </span>
+                                 </div>
+                                 <p className="text-xs text-gray-500 mt-1 truncate">Coach: {session.coach}</p>
+                               </div>
+                             </div>
+                             <div className="flex items-center justify-between lg:justify-end gap-3 flex-shrink-0">
+                               <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(session.status)}`}>
+                                 {session.status.charAt(0).toUpperCase() + session.status.slice(1).replace('-', ' ')}
+                               </span>
+                               <div className="flex gap-1 flex-shrink-0">
+                                 {session.status === 'scheduled' && (
+                                   <Button size="sm" variant="outline" className="p-2">
+                                     <Play className="h-3 w-3" />
+                                   </Button>
+                                 )}
+                                 {session.status === 'in-progress' && (
+                                   <Button size="sm" variant="outline" className="p-2">
+                                     <Pause className="h-3 w-3" />
+                                   </Button>
+                                 )}
+                                 <Button size="sm" variant="outline" className="p-2">
+                                   <Edit className="h-3 w-3" />
+                                 </Button>
+                               </div>
+                             </div>
+                           </div>
+                         </div>
+                       ))
+                     )}
+                   </div>
+                 )}
+               </CardContent>
             </Card>
           </div>
 

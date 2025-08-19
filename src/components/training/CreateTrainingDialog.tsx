@@ -12,6 +12,7 @@ import { Plus, Clock, Users, Target, Activity, MapPin, Calendar as CalendarIcon,
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -33,6 +34,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
   const [coachesLoading, setCoachesLoading] = useState(false);
   const { toast } = useToast();
   const { profile, isAdmin, isCoach, loading: profileLoading } = useUserProfile();
+  const queryClient = useQueryClient();
 
   console.log('CreateTrainingDialog: Component initialized', { 
     isAdmin, 
@@ -314,6 +316,9 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
       });
 
       await Promise.all(trainingPromises);
+
+      // Invalidate training sessions cache to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['training-sessions'] });
 
       toast({
         title: "Éxito",
