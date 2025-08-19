@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import AddTransactionDialog from '@/components/finance/AddTransactionDialog';
 import { TransactionReceiptGenerator } from '@/components/finance/TransactionReceiptGenerator';
+import { AthleteLetterGenerator } from '@/components/finance/AthleteLetterGenerator';
 import { useTransactions, useFinancialStats, useUpdateTransaction } from '@/hooks/useTransactions';
 import { 
   DollarSign, 
@@ -165,12 +166,13 @@ const Finance = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="overview">Resumen</TabsTrigger>
             <TabsTrigger value="transactions">Transacciones</TabsTrigger>
             <TabsTrigger value="budgets">Presupuestos</TabsTrigger>
             <TabsTrigger value="reports">Informes</TabsTrigger>
             <TabsTrigger value="payments">Pagos</TabsTrigger>
+            <TabsTrigger value="letters">Cartas</TabsTrigger>
             <TabsTrigger value="settings">Configuración</TabsTrigger>
           </TabsList>
 
@@ -526,6 +528,11 @@ const Finance = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+          {/* Letters Tab */}
+          <TabsContent value="letters" className="space-y-6">
+            <AthleteLetterGenerator />
+          </TabsContent>
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-6">
