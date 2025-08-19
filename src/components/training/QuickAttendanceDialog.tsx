@@ -111,14 +111,20 @@ export default function QuickAttendanceDialog({ children }: QuickAttendanceDialo
 
       if (sessionError || !session) throw sessionError || new Error('No session created');
 
-      // Insert attendance for selected athletes
+      // Insert attendance for selected athletes using UPSERT
       const rows = selectedIds.map(athlete_id => ({
         training_session_id: session.id,
         athlete_id,
         attended: true,
       }));
 
-      const { error: attError } = await supabase.from('training_attendance').insert(rows);
+      const { error: attError } = await supabase
+        .from('training_attendance')
+        .upsert(rows, { 
+          onConflict: 'training_session_id,athlete_id',
+          ignoreDuplicates: false 
+        });
+      
       if (attError) throw attError;
 
       toast({ title: 'Attendance saved', description: 'Training session and attendance registered.' });
@@ -126,7 +132,17 @@ export default function QuickAttendanceDialog({ children }: QuickAttendanceDialo
       setSelected({});
     } catch (e: any) {
       console.error(e);
-      toast({ title: 'Error', description: 'Could not save attendance.', variant: 'destructive' });
+      let errorMessage = 'Could not save attendance.';
+      
+      if (e.code === '23505') {
+        errorMessage = 'Some athletes already have attendance records for this session.';
+      } else if (e.message?.includes('foreign key')) {
+        errorMessage = 'Invalid training session or athlete data.';
+      } else if (e.message) {
+        errorMessage = e.message;
+      }
+      
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     } finally {
       setSaving(false);
     }

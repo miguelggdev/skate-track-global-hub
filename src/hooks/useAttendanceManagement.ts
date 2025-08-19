@@ -43,9 +43,13 @@ export const useAttendanceManagement = () => {
   // Register attendance mutation
   const registerAttendanceMutation = useMutation({
     mutationFn: async (attendanceData: AttendanceFormData) => {
+      // Use UPSERT to handle existing records
       const { data, error } = await supabase
         .from('training_attendance')
-        .insert([attendanceData])
+        .upsert([attendanceData], { 
+          onConflict: 'training_session_id,athlete_id',
+          ignoreDuplicates: false 
+        })
         .select()
         .single();
 
@@ -59,7 +63,15 @@ export const useAttendanceManagement = () => {
     },
     onError: (error: any) => {
       console.error('Error registering attendance:', error);
-      toast.error('Error al registrar la asistencia');
+      
+      // Provide more specific error messages
+      if (error.code === '23505') {
+        toast.error('Ya existe un registro de asistencia para este atleta en esta sesión');
+      } else if (error.message?.includes('foreign key')) {
+        toast.error('Error: Sesión de entrenamiento o atleta no válido');
+      } else {
+        toast.error('Error al registrar la asistencia: ' + (error.message || 'Error desconocido'));
+      }
     },
   });
 

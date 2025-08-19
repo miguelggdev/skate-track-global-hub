@@ -19,6 +19,7 @@ import { Separator } from '@/components/ui/separator';
 import { useAthletes } from '@/hooks/useAthletes';
 import { useAttendanceManagement } from '@/hooks/useAttendanceManagement';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { toast } from 'sonner';
 
 const attendanceSchema = z.object({
   athlete_attendances: z.array(z.object({
@@ -95,16 +96,25 @@ export const AttendanceRegistrationForm: React.FC<AttendanceRegistrationFormProp
       return;
     }
 
-    for (const attendance of data.athlete_attendances) {
-      if (attendance.attended || attendance.performance_rating || attendance.notes) {
-        await registerAttendance({
-          training_session_id: trainingSession.id,
-          athlete_id: attendance.athlete_id,
-          attended: attendance.attended,
-          performance_rating: attendance.performance_rating,
-          notes: attendance.notes,
-        });
-      }
+    // Filter attendances that need to be registered
+    const attendancesToRegister = data.athlete_attendances.filter(
+      attendance => attendance.attended || attendance.performance_rating || attendance.notes
+    );
+
+    if (attendancesToRegister.length === 0) {
+      toast.error('No hay asistencias para registrar');
+      return;
+    }
+
+    // Register attendances sequentially to avoid race conditions
+    for (const attendance of attendancesToRegister) {
+      registerAttendance({
+        training_session_id: trainingSession.id,
+        athlete_id: attendance.athlete_id,
+        attended: attendance.attended,
+        performance_rating: attendance.performance_rating,
+        notes: attendance.notes,
+      });
     }
 
     onSuccess?.();
