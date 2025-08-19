@@ -43,11 +43,11 @@ export const useAttendanceManagement = () => {
   // Register attendance mutation
   const registerAttendanceMutation = useMutation({
     mutationFn: async (attendanceData: AttendanceFormData) => {
-      // Use UPSERT to handle existing records
+      // Use UPSERT with named constraint for better reliability
       const { data, error } = await supabase
         .from('training_attendance')
         .upsert([attendanceData], { 
-          onConflict: 'training_session_id,athlete_id',
+          onConflict: 'training_attendance_session_athlete_unique',
           ignoreDuplicates: false 
         })
         .select()
