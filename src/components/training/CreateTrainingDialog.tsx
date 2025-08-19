@@ -48,7 +48,9 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
   console.log('CreateTrainingDialog: Permission check', {
     canCreateTraining,
     hasProfile: !!profile,
-    isAuthenticated: !profileLoading && !!profile
+    isAuthenticated: !profileLoading && !!profile,
+    isAdmin,
+    isCoach
   });
   
   const [formData, setFormData] = useState({
@@ -351,11 +353,32 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
     ? getTrainingTypes(formData.category, formData.level)
     : [];
 
+  console.log('CreateTrainingDialog: Rendering dialog', {
+    open,
+    profileLoading,
+    canCreateTraining,
+    profile: !!profile,
+    error
+  });
+
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
+      console.log('CreateTrainingDialog: Dialog open change requested', { 
+        newOpen, 
+        canCreateTraining, 
+        profileLoading,
+        profile: !!profile 
+      });
+      
       // Prevent opening if user is not authenticated or authorized
       if (newOpen && !canCreateTraining) {
-        console.log('CreateTrainingDialog: Preventing dialog open - user not authorized');
+        console.log('CreateTrainingDialog: Preventing dialog open - user not authorized', {
+          profileLoading,
+          hasProfile: !!profile,
+          isAdmin,
+          isCoach
+        });
+        
         if (profileLoading) {
           toast({
             title: "Cargando...",
@@ -384,6 +407,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
         }
       }
       
+      console.log('CreateTrainingDialog: Setting open to', newOpen);
       setOpen(newOpen);
     }}>
       <DialogTrigger asChild>
@@ -417,6 +441,19 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
               <AlertCircle className="h-4 w-4 text-destructive" />
               <p className="text-sm text-destructive">{error}</p>
             </div>
+          </div>
+        )}
+
+        {/* Debug information - remove in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 text-xs">
+            <p><strong>Debug Info:</strong></p>
+            <p>Profile Loading: {profileLoading.toString()}</p>
+            <p>Has Profile: {(!!profile).toString()}</p>
+            <p>Is Admin: {isAdmin.toString()}</p>
+            <p>Is Coach: {isCoach.toString()}</p>
+            <p>Can Create Training: {canCreateTraining.toString()}</p>
+            <p>Error: {error || 'None'}</p>
           </div>
         )}
 
