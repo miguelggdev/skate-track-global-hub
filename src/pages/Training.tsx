@@ -122,13 +122,28 @@ const Training = () => {
     }
   };
 
-  const filteredSessions = trainingSessions.filter(session => {
-    const matchesSearch = session.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         session.coach.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         session.location?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
-    const matchesFilter = filterStatus === 'all' || session.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+  const filteredSessions = trainingSessions
+    .filter(session => {
+      const matchesSearch = session.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           session.coach.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           session.location?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+      const matchesFilter = filterStatus === 'all' || session.status === filterStatus;
+      return matchesSearch && matchesFilter;
+    })
+    .sort((a, b) => {
+      // Sort by date (newest first), then by time
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      
+      if (dateA.getTime() !== dateB.getTime()) {
+        return dateB.getTime() - dateA.getTime(); // Newest first
+      }
+      
+      // If same date, sort by start time (earliest first for same day)
+      const timeA = a.start_time;
+      const timeB = b.start_time;
+      return timeA.localeCompare(timeB);
+    });
 
   return (
     <DashboardLayout title="Training Management">
