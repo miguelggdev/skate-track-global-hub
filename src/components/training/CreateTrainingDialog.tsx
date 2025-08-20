@@ -240,15 +240,24 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
       return;
     }
 
-    // Calculate the actual date for the selected day within the week
-    const selectedDate = new Date(formData.date);
-    const dayOfWeek = days.findIndex(d => d.value === selectedDay);
-    const startOfWeek = new Date(selectedDate);
-    startOfWeek.setDate(selectedDate.getDate() - selectedDate.getDay() + dayOfWeek);
+    // Calculate the actual date based on selected month and day
+    const currentYear = new Date().getFullYear();
+    const monthNumber = parseInt(formData.month) - 1; // JavaScript months are 0-indexed
+    const dayOfWeekIndex = days.findIndex(d => d.value === selectedDay);
+    
+    // Find the first occurrence of the selected day in the selected month
+    const firstDayOfMonth = new Date(currentYear, monthNumber, 1);
+    const firstDayOfWeek = firstDayOfMonth.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    
+    // Calculate which date in the month corresponds to the first occurrence of the selected day
+    let targetDay = 1 + ((dayOfWeekIndex + 7 - firstDayOfWeek) % 7);
+    
+    // Create the actual calendar date
+    const calculatedDate = new Date(currentYear, monthNumber, targetDay);
 
     const newScheduleItem = {
       day: selectedDay,
-      date: startOfWeek.toISOString().split('T')[0],
+      date: calculatedDate.toISOString().split('T')[0],
       start_time: formData.start_time,
       end_time: formData.end_time,
       training_type: formData.training_type as 'technical' | 'physical' | 'mental' | 'recovery',
