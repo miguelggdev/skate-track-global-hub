@@ -1151,6 +1151,7 @@ export type Database = {
           start_time: string
           training_type: Database["public"]["Enums"]["training_type"]
           updated_at: string
+          week_start_date: string | null
         }
         Insert: {
           coach_id?: string | null
@@ -1165,6 +1166,7 @@ export type Database = {
           start_time: string
           training_type: Database["public"]["Enums"]["training_type"]
           updated_at?: string
+          week_start_date?: string | null
         }
         Update: {
           coach_id?: string | null
@@ -1179,6 +1181,7 @@ export type Database = {
           start_time?: string
           training_type?: Database["public"]["Enums"]["training_type"]
           updated_at?: string
+          week_start_date?: string | null
         }
         Relationships: [
           {
