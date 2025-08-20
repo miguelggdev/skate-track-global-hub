@@ -219,6 +219,9 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
     return `${y}-${m}-${dd}`;
   };
 
+  // Normalize any picked date to local midnight to avoid timezone shifts
+  const normalizeDate = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
   const categories = [
     { value: 'youth', label: 'Menores' },
     { value: 'junior', label: 'Juvenil' },
@@ -346,6 +349,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
           name: `${selectedType?.label} - ${categories.find(c => c.value === item.category)?.label} ${levels.find(l => l.value === item.level)?.label}`,
           description: selectedType?.description || formData.description || '',
           date: item.date,
+          week_start_date: formatDateLocal(getMondayOfWeek(new Date(formData.date))),
           start_time: item.start_time,
           end_time: item.end_time,
           location: item.location || null,
@@ -531,7 +535,9 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                         <Calendar
                           mode="single"
                           selected={formData.date}
-                          onSelect={(date) => setFormData({...formData, date: date || new Date()})}
+                          onSelect={(date) => {
+                            if (date) setFormData({ ...formData, date: normalizeDate(date) });
+                          }}
                           initialFocus
                           className="pointer-events-auto"
                         />
