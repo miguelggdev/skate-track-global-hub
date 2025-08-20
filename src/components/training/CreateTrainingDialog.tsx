@@ -268,7 +268,8 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
 
     // Calculate real calendar date for the selected weekday within the Monday–Sunday week of the selected date
     const baseDate = new Date(formData.date);
-    const weekStartMonday = getMondayOfWeek(baseDate);
+    const baseDateLocal = normalizeDate(baseDate);
+    const weekStartMonday = getMondayOfWeek(baseDateLocal);
     const dayIndex = days.findIndex(d => d.value === selectedDay);
     const calculatedDate = addDays(weekStartMonday, dayIndex);
 
@@ -349,7 +350,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
           name: `${selectedType?.label} - ${categories.find(c => c.value === item.category)?.label} ${levels.find(l => l.value === item.level)?.label}`,
           description: selectedType?.description || formData.description || '',
           date: item.date,
-          week_start_date: formatDateLocal(getMondayOfWeek(new Date(formData.date))),
+          week_start_date: formatDateLocal(getMondayOfWeek(normalizeDate(new Date(formData.date)))),
           start_time: item.start_time,
           end_time: item.end_time,
           location: item.location || null,
