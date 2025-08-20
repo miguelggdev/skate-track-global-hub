@@ -30,10 +30,12 @@ import {
 } from 'lucide-react';
 import QuickAttendanceDialog from '@/components/training/QuickAttendanceDialog';
 import DailyAttendanceIndicator from '@/components/training/DailyAttendanceIndicator';
+import CalendarViewDialog from '@/components/training/CalendarViewDialog';
 
 const Training = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [showCalendarDialog, setShowCalendarDialog] = useState(false);
   const { isAdmin } = useUserProfile();
   
   // Fetch training sessions from database
@@ -266,12 +268,18 @@ const Training = () => {
                                <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(session.status)}`}>
                                  {session.status.charAt(0).toUpperCase() + session.status.slice(1).replace('-', ' ')}
                                </span>
-                               <div className="flex gap-1 flex-shrink-0">
-                                 {session.status === 'scheduled' && (
-                                   <Button size="sm" variant="outline" className="p-2">
-                                     <Play className="h-3 w-3" />
-                                   </Button>
-                                 )}
+                                <div className="flex gap-1 flex-shrink-0">
+                                  {session.status === 'scheduled' && (
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      className="p-2"
+                                      onClick={() => setShowCalendarDialog(true)}
+                                      title="Ver calendario"
+                                    >
+                                      <Play className="h-3 w-3" />
+                                    </Button>
+                                  )}
                                  {session.status === 'in-progress' && (
                                    <Button size="sm" variant="outline" className="p-2">
                                      <Pause className="h-3 w-3" />
@@ -401,6 +409,12 @@ const Training = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Calendar Dialog */}
+        <CalendarViewDialog
+          open={showCalendarDialog}
+          onOpenChange={setShowCalendarDialog}
+        />
       </div>
     </DashboardLayout>
   );
