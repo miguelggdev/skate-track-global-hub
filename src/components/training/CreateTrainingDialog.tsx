@@ -254,7 +254,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
   ];
 
   const addToWeeklySchedule = () => {
-    if (!selectedDay || !formData.start_time || !formData.end_time || !formData.training_type || !formData.month) {
+    if (!selectedDay || !formData.start_time || !formData.end_time || !formData.training_type) {
       toast({
         title: "Error",
         description: "Completa todos los campos para agregar al horario semanal",
@@ -279,8 +279,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
       level: formData.level,
       max_participants: formData.max_participants,
       location: formData.location,
-      coach_id: formData.coach_id,
-      month: formData.month
+      coach_id: formData.coach_id
     };
 
     setWeeklySchedule([...weeklySchedule, newScheduleItem]);
@@ -290,8 +289,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
       ...formData,
       start_time: '',
       end_time: '',
-      training_type: '',
-      month: ''
+      training_type: ''
     });
     setSelectedDay('');
   };
@@ -652,7 +650,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                 <CardDescription>Agrega entrenamientos para cada día de la semana</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   <div>
                     <Label>Día</Label>
                     <Select value={selectedDay} onValueChange={setSelectedDay}>
@@ -662,20 +660,6 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                       <SelectContent>
                         {days.map(day => (
                           <SelectItem key={day.value} value={day.value}>{day.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label>Mes</Label>
-                    <Select value={formData.month} onValueChange={(value) => setFormData({...formData, month: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Mes" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {months.map(month => (
-                          <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
