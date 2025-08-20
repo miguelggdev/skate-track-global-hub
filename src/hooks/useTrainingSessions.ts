@@ -70,7 +70,7 @@ export const useTrainingSessions = (options?: {
         query = query.eq('date', today);
       }
 
-      return query.order('date', { ascending: true }).order('start_time', { ascending: true });
+      return query.order('date', { ascending: false }).order('start_time', { ascending: false });
     } else {
       let query = supabase.from('training_sessions').select('*');
       
@@ -81,7 +81,7 @@ export const useTrainingSessions = (options?: {
         query = query.eq('date', today);
       }
 
-      return query.order('date', { ascending: true }).order('start_time', { ascending: true });
+      return query.order('date', { ascending: false }).order('start_time', { ascending: false });
     }
   };
 

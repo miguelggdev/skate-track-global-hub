@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useTrainingSessions } from '@/hooks/useTrainingSessions';
 import CreateTrainingDialog from '@/components/training/CreateTrainingDialog';
+import EditTrainingDialog from '@/components/training/EditTrainingDialog';
 import { 
   Calendar,
   Clock,
@@ -276,9 +277,11 @@ const Training = () => {
                                      <Pause className="h-3 w-3" />
                                    </Button>
                                  )}
-                                 <Button size="sm" variant="outline" className="p-2">
-                                   <Edit className="h-3 w-3" />
-                                 </Button>
+                                  <EditTrainingDialog session={session}>
+                                    <Button size="sm" variant="outline" className="p-2">
+                                      <Edit className="h-3 w-3" />
+                                    </Button>
+                                  </EditTrainingDialog>
                                </div>
                              </div>
                            </div>
