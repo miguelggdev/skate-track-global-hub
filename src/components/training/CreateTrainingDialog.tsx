@@ -240,20 +240,18 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
       return;
     }
 
-    // Calculate the actual date based on selected month and day
-    const currentYear = new Date().getFullYear();
-    const monthNumber = parseInt(formData.month) - 1; // JavaScript months are 0-indexed
+    // Use the selected date as base and calculate the date for the selected day within that week
+    const selectedDate = new Date(formData.date);
     const dayOfWeekIndex = days.findIndex(d => d.value === selectedDay);
     
-    // Find the first occurrence of the selected day in the selected month
-    const firstDayOfMonth = new Date(currentYear, monthNumber, 1);
-    const firstDayOfWeek = firstDayOfMonth.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    // Convert days array index to JavaScript day-of-week (Monday=0 -> Monday=1, Sunday=6 -> Sunday=0)
+    const jsdayOfWeek = dayOfWeekIndex === 6 ? 0 : dayOfWeekIndex + 1;
     
-    // Calculate which date in the month corresponds to the first occurrence of the selected day
-    let targetDay = 1 + ((dayOfWeekIndex + 7 - firstDayOfWeek) % 7);
-    
-    // Create the actual calendar date
-    const calculatedDate = new Date(currentYear, monthNumber, targetDay);
+    // Calculate the date for the selected day within the week containing the selected date
+    const calculatedDate = new Date(selectedDate);
+    const selectedJsDayOfWeek = selectedDate.getDay();
+    const daysFromSunday = jsdayOfWeek - selectedJsDayOfWeek;
+    calculatedDate.setDate(selectedDate.getDate() + daysFromSunday);
 
     const newScheduleItem = {
       day: selectedDay,
@@ -752,9 +750,16 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                           
                           // Calculate the actual date for this day
                           const selectedDate = new Date(formData.date);
-                          const dayOfWeek = days.findIndex(d => d.value === day.value);
+                          const dayOfWeekIndex = days.findIndex(d => d.value === day.value);
+                          
+                          // Convert days array index to JavaScript day-of-week
+                          const jsDateOfWeek = dayOfWeekIndex === 6 ? 0 : dayOfWeekIndex + 1;
+                          
+                          // Calculate the date for this day within the week containing the selected date
                           const dayDate = new Date(selectedDate);
-                          dayDate.setDate(selectedDate.getDate() - selectedDate.getDay() + dayOfWeek);
+                          const selectedJsDayOfWeek = selectedDate.getDay();
+                          const daysFromSunday = jsDateOfWeek - selectedJsDayOfWeek;
+                          dayDate.setDate(selectedDate.getDate() + daysFromSunday);
                           const dayNumber = dayDate.getDate();
                           
                           return (
