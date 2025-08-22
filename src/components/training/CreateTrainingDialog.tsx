@@ -266,22 +266,12 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
       return;
     }
 
-    // Calculate next occurrence of selected weekday on or after the selected "Fecha de programación"
+    // Calculate date for the selected weekday within the same Monday-Sunday week as the programming date
     const baseDate = new Date(formData.date);
     const baseDateLocal = normalizeDate(baseDate);
+    const weekStartMonday = getMondayOfWeek(baseDateLocal);
     const dayIndex = days.findIndex(d => d.value === selectedDay);
-    
-    // Convert day indices: Monday=0, Tuesday=1, ..., Sunday=6
-    const targetDayOfWeek = dayIndex;
-    const currentDayOfWeek = baseDateLocal.getDay() === 0 ? 6 : baseDateLocal.getDay() - 1; // Convert to Monday=0 system
-    
-    // Calculate days to add to reach next occurrence of target day
-    let daysToAdd = targetDayOfWeek - currentDayOfWeek;
-    if (daysToAdd < 0) {
-      daysToAdd += 7; // Move to next week
-    }
-    
-    const calculatedDate = addDays(baseDateLocal, daysToAdd);
+    const calculatedDate = addDays(weekStartMonday, dayIndex);
 
     const newScheduleItem = {
       day: selectedDay,
