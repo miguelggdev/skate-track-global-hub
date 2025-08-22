@@ -23,12 +23,14 @@ interface WeeklyCalendarTableProps {
   baseDate?: Date;
   events?: CalendarEvent[];
   className?: string;
+  weekStartsOn?: 0 | 1; // 0 = Sunday, 1 = Monday
 }
 
 export const WeeklyCalendarTable: React.FC<WeeklyCalendarTableProps> = ({
   baseDate = new Date(),
   events = [],
-  className = ""
+  className = "",
+  weekStartsOn = 0
 }) => {
   // Generate hours from 6 AM to 10 PM
   const hours = Array.from({ length: 17 }, (_, i) => {
@@ -40,7 +42,7 @@ export const WeeklyCalendarTable: React.FC<WeeklyCalendarTableProps> = ({
   });
 
   // Get the week starting from Monday
-  const weekStart = startOfWeek(baseDate, { weekStartsOn: 1 });
+  const weekStart = startOfWeek(baseDate, { weekStartsOn });
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = addDays(weekStart, i);
     return {
@@ -53,12 +55,20 @@ export const WeeklyCalendarTable: React.FC<WeeklyCalendarTableProps> = ({
   });
 
   // Map day names to indices for event placement
-  const dayNameMap: { [key: string]: number } = {
-    'monday': 0, 'tuesday': 1, 'wednesday': 2, 'thursday': 3,
-    'friday': 4, 'saturday': 5, 'sunday': 6,
-    'lunes': 0, 'martes': 1, 'miércoles': 2, 'jueves': 3,
-    'viernes': 4, 'sábado': 5, 'domingo': 6
+  const getDayNameMap = (weekStartsOn: 0 | 1) => {
+    if (weekStartsOn === 0) {
+      return {
+        'sunday': 0, 'monday': 1, 'tuesday': 2, 'wednesday': 3, 'thursday': 4, 'friday': 5, 'saturday': 6,
+        'domingo': 0, 'lunes': 1, 'martes': 2, 'miércoles': 3, 'jueves': 4, 'viernes': 5, 'sábado': 6,
+      } as { [key: string]: number };
+    }
+    return {
+      'monday': 0, 'tuesday': 1, 'wednesday': 2, 'thursday': 3, 'friday': 4, 'saturday': 5, 'sunday': 6,
+      'lunes': 0, 'martes': 1, 'miércoles': 2, 'jueves': 3, 'viernes': 4, 'sábado': 5, 'domingo': 6,
+    } as { [key: string]: number };
   };
+
+  const dayNameMap = getDayNameMap(weekStartsOn);
 
   // Get events for a specific day and time
   const getEventsForSlot = (dayIndex: number, time: string) => {
@@ -74,19 +84,19 @@ export const WeeklyCalendarTable: React.FC<WeeklyCalendarTableProps> = ({
         <TableHeader>
           <TableRow>
             <TableHead className="w-20 text-center font-semibold">Hora</TableHead>
-            {days.map((day, index) => (
-              <TableHead key={index} className="text-center font-semibold min-w-32">
-                <div className="flex flex-col items-center gap-1">
-                  <span className={day.isToday ? "font-bold text-primary" : ""}>
-                    {day.shortName}
-                    {day.isToday && " *"}
-                  </span>
-                  <span className={`text-sm ${day.isToday ? "font-bold text-primary" : "text-muted-foreground"}`}>
-                    {day.dayNumber}
-                  </span>
-                </div>
-              </TableHead>
-            ))}
+              {days.map((day, index) => (
+                <TableHead key={index} className="text-center font-semibold min-w-32">
+                  <div className="flex flex-col items-center gap-1">
+                    <span className={day.isToday ? "font-bold text-primary" : ""}>
+                      {day.shortName}
+                      {day.isToday && " *"}
+                    </span>
+                    <span className={`text-sm ${day.isToday ? "font-bold text-primary" : "text-muted-foreground"}`}>
+                      {day.dayNumber}
+                    </span>
+                  </div>
+                </TableHead>
+              ))}
           </TableRow>
         </TableHeader>
         <TableBody>
