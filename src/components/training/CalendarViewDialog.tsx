@@ -41,6 +41,7 @@ const CalendarViewDialog: React.FC<CalendarViewDialogProps> = ({ open, onOpenCha
   const [sessions, setSessions] = useState<TrainingSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const weekStartsOn: 0 | 1 = 0;
 
   useEffect(() => {
     if (open) {
@@ -51,8 +52,8 @@ const CalendarViewDialog: React.FC<CalendarViewDialogProps> = ({ open, onOpenCha
   const loadSessions = async () => {
     setIsLoading(true);
     try {
-      const startDate = startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 });
-      const endDate = endOfWeek(endOfMonth(currentDate), { weekStartsOn: 1 });
+      const startDate = startOfWeek(startOfMonth(currentDate), { weekStartsOn });
+      const endDate = endOfWeek(endOfMonth(currentDate), { weekStartsOn });
 
       const { data, error } = await supabase
         .from('training_sessions')
@@ -124,8 +125,8 @@ const CalendarViewDialog: React.FC<CalendarViewDialogProps> = ({ open, onOpenCha
 
   // Generate calendar days
   const generateCalendarDays = () => {
-    const startDate = startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 });
-    const endDate = endOfWeek(endOfMonth(currentDate), { weekStartsOn: 1 });
+    const startDate = startOfWeek(startOfMonth(currentDate), { weekStartsOn });
+    const endDate = endOfWeek(endOfMonth(currentDate), { weekStartsOn });
     const days = [];
     
     let day = new Date(startDate);

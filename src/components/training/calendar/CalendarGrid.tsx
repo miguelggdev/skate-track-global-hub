@@ -27,6 +27,7 @@ interface CalendarGridProps {
   getTrainingTypeColor: (type: string) => string;
   getTrainingTypeLabel: (type: string) => string;
   isLoading: boolean;
+  weekStartsOn?: 0 | 1;
 }
 
 export const CalendarGrid: React.FC<CalendarGridProps> = ({
@@ -37,16 +38,19 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   onSessionClick,
   getTrainingTypeColor,
   getTrainingTypeLabel,
-  isLoading
+  isLoading,
+  weekStartsOn = 0
 }) => {
   const renderMonthView = () => {
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(currentDate);
-    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
-    const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+    const calendarStart = startOfWeek(monthStart, { weekStartsOn });
+    const calendarEnd = endOfWeek(monthEnd, { weekStartsOn });
     
     const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
-    const weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    const weekDays = weekStartsOn === 1 
+      ? ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'] 
+      : ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
     return (
       <Card>
@@ -118,8 +122,8 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   };
 
   const renderWeekView = () => {
-    const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
-    const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
+    const weekStart = startOfWeek(currentDate, { weekStartsOn });
+    const weekEnd = endOfWeek(currentDate, { weekStartsOn });
     const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
     
     const timeSlots = [];

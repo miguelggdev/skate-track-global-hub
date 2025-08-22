@@ -48,6 +48,7 @@ const TrainingCalendar = () => {
   const [filterType, setFilterType] = useState<string>('all');
   const { toast } = useToast();
   const { isAdmin } = useUserProfile();
+  const weekStartsOn: 0 | 1 = 0;
 
   // Load training sessions
   useEffect(() => {
@@ -61,11 +62,11 @@ const TrainingCalendar = () => {
       let endDate: Date;
 
       if (viewMode === 'month') {
-        startDate = startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 });
-        endDate = endOfWeek(endOfMonth(currentDate), { weekStartsOn: 1 });
+        startDate = startOfWeek(startOfMonth(currentDate), { weekStartsOn });
+        endDate = endOfWeek(endOfMonth(currentDate), { weekStartsOn });
       } else if (viewMode === 'week') {
-        startDate = startOfWeek(currentDate, { weekStartsOn: 1 });
-        endDate = endOfWeek(currentDate, { weekStartsOn: 1 });
+        startDate = startOfWeek(currentDate, { weekStartsOn });
+        endDate = endOfWeek(currentDate, { weekStartsOn });
       } else {
         startDate = new Date(currentDate);
         endDate = new Date(currentDate);
@@ -298,6 +299,7 @@ const TrainingCalendar = () => {
           getTrainingTypeColor={getTrainingTypeColor}
           getTrainingTypeLabel={getTrainingTypeLabel}
           isLoading={isLoading}
+          weekStartsOn={weekStartsOn}
         />
 
         {/* Event Details Modal */}
