@@ -187,20 +187,20 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
   };
 
   const days = [
+    { value: 'sunday', label: 'Domingo' },
     { value: 'monday', label: 'Lunes' },
     { value: 'tuesday', label: 'Martes' },
     { value: 'wednesday', label: 'Miércoles' },
     { value: 'thursday', label: 'Jueves' },
     { value: 'friday', label: 'Viernes' },
-    { value: 'saturday', label: 'Sábado' },
-    { value: 'sunday', label: 'Domingo' }
+    { value: 'saturday', label: 'Sábado' }
   ];
 
-  // Helpers: compute Monday-based week and safe local date formatting
-  const getMondayOfWeek = (date: Date) => {
+  // Helpers: compute Sunday-based week and safe local date formatting
+  const getSundayOfWeek = (date: Date) => {
     const d = new Date(date);
     const day = d.getDay(); // 0=Sun..6=Sat
-    const diff = day === 0 ? -6 : 1 - day; // back to Monday
+    const diff = -day; // back to Sunday
     d.setDate(d.getDate() + diff);
     d.setHours(0, 0, 0, 0);
     return d;
@@ -266,12 +266,12 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
       return;
     }
 
-    // Calculate date for the selected weekday within the same Monday-Sunday week as the programming date
+    // Calculate date for the selected weekday within the same Sunday–Saturday week as the programming date
     const baseDate = new Date(formData.date);
     const baseDateLocal = normalizeDate(baseDate);
-    const weekStartMonday = getMondayOfWeek(baseDateLocal);
+    const weekStartSunday = getSundayOfWeek(baseDateLocal);
     const dayIndex = days.findIndex(d => d.value === selectedDay);
-    const calculatedDate = addDays(weekStartMonday, dayIndex);
+    const calculatedDate = addDays(weekStartSunday, dayIndex);
 
     const newScheduleItem = {
       day: selectedDay,
@@ -350,7 +350,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
           name: `${selectedType?.label} - ${categories.find(c => c.value === item.category)?.label} ${levels.find(l => l.value === item.level)?.label}`,
           description: selectedType?.description || formData.description || '',
           date: item.date,
-          week_start_date: formatDateLocal(getMondayOfWeek(normalizeDate(new Date(formData.date)))),
+          week_start_date: formatDateLocal(getSundayOfWeek(normalizeDate(new Date(formData.date)))),
           start_time: item.start_time,
           end_time: item.end_time,
           location: item.location || null,
@@ -729,7 +729,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                     
                     {/* Calendar Header */}
                     <div className="bg-yellow-400 text-black p-3 text-center font-bold text-sm border border-gray-800">
-                      PROGRAMACIÓN DE ENTRENAMIENTO SEMANA {format(getMondayOfWeek(new Date(formData.date)), 'dd/MM')} - {format(addDays(getMondayOfWeek(new Date(formData.date)), 6), 'dd/MM')} {format(formData.date, 'MMMM yyyy')}
+                      PROGRAMACIÓN DE ENTRENAMIENTO SEMANA {format(getSundayOfWeek(new Date(formData.date)), 'dd/MM')} - {format(addDays(getSundayOfWeek(new Date(formData.date)), 6), 'dd/MM')} {format(formData.date, 'MMMM yyyy')}
                     </div>
                     
                     {/* Calendar Grid */}
@@ -755,10 +755,10 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                             parseInt(item.start_time.split(':')[0]) < 12
                           );
                           
-                          // Calculate the actual date for this day (Monday–Sunday week)
-                          const weekStartMonday = getMondayOfWeek(new Date(formData.date));
+                          // Calculate the actual date for this day (Sunday–Saturday week)
+                          const weekStartSunday = getSundayOfWeek(new Date(formData.date));
                           const dayOfWeekIndex = days.findIndex(d => d.value === day.value);
-                          const dayDate = addDays(weekStartMonday, dayOfWeekIndex);
+                          const dayDate = addDays(weekStartSunday, dayOfWeekIndex);
                           const dayNumber = dayDate.getDate();
                           
                           return (
