@@ -41,7 +41,7 @@ export const WeeklyCalendarTable: React.FC<WeeklyCalendarTableProps> = ({
     };
   });
 
-  // Get the week starting from Monday
+  // Get the week starting from Sunday (weekStartsOn = 0) or Monday (weekStartsOn = 1)
   const weekStart = startOfWeek(baseDate, { weekStartsOn });
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = addDays(weekStart, i);
