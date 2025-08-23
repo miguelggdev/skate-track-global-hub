@@ -142,13 +142,16 @@ const TrainingCalendar = () => {
 
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
+    // Always anchor the calendar to the clicked date
+    setCurrentDate(date);
+
     const daySessionsExist = filteredSessions.some(session => 
       format(new Date(session.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
     );
     
-    if (daySessionsExist && viewMode === 'month') {
+    // Preserve existing UX: if coming from month view and the day has sessions, go to day view
+    if (viewMode === 'month' && daySessionsExist) {
       setViewMode('day');
-      setCurrentDate(date);
     }
   };
 

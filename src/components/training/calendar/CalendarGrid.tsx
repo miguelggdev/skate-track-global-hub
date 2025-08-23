@@ -138,12 +138,19 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
           <div className="grid grid-cols-8 border-b">
             <div className="p-4 border-r"></div>
             {days.map((day) => (
-              <div key={day.toString()} className="p-4 text-center border-r last:border-r-0">
+              <div
+                key={day.toString()}
+                className="p-4 text-center border-r last:border-r-0 cursor-pointer hover:bg-muted/50"
+                onClick={() => onDateClick(day)}
+              >
                 <div className="font-medium">{format(day, 'EEE', { locale: es })}</div>
-                <div className={cn(
-                  "text-2xl",
-                  isToday(day) && "text-primary font-bold"
-                )}>
+                <div
+                  className={cn(
+                    "text-2xl",
+                    isToday(day) && "text-primary font-bold",
+                    isSameDay(day, currentDate) && "text-primary font-bold"
+                  )}
+                >
                   {format(day, 'd')}
                 </div>
               </div>
