@@ -152,7 +152,7 @@ export default function QuickAttendanceDialog({ children }: QuickAttendanceDialo
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CheckSquare className="h-5 w-5" /> Register Attendance
