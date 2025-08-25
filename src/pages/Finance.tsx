@@ -12,7 +12,12 @@ import { Badge } from '@/components/ui/badge';
 import AddTransactionDialog from '@/components/finance/AddTransactionDialog';
 import { TransactionReceiptGenerator } from '@/components/finance/TransactionReceiptGenerator';
 import { AthleteLetterGenerator } from '@/components/finance/AthleteLetterGenerator';
+import { FinancialReportGenerator } from '@/components/finance/FinancialReportGenerator';
+import { ReportPreviewDialog } from '@/components/finance/ReportPreviewDialog';
 import { useTransactions, useFinancialStats, useUpdateTransaction } from '@/hooks/useTransactions';
+import { useFinancialReports, type ReportType, type ReportPeriod } from '@/hooks/useFinancialReports';
+import { generateFinancialReportPDF } from '@/utils/pdfGenerator';
+import { toast } from '@/hooks/use-toast';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -37,14 +42,19 @@ import {
 } from 'lucide-react';
 
 const Finance = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState('month');
+  const [selectedPeriod, setSelectedPeriod] = useState<ReportPeriod>('month');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTransactionType, setSelectedTransactionType] = useState('all');
+  const [selectedReportType, setSelectedReportType] = useState<ReportType>('complete');
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [generatedReport, setGeneratedReport] = useState(null);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
 
   // Use real data from hooks
   const { data: transactions = [], isLoading: transactionsLoading } = useTransactions();
   const { data: financialStats, isLoading: statsLoading } = useFinancialStats();
   const updateTransactionMutation = useUpdateTransaction();
+  const { data: reportData, isLoading: reportLoading } = useFinancialReports(selectedReportType, selectedPeriod);
 
   // Filter transactions based on search and type
   const filteredTransactions = transactions.filter(transaction => {
@@ -108,6 +118,71 @@ const Finance = () => {
       });
     } catch (error) {
       console.error('Error updating transaction with receipt URL:', error);
+    }
+  };
+
+  const handleGenerateReport = async () => {
+    if (!reportData) {
+      toast({
+        title: "Error",
+        description: "No hay datos disponibles para generar el informe",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGeneratingReport(true);
+    try {
+      setGeneratedReport(reportData);
+      toast({
+        title: "Éxito",
+        description: "Informe generado correctamente",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Error al generar el informe",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  };
+
+  const handlePreviewReport = () => {
+    if (!reportData) {
+      toast({
+        title: "Error",
+        description: "No hay datos disponibles para mostrar la vista previa",
+        variant: "destructive",
+      });
+      return;
+    }
+    setShowPreviewDialog(true);
+  };
+
+  const handleExportPDF = async () => {
+    if (!reportData) {
+      toast({
+        title: "Error",
+        description: "No hay datos disponibles para exportar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await generateFinancialReportPDF(reportData);
+      toast({
+        title: "Éxito",
+        description: "PDF generado y descargado correctamente",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Error al generar el PDF",
+        variant: "destructive",
+      });
     }
   };
 
@@ -421,58 +496,80 @@ const Finance = () => {
           {/* Reports Tab */}
           <TabsContent value="reports" className="space-y-6">
             <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Informes Financieros
-              </CardTitle>
-              <CardDescription>
-                Genera informes detallados de la situación financiera
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="report-period">Período del Informe</Label>
-                    <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="week">Esta Semana</SelectItem>
-                        <SelectItem value="month">Este Mes</SelectItem>
-                        <SelectItem value="quarter">Este Trimestre</SelectItem>
-                        <SelectItem value="year">Este Año</SelectItem>
-                      </SelectContent>
-                    </Select>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Informes Financieros
+                </CardTitle>
+                <CardDescription>
+                  Genera informes detallados de la situación financiera
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="report-period">Período del Informe</Label>
+                      <Select value={selectedPeriod} onValueChange={(value) => setSelectedPeriod(value as ReportPeriod)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="week">Esta Semana</SelectItem>
+                          <SelectItem value="month">Este Mes</SelectItem>
+                          <SelectItem value="quarter">Este Trimestre</SelectItem>
+                          <SelectItem value="year">Este Año</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="report-type">Tipo de Informe</Label>
+                      <Select value={selectedReportType} onValueChange={(value) => setSelectedReportType(value as ReportType)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="income">Ingresos</SelectItem>
+                          <SelectItem value="expenses">Gastos</SelectItem>
+                          <SelectItem value="balance">Balance General</SelectItem>
+                          <SelectItem value="complete">Informe Completo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  
-                  <div>
-                    <Label htmlFor="report-type">Tipo de Informe</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar tipo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="income">Ingresos</SelectItem>
-                        <SelectItem value="expenses">Gastos</SelectItem>
-                        <SelectItem value="balance">Balance General</SelectItem>
-                        <SelectItem value="complete">Informe Completo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
 
-                <div className="flex gap-2">
-                  <Button className="argon-gradient-blue text-white">Generar Informe</Button>
-                  <Button variant="outline">Vista Previa</Button>
-                  <Button variant="outline">Exportar PDF</Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={handleGenerateReport}
+                      disabled={isGeneratingReport || reportLoading}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      {isGeneratingReport ? 'Generando...' : 'Generar Informe'}
+                    </Button>
+                    <Button variant="outline" onClick={handlePreviewReport} disabled={!reportData}>
+                      Vista Previa
+                    </Button>
+                    <Button variant="outline" onClick={handleExportPDF} disabled={!reportData}>
+                      Exportar PDF
+                    </Button>
+                  </div>
+
+                  {reportLoading && (
+                    <div className="text-center py-4">
+                      <div className="text-muted-foreground">Cargando datos del informe...</div>
+                    </div>
+                  )}
+
+                  {generatedReport && (
+                    <div className="mt-6">
+                      <FinancialReportGenerator report={generatedReport} />
+                    </div>
+                  )}
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Payments Tab */}
           <TabsContent value="payments" className="space-y-6">
@@ -567,6 +664,13 @@ const Finance = () => {
           </Card>
         </TabsContent>
         </Tabs>
+
+        {/* Report Preview Dialog */}
+        <ReportPreviewDialog 
+          open={showPreviewDialog}
+          onOpenChange={setShowPreviewDialog}
+          report={reportData}
+        />
       </div>
     </DashboardLayout>
   );
