@@ -96,7 +96,7 @@ export const useCurrentAthlete = () => {
           email: profileData?.email || '',
           date_of_birth: profileData?.date_of_birth,
           category: 'juvenil',
-          level: 'beginner',
+          level: 'juvenil_primer_ano',
           status: 'active',
           performance_score: 0,
         })
