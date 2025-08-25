@@ -14,6 +14,256 @@ export type Database = {
   }
   public: {
     Tables: {
+      athlete_body_info: {
+        Row: {
+          allergies: string | null
+          athlete_id: string
+          blood_type: string | null
+          created_at: string
+          height: number | null
+          id: string
+          injuries: string | null
+          limitations: string | null
+          size: string | null
+          surgeries: string | null
+          updated_at: string
+          weight: number | null
+        }
+        Insert: {
+          allergies?: string | null
+          athlete_id: string
+          blood_type?: string | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          injuries?: string | null
+          limitations?: string | null
+          size?: string | null
+          surgeries?: string | null
+          updated_at?: string
+          weight?: number | null
+        }
+        Update: {
+          allergies?: string | null
+          athlete_id?: string
+          blood_type?: string | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          injuries?: string | null
+          limitations?: string | null
+          size?: string | null
+          surgeries?: string | null
+          updated_at?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_body_info_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      athlete_equipment: {
+        Row: {
+          athlete_id: string
+          boot_brand: string | null
+          boot_size: number | null
+          created_at: string
+          frame_brand: string | null
+          frame_size: string | null
+          helmet_brand: string | null
+          id: string
+          track_wheels_brand: string | null
+          updated_at: string
+          wheel_diameter: number | null
+        }
+        Insert: {
+          athlete_id: string
+          boot_brand?: string | null
+          boot_size?: number | null
+          created_at?: string
+          frame_brand?: string | null
+          frame_size?: string | null
+          helmet_brand?: string | null
+          id?: string
+          track_wheels_brand?: string | null
+          updated_at?: string
+          wheel_diameter?: number | null
+        }
+        Update: {
+          athlete_id?: string
+          boot_brand?: string | null
+          boot_size?: number | null
+          created_at?: string
+          frame_brand?: string | null
+          frame_size?: string | null
+          helmet_brand?: string | null
+          id?: string
+          track_wheels_brand?: string | null
+          updated_at?: string
+          wheel_diameter?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_equipment_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      athlete_family: {
+        Row: {
+          athlete_id: string
+          created_at: string
+          guardian_email: string | null
+          guardian_name: string | null
+          guardian_phone: string | null
+          guardian_relationship: string | null
+          id: string
+          parent_email: string | null
+          parent_name: string | null
+          parent_phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          athlete_id: string
+          created_at?: string
+          guardian_email?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          guardian_relationship?: string | null
+          id?: string
+          parent_email?: string | null
+          parent_name?: string | null
+          parent_phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          athlete_id?: string
+          created_at?: string
+          guardian_email?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          guardian_relationship?: string | null
+          id?: string
+          parent_email?: string | null
+          parent_name?: string | null
+          parent_phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_family_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      athlete_history: {
+        Row: {
+          athlete_id: string
+          created_at: string
+          federation_date: string | null
+          id: string
+          is_federated: boolean | null
+          is_league: boolean | null
+          league_date: string | null
+          previous_club: string | null
+          start_date: string | null
+          updated_at: string
+          years_experience: number | null
+        }
+        Insert: {
+          athlete_id: string
+          created_at?: string
+          federation_date?: string | null
+          id?: string
+          is_federated?: boolean | null
+          is_league?: boolean | null
+          league_date?: string | null
+          previous_club?: string | null
+          start_date?: string | null
+          updated_at?: string
+          years_experience?: number | null
+        }
+        Update: {
+          athlete_id?: string
+          created_at?: string
+          federation_date?: string | null
+          id?: string
+          is_federated?: boolean | null
+          is_league?: boolean | null
+          league_date?: string | null
+          previous_club?: string | null
+          start_date?: string | null
+          updated_at?: string
+          years_experience?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_history_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      athlete_studies: {
+        Row: {
+          athlete_id: string
+          created_at: string
+          current_grade: string | null
+          education_level: string | null
+          id: string
+          school_address: string | null
+          school_email: string | null
+          school_name: string | null
+          school_phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          athlete_id: string
+          created_at?: string
+          current_grade?: string | null
+          education_level?: string | null
+          id?: string
+          school_address?: string | null
+          school_email?: string | null
+          school_name?: string | null
+          school_phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          athlete_id?: string
+          created_at?: string
+          current_grade?: string | null
+          education_level?: string | null
+          id?: string
+          school_address?: string | null
+          school_email?: string | null
+          school_name?: string | null
+          school_phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_studies_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       athletes: {
         Row: {
           achievements: string | null
