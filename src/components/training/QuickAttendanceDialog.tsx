@@ -112,33 +112,84 @@ export default function QuickAttendanceDialog({ children }: QuickAttendanceDialo
 
       if (sessionError || !session) throw sessionError || new Error('No session created');
 
-      // Insert attendance for selected athletes using the correct constraint columns
+      // Insert attendance for selected athletes using robust upsert with fallback
       const rows = selectedIds.map(athlete_id => ({
         training_session_id: session.id,
         athlete_id,
         attended: true,
       }));
 
-      const { error: attError } = await supabase
-        .from('training_attendance')
-        .upsert(rows, { 
-          onConflict: 'training_session_id,athlete_id',
-          ignoreDuplicates: false 
-        });
-      
-      if (attError) throw attError;
+      try {
+        // Try upsert first (faster)
+        const { error: attError } = await supabase
+          .from('training_attendance')
+          .upsert(rows, { 
+            onConflict: 'training_session_id,athlete_id',
+            ignoreDuplicates: false 
+          });
+        
+        if (attError) {
+          console.error('Upsert failed, trying fallback approach:', attError);
+          
+          // Fallback: individual insert/update operations
+          for (const row of rows) {
+            // Check if record exists
+            const { data: existing } = await supabase
+              .from('training_attendance')
+              .select('id')
+              .eq('training_session_id', row.training_session_id)
+              .eq('athlete_id', row.athlete_id)
+              .maybeSingle();
+
+            if (existing) {
+              // Update existing record
+              const { error: updateError } = await supabase
+                .from('training_attendance')
+                .update({
+                  attended: row.attended
+                })
+                .eq('id', existing.id);
+
+              if (updateError) {
+                console.error('Error updating attendance:', updateError);
+                throw updateError;
+              }
+            } else {
+              // Insert new record
+              const { error: insertError } = await supabase
+                .from('training_attendance')
+                .insert(row);
+
+              if (insertError) {
+                console.error('Error inserting attendance:', insertError);
+                throw insertError;
+              }
+            }
+          }
+        }
+      } catch (attendanceError) {
+        console.error('Error saving attendance:', attendanceError);
+        throw attendanceError;
+      }
 
       toast({ title: 'Attendance saved', description: 'Training session and attendance registered.' });
       setOpen(false);
       setSelected({});
     } catch (e: any) {
-      console.error(e);
+      console.error('Error details:', {
+        message: e.message,
+        code: e.code,
+        details: e.details
+      });
+      
       let errorMessage = 'Could not save attendance.';
       
       if (e.code === '23505') {
         errorMessage = 'Some athletes already have attendance records for this session.';
       } else if (e.message?.includes('foreign key')) {
         errorMessage = 'Invalid training session or athlete data.';
+      } else if (e.message?.includes('unique constraint')) {
+        errorMessage = 'Database constraint error - please try again.';
       } else if (e.message) {
         errorMessage = e.message;
       }

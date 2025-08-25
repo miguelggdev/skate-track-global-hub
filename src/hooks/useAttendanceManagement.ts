@@ -44,18 +44,61 @@ export const useAttendanceManagement = () => {
   // Register attendance mutation
   const registerAttendanceMutation = useMutation({
     mutationFn: async (attendanceData: AttendanceFormData) => {
-      // Use the correct unique index name for ON CONFLICT
-      const { data, error } = await supabase
-        .from('training_attendance')
-        .upsert([attendanceData], { 
-          onConflict: 'training_session_id,athlete_id',
-          ignoreDuplicates: false 
-        })
-        .select()
-        .single();
+      try {
+        // Try upsert first (faster)
+        const { data, error } = await supabase
+          .from('training_attendance')
+          .upsert([attendanceData], { 
+            onConflict: 'training_session_id,athlete_id',
+            ignoreDuplicates: false 
+          })
+          .select()
+          .single();
 
-      if (error) throw error;
-      return data;
+        if (error) {
+          console.error('Upsert failed, trying fallback:', error);
+          
+          // Fallback: check if record exists and update/insert accordingly
+          const { data: existing } = await supabase
+            .from('training_attendance')
+            .select('id')
+            .eq('training_session_id', attendanceData.training_session_id)
+            .eq('athlete_id', attendanceData.athlete_id)
+            .maybeSingle();
+
+          if (existing) {
+            // Update existing record
+            const { data: updateData, error: updateError } = await supabase
+              .from('training_attendance')
+              .update({
+                attended: attendanceData.attended,
+                performance_rating: attendanceData.performance_rating,
+                notes: attendanceData.notes
+              })
+              .eq('id', existing.id)
+              .select()
+              .single();
+
+            if (updateError) throw updateError;
+            return updateData;
+          } else {
+            // Insert new record
+            const { data: insertData, error: insertError } = await supabase
+              .from('training_attendance')
+              .insert(attendanceData)
+              .select()
+              .single();
+
+            if (insertError) throw insertError;
+            return insertData;
+          }
+        }
+
+        return data;
+      } catch (fallbackError) {
+        console.error('All attempts failed:', fallbackError);
+        throw fallbackError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendance-records'] });
@@ -63,13 +106,19 @@ export const useAttendanceManagement = () => {
       toast.success('Asistencia registrada correctamente');
     },
     onError: (error: any) => {
-      console.error('Error registering attendance:', error);
+      console.error('Error registering attendance:', {
+        message: error.message,
+        code: error.code,
+        details: error.details
+      });
       
       // Provide more specific error messages
       if (error.code === '23505') {
         toast.error('Ya existe un registro de asistencia para este atleta en esta sesión');
       } else if (error.message?.includes('foreign key')) {
         toast.error('Error: Sesión de entrenamiento o atleta no válido');
+      } else if (error.message?.includes('unique constraint')) {
+        toast.error('Error de restricción única en la base de datos');
       } else {
         toast.error('Error al registrar la asistencia: ' + (error.message || 'Error desconocido'));
       }
