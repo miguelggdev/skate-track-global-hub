@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,16 +40,21 @@ export const useAttendanceManagement = () => {
     },
   });
 
-  // Register attendance mutation using new RPC function
+  // Register attendance mutation using upsert
   const registerAttendanceMutation = useMutation({
     mutationFn: async (attendanceData: AttendanceFormData) => {
-      const { data, error } = await supabase.rpc('upsert_training_attendance', {
-        p_training_session_id: attendanceData.training_session_id,
-        p_athlete_id: attendanceData.athlete_id,
-        p_attended: attendanceData.attended,
-        p_performance_rating: attendanceData.performance_rating || null,
-        p_notes: attendanceData.notes || null
-      });
+      const { data, error } = await supabase
+        .from('training_attendance')
+        .upsert({
+          training_session_id: attendanceData.training_session_id,
+          athlete_id: attendanceData.athlete_id,
+          attended: attendanceData.attended,
+          performance_rating: attendanceData.performance_rating || null,
+          notes: attendanceData.notes || null
+        }, {
+          onConflict: 'training_session_id,athlete_id'
+        })
+        .select();
 
       if (error) throw error;
       return data;
@@ -66,12 +70,21 @@ export const useAttendanceManagement = () => {
     },
   });
 
-  // Bulk register attendance mutation using new RPC function
+  // Bulk register attendance mutation
   const registerBulkAttendanceMutation = useMutation({
     mutationFn: async (attendanceRows: AttendanceFormData[]) => {
-      const { data, error } = await supabase.rpc('upsert_training_attendance_bulk', {
-        p_rows: attendanceRows
-      });
+      const { data, error } = await supabase
+        .from('training_attendance')
+        .upsert(attendanceRows.map(row => ({
+          training_session_id: row.training_session_id,
+          athlete_id: row.athlete_id,
+          attended: row.attended,
+          performance_rating: row.performance_rating || null,
+          notes: row.notes || null
+        })), {
+          onConflict: 'training_session_id,athlete_id'
+        })
+        .select();
 
       if (error) throw error;
       return data;
