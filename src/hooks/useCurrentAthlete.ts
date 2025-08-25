@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -49,6 +50,7 @@ export const useCurrentAthlete = () => {
       }
 
       try {
+        console.log('Fetching athlete record for user:', user.id);
         const { data, error } = await supabase
           .from('athletes')
           .select('*')
@@ -62,13 +64,16 @@ export const useCurrentAthlete = () => {
             await createAthleteRecord(user.id);
             return; // Will trigger useEffect again after creation
           } else {
+            console.error('Error fetching athlete:', error);
             throw error;
           }
         } else {
+          console.log('Athlete record found:', data);
           setAthlete(data);
+          setError(null);
         }
       } catch (error) {
-        console.error('Error fetching athlete data:', error);
+        console.error('Error in fetchAthlete:', error);
         setError('Failed to fetch athlete data');
       } finally {
         setLoading(false);
@@ -80,12 +85,21 @@ export const useCurrentAthlete = () => {
 
   const createAthleteRecord = async (userId: string) => {
     try {
+      console.log('Creating athlete record for user:', userId);
+      
       // Get user profile data to populate athlete record
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('first_name, last_name, email, date_of_birth')
         .eq('id', userId)
         .single();
+
+      if (profileError) {
+        console.error('Error fetching profile for athlete creation:', profileError);
+        throw profileError;
+      }
+
+      console.log('Profile data for athlete creation:', profileData);
 
       const { data, error } = await supabase
         .from('athletes')
@@ -103,13 +117,16 @@ export const useCurrentAthlete = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating athlete record:', error);
+        throw error;
+      }
       
+      console.log('Athlete record created successfully:', data);
       setAthlete(data);
       setError(null);
-      console.log('Athlete record created successfully');
     } catch (error) {
-      console.error('Error creating athlete record:', error);
+      console.error('Error in createAthleteRecord:', error);
       setError('Failed to create athlete record');
     }
   };
