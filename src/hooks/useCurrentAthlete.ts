@@ -57,8 +57,10 @@ export const useCurrentAthlete = () => {
 
         if (error) {
           if (error.code === 'PGRST116') {
-            // No athlete record found
-            setError('No athlete record found for this user');
+            // No athlete record found - create one automatically
+            console.log('No athlete record found, creating one...');
+            await createAthleteRecord(user.id);
+            return; // Will trigger useEffect again after creation
           } else {
             throw error;
           }
@@ -75,6 +77,42 @@ export const useCurrentAthlete = () => {
 
     fetchAthlete();
   }, [user, profile]);
+
+  const createAthleteRecord = async (userId: string) => {
+    try {
+      // Get user profile data to populate athlete record
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, email, date_of_birth')
+        .eq('id', userId)
+        .single();
+
+      const { data, error } = await supabase
+        .from('athletes')
+        .insert({
+          user_id: userId,
+          first_name: profileData?.first_name || '',
+          last_name: profileData?.last_name || '',
+          email: profileData?.email || '',
+          date_of_birth: profileData?.date_of_birth,
+          category: 'juvenil',
+          level: 'beginner',
+          status: 'active',
+          performance_score: 0,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setAthlete(data);
+      setError(null);
+      console.log('Athlete record created successfully');
+    } catch (error) {
+      console.error('Error creating athlete record:', error);
+      setError('Failed to create athlete record');
+    }
+  };
 
   const refreshAthlete = async () => {
     if (!user) return;
