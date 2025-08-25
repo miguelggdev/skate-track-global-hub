@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAthletes } from '@/hooks/useAthletes';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useAttendanceManagement } from '@/hooks/useAttendanceManagement';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -34,6 +35,7 @@ export default function QuickAttendanceDialog({ children }: QuickAttendanceDialo
   const [open, setOpen] = useState(false);
   const { profile, isAthlete } = useUserProfile();
   const { data: athletes = [] } = useAthletes();
+  const { registerBulkAttendance, isBulkRegistering } = useAttendanceManagement();
   const { toast } = useToast();
 
   const [date, setDate] = useState<Date>(new Date());
@@ -44,7 +46,6 @@ export default function QuickAttendanceDialog({ children }: QuickAttendanceDialo
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<'all' | string>('all');
   const [selected, setSelected] = useState<Record<string, boolean>>({});
-  const [saving, setSaving] = useState(false);
 
   const todaysStr = useMemo(() => format(date, 'yyyy-MM-dd'), [date]);
 
@@ -92,11 +93,10 @@ export default function QuickAttendanceDialog({ children }: QuickAttendanceDialo
       return;
     }
 
-    setSaving(true);
     try {
       const endTime = computeEndTime();
 
-      // Create training session (coach_id optional)
+      // Create training session
       const { data: session, error: sessionError } = await supabase
         .from('training_sessions')
         .insert({
@@ -112,91 +112,21 @@ export default function QuickAttendanceDialog({ children }: QuickAttendanceDialo
 
       if (sessionError || !session) throw sessionError || new Error('No session created');
 
-      // Insert attendance for selected athletes using robust upsert with fallback
-      const rows = selectedIds.map(athlete_id => ({
+      // Prepare attendance data for bulk insert using the new RPC
+      const attendanceRows = selectedIds.map(athlete_id => ({
         training_session_id: session.id,
         athlete_id,
         attended: true,
       }));
 
-      try {
-        // Try upsert first (faster)
-        const { error: attError } = await supabase
-          .from('training_attendance')
-          .upsert(rows, { 
-            onConflict: 'training_session_id,athlete_id',
-            ignoreDuplicates: false 
-          });
-        
-        if (attError) {
-          console.error('Upsert failed, trying fallback approach:', attError);
-          
-          // Fallback: individual insert/update operations
-          for (const row of rows) {
-            // Check if record exists
-            const { data: existing } = await supabase
-              .from('training_attendance')
-              .select('id')
-              .eq('training_session_id', row.training_session_id)
-              .eq('athlete_id', row.athlete_id)
-              .maybeSingle();
+      // Use the new bulk RPC function
+      registerBulkAttendance(attendanceRows);
 
-            if (existing) {
-              // Update existing record
-              const { error: updateError } = await supabase
-                .from('training_attendance')
-                .update({
-                  attended: row.attended
-                })
-                .eq('id', existing.id);
-
-              if (updateError) {
-                console.error('Error updating attendance:', updateError);
-                throw updateError;
-              }
-            } else {
-              // Insert new record
-              const { error: insertError } = await supabase
-                .from('training_attendance')
-                .insert(row);
-
-              if (insertError) {
-                console.error('Error inserting attendance:', insertError);
-                throw insertError;
-              }
-            }
-          }
-        }
-      } catch (attendanceError) {
-        console.error('Error saving attendance:', attendanceError);
-        throw attendanceError;
-      }
-
-      toast({ title: 'Attendance saved', description: 'Training session and attendance registered.' });
       setOpen(false);
       setSelected({});
     } catch (e: any) {
-      console.error('Error details:', {
-        message: e.message,
-        code: e.code,
-        details: e.details
-      });
-      
-      let errorMessage = 'Could not save attendance.';
-      
-      if (e.code === '23505') {
-        errorMessage = 'Some athletes already have attendance records for this session.';
-      } else if (e.message?.includes('foreign key')) {
-        errorMessage = 'Invalid training session or athlete data.';
-      } else if (e.message?.includes('unique constraint')) {
-        errorMessage = 'Database constraint error - please try again.';
-      } else if (e.message) {
-        errorMessage = e.message;
-      }
-      
-      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
-    } finally {
-      setSaving(false);
+      console.error('Error creating training session:', e);
+      toast({ title: 'Error', description: 'Could not create training session: ' + (e.message || 'Unknown error'), variant: 'destructive' });
     }
   };
 
@@ -322,10 +252,10 @@ export default function QuickAttendanceDialog({ children }: QuickAttendanceDialo
           </Card>
 
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving}>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={isBulkRegistering}>Cancel</Button>
+            <Button onClick={handleSave} disabled={isBulkRegistering}>
               <Activity className="h-4 w-4 mr-2" />
-              {saving ? 'Saving...' : 'Save Attendance'}
+              {isBulkRegistering ? 'Saving...' : 'Save Attendance'}
             </Button>
           </div>
         </div>

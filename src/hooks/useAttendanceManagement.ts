@@ -41,64 +41,19 @@ export const useAttendanceManagement = () => {
     },
   });
 
-  // Register attendance mutation
+  // Register attendance mutation using new RPC function
   const registerAttendanceMutation = useMutation({
     mutationFn: async (attendanceData: AttendanceFormData) => {
-      try {
-        // Try upsert first (faster)
-        const { data, error } = await supabase
-          .from('training_attendance')
-          .upsert([attendanceData], { 
-            onConflict: 'training_session_id,athlete_id',
-            ignoreDuplicates: false 
-          })
-          .select()
-          .single();
+      const { data, error } = await supabase.rpc('upsert_training_attendance', {
+        p_training_session_id: attendanceData.training_session_id,
+        p_athlete_id: attendanceData.athlete_id,
+        p_attended: attendanceData.attended,
+        p_performance_rating: attendanceData.performance_rating || null,
+        p_notes: attendanceData.notes || null
+      });
 
-        if (error) {
-          console.error('Upsert failed, trying fallback:', error);
-          
-          // Fallback: check if record exists and update/insert accordingly
-          const { data: existing } = await supabase
-            .from('training_attendance')
-            .select('id')
-            .eq('training_session_id', attendanceData.training_session_id)
-            .eq('athlete_id', attendanceData.athlete_id)
-            .maybeSingle();
-
-          if (existing) {
-            // Update existing record
-            const { data: updateData, error: updateError } = await supabase
-              .from('training_attendance')
-              .update({
-                attended: attendanceData.attended,
-                performance_rating: attendanceData.performance_rating,
-                notes: attendanceData.notes
-              })
-              .eq('id', existing.id)
-              .select()
-              .single();
-
-            if (updateError) throw updateError;
-            return updateData;
-          } else {
-            // Insert new record
-            const { data: insertData, error: insertError } = await supabase
-              .from('training_attendance')
-              .insert(attendanceData)
-              .select()
-              .single();
-
-            if (insertError) throw insertError;
-            return insertData;
-          }
-        }
-
-        return data;
-      } catch (fallbackError) {
-        console.error('All attempts failed:', fallbackError);
-        throw fallbackError;
-      }
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendance-records'] });
@@ -106,22 +61,29 @@ export const useAttendanceManagement = () => {
       toast.success('Asistencia registrada correctamente');
     },
     onError: (error: any) => {
-      console.error('Error registering attendance:', {
-        message: error.message,
-        code: error.code,
-        details: error.details
+      console.error('Error registering attendance:', error);
+      toast.error('Error al registrar la asistencia: ' + (error.message || 'Error desconocido'));
+    },
+  });
+
+  // Bulk register attendance mutation using new RPC function
+  const registerBulkAttendanceMutation = useMutation({
+    mutationFn: async (attendanceRows: AttendanceFormData[]) => {
+      const { data, error } = await supabase.rpc('upsert_training_attendance_bulk', {
+        p_rows: attendanceRows
       });
-      
-      // Provide more specific error messages
-      if (error.code === '23505') {
-        toast.error('Ya existe un registro de asistencia para este atleta en esta sesión');
-      } else if (error.message?.includes('foreign key')) {
-        toast.error('Error: Sesión de entrenamiento o atleta no válido');
-      } else if (error.message?.includes('unique constraint')) {
-        toast.error('Error de restricción única en la base de datos');
-      } else {
-        toast.error('Error al registrar la asistencia: ' + (error.message || 'Error desconocido'));
-      }
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['attendance-records'] });
+      queryClient.invalidateQueries({ queryKey: ['training-kpis'] });
+      toast.success('Asistencia registrada correctamente');
+    },
+    onError: (error: any) => {
+      console.error('Error registering bulk attendance:', error);
+      toast.error('Error al registrar la asistencia: ' + (error.message || 'Error desconocido'));
     },
   });
 
@@ -194,9 +156,11 @@ export const useAttendanceManagement = () => {
     attendanceRecords,
     isLoading,
     registerAttendance: registerAttendanceMutation.mutate,
+    registerBulkAttendance: registerBulkAttendanceMutation.mutate,
     updateAttendance: updateAttendanceMutation.mutate,
     deleteAttendance: deleteAttendanceMutation.mutate,
     isRegistering: registerAttendanceMutation.isPending,
+    isBulkRegistering: registerBulkAttendanceMutation.isPending,
     isUpdating: updateAttendanceMutation.isPending,
     isDeleting: deleteAttendanceMutation.isPending,
     canEditAttendance,
