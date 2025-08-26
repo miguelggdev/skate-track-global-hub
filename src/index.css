@@ -269,6 +269,20 @@
   }
 }
 
+/* Button hover enhancement */
+.button-hover-dynamic {
+  @apply transition-all duration-200 ease-in-out;
+  @apply hover:scale-[1.02] hover:shadow-md;
+}
+
+.button-hover-dynamic:hover {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05));
+}
+
+.dark .button-hover-dynamic:hover {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05));
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
