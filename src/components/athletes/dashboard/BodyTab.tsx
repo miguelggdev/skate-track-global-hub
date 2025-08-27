@@ -12,6 +12,7 @@ import { useCurrentAthlete } from '@/hooks/useCurrentAthlete';
 import { BodyRecordsTable } from './body/BodyRecordsTable';
 import { EditBodyRecordDialog } from './body/EditBodyRecordDialog';
 import { DeleteBodyRecordDialog } from './body/DeleteBodyRecordDialog';
+import { MedicalRecordField } from './body/MedicalRecordField';
 
 interface BodyRecord {
   id: string;
@@ -323,43 +324,31 @@ export const BodyTab = () => {
             </div>
           </div>
           <Separator />
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="allergies">Alergias</Label>
-              <Input 
-                id="allergies" 
-                placeholder="Describe cualquier alergia conocida"
-                value={formData.allergies}
-                onChange={(e) => handleInputChange('allergies', e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="surgeries">Cirugías</Label>
-              <Input 
-                id="surgeries" 
-                placeholder="Cirugías previas"
-                value={formData.surgeries}
-                onChange={(e) => handleInputChange('surgeries', e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="injuries">Lesiones</Label>
-              <Input 
-                id="injuries" 
-                placeholder="Lesiones importantes"
-                value={formData.injuries}
-                onChange={(e) => handleInputChange('injuries', e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="limitations">Limitaciones Físicas</Label>
-              <Input 
-                id="limitations" 
-                placeholder="Limitaciones o restricciones"
-                value={formData.limitations}
-                onChange={(e) => handleInputChange('limitations', e.target.value)}
-              />
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <MedicalRecordField
+              label="Alergias"
+              placeholder="Describe una alergia"
+              value={formData.allergies}
+              onChange={(value) => handleInputChange('allergies', value)}
+            />
+            <MedicalRecordField
+              label="Cirugías"
+              placeholder="Describe una cirugía"
+              value={formData.surgeries}
+              onChange={(value) => handleInputChange('surgeries', value)}
+            />
+            <MedicalRecordField
+              label="Lesiones"
+              placeholder="Describe una lesión"
+              value={formData.injuries}
+              onChange={(value) => handleInputChange('injuries', value)}
+            />
+            <MedicalRecordField
+              label="Limitaciones Físicas"
+              placeholder="Describe una limitación"
+              value={formData.limitations}
+              onChange={(value) => handleInputChange('limitations', value)}
+            />
           </div>
           
           <div className="flex flex-wrap gap-2 pt-4">
