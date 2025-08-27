@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 
 interface HistoryRecord {
   id: string;
+  athlete_id: string;
   previous_club: string | null;
   years_experience: number | null;
   start_date: string | null;
