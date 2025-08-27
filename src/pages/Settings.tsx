@@ -28,6 +28,7 @@ import {
   Trophy,
   DollarSign
 } from 'lucide-react';
+import UserManagementTab from '@/components/settings/UserManagementTab';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { PhotoUpload } from '@/components/users/PhotoUpload';
@@ -38,7 +39,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 const Settings = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { profile, loading } = useUserProfile();
+  const { profile, loading, isAdmin } = useUserProfile();
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -223,12 +224,18 @@ const Settings = () => {
 
         {/* Settings Tabs */}
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5 gap-1">
+          <TabsList className={`grid w-full gap-1 ${isAdmin ? 'grid-cols-3 lg:grid-cols-6' : 'grid-cols-3 lg:grid-cols-5'}`}>
             <TabsTrigger value="profile" className="text-xs lg:text-sm">Profile</TabsTrigger>
             <TabsTrigger value="security" className="text-xs lg:text-sm">Security</TabsTrigger>
             <TabsTrigger value="notifications" className="text-xs lg:text-sm">Notifications</TabsTrigger>
             <TabsTrigger value="preferences" className="text-xs lg:text-sm hidden lg:block">Preferences</TabsTrigger>
             <TabsTrigger value="system" className="text-xs lg:text-sm hidden lg:block">System</TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="users" className="text-xs lg:text-sm">
+                <Users className="h-3 w-3 mr-1 lg:mr-2" />
+                Users
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Profile Settings */}
@@ -631,6 +638,13 @@ const Settings = () => {
               </Card>
             </div>
           </TabsContent>
+
+          {/* User Management Tab - Admin Only */}
+          {isAdmin && (
+            <TabsContent value="users" className="space-y-6">
+              <UserManagementTab />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </DashboardLayout>
