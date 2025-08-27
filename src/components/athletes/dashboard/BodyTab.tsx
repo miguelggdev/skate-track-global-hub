@@ -76,23 +76,46 @@ export const BodyTab = () => {
 
     setLoading(true);
     try {
+      // First check if a record exists
+      const { data: existingData } = await supabase
+        .from('athlete_body_info')
+        .select('id')
+        .eq('athlete_id', athlete.id)
+        .maybeSingle();
+
       const saveData = {
         athlete_id: athlete.id,
         weight: formData.weight ? parseFloat(formData.weight) : null,
         height: formData.height ? parseFloat(formData.height) : null,
-        size: formData.size,
-        blood_type: formData.blood_type,
-        allergies: formData.allergies,
-        surgeries: formData.surgeries,
-        injuries: formData.injuries,
-        limitations: formData.limitations,
+        size: formData.size || null,
+        blood_type: formData.blood_type || null,
+        allergies: formData.allergies || null,
+        surgeries: formData.surgeries || null,
+        injuries: formData.injuries || null,
+        limitations: formData.limitations || null,
       };
 
-      const { error } = await supabase
-        .from('athlete_body_info')
-        .upsert(saveData);
+      let error;
+      
+      if (existingData) {
+        // Update existing record
+        const { error: updateError } = await supabase
+          .from('athlete_body_info')
+          .update(saveData)
+          .eq('id', existingData.id);
+        error = updateError;
+      } else {
+        // Insert new record
+        const { error: insertError } = await supabase
+          .from('athlete_body_info')
+          .insert(saveData);
+        error = insertError;
+      }
 
       if (error) throw error;
+
+      // Refresh the data to confirm it was saved
+      await fetchBodyData();
 
       toast({
         title: "Información médica actualizada",
