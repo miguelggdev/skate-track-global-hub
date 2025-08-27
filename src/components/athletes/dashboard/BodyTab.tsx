@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Heart, Plus, RotateCcw, Database } from 'lucide-react';
+import { Heart, Database } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useCurrentAthlete } from '@/hooks/useCurrentAthlete';
@@ -167,85 +167,6 @@ export const BodyTab = () => {
     }
   };
 
-  const handleNewRecord = async () => {
-    if (!athlete?.id) return;
-
-    // Check if all fields are empty
-    const isEmpty = !formData.weight && !formData.height && !formData.size && 
-                    !formData.blood_type && !formData.allergies && !formData.surgeries &&
-                    !formData.injuries && !formData.limitations;
-
-    if (isEmpty) {
-      toast({
-        title: "Campos vacíos",
-        description: "Completa al menos un campo para crear un nuevo registro.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const saveData = {
-        athlete_id: athlete.id,
-        weight: formData.weight ? parseFloat(formData.weight) : null,
-        height: formData.height ? parseFloat(formData.height) : null,
-        size: formData.size || null,
-        blood_type: formData.blood_type || null,
-        allergies: formData.allergies || null,
-        surgeries: formData.surgeries || null,
-        injuries: formData.injuries || null,
-        limitations: formData.limitations || null,
-      };
-
-      const { error } = await supabase
-        .from('athlete_body_info')
-        .insert(saveData);
-
-      if (error) throw error;
-
-      // Clear form and refresh data
-      setFormData({
-        weight: '',
-        height: '',
-        size: '',
-        blood_type: '',
-        allergies: '',
-        surgeries: '',
-        injuries: '',
-        limitations: '',
-      });
-
-      await Promise.all([fetchBodyData(), fetchAllRecords()]);
-
-      toast({
-        title: "Nuevo registro creado",
-        description: "Se ha creado un nuevo registro médico.",
-      });
-    } catch (error) {
-      console.error('Error creating new record:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo crear el nuevo registro. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const clearForm = () => {
-    setFormData({
-      weight: '',
-      height: '',
-      size: '',
-      blood_type: '',
-      allergies: '',
-      surgeries: '',
-      injuries: '',
-      limitations: '',
-    });
-  };
 
   const handleEdit = (record: BodyRecord) => {
     setEditingRecord(record);
@@ -351,17 +272,9 @@ export const BodyTab = () => {
             />
           </div>
           
-          <div className="flex flex-wrap gap-2 pt-4">
+          <div className="flex pt-4">
             <Button onClick={handleSave} disabled={loading}>
               {loading ? 'Guardando...' : 'Actualizar Información'}
-            </Button>
-            <Button variant="outline" onClick={handleNewRecord} disabled={loading}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Registro
-            </Button>
-            <Button variant="ghost" onClick={clearForm}>
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Limpiar
             </Button>
           </div>
         </CardContent>
