@@ -177,17 +177,19 @@ const Settings = () => {
 
   return (
     <DashboardLayout title="Settings">
-      <div className="space-y-6">
-        {/* Header Actions */}
-        <div className="flex justify-end">
-          <Button 
-            onClick={handleSaveSettings} 
-            disabled={saving || loading}
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            <Save className="h-4 w-4 mr-2" />
-            {saving ? "Guardando..." : "Guardar Cambios"}
-          </Button>
+      <div className="min-h-full pb-6">
+        {/* Sticky Header Actions */}
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-4 mb-6">
+          <div className="flex justify-end">
+            <Button 
+              onClick={handleSaveSettings} 
+              disabled={saving || loading}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {saving ? "Guardando..." : "Guardar Cambios"}
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
