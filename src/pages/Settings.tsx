@@ -32,13 +32,22 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { PhotoUpload } from '@/components/users/PhotoUpload';
 import { supabase } from '@/integrations/supabase/client';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 
 const Settings = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { profile, loading } = useUserProfile();
   const [showPassword, setShowPassword] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    bio: ''
+  });
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   const [notifications, setNotifications] = useState({
     email: true,
@@ -49,32 +58,82 @@ const Settings = () => {
     finance: true
   });
 
-  // Fetch current user profile
+  // Update form data when profile loads
   useEffect(() => {
-    const fetchCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        
-        if (profile) {
-          setCurrentUser(profile);
-          setProfilePhotoUrl(profile.avatar_url);
+    if (profile) {
+      setFormData({
+        first_name: profile.first_name || '',
+        last_name: profile.last_name || '',
+        email: profile.email || '',
+        phone: '',
+        bio: ''
+      });
+      setProfilePhotoUrl(null);
+      
+      // Fetch additional profile data that might not be in UserProfile
+      const fetchFullProfile = async () => {
+        try {
+          const { data: fullProfile } = await supabase
+            .from('profiles')
+            .select('phone, bio, avatar_url')
+            .eq('id', profile.id)
+            .single();
+            
+          if (fullProfile) {
+            setFormData(prev => ({
+              ...prev,
+              phone: fullProfile.phone || '',
+              bio: fullProfile.bio || ''
+            }));
+            setProfilePhotoUrl(fullProfile.avatar_url);
+          }
+        } catch (error) {
+          console.error('Error fetching full profile:', error);
         }
-      }
-    };
-    
-    fetchCurrentUser();
-  }, []);
+      };
+      
+      fetchFullProfile();
+    }
+  }, [profile]);
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   const handleSaveSettings = async () => {
-    toast({
-      title: "Settings saved",
-      description: "Your preferences have been updated successfully",
-    });
+    if (!profile?.id) return;
+    
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          phone: formData.phone,
+          bio: formData.bio
+        })
+        .eq('id', profile.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Configuración guardada",
+        description: "Tus preferencias han sido actualizadas exitosamente",
+      });
+    } catch (error: any) {
+      console.error('Error saving settings:', error);
+      toast({
+        title: "Error al guardar",
+        description: error.message || "No se pudo guardar la configuración",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const quickStats = [
@@ -121,9 +180,13 @@ const Settings = () => {
       <div className="space-y-6">
         {/* Header Actions */}
         <div className="flex justify-end">
-          <Button onClick={handleSaveSettings} className="bg-primary text-primary-foreground hover:bg-primary/90">
+          <Button 
+            onClick={handleSaveSettings} 
+            disabled={saving || loading}
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
             <Save className="h-4 w-4 mr-2" />
-            Save Changes
+            {saving ? "Guardando..." : "Guardar Cambios"}
           </Button>
         </div>
 
@@ -180,39 +243,73 @@ const Settings = () => {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="firstName">First Name</Label>
-                      <Input id="firstName" defaultValue="John" />
+                      <Label htmlFor="firstName">Nombre</Label>
+                      <Input 
+                        id="firstName" 
+                        value={formData.first_name}
+                        onChange={(e) => handleInputChange('first_name', e.target.value)}
+                        placeholder="Ingresa tu nombre"
+                      />
                     </div>
                     <div>
-                      <Label htmlFor="lastName">Last Name</Label>
-                      <Input id="lastName" defaultValue="Doe" />
+                      <Label htmlFor="lastName">Apellido</Label>
+                      <Input 
+                        id="lastName" 
+                        value={formData.last_name}
+                        onChange={(e) => handleInputChange('last_name', e.target.value)}
+                        placeholder="Ingresa tu apellido"
+                      />
                     </div>
                   </div>
                   <div>
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" defaultValue="john.doe@speedskate.com" />
+                    <Input 
+                      id="email" 
+                      type="email" 
+                      value={formData.email}
+                      disabled
+                      className="bg-muted"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      El email no se puede cambiar
+                    </p>
                   </div>
                   <div>
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input id="phone" type="tel" defaultValue="+1 (555) 123-4567" />
+                    <Label htmlFor="phone">Teléfono</Label>
+                    <Input 
+                      id="phone" 
+                      type="tel" 
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      placeholder="Ingresa tu teléfono"
+                    />
                   </div>
                   <div>
-                    <Label htmlFor="bio">Bio</Label>
-                    <Input id="bio" placeholder="Tell us about yourself..." />
+                    <Label htmlFor="bio">Biografía</Label>
+                    <Input 
+                      id="bio" 
+                      value={formData.bio}
+                      onChange={(e) => handleInputChange('bio', e.target.value)}
+                      placeholder="Cuéntanos sobre ti..."
+                    />
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="argon-card">
                 <CardHeader>
-                  <CardTitle>Profile Picture</CardTitle>
-                  <CardDescription>Upload and manage your profile image</CardDescription>
+                  <CardTitle>Foto de Perfil</CardTitle>
+                  <CardDescription>Sube y gestiona tu imagen de perfil</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <PhotoUpload
                     currentPhotoUrl={profilePhotoUrl}
-                    onPhotoChange={setProfilePhotoUrl}
-                    userId={currentUser?.id}
+                    onPhotoChange={(url) => {
+                      setProfilePhotoUrl(url);
+                      // Force a refresh of the user profile to update the avatar in the session
+                      window.location.reload();
+                    }}
+                    userId={profile?.id}
                     className="flex justify-center"
                   />
                 </CardContent>

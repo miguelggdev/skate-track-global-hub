@@ -56,8 +56,32 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [clubLogo, setClubLogo] = useState<string>('');
+  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const { profile } = useUserProfile();
+
+  // Fetch user avatar when profile changes
+  useEffect(() => {
+    if (profile?.id) {
+      const fetchUserAvatar = async () => {
+        try {
+          const { data } = await supabase
+            .from('profiles')
+            .select('avatar_url')
+            .eq('id', profile.id)
+            .single();
+          
+          if (data?.avatar_url) {
+            setUserAvatarUrl(data.avatar_url);
+          }
+        } catch (error) {
+          console.error('Error fetching user avatar:', error);
+        }
+      };
+      
+      fetchUserAvatar();
+    }
+  }, [profile]);
 
   // Fetch club logo on component mount
   useEffect(() => {
@@ -437,15 +461,17 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center space-x-2 px-2 transition-all hover:scale-105">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={userAvatar} />
+                  <AvatarImage src={userAvatarUrl || userAvatar} />
                   <AvatarFallback className="bg-primary text-primary-foreground">
-                    {getInitials(userRole)}
+                    {profile ? getInitials(`${profile.first_name} ${profile.last_name}`) : getInitials(userRole)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden sm:block text-left">
-                  <p className="font-medium text-sm truncate max-w-24">{userRole}</p>
-                  {userEmail && (
-                    <p className="text-xs text-muted-foreground truncate max-w-24">{userEmail}</p>
+                  <p className="font-medium text-sm truncate max-w-24">
+                    {profile ? `${profile.first_name} ${profile.last_name}` : userRole}
+                  </p>
+                  {profile?.email && (
+                    <p className="text-xs text-muted-foreground truncate max-w-24">{profile.email}</p>
                   )}
                 </div>
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
