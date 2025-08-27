@@ -8,6 +8,7 @@ import { Trophy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useCurrentAthlete } from '@/hooks/useCurrentAthlete';
+import { HistoryRecordField } from './history/HistoryRecordField';
 
 export const HistoryTab = () => {
   const { athlete } = useCurrentAthlete();
@@ -107,16 +108,15 @@ export const HistoryTab = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="previousClub">Escuela/Club Anterior</Label>
-            <Input 
-              id="previousClub" 
-              placeholder="Si has pertenecido a otro club"
-              value={formData.previous_club}
-              onChange={(e) => handleInputChange('previous_club', e.target.value)}
-            />
-          </div>
+        <div className="space-y-4">
+          <HistoryRecordField
+            label="Escuela/Club Anterior"
+            placeholder="Si has pertenecido a otro club"
+            value={formData.previous_club}
+            onChange={(value) => handleInputChange('previous_club', value)}
+            type="text"
+          />
+          
           <div>
             <Label htmlFor="yearsExperience">Años de Práctica</Label>
             <Input 
@@ -127,33 +127,30 @@ export const HistoryTab = () => {
               onChange={(e) => handleInputChange('years_experience', parseInt(e.target.value) || 0)}
             />
           </div>
-          <div>
-            <Label htmlFor="startDate">Fecha de Inicio en el Patinaje</Label>
-            <Input 
-              id="startDate" 
-              type="date"
-              value={formData.start_date}
-              onChange={(e) => handleInputChange('start_date', e.target.value)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="leagueDate">Fecha de Liga</Label>
-            <Input 
-              id="leagueDate" 
-              type="date"
-              value={formData.league_date}
-              onChange={(e) => handleInputChange('league_date', e.target.value)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="federationDate">Fecha de Federación</Label>
-            <Input 
-              id="federationDate" 
-              type="date"
-              value={formData.federation_date}
-              onChange={(e) => handleInputChange('federation_date', e.target.value)}
-            />
-          </div>
+          
+          <HistoryRecordField
+            label="Fecha de Inicio en el Patinaje"
+            placeholder="Fecha de inicio"
+            value={formData.start_date}
+            onChange={(value) => handleInputChange('start_date', value)}
+            type="date"
+          />
+          
+          <HistoryRecordField
+            label="Fecha de Liga"
+            placeholder="Fecha de liga"
+            value={formData.league_date}
+            onChange={(value) => handleInputChange('league_date', value)}
+            type="date"
+          />
+          
+          <HistoryRecordField
+            label="Fecha de Federación"
+            placeholder="Fecha de federación"
+            value={formData.federation_date}
+            onChange={(value) => handleInputChange('federation_date', value)}
+            type="date"
+          />
         </div>
         
         <div className="flex gap-4">
