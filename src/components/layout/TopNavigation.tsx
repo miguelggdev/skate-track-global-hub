@@ -26,8 +26,9 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 interface SearchResult {
   id: string;
   title: string;
-  type: 'athlete' | 'competition' | 'training';
+  type: 'athlete' | 'competition' | 'training' | 'financial' | 'equipment' | 'coach' | 'award' | 'team' | 'notification' | 'user';
   subtitle?: string;
+  metadata?: string;
 }
 
 interface Notification {
@@ -135,7 +136,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
     setUnreadCount(mockNotifications.filter(n => !n.read).length);
   }, []);
 
-  // Search functionality (role-aware)
+  // Enhanced search functionality (role-aware)
   useEffect(() => {
     const searchDatabase = async () => {
       if (searchQuery.length < 2) {
@@ -148,65 +149,258 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
         const results: SearchResult[] = [];
         const role = profile?.role;
 
-        const canSearchAthletes = role === 'admin' || role === 'coach' || role === 'leader';
+        // Define role-based permissions
+        const canSearchAthletes = role === 'admin' || role === 'coach' || role === 'leader' || role === 'delegate';
         const canSearchCompetitions = role === 'admin' || role === 'coach' || role === 'athlete' || role === 'leader' || role === 'delegate';
         const canSearchTraining = role === 'admin' || role === 'coach' || role === 'athlete' || role === 'leader';
+        const canSearchFinancial = role === 'admin' || role === 'finance' || role === 'leader';
+        const canSearchEquipment = role === 'admin' || role === 'coach' || role === 'leader';
+        const canSearchCoaches = role === 'admin' || role === 'leader';
+        const canSearchAwards = role === 'admin' || role === 'coach' || role === 'athlete' || role === 'leader' || role === 'delegate';
+        const canSearchTeams = role === 'admin' || role === 'coach' || role === 'leader';
+        const canSearchNotifications = true; // All authenticated users
+        const canSearchUsers = role === 'admin' || role === 'leader';
 
-        const athletePromise = canSearchAthletes
-          ? supabase
+        // Build search promises based on permissions
+        const searchPromises: PromiseLike<any>[] = [];
+
+        if (canSearchAthletes) {
+          searchPromises.push(
+            supabase
               .from('athletes')
-              .select('id, first_name, last_name, athlete_number')
+              .select('id, first_name, last_name, athlete_number, category')
               .or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,athlete_number.ilike.%${searchQuery}%`)
-              .limit(5)
-          : Promise.resolve({ data: [] as any[] });
+              .limit(8)
+              .then(result => ({ type: 'athletes', data: result.data }))
+          );
+        }
 
-        const competitionPromise = canSearchCompetitions
-          ? supabase
+        if (canSearchCompetitions) {
+          searchPromises.push(
+            supabase
               .from('competitions')
-              .select('id, name, location')
+              .select('id, name, location, start_date')
               .ilike('name', `%${searchQuery}%`)
-              .limit(3)
-          : Promise.resolve({ data: [] as any[] });
+              .limit(5)
+              .then(result => ({ type: 'competitions', data: result.data }))
+          );
+        }
 
-        const trainingPromise = canSearchTraining
-          ? supabase
+        if (canSearchTraining) {
+          searchPromises.push(
+            supabase
               .from('training_sessions')
-              .select('id, name, date')
+              .select('id, name, date, location')
               .ilike('name', `%${searchQuery}%`)
+              .limit(5)
+              .then(result => ({ type: 'training', data: result.data }))
+          );
+        }
+
+        if (canSearchFinancial) {
+          searchPromises.push(
+            supabase
+              .from('financial_transactions')
+              .select('id, description, amount, payer_name, transaction_type')
+              .or(`description.ilike.%${searchQuery}%,payer_name.ilike.%${searchQuery}%`)
+              .limit(5)
+              .then(result => ({ type: 'financial', data: result.data }))
+          );
+        }
+
+        if (canSearchEquipment) {
+          searchPromises.push(
+            supabase
+              .from('equipment')
+              .select('id, name, brand, model, category')
+              .or(`name.ilike.%${searchQuery}%,brand.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%`)
+              .limit(4)
+              .then(result => ({ type: 'equipment', data: result.data }))
+          );
+        }
+
+        if (canSearchCoaches) {
+          searchPromises.push(
+            supabase
+              .from('profiles')
+              .select('id, first_name, last_name, email')
+              .eq('role', 'coach')
+              .or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+              .limit(4)
+              .then(result => ({ type: 'coaches', data: result.data }))
+          );
+        }
+
+        if (canSearchAwards) {
+          searchPromises.push(
+            supabase
+              .from('awards')
+              .select('id, award_name, award_type, award_date')
+              .or(`award_name.ilike.%${searchQuery}%,award_type.ilike.%${searchQuery}%`)
+              .limit(4)
+              .then(result => ({ type: 'awards', data: result.data }))
+          );
+        }
+
+        if (canSearchTeams) {
+          searchPromises.push(
+            supabase
+              .from('teams')
+              .select('id, name, description, location')
+              .or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`)
+              .limit(4)
+              .then(result => ({ type: 'teams', data: result.data }))
+          );
+        }
+
+        if (canSearchNotifications) {
+          searchPromises.push(
+            supabase
+              .from('notifications')
+              .select('id, title, message, notification_type')
+              .eq('recipient_id', profile?.id)
+              .or(`title.ilike.%${searchQuery}%,message.ilike.%${searchQuery}%`)
               .limit(3)
-          : Promise.resolve({ data: [] as any[] });
+              .then(result => ({ type: 'notifications', data: result.data }))
+          );
+        }
 
-        const [athletesRes, competitionsRes, trainingRes] = await Promise.all([
-          athletePromise,
-          competitionPromise,
-          trainingPromise,
-        ]);
+        if (canSearchUsers) {
+          searchPromises.push(
+            supabase
+              .from('profiles')
+              .select('id, first_name, last_name, email, role')
+              .or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+              .limit(5)
+              .then(result => ({ type: 'users', data: result.data }))
+          );
+        }
 
-        (athletesRes as any)?.data?.forEach((athlete: any) => {
-          results.push({
-            id: athlete.id,
-            title: `${athlete.first_name} ${athlete.last_name}`,
-            type: 'athlete',
-            subtitle: athlete.athlete_number,
-          });
-        });
+        const searchResults = await Promise.all(searchPromises);
 
-        (competitionsRes as any)?.data?.forEach((competition: any) => {
-          results.push({
-            id: competition.id,
-            title: competition.name,
-            type: 'competition',
-            subtitle: competition.location,
-          });
-        });
+        // Process each result type
+        searchResults.forEach((result) => {
+          if (!result.data) return;
 
-        (trainingRes as any)?.data?.forEach((session: any) => {
-          results.push({
-            id: session.id,
-            title: session.name,
-            type: 'training',
-            subtitle: new Date(session.date).toLocaleDateString(),
-          });
+          switch (result.type) {
+            case 'athletes':
+              result.data.forEach((athlete: any) => {
+                results.push({
+                  id: athlete.id,
+                  title: `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim(),
+                  type: 'athlete',
+                  subtitle: athlete.athlete_number || athlete.category,
+                });
+              });
+              break;
+
+            case 'competitions':
+              result.data.forEach((competition: any) => {
+                results.push({
+                  id: competition.id,
+                  title: competition.name,
+                  type: 'competition',
+                  subtitle: competition.location,
+                  metadata: competition.start_date ? new Date(competition.start_date).toLocaleDateString() : undefined,
+                });
+              });
+              break;
+
+            case 'training':
+              result.data.forEach((session: any) => {
+                results.push({
+                  id: session.id,
+                  title: session.name,
+                  type: 'training',
+                  subtitle: session.location,
+                  metadata: new Date(session.date).toLocaleDateString(),
+                });
+              });
+              break;
+
+            case 'financial':
+              result.data.forEach((transaction: any) => {
+                results.push({
+                  id: transaction.id,
+                  title: transaction.description,
+                  type: 'financial',
+                  subtitle: transaction.payer_name,
+                  metadata: `${transaction.amount}€ - ${transaction.transaction_type}`,
+                });
+              });
+              break;
+
+            case 'equipment':
+              result.data.forEach((equipment: any) => {
+                results.push({
+                  id: equipment.id,
+                  title: equipment.name,
+                  type: 'equipment',
+                  subtitle: `${equipment.brand || ''} ${equipment.model || ''}`.trim(),
+                  metadata: equipment.category,
+                });
+              });
+              break;
+
+            case 'coaches':
+              result.data.forEach((coach: any) => {
+                results.push({
+                  id: coach.id,
+                  title: `${coach.first_name || ''} ${coach.last_name || ''}`.trim(),
+                  type: 'coach',
+                  subtitle: coach.email,
+                });
+              });
+              break;
+
+            case 'awards':
+              result.data.forEach((award: any) => {
+                results.push({
+                  id: award.id,
+                  title: award.award_name,
+                  type: 'award',
+                  subtitle: award.award_type,
+                  metadata: award.award_date ? new Date(award.award_date).toLocaleDateString() : undefined,
+                });
+              });
+              break;
+
+            case 'teams':
+              result.data.forEach((team: any) => {
+                results.push({
+                  id: team.id,
+                  title: team.name,
+                  type: 'team',
+                  subtitle: team.location,
+                  metadata: team.description,
+                });
+              });
+              break;
+
+            case 'notifications':
+              result.data.forEach((notification: any) => {
+                results.push({
+                  id: notification.id,
+                  title: notification.title,
+                  type: 'notification',
+                  subtitle: notification.message,
+                  metadata: notification.notification_type,
+                });
+              });
+              break;
+
+            case 'users':
+              result.data.forEach((user: any) => {
+                results.push({
+                  id: user.id,
+                  title: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+                  type: 'user',
+                  subtitle: user.email,
+                  metadata: user.role,
+                });
+              });
+              break;
+          }
         });
 
         setSearchResults(results);
@@ -253,6 +447,30 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
         break;
       case 'training':
         navigate(`/training?highlight=${result.id}`);
+        break;
+      case 'financial':
+        navigate(`/finance?highlight=${result.id}`);
+        break;
+      case 'equipment':
+        navigate(`/athletes?tab=equipment&highlight=${result.id}`);
+        break;
+      case 'coach':
+        navigate(`/training?coach=${result.id}`);
+        break;
+      case 'award':
+        navigate(`/competitions?tab=results&highlight=${result.id}`);
+        break;
+      case 'team':
+        navigate(`/athletes?team=${result.id}`);
+        break;
+      case 'notification':
+        // Keep notifications in the header, just mark as read
+        markNotificationAsRead(result.id);
+        break;
+      case 'user':
+        if (profile?.role === 'admin' || profile?.role === 'leader') {
+          navigate(`/settings?tab=users&highlight=${result.id}`);
+        }
         break;
     }
   };
@@ -346,7 +564,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Buscar atletas, competencias, entrenamientos..."
+              placeholder="Buscar atletas, competencias, entrenamientos, finanzas, equipos..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -365,17 +583,36 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
                     <div className="flex items-center space-x-3">
                       <div className={`w-2 h-2 rounded-full ${
                         result.type === 'athlete' ? 'bg-blue-500' :
-                        result.type === 'competition' ? 'bg-green-500' : 'bg-orange-500'
+                        result.type === 'competition' ? 'bg-green-500' :
+                        result.type === 'training' ? 'bg-orange-500' :
+                        result.type === 'financial' ? 'bg-emerald-500' :
+                        result.type === 'equipment' ? 'bg-purple-500' :
+                        result.type === 'coach' ? 'bg-indigo-500' :
+                        result.type === 'award' ? 'bg-yellow-500' :
+                        result.type === 'team' ? 'bg-pink-500' :
+                        result.type === 'notification' ? 'bg-red-500' :
+                        result.type === 'user' ? 'bg-gray-500' : 'bg-gray-400'
                       }`} />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-foreground truncate">{result.title}</p>
                         {result.subtitle && (
                           <p className="text-sm text-muted-foreground truncate">{result.subtitle}</p>
                         )}
+                        {result.metadata && (
+                          <p className="text-xs text-muted-foreground truncate">{result.metadata}</p>
+                        )}
                       </div>
                       <Badge variant="secondary" className="text-xs">
                         {result.type === 'athlete' ? 'Atleta' :
-                         result.type === 'competition' ? 'Competencia' : 'Entrenamiento'}
+                         result.type === 'competition' ? 'Competencia' :
+                         result.type === 'training' ? 'Entrenamiento' :
+                         result.type === 'financial' ? 'Finanzas' :
+                         result.type === 'equipment' ? 'Equipo' :
+                         result.type === 'coach' ? 'Entrenador' :
+                         result.type === 'award' ? 'Premio' :
+                         result.type === 'team' ? 'Equipo' :
+                         result.type === 'notification' ? 'Notificación' :
+                         result.type === 'user' ? 'Usuario' : 'Otro'}
                       </Badge>
                     </div>
                   </div>
