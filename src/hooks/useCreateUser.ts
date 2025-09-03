@@ -7,6 +7,8 @@ export interface CreateUserData {
   password: string;
   first_name: string;
   last_name: string;
+  id_type?: string;
+  id_number?: string;
   phone?: string;
   date_of_birth?: string;
   role: 'admin' | 'coach' | 'athlete' | 'delegate' | 'leader' | 'finance';
@@ -31,6 +33,8 @@ export const useCreateUser = () => {
           password: data.password,
           first_name: data.first_name,
           last_name: data.last_name,
+          id_type: data.id_type || null,
+          id_number: data.id_number || null,
           role: data.role,
           phone: data.phone || null,
           date_of_birth: data.date_of_birth || null,

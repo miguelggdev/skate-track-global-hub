@@ -12,6 +12,8 @@ interface CreateUserRequest {
   password: string;
   first_name: string;
   last_name: string;
+  id_type?: string;
+  id_number?: string;
   role: string;
   phone?: string;
   date_of_birth?: string;
@@ -71,7 +73,7 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { email, password, first_name, last_name, role, phone, date_of_birth }: CreateUserRequest = await req.json();
+    const { email, password, first_name, last_name, id_type, id_number, role, phone, date_of_birth }: CreateUserRequest = await req.json();
 
     // Validate required fields
     if (!email || !password || !first_name || !last_name || !role) {
@@ -89,6 +91,8 @@ serve(async (req) => {
       user_metadata: {
         first_name,
         last_name,
+        id_type,
+        id_number,
         role,
         phone,
         date_of_birth

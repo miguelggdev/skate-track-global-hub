@@ -1141,6 +1141,8 @@ export type Database = {
           email: string
           first_name: string
           id: string
+          id_number: string | null
+          id_type: Database["public"]["Enums"]["id_type"] | null
           last_name: string
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
@@ -1154,6 +1156,8 @@ export type Database = {
           email: string
           first_name: string
           id: string
+          id_number?: string | null
+          id_type?: Database["public"]["Enums"]["id_type"] | null
           last_name: string
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -1167,6 +1171,8 @@ export type Database = {
           email?: string
           first_name?: string
           id?: string
+          id_number?: string | null
+          id_type?: Database["public"]["Enums"]["id_type"] | null
           last_name?: string
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -1530,6 +1536,11 @@ export type Database = {
         | "mayores_unica"
       athlete_status: "active" | "inactive" | "injured" | "suspended"
       competition_status: "upcoming" | "ongoing" | "completed" | "cancelled"
+      id_type:
+        | "Tarjeta de identidad"
+        | "Cedula de Ciudadania"
+        | "Pasaporte"
+        | "Cedula de Extranjeria"
       payment_status: "pending" | "paid" | "overdue" | "cancelled"
       training_type:
         | "technical"
@@ -1721,6 +1732,12 @@ export const Constants = {
       ],
       athlete_status: ["active", "inactive", "injured", "suspended"],
       competition_status: ["upcoming", "ongoing", "completed", "cancelled"],
+      id_type: [
+        "Tarjeta de identidad",
+        "Cedula de Ciudadania",
+        "Pasaporte",
+        "Cedula de Extranjeria",
+      ],
       payment_status: ["pending", "paid", "overdue", "cancelled"],
       training_type: [
         "technical",

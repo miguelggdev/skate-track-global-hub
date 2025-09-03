@@ -18,6 +18,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -46,6 +53,8 @@ interface AddAthleteDialogProps {
 interface AthleteFormData {
   firstName: string;
   lastName: string;
+  idType: string;
+  idNumber: string;
   email: string;
   password: string;
   dateOfBirth: Date | undefined;
@@ -61,6 +70,8 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
     defaultValues: {
       firstName: '',
       lastName: '',
+      idType: '',
+      idNumber: '',
       email: '',
       password: '',
       dateOfBirth: undefined,
@@ -98,6 +109,8 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
       password: data.password,
       first_name: data.firstName,
       last_name: data.lastName,
+      id_type: data.idType,
+      id_number: data.idNumber,
       role: 'athlete',
       date_of_birth: format(data.dateOfBirth, 'yyyy-MM-dd'),
     };
@@ -155,6 +168,46 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
                   <FormLabel>Apellido</FormLabel>
                   <FormControl>
                     <Input placeholder="Ingrese el apellido del atleta" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="idType"
+              rules={{ required: 'El tipo de identificación es requerido' }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo de Identificación</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione el tipo de identificación" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Tarjeta de identidad">Tarjeta de identidad</SelectItem>
+                      <SelectItem value="Cedula de Ciudadania">Cédula de Ciudadanía</SelectItem>
+                      <SelectItem value="Pasaporte">Pasaporte</SelectItem>
+                      <SelectItem value="Cedula de Extranjeria">Cédula de Extranjería</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="idNumber"
+              rules={{ required: 'El número de identificación es requerido' }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Número de Identificación</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ingrese el número de identificación" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
