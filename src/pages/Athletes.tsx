@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import StatsCards from '@/components/athletes/StatsCards';
@@ -22,22 +22,58 @@ interface Athlete {
   performance_score?: number;
 }
 
+interface PaginationData {
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+  itemsPerPage: number;
+}
+
 const Athletes = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState<PaginationData>({
+    currentPage: 1,
+    totalPages: 0,
+    totalCount: 0,
+    itemsPerPage: 25,
+  });
   const { toast } = useToast();
 
-  const fetchAthletes = async () => {
+  const fetchAthletes = async (page = 1, search = '') => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Calculate offset for pagination
+      const offset = (page - 1) * pagination.itemsPerPage;
+      
+      // Build the query with pagination and search
+      let query = supabase
         .from('athletes')
-        .select('*')
+        .select('*', { count: 'exact' })
+        .range(offset, offset + pagination.itemsPerPage - 1)
         .order('created_at', { ascending: false });
+      
+      // Add search filters if search term exists
+      if (search.trim()) {
+        query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%,category.ilike.%${search}%`);
+      }
+
+      const { data, error, count } = await query;
 
       if (error) throw error;
+      
+      const totalCount = count || 0;
+      const totalPages = Math.ceil(totalCount / pagination.itemsPerPage);
+      
       setAthletes(data || []);
+      setPagination(prev => ({
+        ...prev,
+        currentPage: page,
+        totalPages,
+        totalCount,
+      }));
     } catch (error) {
       console.error('Error fetching athletes:', error);
       toast({
@@ -50,38 +86,54 @@ const Athletes = () => {
     }
   };
 
+  // Debounced search function
+  const debouncedSearch = useCallback((searchValue: string) => {
+    const timeoutId = setTimeout(() => {
+      fetchAthletes(1, searchValue); // Reset to page 1 on search
+    }, 300);
+    
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  const handleSearch = (newSearchTerm: string) => {
+    setSearchTerm(newSearchTerm);
+    debouncedSearch(newSearchTerm);
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= pagination.totalPages) {
+      fetchAthletes(page, searchTerm);
+    }
+  };
+
   useEffect(() => {
     fetchAthletes();
   }, []);
 
   const handleAthleteAdded = () => {
-    fetchAthletes();
+    fetchAthletes(pagination.currentPage, searchTerm);
     toast({
       title: "Éxito",
       description: "Atleta creado exitosamente",
     });
   };
 
-  const filteredAthletes = athletes.filter(athlete => {
-    const fullName = athlete.first_name && athlete.last_name ? `${athlete.first_name} ${athlete.last_name}` : '';
-    const email = athlete.email || '';
-    return (
-      fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      athlete.category.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
-
   return (
     <DashboardLayout title="Athletes Management">
       <div className="space-y-6 max-w-none">
         <AthletesHeader onAthleteAdded={handleAthleteAdded} />
         <StatsCards />
-        <SearchFilterBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+        <SearchFilterBar searchTerm={searchTerm} setSearchTerm={handleSearch} />
         
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <AthletesTable athletes={filteredAthletes} loading={loading} onActionCompleted={fetchAthletes} />
+          <AthletesTable 
+            athletes={athletes} 
+            loading={loading} 
+            onActionCompleted={() => fetchAthletes(pagination.currentPage, searchTerm)}
+            pagination={pagination}
+            onPageChange={handlePageChange}
+          />
           <RecentActivity />
         </div>
       </div>

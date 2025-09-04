@@ -17,6 +17,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -41,9 +49,16 @@ interface AthletesTableProps {
   athletes: Athlete[];
   loading?: boolean;
   onActionCompleted?: () => void;
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    totalCount: number;
+    itemsPerPage: number;
+  };
+  onPageChange?: (page: number) => void;
 }
 
-const AthletesTable = ({ athletes, loading = false, onActionCompleted }: AthletesTableProps) => {
+const AthletesTable = ({ athletes, loading = false, onActionCompleted, pagination, onPageChange }: AthletesTableProps) => {
   const { toast } = useToast();
 
   const [selected, setSelected] = useState<Athlete | null>(null);
@@ -325,11 +340,88 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted }: Athlete
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-
               <AlertDialogAction onClick={handleConfirmDelete}>Eliminar</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Pagination */}
+        {pagination && pagination.totalPages > 1 && (
+          <div className="px-6 py-4 border-t">
+            {/* Pagination Info */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-sm text-gray-600">
+                Showing {((pagination.currentPage - 1) * pagination.itemsPerPage) + 1} to {' '}
+                {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalCount)} of{' '}
+                {pagination.totalCount} athletes
+              </div>
+              <div className="text-sm text-gray-600">
+                Page {pagination.currentPage} of {pagination.totalPages}
+              </div>
+            </div>
+
+            {/* Pagination Controls */}
+            <Pagination>
+              <PaginationContent>
+                {/* Previous Button */}
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => pagination.currentPage > 1 && onPageChange?.(pagination.currentPage - 1)}
+                    className={pagination.currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+
+                {/* Page Numbers */}
+                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((pageNum) => {
+                  // Show first page, last page, current page, and 2 pages around current
+                  const showPage = 
+                    pageNum === 1 || 
+                    pageNum === pagination.totalPages || 
+                    Math.abs(pageNum - pagination.currentPage) <= 2;
+
+                  if (!showPage && pageNum !== 2 && pageNum !== pagination.totalPages - 1) {
+                    // Show ellipsis only once between ranges
+                    if (pageNum === 3 && pagination.currentPage > 5) {
+                      return (
+                        <PaginationItem key={pageNum}>
+                          <span className="px-3 py-1 text-sm text-gray-500">...</span>
+                        </PaginationItem>
+                      );
+                    }
+                    if (pageNum === pagination.totalPages - 2 && pagination.currentPage < pagination.totalPages - 4) {
+                      return (
+                        <PaginationItem key={pageNum}>
+                          <span className="px-3 py-1 text-sm text-gray-500">...</span>
+                        </PaginationItem>
+                      );
+                    }
+                    return null;
+                  }
+
+                  return (
+                    <PaginationItem key={pageNum}>
+                      <PaginationLink
+                        onClick={() => onPageChange?.(pageNum)}
+                        isActive={pageNum === pagination.currentPage}
+                        className="cursor-pointer"
+                      >
+                        {pageNum}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                })}
+
+                {/* Next Button */}
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => pagination.currentPage < pagination.totalPages && onPageChange?.(pagination.currentPage + 1)}
+                    className={pagination.currentPage === pagination.totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
