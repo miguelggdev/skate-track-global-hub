@@ -20,6 +20,17 @@ interface Athlete {
   join_date: string;
   status: string;
   performance_score?: number;
+  athlete_number?: string;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
+  medical_notes?: string;
+  achievements?: string;
+  // Profile data
+  avatar_url?: string;
+  id_type?: string;
+  id_number?: string;
+  date_of_birth?: string;
+  phone?: string;
 }
 
 interface PaginationData {
@@ -48,10 +59,19 @@ const Athletes = () => {
       // Calculate offset for pagination
       const offset = (page - 1) * pagination.itemsPerPage;
       
-      // Build the query with pagination and search
+      // Build the query with pagination and search, joining with profiles table
       let query = supabase
         .from('athletes')
-        .select('*', { count: 'exact' })
+        .select(`
+          *,
+          profiles!inner(
+            avatar_url,
+            id_type,
+            id_number,
+            date_of_birth,
+            phone
+          )
+        `, { count: 'exact' })
         .range(offset, offset + pagination.itemsPerPage - 1)
         .order('created_at', { ascending: false });
       
@@ -67,7 +87,17 @@ const Athletes = () => {
       const totalCount = count || 0;
       const totalPages = Math.ceil(totalCount / pagination.itemsPerPage);
       
-      setAthletes(data || []);
+      // Flatten the profile data into the athlete object for easier access
+      const flattenedAthletes = (data || []).map(athlete => ({
+        ...athlete,
+        avatar_url: athlete.profiles?.avatar_url,
+        id_type: athlete.profiles?.id_type,
+        id_number: athlete.profiles?.id_number,
+        date_of_birth: athlete.profiles?.date_of_birth,
+        phone: athlete.profiles?.phone,
+      }));
+      
+      setAthletes(flattenedAthletes);
       setPagination(prev => ({
         ...prev,
         currentPage: page,

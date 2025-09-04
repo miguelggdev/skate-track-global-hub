@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, Eye, User, Calendar, Phone, Mail, FileText, Award } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -28,9 +28,12 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { format, differenceInYears } from 'date-fns';
 
 interface Athlete {
   id: string;
@@ -43,6 +46,17 @@ interface Athlete {
   join_date: string;
   status: string;
   performance_score?: number;
+  athlete_number?: string;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
+  medical_notes?: string;
+  achievements?: string;
+  // Profile data
+  avatar_url?: string;
+  id_type?: string;
+  id_number?: string;
+  date_of_birth?: string;
+  phone?: string;
 }
 
 interface AthletesTableProps {
@@ -71,6 +85,39 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
     email: '',
     performance_score: 0,
   });
+
+  // Utility functions
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'No disponible';
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy');
+    } catch {
+      return 'Fecha inválida';
+    }
+  };
+
+  const calculateAge = (dateOfBirth: string | null) => {
+    if (!dateOfBirth) return null;
+    try {
+      return differenceInYears(new Date(), new Date(dateOfBirth));
+    } catch {
+      return null;
+    }
+  };
+
+  const formatIdType = (idType: string | null) => {
+    const idTypes = {
+      'tarjeta_de_identidad': 'Tarjeta de Identidad',
+      'cedula_de_ciudadania': 'Cédula de Ciudadanía',
+      'pasaporte': 'Pasaporte',
+      'cedula_de_extranjeria': 'Cédula de Extranjería'
+    };
+    return idType ? idTypes[idType as keyof typeof idTypes] || idType : 'No especificado';
+  };
+
+  const getInitials = (firstName?: string, lastName?: string) => {
+    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -250,47 +297,258 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
           </Table>
         </div>
 
-        {/* View Details Dialog */}
+        {/* Enhanced View Details Dialog */}
         <Dialog open={viewOpen} onOpenChange={setViewOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Athlete details</DialogTitle>
-              <DialogDescription>Información del atleta seleccionado</DialogDescription>
+              <DialogTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Detalles del Atleta
+              </DialogTitle>
+              <DialogDescription>
+                Información completa del atleta seleccionado
+              </DialogDescription>
             </DialogHeader>
+            
             {selected && (
-              <div className="space-y-3">
-                <div>
-                  <Label>Nombre</Label>
-                  <div className="mt-1">{`${selected.first_name || ''} ${selected.last_name || ''}`.trim() || 'Sin nombre'}</div>
-                </div>
-                <div>
-                  <Label>Email</Label>
-                  <div className="mt-1">{selected.email || 'Sin email'}</div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Categoría</Label>
-                    <div className="mt-1 capitalize">{selected.category}</div>
-                  </div>
-                  <div>
-                    <Label>Nivel</Label>
-                    <div className="mt-1 capitalize">{selected.level}</div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Estado</Label>
-                    <div className="mt-1 capitalize">{selected.status}</div>
-                  </div>
-                  <div>
-                    <Label>Performance</Label>
-                    <div className="mt-1">{Number(selected.performance_score || 0)}%</div>
-                  </div>
-                </div>
+              <div className="space-y-6">
+                {/* Avatar and Basic Info Section */}
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex flex-col md:flex-row gap-6 items-start">
+                      {/* Avatar */}
+                      <div className="flex flex-col items-center space-y-2">
+                        <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                          {selected.avatar_url ? (
+                            <img 
+                              src={selected.avatar_url} 
+                              alt="Foto del atleta"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                target.nextElementSibling!.classList.remove('hidden');
+                              }}
+                            />
+                          ) : null}
+                          <div className={`text-white text-2xl font-bold ${selected.avatar_url ? 'hidden' : ''}`}>
+                            {getInitials(selected.first_name, selected.last_name)}
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          Foto de perfil
+                        </Badge>
+                      </div>
+
+                      {/* Basic Information */}
+                      <div className="flex-1 space-y-4">
+                        <div>
+                          <h3 className="text-2xl font-bold text-gray-900">
+                            {`${selected.first_name || ''} ${selected.last_name || ''}`.trim() || 'Sin nombre'}
+                          </h3>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            <Badge variant={selected.status === 'active' ? 'default' : 'secondary'}>
+                              {selected.status}
+                            </Badge>
+                            <Badge variant="outline">
+                              {selected.category}
+                            </Badge>
+                            <Badge variant="outline">
+                              {selected.level}
+                            </Badge>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-gray-500" />
+                            <div>
+                              <div className="text-sm font-medium">Email</div>
+                              <div className="text-sm text-gray-600">
+                                {selected.email || 'No disponible'}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-gray-500" />
+                            <div>
+                              <div className="text-sm font-medium">Teléfono</div>
+                              <div className="text-sm text-gray-600">
+                                {selected.phone || 'No disponible'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Personal Information Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Calendar className="h-5 w-5" />
+                      Información Personal
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">Fecha de Nacimiento</Label>
+                        <div className="mt-1 text-sm">
+                          {formatDate(selected.date_of_birth)}
+                          {selected.date_of_birth && calculateAge(selected.date_of_birth) && (
+                            <span className="text-gray-500 ml-2">
+                              ({calculateAge(selected.date_of_birth)} años)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">Fecha de Ingreso</Label>
+                        <div className="mt-1 text-sm">{formatDate(selected.join_date)}</div>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">Número de Atleta</Label>
+                        <div className="mt-1 text-sm">
+                          {selected.athlete_number || 'No asignado'}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Identification Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <FileText className="h-5 w-5" />
+                      Documentación
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">Tipo de Documento</Label>
+                        <div className="mt-1 text-sm">
+                          {formatIdType(selected.id_type)}
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">Número de Documento</Label>
+                        <div className="mt-1 text-sm font-mono">
+                          {selected.id_number || 'No disponible'}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Athletic Performance Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Award className="h-5 w-5" />
+                      Rendimiento Deportivo
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-blue-600">
+                          {Number(selected.performance_score || 0)}%
+                        </div>
+                        <div className="text-sm text-gray-600 mt-1">Puntuación de Rendimiento</div>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">Categoría</Label>
+                        <div className="mt-1">
+                          <Badge variant="outline" className="capitalize">
+                            {selected.category}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">Nivel</Label>
+                        <div className="mt-1">
+                          <Badge variant="outline" className="capitalize">
+                            {selected.level}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Emergency Contact Section */}
+                {(selected.emergency_contact_name || selected.emergency_contact_phone) && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Phone className="h-5 w-5" />
+                        Contacto de Emergencia
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700">Nombre</Label>
+                          <div className="mt-1 text-sm">
+                            {selected.emergency_contact_name || 'No disponible'}
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700">Teléfono</Label>
+                          <div className="mt-1 text-sm font-mono">
+                            {selected.emergency_contact_phone || 'No disponible'}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Additional Information Section */}
+                {(selected.medical_notes || selected.achievements) && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <FileText className="h-5 w-5" />
+                        Información Adicional
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {selected.medical_notes && (
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700">Notas Médicas</Label>
+                          <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md">
+                            <div className="text-sm text-red-800">
+                              {selected.medical_notes}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {selected.achievements && (
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700">Logros</Label>
+                          <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md">
+                            <div className="text-sm text-green-800">
+                              {selected.achievements}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             )}
+            
             <DialogFooter>
-              <Button onClick={() => setViewOpen(false)}>Cerrar</Button>
+              <Button onClick={() => setViewOpen(false)}>
+                Cerrar
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
