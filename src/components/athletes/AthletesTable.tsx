@@ -1,8 +1,13 @@
-
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { MoreVertical, Edit, Trash2, Eye, User, Calendar, Phone, Mail, FileText, Award } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -11,6 +16,23 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,50 +47,27 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { format, differenceInYears } from 'date-fns';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
+import { MoreHorizontal, Eye, Edit, Trash2, User, Phone, Mail, Calendar, Trophy, Activity } from 'lucide-react';
+import { format } from 'date-fns';
+import { Athlete } from '@/hooks/useAthletes';
+import { EditAthleteDialog } from './EditAthleteDialog';
 
-interface Athlete {
-  id: string;
-  user_id?: string;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  category: string;
-  level: string;
-  join_date: string;
-  status: string;
-  performance_score?: number;
-  athlete_number?: string;
-  emergency_contact_name?: string;
-  emergency_contact_phone?: string;
-  medical_notes?: string;
-  achievements?: string;
-  // Profile data
-  avatar_url?: string;
-  id_type?: string;
-  id_number?: string;
-  date_of_birth?: string;
-  phone?: string;
+interface PaginationData {
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+  itemsPerPage: number;
 }
 
 interface AthletesTableProps {
   athletes: Athlete[];
-  loading?: boolean;
+  loading: boolean;
   onActionCompleted?: () => void;
-  pagination?: {
-    currentPage: number;
-    totalPages: number;
-    totalCount: number;
-    itemsPerPage: number;
-  };
+  pagination?: PaginationData;
   onPageChange?: (page: number) => void;
 }
 
@@ -77,79 +76,58 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
 
   const [selected, setSelected] = useState<Athlete | null>(null);
   const [viewOpen, setViewOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
+  const [editAthlete, setEditAthlete] = useState<Athlete | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [editData, setEditData] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    performance_score: 0,
-  });
 
   // Utility functions
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'No disponible';
-    try {
-      return format(new Date(dateString), 'dd/MM/yyyy');
-    } catch {
-      return 'Fecha inválida';
-    }
+  const formatDate = (dateString: string) => {
+    return format(new Date(dateString), 'dd/MM/yyyy');
   };
 
-  const calculateAge = (dateOfBirth: string | null) => {
-    if (!dateOfBirth) return null;
-    try {
-      return differenceInYears(new Date(), new Date(dateOfBirth));
-    } catch {
-      return null;
-    }
+  const calculateAge = (dateString: string) => {
+    return Math.floor((Date.now() - new Date(dateString).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
   };
 
-  const formatIdType = (idType: string | null) => {
-    const idTypes = {
-      'tarjeta_de_identidad': 'Tarjeta de Identidad',
-      'cedula_de_ciudadania': 'Cédula de Ciudadanía',
-      'pasaporte': 'Pasaporte',
-      'cedula_de_extranjeria': 'Cédula de Extranjería'
-    };
-    return idType ? idTypes[idType as keyof typeof idTypes] || idType : 'No especificado';
-  };
-
-  const getInitials = (firstName?: string, lastName?: string) => {
-    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'inactive': return 'bg-gray-100 text-gray-800';
-      case 'injured': return 'bg-red-100 text-red-800';
-      case 'suspended': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+    const colors: Record<string, string> = {
+      'active': 'bg-green-100 text-green-800',
+      'inactive': 'bg-gray-100 text-gray-800',
+      'injured': 'bg-red-100 text-red-800',
+      'suspended': 'bg-yellow-100 text-yellow-800',
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
-  const getPerformanceColor = (performance: number) => {
-    if (performance >= 90) return 'text-green-600';
-    if (performance >= 80) return 'text-blue-600';
-    if (performance >= 70) return 'text-orange-600';
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      'active': 'Activo',
+      'inactive': 'Inactivo',
+      'injured': 'Lesionado',
+      'suspended': 'Suspendido',
+    };
+    return labels[status] || status;
+  };
+
+  const getPerformanceColor = (score?: number) => {
+    if (!score) return 'text-gray-500';
+    if (score >= 90) return 'text-green-600';
+    if (score >= 75) return 'text-blue-600';
+    if (score >= 60) return 'text-yellow-600';
     return 'text-red-600';
   };
 
+  // Event handlers
   const openView = (athlete: Athlete) => {
     setSelected(athlete);
     setViewOpen(true);
   };
 
   const openEdit = (athlete: Athlete) => {
-    setSelected(athlete);
-    setEditData({
-      first_name: athlete.first_name || '',
-      last_name: athlete.last_name || '',
-      email: athlete.email || '',
-      performance_score: Number(athlete.performance_score || 0),
-    });
-    setEditOpen(true);
+    setEditAthlete(athlete);
   };
 
   const openDelete = (athlete: Athlete) => {
@@ -157,27 +135,10 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
     setDeleteOpen(true);
   };
 
-  const handleSaveEdit = async () => {
-    if (!selected) return;
-    try {
-      const { error } = await supabase
-        .from('athletes')
-        .update({
-          first_name: editData.first_name,
-          last_name: editData.last_name,
-          email: editData.email,
-          performance_score: Number(editData.performance_score) || 0,
-        })
-        .eq('id', selected.id);
-
-      if (error) throw error;
-
-      toast({ title: 'Éxito', description: 'Atleta actualizado correctamente' });
-      setEditOpen(false);
-      onActionCompleted?.();
-    } catch (e: any) {
-      console.error('Error updating athlete:', e);
-      toast({ title: 'Error', description: 'No se pudo actualizar el atleta', variant: 'destructive' });
+  const handleAthleteUpdated = () => {
+    setEditAthlete(null);
+    if (onActionCompleted) {
+      onActionCompleted();
     }
   };
 
@@ -191,414 +152,205 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
 
       if (error) throw error;
 
-      toast({ title: 'Eliminado', description: 'Atleta eliminado correctamente' });
+      toast({
+        title: "Atleta eliminado",
+        description: "El atleta ha sido eliminado correctamente.",
+      });
+
       setDeleteOpen(false);
       onActionCompleted?.();
-    } catch (e: any) {
-      console.error('Error deleting athlete:', e);
-      toast({ title: 'Error', description: 'No se pudo eliminar el atleta', variant: 'destructive' });
+    } catch (error: any) {
+      console.error('Error deleting athlete:', error);
+      toast({
+        title: "Error",
+        description: error.message || 'No se pudo eliminar el atleta.',
+        variant: "destructive",
+      });
     }
   };
 
-  return (
-    <Card className="xl:col-span-2 argon-card">
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold text-gray-800">Athletes List</CardTitle>
-        <CardDescription>Manage your athletes and their information</CardDescription>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="min-w-[250px] px-6">Athlete</TableHead>
-                <TableHead className="min-w-[100px] px-4">Category</TableHead>
-                <TableHead className="min-w-[120px] px-4">Level</TableHead>
-                <TableHead className="min-w-[100px] px-4">Status</TableHead>
-                <TableHead className="min-w-[120px] px-4">Performance</TableHead>
-                <TableHead className="min-w-[80px] text-right px-6">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
-                      <span className="ml-2">Loading athletes...</span>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : athletes.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                    No athletes found. Add your first athlete to get started.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                athletes.map((athlete) => {
-                  const fullName = athlete.first_name && athlete.last_name ? `${athlete.first_name} ${athlete.last_name}` : 'Unknown';
-                  const email = athlete.email || 'No email';
-                  const performanceScore = athlete.performance_score || 0;
-                  
-                  return (
-                    <TableRow key={athlete.id}>
-                      <TableCell className="px-6">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-lg">👤</span>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium text-gray-800 truncate">{fullName}</p>
-                            <p className="text-sm text-gray-600 truncate">{email}</p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="px-4 text-sm capitalize">{athlete.category}</TableCell>
-                      <TableCell className="px-4 text-sm capitalize">{athlete.level}</TableCell>
-                      <TableCell className="px-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap capitalize ${getStatusColor(athlete.status)}`}>
-                          {athlete.status}
-                        </span>
-                      </TableCell>
-                      <TableCell className="px-4">
-                        <span className={`font-semibold text-sm ${getPerformanceColor(performanceScore)}`}>
-                          {performanceScore}%
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right px-6">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openView(athlete)}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openEdit(athlete)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600" onClick={() => openDelete(athlete)}>
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Cargando atletas...</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
-        {/* Enhanced View Details Dialog */}
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Lista de Atletas</CardTitle>
+        <CardDescription>
+          Gestiona la información de todos los atletas registrados
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Atleta</TableHead>
+              <TableHead>Categoría/Nivel</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead>Rendimiento</TableHead>
+              <TableHead>Fecha Ingreso</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {athletes.map((athlete) => (
+              <TableRow key={athlete.id}>
+                <TableCell>
+                  <div className="flex items-center space-x-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${athlete.first_name} ${athlete.last_name}`} />
+                      <AvatarFallback>
+                        {getInitials(athlete.first_name || '', athlete.last_name || '')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="font-medium">
+                        {athlete.first_name} {athlete.last_name}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {athlete.email}
+                      </div>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div>
+                    <div className="font-medium capitalize">{athlete.category}</div>
+                    <div className="text-sm text-muted-foreground capitalize">{athlete.level}</div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge className={getStatusColor(athlete.status)}>
+                    {getStatusLabel(athlete.status)}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className={`font-medium ${getPerformanceColor(athlete.performance_score)}`}>
+                    {athlete.performance_score ? `${athlete.performance_score}%` : 'N/A'}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="text-sm">
+                    {formatDate(athlete.join_date)}
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => openView(athlete)}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        Ver detalles
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => openEdit(athlete)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        className="text-red-600" 
+                        onClick={() => openDelete(athlete)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Eliminar
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+
+        {/* View Dialog */}
         <Dialog open={viewOpen} onOpenChange={setViewOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Detalles del Atleta
-              </DialogTitle>
+              <DialogTitle>Detalles del Atleta</DialogTitle>
               <DialogDescription>
                 Información completa del atleta seleccionado
               </DialogDescription>
             </DialogHeader>
-            
             {selected && (
-              <div className="space-y-6">
-                {/* Avatar and Basic Info Section */}
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex flex-col md:flex-row gap-6 items-start">
-                      {/* Avatar */}
-                      <div className="flex flex-col items-center space-y-2">
-                        <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                          {selected.avatar_url ? (
-                            <img 
-                              src={selected.avatar_url} 
-                              alt="Foto del atleta"
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                                target.nextElementSibling!.classList.remove('hidden');
-                              }}
-                            />
-                          ) : null}
-                          <div className={`text-white text-2xl font-bold ${selected.avatar_url ? 'hidden' : ''}`}>
-                            {getInitials(selected.first_name, selected.last_name)}
-                          </div>
-                        </div>
-                        <Badge variant="outline" className="text-xs">
-                          Foto de perfil
-                        </Badge>
-                      </div>
-
-                      {/* Basic Information */}
-                      <div className="flex-1 space-y-4">
-                        <div>
-                          <h3 className="text-2xl font-bold text-gray-900">
-                            {`${selected.first_name || ''} ${selected.last_name || ''}`.trim() || 'Sin nombre'}
-                          </h3>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            <Badge variant={selected.status === 'active' ? 'default' : 'secondary'}>
-                              {selected.status}
-                            </Badge>
-                            <Badge variant="outline">
-                              {selected.category}
-                            </Badge>
-                            <Badge variant="outline">
-                              {selected.level}
-                            </Badge>
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4 text-gray-500" />
-                            <div>
-                              <div className="text-sm font-medium">Email</div>
-                              <div className="text-sm text-gray-600">
-                                {selected.email || 'No disponible'}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-gray-500" />
-                            <div>
-                              <div className="text-sm font-medium">Teléfono</div>
-                              <div className="text-sm text-gray-600">
-                                {selected.phone || 'No disponible'}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Personal Information Section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <Calendar className="h-5 w-5" />
-                      Información Personal
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700">Fecha de Nacimiento</Label>
-                        <div className="mt-1 text-sm">
-                          {formatDate(selected.date_of_birth)}
-                          {selected.date_of_birth && calculateAge(selected.date_of_birth) && (
-                            <span className="text-gray-500 ml-2">
-                              ({calculateAge(selected.date_of_birth)} años)
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700">Fecha de Ingreso</Label>
-                        <div className="mt-1 text-sm">{formatDate(selected.join_date)}</div>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700">Número de Atleta</Label>
-                        <div className="mt-1 text-sm">
-                          {selected.athlete_number || 'No asignado'}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Identification Section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <FileText className="h-5 w-5" />
-                      Documentación
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700">Tipo de Documento</Label>
-                        <div className="mt-1 text-sm">
-                          {formatIdType(selected.id_type)}
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700">Número de Documento</Label>
-                        <div className="mt-1 text-sm font-mono">
-                          {selected.id_number || 'No disponible'}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Athletic Performance Section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <Award className="h-5 w-5" />
-                      Rendimiento Deportivo
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="text-center">
-                        <div className="text-3xl font-bold text-blue-600">
-                          {Number(selected.performance_score || 0)}%
-                        </div>
-                        <div className="text-sm text-gray-600 mt-1">Puntuación de Rendimiento</div>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700">Categoría</Label>
-                        <div className="mt-1">
-                          <Badge variant="outline" className="capitalize">
-                            {selected.category}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700">Nivel</Label>
-                        <div className="mt-1">
-                          <Badge variant="outline" className="capitalize">
-                            {selected.level}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Emergency Contact Section */}
-                {(selected.emergency_contact_name || selected.emergency_contact_phone) && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <Phone className="h-5 w-5" />
-                        Contacto de Emergencia
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label className="text-sm font-medium text-gray-700">Nombre</Label>
-                          <div className="mt-1 text-sm">
-                            {selected.emergency_contact_name || 'No disponible'}
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="text-sm font-medium text-gray-700">Teléfono</Label>
-                          <div className="mt-1 text-sm font-mono">
-                            {selected.emergency_contact_phone || 'No disponible'}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Additional Information Section */}
-                {(selected.medical_notes || selected.achievements) && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <FileText className="h-5 w-5" />
-                        Información Adicional
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {selected.medical_notes && (
-                        <div>
-                          <Label className="text-sm font-medium text-gray-700">Notas Médicas</Label>
-                          <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md">
-                            <div className="text-sm text-red-800">
-                              {selected.medical_notes}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      {selected.achievements && (
-                        <div>
-                          <Label className="text-sm font-medium text-gray-700">Logros</Label>
-                          <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md">
-                            <div className="text-sm text-green-800">
-                              {selected.achievements}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${selected.first_name} ${selected.last_name}`} />
+                    <AvatarFallback>
+                      {getInitials(selected.first_name || '', selected.last_name || '')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className="text-lg font-semibold">
+                      {selected.first_name} {selected.last_name}
+                    </h3>
+                    <Badge className={getStatusColor(selected.status)}>
+                      {getStatusLabel(selected.status)}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <strong>Email:</strong> {selected.email || 'N/A'}
+                  </div>
+                  <div>
+                    <strong>Categoría:</strong> {selected.category}
+                  </div>
+                  <div>
+                    <strong>Nivel:</strong> {selected.level}
+                  </div>
+                  <div>
+                    <strong>Rendimiento:</strong> {selected.performance_score ? `${selected.performance_score}%` : 'N/A'}
+                  </div>
+                  <div>
+                    <strong>Fecha de Ingreso:</strong> {formatDate(selected.join_date)}
+                  </div>
+                </div>
               </div>
             )}
-            
-            <DialogFooter>
-              <Button onClick={() => setViewOpen(false)}>
-                Cerrar
-              </Button>
-            </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        {/* Edit Dialog */}
-        <Dialog open={editOpen} onOpenChange={setEditOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Editar atleta</DialogTitle>
-              <DialogDescription>Actualiza los datos básicos del atleta</DialogDescription>
-            </DialogHeader>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="first_name">Nombre</Label>
-                <Input id="first_name" value={editData.first_name} onChange={(e) => setEditData({ ...editData, first_name: e.target.value })} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="last_name">Apellido</Label>
-                <Input id="last_name" value={editData.last_name} onChange={(e) => setEditData({ ...editData, last_name: e.target.value })} />
-              </div>
-              <div className="space-y-1.5 col-span-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={editData.email} onChange={(e) => setEditData({ ...editData, email: e.target.value })} />
-              </div>
-              <div className="space-y-1.5 col-span-2">
-                <Label htmlFor="performance">Performance (%)</Label>
-                <Input id="performance" type="number" min={0} max={100} value={editData.performance_score}
-                  onChange={(e) => setEditData({ ...editData, performance_score: Number(e.target.value) })}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => setEditOpen(false)}>Cancelar</Button>
-              <Button onClick={handleSaveEdit}>Guardar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {/* Enhanced Edit Dialog */}
+        <EditAthleteDialog
+          athlete={editAthlete}
+          open={!!editAthlete}
+          onOpenChange={(open) => !open && setEditAthlete(null)}
+          onAthleteUpdated={handleAthleteUpdated}
+        />
 
-        {/* Delete Confirm */}
+        {/* Delete Confirmation Dialog */}
         <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>¿Eliminar atleta?</AlertDialogTitle>
               <AlertDialogDescription>
-                Esta acción no se puede deshacer. Se eliminará el registro del atleta.
+                Esta acción no se puede deshacer. Se eliminará permanentemente el atleta{' '}
+                <strong>{selected?.first_name} {selected?.last_name}</strong>.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmDelete}>Eliminar</AlertDialogAction>
+              <AlertDialogAction onClick={handleConfirmDelete}>
+                Eliminar
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -606,70 +358,32 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
         {/* Pagination */}
         {pagination && pagination.totalPages > 1 && (
           <div className="px-6 py-4 border-t">
-            {/* Pagination Info */}
             <div className="flex items-center justify-between mb-4">
               <div className="text-sm text-gray-600">
-                Showing {((pagination.currentPage - 1) * pagination.itemsPerPage) + 1} to {' '}
-                {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalCount)} of{' '}
-                {pagination.totalCount} athletes
-              </div>
-              <div className="text-sm text-gray-600">
-                Page {pagination.currentPage} of {pagination.totalPages}
+                Mostrando {((pagination.currentPage - 1) * pagination.itemsPerPage) + 1} a {' '}
+                {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalCount)} de{' '}
+                {pagination.totalCount} atletas
               </div>
             </div>
-
-            {/* Pagination Controls */}
             <Pagination>
               <PaginationContent>
-                {/* Previous Button */}
                 <PaginationItem>
                   <PaginationPrevious 
                     onClick={() => pagination.currentPage > 1 && onPageChange?.(pagination.currentPage - 1)}
                     className={pagination.currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                   />
                 </PaginationItem>
-
-                {/* Page Numbers */}
-                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((pageNum) => {
-                  // Show first page, last page, current page, and 2 pages around current
-                  const showPage = 
-                    pageNum === 1 || 
-                    pageNum === pagination.totalPages || 
-                    Math.abs(pageNum - pagination.currentPage) <= 2;
-
-                  if (!showPage && pageNum !== 2 && pageNum !== pagination.totalPages - 1) {
-                    // Show ellipsis only once between ranges
-                    if (pageNum === 3 && pagination.currentPage > 5) {
-                      return (
-                        <PaginationItem key={pageNum}>
-                          <span className="px-3 py-1 text-sm text-gray-500">...</span>
-                        </PaginationItem>
-                      );
-                    }
-                    if (pageNum === pagination.totalPages - 2 && pagination.currentPage < pagination.totalPages - 4) {
-                      return (
-                        <PaginationItem key={pageNum}>
-                          <span className="px-3 py-1 text-sm text-gray-500">...</span>
-                        </PaginationItem>
-                      );
-                    }
-                    return null;
-                  }
-
-                  return (
-                    <PaginationItem key={pageNum}>
-                      <PaginationLink
-                        onClick={() => onPageChange?.(pageNum)}
-                        isActive={pageNum === pagination.currentPage}
-                        className="cursor-pointer"
-                      >
-                        {pageNum}
-                      </PaginationLink>
-                    </PaginationItem>
-                  );
-                })}
-
-                {/* Next Button */}
+                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((pageNum) => (
+                  <PaginationItem key={pageNum}>
+                    <PaginationLink
+                      onClick={() => onPageChange?.(pageNum)}
+                      isActive={pageNum === pagination.currentPage}
+                      className="cursor-pointer"
+                    >
+                      {pageNum}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
                 <PaginationItem>
                   <PaginationNext 
                     onClick={() => pagination.currentPage < pagination.totalPages && onPageChange?.(pagination.currentPage + 1)}
