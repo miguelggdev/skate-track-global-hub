@@ -8,18 +8,10 @@ import AthletesTable from '@/components/athletes/AthletesTable';
 import RecentActivity from '@/components/athletes/RecentActivity';
 import AthletesHeader from '@/components/athletes/AthletesHeader';
 import { useToast } from '@/hooks/use-toast';
+import { Athlete } from '@/hooks/useAthletes';
 
-interface Athlete {
-  id: string;
-  user_id?: string;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  category: string;
-  level: string;
-  join_date: string;
-  status: string;
-  performance_score?: number;
+// Extended athlete interface with profile data
+interface AthleteWithProfile extends Athlete {
   athlete_number?: string;
   emergency_contact_name?: string;
   emergency_contact_phone?: string;
@@ -42,7 +34,7 @@ interface PaginationData {
 
 const Athletes = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [athletes, setAthletes] = useState<Athlete[]>([]);
+  const [athletes, setAthletes] = useState<AthleteWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState<PaginationData>({
     currentPage: 1,
