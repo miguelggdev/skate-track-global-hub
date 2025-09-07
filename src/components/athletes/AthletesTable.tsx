@@ -55,6 +55,7 @@ import { MoreHorizontal, Eye, Edit, Trash2, User, Phone, Mail, Calendar, Trophy,
 import { format } from 'date-fns';
 import { Athlete } from '@/hooks/useAthletes';
 import { EditAthleteDialog } from './EditAthleteDialog';
+import AthleteDetailsDialog from './AthleteDetailsDialog';
 
 interface PaginationData {
   currentPage: number;
@@ -75,7 +76,7 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
   const { toast } = useToast();
 
   const [selected, setSelected] = useState<Athlete | null>(null);
-  const [viewOpen, setViewOpen] = useState(false);
+  const [viewAthleteId, setViewAthleteId] = useState<string | null>(null);
   const [editAthlete, setEditAthlete] = useState<Athlete | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -122,8 +123,7 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
 
   // Event handlers
   const openView = (athlete: Athlete) => {
-    setSelected(athlete);
-    setViewOpen(true);
+    setViewAthleteId(athlete.id);
   };
 
   const openEdit = (athlete: Athlete) => {
@@ -279,54 +279,12 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
           </TableBody>
         </Table>
 
-        {/* View Dialog */}
-        <Dialog open={viewOpen} onOpenChange={setViewOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Detalles del Atleta</DialogTitle>
-              <DialogDescription>
-                Información completa del atleta seleccionado
-              </DialogDescription>
-            </DialogHeader>
-            {selected && (
-              <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${selected.first_name} ${selected.last_name}`} />
-                    <AvatarFallback>
-                      {getInitials(selected.first_name || '', selected.last_name || '')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="text-lg font-semibold">
-                      {selected.first_name} {selected.last_name}
-                    </h3>
-                    <Badge className={getStatusColor(selected.status)}>
-                      {getStatusLabel(selected.status)}
-                    </Badge>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <strong>Email:</strong> {selected.email || 'N/A'}
-                  </div>
-                  <div>
-                    <strong>Categoría:</strong> {selected.category}
-                  </div>
-                  <div>
-                    <strong>Nivel:</strong> {selected.level}
-                  </div>
-                  <div>
-                    <strong>Rendimiento:</strong> {selected.performance_score ? `${selected.performance_score}%` : 'N/A'}
-                  </div>
-                  <div>
-                    <strong>Fecha de Ingreso:</strong> {formatDate(selected.join_date)}
-                  </div>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+        {/* Enhanced Details Dialog */}
+        <AthleteDetailsDialog
+          athleteId={viewAthleteId}
+          open={!!viewAthleteId}
+          onOpenChange={(open) => !open && setViewAthleteId(null)}
+        />
 
         {/* Enhanced Edit Dialog */}
         <EditAthleteDialog
