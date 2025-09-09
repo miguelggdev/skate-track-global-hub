@@ -149,14 +149,18 @@ const Athletes = () => {
         
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <AthletesTable 
-            athletes={athletes} 
-            loading={loading} 
-            onActionCompleted={() => fetchAthletes(pagination.currentPage, searchTerm)}
-            pagination={pagination}
-            onPageChange={handlePageChange}
-          />
-          <RecentActivity />
+          <div className="xl:col-span-2">
+            <AthletesTable 
+              athletes={athletes} 
+              loading={loading} 
+              onActionCompleted={() => fetchAthletes(pagination.currentPage, searchTerm)}
+              pagination={pagination}
+              onPageChange={handlePageChange}
+            />
+          </div>
+          <div className="xl:col-span-1">
+            <RecentActivity />
+          </div>
         </div>
       </div>
     </DashboardLayout>
