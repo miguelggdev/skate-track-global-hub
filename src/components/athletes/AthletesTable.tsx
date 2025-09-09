@@ -195,89 +195,91 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Atleta</TableHead>
-              <TableHead>Categoría/Nivel</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Rendimiento</TableHead>
-              <TableHead>Fecha Ingreso</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {athletes.map((athlete) => (
-              <TableRow key={athlete.id}>
-                <TableCell>
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${athlete.first_name} ${athlete.last_name}`} />
-                      <AvatarFallback>
-                        {getInitials(athlete.first_name || '', athlete.last_name || '')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium">
-                        {athlete.first_name} {athlete.last_name}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {athlete.email}
+        <div className="w-full overflow-x-auto">
+          <Table className="min-w-[800px]">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Atleta</TableHead>
+                <TableHead>Categoría/Nivel</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead>Rendimiento</TableHead>
+                <TableHead>Fecha Ingreso</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {athletes.map((athlete) => (
+                <TableRow key={athlete.id}>
+                  <TableCell>
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${athlete.first_name} ${athlete.last_name}`} />
+                        <AvatarFallback>
+                          {getInitials(athlete.first_name || '', athlete.last_name || '')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-medium">
+                          {athlete.first_name} {athlete.last_name}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {athlete.email}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div>
-                    <div className="font-medium capitalize">{athlete.category}</div>
-                    <div className="text-sm text-muted-foreground capitalize">{athlete.level}</div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge className={getStatusColor(athlete.status)}>
-                    {getStatusLabel(athlete.status)}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className={`font-medium ${getPerformanceColor(athlete.performance_score)}`}>
-                    {athlete.performance_score ? `${athlete.performance_score}%` : 'N/A'}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-sm">
-                    {formatDate(athlete.join_date)}
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openView(athlete)}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        Ver detalles
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => openEdit(athlete)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        className="text-red-600" 
-                        onClick={() => openDelete(athlete)}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Eliminar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      <div className="font-medium capitalize">{athlete.category}</div>
+                      <div className="text-sm text-muted-foreground capitalize">{athlete.level}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={getStatusColor(athlete.status)}>
+                      {getStatusLabel(athlete.status)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className={`font-medium ${getPerformanceColor(athlete.performance_score)}`}>
+                      {athlete.performance_score ? `${athlete.performance_score}%` : 'N/A'}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      {formatDate(athlete.join_date)}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openView(athlete)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          Ver detalles
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openEdit(athlete)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="text-red-600" 
+                          onClick={() => openDelete(athlete)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Eliminar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
 
         {/* Enhanced Details Dialog */}
         <AthleteDetailsDialog
@@ -314,7 +316,7 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
         </AlertDialog>
 
         {/* Pagination */}
-        {pagination && pagination.totalPages > 1 && (
+        {pagination && pagination.totalCount > 0 && (
           <div className="px-6 py-4 border-t">
             <div className="flex items-center justify-between mb-4">
               <div className="text-sm text-gray-600">
