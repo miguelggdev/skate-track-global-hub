@@ -5,8 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useTrainingSessions } from '@/hooks/useTrainingSessions';
+import { useTrainingStats } from '@/hooks/useTrainingStats';
 import CreateTrainingDialog from '@/components/training/CreateTrainingDialog';
 import EditTrainingDialog from '@/components/training/EditTrainingDialog';
+import QuickAttendanceDialog from '@/components/training/QuickAttendanceDialog';
+import DailyAttendanceIndicator from '@/components/training/DailyAttendanceIndicator';
+import CalendarViewDialog from '@/components/training/CalendarViewDialog';
+import { TrainingStatsCharts } from '@/components/training/TrainingStatsCharts';
 import { 
   Calendar,
   Clock,
@@ -28,9 +33,6 @@ import {
   MapPin,
   Timer
 } from 'lucide-react';
-import QuickAttendanceDialog from '@/components/training/QuickAttendanceDialog';
-import DailyAttendanceIndicator from '@/components/training/DailyAttendanceIndicator';
-import CalendarViewDialog from '@/components/training/CalendarViewDialog';
 
 const Training = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -38,16 +40,18 @@ const Training = () => {
   const [showCalendarDialog, setShowCalendarDialog] = useState(false);
   const { isAdmin } = useUserProfile();
   
-  // Fetch training sessions from database
+  // Fetch training sessions and stats from database
   const { trainingSessions, isLoading } = useTrainingSessions({
     includeCoachInfo: true,
     dateFilter: 'all'
   });
+  
+  const { data: trainingStats, isLoading: isStatsLoading } = useTrainingStats();
 
   const stats = [
     { 
       title: "ACTIVE SESSIONS", 
-      value: trainingSessions.length.toString(), 
+      value: trainingStats?.activeSessions?.toString() || "0", 
       change: "+8%", 
       period: "from last week",
       icon: Activity,
@@ -56,30 +60,30 @@ const Training = () => {
     },
     { 
       title: "TOTAL ATHLETES", 
-      value: "156", 
-      change: "+12%", 
-      period: "from last month",
+      value: trainingStats?.totalAthletes?.toString() || "0", 
+      change: `${trainingStats?.activeAthletes || 0} active`, 
+      period: "in last 30 days",
       icon: Users,
       bgColor: "argon-gradient-green",
       isPositive: true
     },
     { 
       title: "COMPLETION RATE", 
-      value: "94.2%", 
+      value: `${trainingStats?.completionRate?.toFixed(1) || "0"}%`, 
       change: "+2.1%", 
-      period: "from last week",
+      period: "from last month",
       icon: Target,
       bgColor: "argon-gradient-orange",
       isPositive: true
     },
     { 
       title: "AVG SESSION TIME", 
-      value: "2.5h", 
-      change: "-5%", 
-      period: "from last week",
+      value: `${trainingStats?.avgSessionTime?.toFixed(1) || "0"}h`, 
+      change: "stable", 
+      period: "average duration",
       icon: Timer,
       bgColor: "argon-gradient-red",
-      isPositive: false
+      isPositive: true
     },
   ];
 
@@ -186,7 +190,7 @@ const Training = () => {
                     {stat.title}
                   </CardDescription>
                   <CardTitle className="text-xl font-bold text-gray-800 truncate">
-                    {stat.value}
+                    {isStatsLoading ? "..." : stat.value}
                   </CardTitle>
                 </div>
                 <div className={`p-2 rounded-lg ${stat.bgColor} text-white shadow-lg flex-shrink-0`}>
@@ -204,6 +208,21 @@ const Training = () => {
             </Card>
           ))}
         </div>
+
+        {/* Training Analytics Charts */}
+        {trainingStats && (
+          <div className="mt-6">
+            <Card className="argon-card">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-gray-800">Training Analytics</CardTitle>
+                <CardDescription className="text-sm text-gray-600">Performance insights and trends</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TrainingStatsCharts stats={trainingStats} isLoading={isStatsLoading} />
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Main Content */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 w-full">
