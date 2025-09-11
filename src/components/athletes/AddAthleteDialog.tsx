@@ -58,6 +58,7 @@ interface AthleteFormData {
   email: string;
   password: string;
   dateOfBirth: Date | undefined;
+  gender: string;
 }
 
 const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDialogProps) => {
@@ -75,6 +76,7 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
       email: '',
       password: '',
       dateOfBirth: undefined,
+      gender: '',
     },
   });
 
@@ -113,6 +115,7 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
       id_number: data.idNumber,
       role: 'athlete',
       date_of_birth: format(data.dateOfBirth, 'yyyy-MM-dd'),
+      gender: data.gender,
     };
 
     const result = await createUser(createUserData);
@@ -251,6 +254,29 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
                   <FormControl>
                     <Input type="password" placeholder="Contraseña para acceso del atleta" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="gender"
+              rules={{ required: 'El género es requerido' }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Género</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione el género" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="masculino">Masculino</SelectItem>
+                      <SelectItem value="femenino">Femenino</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, TrendingUp, GraduationCap, Baby, ArrowUpRight, UserCheck } from 'lucide-react';
+import { Users, TrendingUp, GraduationCap, Baby, ArrowUpRight, UserCheck, UserPlus, Shield, UserX, User, UserCircle } from 'lucide-react';
 import { useAthleteStats } from '@/hooks/useAthleteStats';
 
 const StatsCards = () => {
@@ -9,8 +9,8 @@ const StatsCards = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
-        {Array.from({ length: 6 }).map((_, index) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
+      {Array.from({ length: 10 }).map((_, index) => (
           <Card key={index} className="argon-card relative overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div className="min-w-0 flex-1 pr-2">
@@ -41,12 +41,57 @@ const StatsCards = () => {
       isPositive: true
     },
     {
+      title: "MALE ATHLETES",
+      value: athleteStats?.maleAthletes?.toString() || "0",
+      change: `${athleteStats?.totalAthletes ? Math.round((athleteStats.maleAthletes / athleteStats.totalAthletes) * 100) : 0}%`,
+      period: "of total athletes",
+      icon: User,
+      bgColor: "argon-gradient-blue",
+      isPositive: true
+    },
+    {
+      title: "FEMALE ATHLETES", 
+      value: athleteStats?.femaleAthletes?.toString() || "0",
+      change: `${athleteStats?.totalAthletes ? Math.round((athleteStats.femaleAthletes / athleteStats.totalAthletes) * 100) : 0}%`,
+      period: "of total athletes",
+      icon: UserCircle,
+      bgColor: "argon-gradient-pink",
+      isPositive: true
+    },
+    {
+      title: "NEW RECRUITS",
+      value: athleteStats?.newRecruitsThisMonth?.toString() || "0",
+      change: `${athleteStats?.newRecruitsThisYear || 0} this year`,
+      period: "joined this month",
+      icon: UserPlus,
+      bgColor: "argon-gradient-green",
+      isPositive: true
+    },
+    {
+      title: "RETENTION RATE",
+      value: `${athleteStats?.retentionRate || 0}%`,
+      change: "Year over year",
+      period: "active retention",
+      icon: Shield,
+      bgColor: "argon-gradient-purple",
+      isPositive: (athleteStats?.retentionRate || 0) >= 80
+    },
+    {
+      title: "INACTIVE ATHLETES",
+      value: athleteStats?.inactiveAthletes?.toString() || "0",
+      change: `${athleteStats?.totalAthletes ? Math.round((athleteStats.inactiveAthletes / (athleteStats.totalAthletes + athleteStats.inactiveAthletes)) * 100) : 0}%`,
+      period: "of all athletes",
+      icon: UserX,
+      bgColor: "argon-gradient-red",
+      isPositive: false
+    },
+    {
       title: "SCHOOL ATHLETES",
       value: athleteStats?.schoolAthletes?.toString() || "0",
       change: "+8%",
       period: "in education",
       icon: GraduationCap,
-      bgColor: "argon-gradient-green",
+      bgColor: "argon-gradient-cyan",
       isPositive: true
     },
     {
@@ -64,7 +109,7 @@ const StatsCards = () => {
       change: "+3%",
       period: "transicion category",
       icon: ArrowUpRight,
-      bgColor: "argon-gradient-purple",
+      bgColor: "argon-gradient-yellow",
       isPositive: true
     },
     {
@@ -73,22 +118,13 @@ const StatsCards = () => {
       change: "+7%",
       period: "mayores category",
       icon: UserCheck,
-      bgColor: "argon-gradient-red",
+      bgColor: "argon-gradient-teal",
       isPositive: true
-    },
-    {
-      title: "SCHOOL",
-      value: athleteStats?.escuelaAthletes?.toString() || "0",
-      change: "+10%",
-      period: "escuela category",
-      icon: TrendingUp,
-      bgColor: "argon-gradient-cyan",
-      isPositive: true
-    },
+    }
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
       {stats.map((stat, index) => (
         <Card key={index} className="argon-card relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

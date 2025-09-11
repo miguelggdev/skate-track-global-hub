@@ -13,6 +13,7 @@ export interface CreateUserData {
   date_of_birth?: string;
   role: 'admin' | 'coach' | 'athlete' | 'delegate' | 'leader' | 'finance';
   bio?: string;
+  gender?: string;
 }
 
 export const useCreateUser = () => {
@@ -38,6 +39,7 @@ export const useCreateUser = () => {
           role: data.role,
           phone: data.phone || null,
           date_of_birth: data.date_of_birth || null,
+          gender: data.gender || null,
         }
       });
 
