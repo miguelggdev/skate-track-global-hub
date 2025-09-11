@@ -6,6 +6,7 @@ import StatsCards from '@/components/athletes/StatsCards';
 import SearchFilterBar from '@/components/athletes/SearchFilterBar';
 import AthletesTable from '@/components/athletes/AthletesTable';
 import RecentActivity from '@/components/athletes/RecentActivity';
+import UpcomingBirthdays from '@/components/athletes/UpcomingBirthdays';
 import AthletesHeader from '@/components/athletes/AthletesHeader';
 import { useToast } from '@/hooks/use-toast';
 import { Athlete } from '@/hooks/useAthletes';
@@ -158,8 +159,9 @@ const Athletes = () => {
               onPageChange={handlePageChange}
             />
           </div>
-          <div className="xl:col-span-1">
+          <div className="xl:col-span-1 space-y-6">
             <RecentActivity />
+            <UpcomingBirthdays />
           </div>
         </div>
       </div>
