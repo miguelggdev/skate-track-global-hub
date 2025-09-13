@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import {
   Dialog,
   DialogContent,
@@ -52,6 +53,10 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
   const [loading, setLoading] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const { toast } = useToast();
+  const { isAdmin, isLeader } = useUserProfile();
+  
+  // Check if current user can edit roles
+  const canEditRoles = isAdmin || isLeader;
   
   const form = useForm<EditUserFormData>({
     defaultValues: {
@@ -110,18 +115,25 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
         }
       }
 
+      // Prepare update data - only include role if user has permission
+      const updateData: any = {
+        first_name: data.first_name,
+        last_name: data.last_name,
+        email: data.email,
+        phone: data.phone,
+        date_of_birth: data.date_of_birth,
+        bio: data.bio,
+        avatar_url: finalPhotoUrl,
+      };
+
+      // Only allow role updates for admins and leaders
+      if (canEditRoles) {
+        updateData.role = data.role;
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          first_name: data.first_name,
-          last_name: data.last_name,
-          email: data.email,
-          phone: data.phone,
-          date_of_birth: data.date_of_birth,
-          role: data.role,
-          bio: data.bio,
-          avatar_url: finalPhotoUrl,
-        })
+        .update(updateData)
         .eq('id', user.id);
 
       if (error) throw error;
@@ -221,31 +233,47 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
             />
 
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Rol *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar rol" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="athlete">Atleta</SelectItem>
-                        <SelectItem value="coach">Entrenador</SelectItem>
-                        <SelectItem value="admin">Administrador</SelectItem>
-                        <SelectItem value="delegate">Delegado</SelectItem>
-                        <SelectItem value="leader">Líder</SelectItem>
-                        <SelectItem value="finance">Finanzas</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {canEditRoles ? (
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Rol *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar rol" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="athlete">Atleta</SelectItem>
+                          <SelectItem value="coach">Entrenador</SelectItem>
+                          <SelectItem value="admin">Administrador</SelectItem>
+                          <SelectItem value="delegate">Delegado</SelectItem>
+                          <SelectItem value="leader">Líder</SelectItem>
+                          <SelectItem value="finance">Finanzas</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : (
+                <div className="space-y-2">
+                  <FormLabel>Rol</FormLabel>
+                  <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground">
+                    {user.role === 'admin' ? 'Administrador' :
+                     user.role === 'coach' ? 'Entrenador' :
+                     user.role === 'delegate' ? 'Delegado' :
+                     user.role === 'leader' ? 'Líder' :
+                     user.role === 'finance' ? 'Finanzas' : 'Atleta'}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Solo administradores y líderes pueden cambiar roles
+                  </p>
+                </div>
+              )}
 
               <FormField
                 control={form.control}
