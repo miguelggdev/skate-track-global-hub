@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import StatsCards from '@/components/athletes/StatsCards';
-import SearchFilterBar from '@/components/athletes/SearchFilterBar';
+
 import AthletesTable from '@/components/athletes/AthletesTable';
 import RecentActivity from '@/components/athletes/RecentActivity';
 import UpcomingBirthdays from '@/components/athletes/UpcomingBirthdays';
@@ -34,7 +34,7 @@ interface PaginationData {
 }
 
 const Athletes = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  
   const [athletes, setAthletes] = useState<AthleteWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState<PaginationData>({
@@ -45,7 +45,7 @@ const Athletes = () => {
   });
   const { toast } = useToast();
 
-  const fetchAthletes = async (page = 1, search = '') => {
+  const fetchAthletes = async (page = 1) => {
     try {
       setLoading(true);
       
@@ -68,10 +68,6 @@ const Athletes = () => {
         .range(offset, offset + pagination.itemsPerPage - 1)
         .order('created_at', { ascending: false });
       
-      // Add search filters if search term exists
-      if (search.trim()) {
-        query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%,category.ilike.%${search}%`);
-      }
 
       const { data, error, count } = await query;
 
@@ -109,23 +105,10 @@ const Athletes = () => {
     }
   };
 
-  // Debounced search function
-  const debouncedSearch = useCallback((searchValue: string) => {
-    const timeoutId = setTimeout(() => {
-      fetchAthletes(1, searchValue); // Reset to page 1 on search
-    }, 300);
-    
-    return () => clearTimeout(timeoutId);
-  }, []);
-
-  const handleSearch = (newSearchTerm: string) => {
-    setSearchTerm(newSearchTerm);
-    debouncedSearch(newSearchTerm);
-  };
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= pagination.totalPages) {
-      fetchAthletes(page, searchTerm);
+      fetchAthletes(page);
     }
   };
 
@@ -134,7 +117,7 @@ const Athletes = () => {
   }, []);
 
   const handleAthleteAdded = () => {
-    fetchAthletes(pagination.currentPage, searchTerm);
+    fetchAthletes(pagination.currentPage);
     toast({
       title: "Éxito",
       description: "Atleta creado exitosamente",
@@ -146,7 +129,7 @@ const Athletes = () => {
       <div className="space-y-6 max-w-none">
         <AthletesHeader onAthleteAdded={handleAthleteAdded} />
         <StatsCards />
-        <SearchFilterBar searchTerm={searchTerm} setSearchTerm={handleSearch} />
+        
         
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -154,7 +137,7 @@ const Athletes = () => {
             <AthletesTable 
               athletes={athletes} 
               loading={loading} 
-              onActionCompleted={() => fetchAthletes(pagination.currentPage, searchTerm)}
+              onActionCompleted={() => fetchAthletes(pagination.currentPage)}
               pagination={pagination}
               onPageChange={handlePageChange}
             />
