@@ -132,17 +132,17 @@ const Athletes = () => {
         
         
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2">
-            <AthletesTable 
-              athletes={athletes} 
-              loading={loading} 
-              onActionCompleted={() => fetchAthletes(pagination.currentPage)}
-              pagination={pagination}
-              onPageChange={handlePageChange}
-            />
-          </div>
-          <div className="xl:col-span-1 space-y-6">
+        <div className="space-y-6">
+          <AthletesTable 
+            athletes={athletes} 
+            loading={loading} 
+            onActionCompleted={() => fetchAthletes(pagination.currentPage)}
+            pagination={pagination}
+            onPageChange={handlePageChange}
+          />
+          
+          {/* Side modules in a single row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <RecentActivity />
             <UpcomingBirthdays />
           </div>
