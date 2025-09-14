@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, TrendingUp, GraduationCap, Baby, ArrowUpRight, UserCheck, UserPlus, Shield, UserX, User, UserCircle2, Star, Award, Activity } from 'lucide-react';
 import { useAthleteStats } from '@/hooks/useAthleteStats';
+import GenderDistributionChart from './GenderDistributionChart';
 
 const StatsCards = () => {
   const { data: athleteStats, isLoading } = useAthleteStats();
@@ -92,28 +93,6 @@ const StatsCards = () => {
     
     // DEMOGRAPHIC DATA - Standard cards
     {
-      title: "MALE ATHLETES",
-      value: athleteStats?.maleAthletes?.toString() || "0",
-      change: `${athleteStats?.totalAthletes ? Math.round((athleteStats.maleAthletes / athleteStats.totalAthletes) * 100) : 0}%`,
-      period: "of total athletes",
-      icon: User,
-      bgColor: "argon-gradient-blue",
-      isPositive: true,
-      priority: "normal",
-      size: "standard"
-    },
-    {
-      title: "FEMALE ATHLETES", 
-      value: athleteStats?.femaleAthletes?.toString() || "0",
-      change: `${athleteStats?.totalAthletes ? Math.round((athleteStats.femaleAthletes / athleteStats.totalAthletes) * 100) : 0}%`,
-      period: "of total athletes",
-      icon: UserCircle2,
-      bgColor: "argon-gradient-pink",
-      isPositive: true,
-      priority: "normal",
-      size: "standard"
-    },
-    {
       title: "MINORS",
       value: athleteStats?.menoresAthletes?.toString() || "0",
       change: "+5%",
@@ -201,42 +180,52 @@ const StatsCards = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
-      {sortedStats.map((stat, index) => (
-        <Card key={index} className={getCardClasses(stat)}>
-          {/* Background gradient overlay for depth */}
-          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
-            <div className="min-w-0 flex-1 pr-3">
-              <CardDescription className={`${getTitleSize(stat)} text-gray-600 dark:text-gray-300 uppercase tracking-wider truncate mb-1`}>
-                {stat.title}
-              </CardDescription>
-              <CardTitle className={`${getValueSize(stat)} text-gray-800 dark:text-white truncate group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors duration-300`}>
-                {stat.value}
-              </CardTitle>
-            </div>
-            <div className={`p-3 rounded-xl ${stat.bgColor} text-white shadow-lg flex-shrink-0 group-hover:shadow-xl group-hover:scale-110 transition-all duration-300`}>
-              <stat.icon className={getIconSize(stat)} />
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0 relative z-10">
-            <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-              <span className={`font-bold ${stat.isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                {stat.change}
-              </span>{' '}
-              <span className="text-gray-500 dark:text-gray-500">
-                {stat.period}
-              </span>
-            </p>
+    <div className="space-y-6 mb-8">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+        {sortedStats.map((stat, index) => (
+          <Card key={index} className={getCardClasses(stat)}>
+            {/* Background gradient overlay for depth */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             
-            {/* Priority indicator for critical metrics */}
-            {stat.priority === 'critical' && (
-              <div className="absolute top-2 right-2 w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
-            )}
-          </CardContent>
-        </Card>
-      ))}
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
+              <div className="min-w-0 flex-1 pr-3">
+                <CardDescription className={`${getTitleSize(stat)} text-gray-600 dark:text-gray-300 uppercase tracking-wider truncate mb-1`}>
+                  {stat.title}
+                </CardDescription>
+                <CardTitle className={`${getValueSize(stat)} text-gray-800 dark:text-white truncate group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors duration-300`}>
+                  {stat.value}
+                </CardTitle>
+              </div>
+              <div className={`p-3 rounded-xl ${stat.bgColor} text-white shadow-lg flex-shrink-0 group-hover:shadow-xl group-hover:scale-110 transition-all duration-300`}>
+                <stat.icon className={getIconSize(stat)} />
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0 relative z-10">
+              <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                <span className={`font-bold ${stat.isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {stat.change}
+                </span>{' '}
+                <span className="text-gray-500 dark:text-gray-500">
+                  {stat.period}
+                </span>
+              </p>
+              
+              {/* Priority indicator for critical metrics */}
+              {stat.priority === 'critical' && (
+                <div className="absolute top-2 right-2 w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      
+      {/* Gender Distribution Chart */}
+      <GenderDistributionChart
+        maleAthletes={athleteStats?.maleAthletes || 0}
+        femaleAthletes={athleteStats?.femaleAthletes || 0}
+        totalAthletes={athleteStats?.totalAthletes || 0}
+      />
     </div>
   );
 };
