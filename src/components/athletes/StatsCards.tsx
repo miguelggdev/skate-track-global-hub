@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Users, TrendingUp, GraduationCap, Baby, ArrowUpRight, UserCheck, UserPlus, Shield, UserX, User, UserCircle2, Star, Award, Activity } from 'lucide-react';
 import { useAthleteStats } from '@/hooks/useAthleteStats';
 import GenderDistributionChart from './GenderDistributionChart';
+import CategoryDistributionChart from './CategoryDistributionChart';
 
 const StatsCards = () => {
   const { data: athleteStats, isLoading } = useAthleteStats();
@@ -224,6 +225,16 @@ const StatsCards = () => {
       <GenderDistributionChart
         maleAthletes={athleteStats?.maleAthletes || 0}
         femaleAthletes={athleteStats?.femaleAthletes || 0}
+        totalAthletes={athleteStats?.totalAthletes || 0}
+      />
+      
+      {/* Category Distribution Chart */}
+      <CategoryDistributionChart
+        escuelaAthletes={athleteStats?.escuelaAthletes || 0}
+        menoresAthletes={athleteStats?.menoresAthletes || 0}
+        transicionAthletes={athleteStats?.transicionAthletes || 0}
+        mayoresAthletes={athleteStats?.mayoresAthletes || 0}
+        juvenilAthletes={athleteStats?.juvenilAthletes || 0}
         totalAthletes={athleteStats?.totalAthletes || 0}
       />
     </div>
