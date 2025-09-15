@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, User, UserCircle2 } from 'lucide-react';
-
+import { supabase } from '@/integrations/supabase/client';
 interface GenderDistributionProps {
   maleAthletes: number;
   femaleAthletes: number;
@@ -15,17 +15,24 @@ const GenderDistributionChart: React.FC<GenderDistributionProps> = ({
   totalAthletes
 }) => {
   const [animationComplete, setAnimationComplete] = useState(false);
+  const [maleCount, setMaleCount] = useState<number | null>(null);
+  const [femaleCount, setFemaleCount] = useState<number | null>(null);
+
+  const male = (maleCount ?? maleAthletes) || 0;
+  const female = (femaleCount ?? femaleAthletes) || 0;
+  const total = male + female;
+
   const [displayedData, setDisplayedData] = useState([
-    { name: 'Male', value: 0, color: '#3B82F6', icon: User },
-    { name: 'Female', value: 0, color: '#EC4899', icon: UserCircle2 }
+    { name: 'Male', value: 0, color: 'hsl(var(--primary))', icon: User },
+    { name: 'Female', value: 0, color: 'hsl(var(--accent))', icon: UserCircle2 }
   ]);
 
   const finalData = [
-    { name: 'Male', value: maleAthletes, color: '#3B82F6', icon: User },
-    { name: 'Female', value: femaleAthletes, color: '#EC4899', icon: UserCircle2 }
+    { name: 'Male', value: male, color: 'hsl(var(--primary))', icon: User },
+    { name: 'Female', value: female, color: 'hsl(var(--accent))', icon: UserCircle2 }
   ];
 
-  // Animate the chart data on mount
+  // Animate the chart data on mount and when values change
   useEffect(() => {
     const duration = 1500; // 1.5 seconds
     const steps = 60;
@@ -40,14 +47,14 @@ const GenderDistributionChart: React.FC<GenderDistributionProps> = ({
         setDisplayedData([
           {
             name: 'Male',
-            value: Math.round(maleAthletes * easeOutProgress),
-            color: '#3B82F6',
+            value: Math.round(male * easeOutProgress),
+            color: 'hsl(var(--primary))',
             icon: User
           },
           {
             name: 'Female',
-            value: Math.round(femaleAthletes * easeOutProgress),
-            color: '#EC4899',
+            value: Math.round(female * easeOutProgress),
+            color: 'hsl(var(--accent))',
             icon: UserCircle2
           }
         ]);
@@ -60,12 +67,51 @@ const GenderDistributionChart: React.FC<GenderDistributionProps> = ({
     };
 
     animate();
-  }, [maleAthletes, femaleAthletes]);
+  }, [male, female]);
+
+  // Fetch counts from the database and subscribe to realtime changes
+  useEffect(() => {
+    let subscribed = true;
+
+    const fetchCounts = async () => {
+      const { count: maleC } = await supabase
+        .from('athletes')
+        .select('id', { count: 'exact', head: true })
+        .eq('gender', 'masculino');
+
+      const { count: femaleC } = await supabase
+        .from('athletes')
+        .select('id', { count: 'exact', head: true })
+        .eq('gender', 'femenino');
+
+      if (!subscribed) return;
+      setMaleCount(maleC ?? 0);
+      setFemaleCount(femaleC ?? 0);
+    };
+
+    fetchCounts();
+
+    const channel = supabase
+      .channel('athletes-gender-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'athletes' },
+        () => {
+          fetchCounts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscribed = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
     if (active && payload && payload.length) {
       const data = payload[0];
-      const percentage = totalAthletes ? Math.round((data.value / totalAthletes) * 100) : 0;
+      const percentage = total ? Math.round((data.value / total) * 100) : 0;
       return (
         <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
           <p className="font-semibold text-gray-800 dark:text-white">
@@ -112,7 +158,7 @@ const GenderDistributionChart: React.FC<GenderDistributionProps> = ({
             GENDER DISTRIBUTION
           </CardTitle>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Total athletes: <span className="font-semibold">{totalAthletes}</span>
+            Total athletes: <span className="font-semibold">{total}</span>
           </p>
         </div>
         <div className="p-3 rounded-xl argon-gradient-purple text-white shadow-lg flex-shrink-0 group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
@@ -121,6 +167,9 @@ const GenderDistributionChart: React.FC<GenderDistributionProps> = ({
       </CardHeader>
       
       <CardContent className="pt-0 relative z-10">
+        {total === 0 && (
+          <p className="text-sm text-muted-foreground mb-4">No gender data available.</p>
+        )}
         <div className="flex items-center gap-6">
           {/* Pie Chart */}
           <div className="flex-1 h-32">
