@@ -221,10 +221,10 @@ const AdminDashboard = () => {
         <RevenueChart />
 
         {/* Athletic Performance Metrics Section */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <AthleteDistribution />
-          <MedalPodium />
-        </div>
+        <AthleteDistribution />
+        
+        {/* Medal Podium Section */}
+        <MedalPodium />
 
         {/* Training Analytics */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
