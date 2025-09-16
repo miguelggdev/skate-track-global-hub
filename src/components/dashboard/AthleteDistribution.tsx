@@ -1,57 +1,171 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis } from 'recharts';
 import { Users, BarChart3 } from 'lucide-react';
-
-// Age-based categories as specified in requirements
-const categoryData = [
-  { 
-    name: 'School (6-12)', 
-    shortName: 'School',
-    value: 5, 
-    color: 'hsl(var(--chart-1))',
-    ageRange: '6-12 años',
-    level: 'Iniciación'
-  },
-  { 
-    name: 'Juniors (13-15)', 
-    shortName: 'Juniors',
-    value: 5, 
-    color: 'hsl(var(--chart-2))',
-    ageRange: '13-15 años',
-    level: 'Intermedio/Avanzado'
-  },
-  { 
-    name: 'Transition (16-17)', 
-    shortName: 'Transition',
-    value: 5, 
-    color: 'hsl(var(--chart-3))',
-    ageRange: '16-17 años',
-    level: 'Avanzado/Pro'
-  },
-  { 
-    name: 'Seniors (18+)', 
-    shortName: 'Seniors',
-    value: 7, 
-    color: 'hsl(var(--chart-4))',
-    ageRange: '18+ años',
-    level: 'Profesional'
-  }
-];
-
-const attendanceData = [
-  { day: 'Lun', attendance: 85 },
-  { day: 'Mar', attendance: 92 },
-  { day: 'Mié', attendance: 78 },
-  { day: 'Jue', attendance: 88 },
-  { day: 'Vie', attendance: 82 },
-  { day: 'Sáb', attendance: 95 },
-  { day: 'Dom', attendance: 73 }
-];
+import { supabase } from '@/integrations/supabase/client';
 
 const AthleteDistribution: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [categoryData, setCategoryData] = useState([
+    { 
+      name: 'School (6-12)', 
+      shortName: 'Escuela',
+      value: 0, 
+      color: 'hsl(var(--chart-1))',
+      ageRange: '6-12 años',
+      level: 'Iniciación'
+    },
+    { 
+      name: 'Minors (13-15)', 
+      shortName: 'Menores',
+      value: 0, 
+      color: 'hsl(var(--chart-2))',
+      ageRange: '13-15 años',
+      level: 'Intermedio'
+    },
+    { 
+      name: 'Transition (16-17)', 
+      shortName: 'Transición',
+      value: 0, 
+      color: 'hsl(var(--chart-3))',
+      ageRange: '16-17 años',
+      level: 'Avanzado'
+    },
+    { 
+      name: 'Juniors (18-20)', 
+      shortName: 'Juvenil',
+      value: 0, 
+      color: 'hsl(var(--chart-4))',
+      ageRange: '13-17 años',
+      level: 'Competitivo'
+    },
+    { 
+      name: 'Seniors (21+)', 
+      shortName: 'Mayores',
+      value: 0, 
+      color: 'hsl(var(--chart-5))',
+      ageRange: '18+ años',
+      level: 'Profesional'
+    }
+  ]);
+
+  const [attendanceData, setAttendanceData] = useState([
+    { day: 'Lun', attendance: 0 },
+    { day: 'Mar', attendance: 0 },
+    { day: 'Mié', attendance: 0 },
+    { day: 'Jue', attendance: 0 },
+    { day: 'Vie', attendance: 0 },
+    { day: 'Sáb', attendance: 0 },
+    { day: 'Dom', attendance: 0 }
+  ]);
+
+  // Fetch real athlete distribution data
+  useEffect(() => {
+    const fetchAthleteDistribution = async () => {
+      try {
+        const { data: athletes, error } = await supabase
+          .from('athletes')
+          .select('category')
+          .eq('status', 'active');
+
+        if (error) throw error;
+
+        // Count athletes by category
+        const counts = athletes.reduce((acc, athlete) => {
+          acc[athlete.category] = (acc[athlete.category] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+
+        // Update category data with real counts
+        setCategoryData(prev => prev.map(category => {
+          let dbKey = '';
+          switch (category.shortName) {
+            case 'Escuela': dbKey = 'escuela'; break;
+            case 'Menores': dbKey = 'menores'; break;
+            case 'Transición': dbKey = 'transicion'; break;
+            case 'Juvenil': dbKey = 'juvenil'; break;
+            case 'Mayores': dbKey = 'mayores'; break;
+          }
+          return { ...category, value: counts[dbKey] || 0 };
+        }));
+      } catch (error) {
+        console.error('Error fetching athlete distribution:', error);
+      }
+    };
+
+    // Fetch training attendance data for current week
+    const fetchAttendanceData = async () => {
+      try {
+        const today = new Date();
+        const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 1));
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+        const { data: sessions, error } = await supabase
+          .from('training_sessions')
+          .select(`
+            id,
+            date,
+            training_attendance(
+              id,
+              attended
+            )
+          `)
+          .gte('date', startOfWeek.toISOString().split('T')[0])
+          .lte('date', endOfWeek.toISOString().split('T')[0]);
+
+        if (error) throw error;
+
+        // Calculate attendance by day
+        const dayAttendance = {};
+        const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        
+        sessions?.forEach(session => {
+          const sessionDate = new Date(session.date);
+          const dayIndex = sessionDate.getDay();
+          const dayName = dayNames[dayIndex];
+          
+          if (!dayAttendance[dayName]) {
+            dayAttendance[dayName] = { total: 0, attended: 0 };
+          }
+          
+          dayAttendance[dayName].total += session.training_attendance.length;
+          dayAttendance[dayName].attended += session.training_attendance.filter(a => a.attended).length;
+        });
+
+        // Update attendance data
+        setAttendanceData(prev => prev.map(day => {
+          const dayData = dayAttendance[day.day];
+          const attendance = dayData && dayData.total > 0 
+            ? Math.round((dayData.attended / dayData.total) * 100)
+            : 0;
+          return { ...day, attendance };
+        }));
+      } catch (error) {
+        console.error('Error fetching attendance data:', error);
+      }
+    };
+
+    fetchAthleteDistribution();
+    fetchAttendanceData();
+
+    // Set up real-time subscriptions
+    const athletesChannel = supabase
+      .channel('athletes-distribution-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'athletes' }, fetchAthleteDistribution)
+      .subscribe();
+
+    const attendanceChannel = supabase
+      .channel('attendance-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'training_attendance' }, fetchAttendanceData)
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(athletesChannel);
+      supabase.removeChannel(attendanceChannel);
+    };
+  }, []);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
