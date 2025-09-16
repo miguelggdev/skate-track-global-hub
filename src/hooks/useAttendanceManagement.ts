@@ -40,21 +40,16 @@ export const useAttendanceManagement = () => {
     },
   });
 
-  // Register attendance mutation using upsert
+  // Register attendance using RPC function
   const registerAttendanceMutation = useMutation({
     mutationFn: async (attendanceData: AttendanceFormData) => {
-      const { data, error } = await supabase
-        .from('training_attendance')
-        .upsert({
-          training_session_id: attendanceData.training_session_id,
-          athlete_id: attendanceData.athlete_id,
-          attended: attendanceData.attended,
-          performance_rating: attendanceData.performance_rating || null,
-          notes: attendanceData.notes || null
-        }, {
-          onConflict: 'training_session_id,athlete_id'
-        })
-        .select();
+      const { data, error } = await supabase.rpc('register_attendance', {
+        p_training_session_id: attendanceData.training_session_id,
+        p_athlete_id: attendanceData.athlete_id,
+        p_attended: attendanceData.attended,
+        p_performance_rating: attendanceData.performance_rating || null,
+        p_notes: attendanceData.notes || null
+      });
 
       if (error) throw error;
       return data;
@@ -70,21 +65,20 @@ export const useAttendanceManagement = () => {
     },
   });
 
-  // Bulk register attendance mutation
+  // Bulk register attendance using RPC function
   const registerBulkAttendanceMutation = useMutation({
     mutationFn: async (attendanceRows: AttendanceFormData[]) => {
-      const { data, error } = await supabase
-        .from('training_attendance')
-        .upsert(attendanceRows.map(row => ({
-          training_session_id: row.training_session_id,
-          athlete_id: row.athlete_id,
-          attended: row.attended,
-          performance_rating: row.performance_rating || null,
-          notes: row.notes || null
-        })), {
-          onConflict: 'training_session_id,athlete_id'
-        })
-        .select();
+      const formattedRows = attendanceRows.map(row => ({
+        training_session_id: row.training_session_id,
+        athlete_id: row.athlete_id,
+        attended: row.attended,
+        performance_rating: row.performance_rating?.toString() || '',
+        notes: row.notes || ''
+      }));
+
+      const { data, error } = await supabase.rpc('register_bulk_attendance', {
+        rows: formattedRows
+      });
 
       if (error) throw error;
       return data;

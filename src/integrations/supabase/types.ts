@@ -1490,6 +1490,28 @@ export type Database = {
         }
         Returns: boolean
       }
+      register_attendance: {
+        Args: {
+          p_athlete_id: string
+          p_attended: boolean
+          p_notes?: string
+          p_performance_rating?: number
+          p_training_session_id: string
+        }
+        Returns: {
+          athlete_id: string
+          attended: boolean | null
+          created_at: string
+          id: string
+          notes: string | null
+          performance_rating: number | null
+          training_session_id: string
+        }
+      }
+      register_bulk_attendance: {
+        Args: { rows: Json }
+        Returns: number
+      }
       send_notification_to_athletes: {
         Args: {
           message_param: string
