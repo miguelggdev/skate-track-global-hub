@@ -9,6 +9,7 @@ import { useTrainingStats } from '@/hooks/useTrainingStats';
 import CreateTrainingDialog from '@/components/training/CreateTrainingDialog';
 import EditTrainingDialog from '@/components/training/EditTrainingDialog';
 import QuickAttendanceDialog from '@/components/training/QuickAttendanceDialog';
+import QuickAttendanceRegistration from '@/components/training/QuickAttendanceRegistration';
 import DailyAttendanceIndicator from '@/components/training/DailyAttendanceIndicator';
 import CalendarViewDialog from '@/components/training/CalendarViewDialog';
 import { TrainingStatsCharts } from '@/components/training/TrainingStatsCharts';
@@ -38,6 +39,7 @@ const Training = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showCalendarDialog, setShowCalendarDialog] = useState(false);
+  const [currentView, setCurrentView] = useState<'sessions' | 'attendance'>('sessions');
   const { isAdmin } = useUserProfile();
   
   // Fetch training sessions and stats from database
@@ -166,10 +168,17 @@ const Training = () => {
                 </Button>
               </CreateTrainingDialog>
             )}
+            <Button 
+              onClick={() => setCurrentView(currentView === 'sessions' ? 'attendance' : 'sessions')}
+              className="argon-gradient-green text-white hover:opacity-90 text-sm"
+            >
+              <CheckCircle className="h-4 w-4 mr-2" />
+              {currentView === 'sessions' ? 'Register Attendance' : 'View Sessions'}
+            </Button>
             <QuickAttendanceDialog>
-              <Button className="argon-gradient-green text-white hover:opacity-90 text-sm">
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Register Attendance
+              <Button variant="outline" className="text-sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Create & Register
               </Button>
             </QuickAttendanceDialog>
             <Button variant="outline" className="text-sm">
@@ -225,7 +234,10 @@ const Training = () => {
         )}
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 w-full">
+        {currentView === 'attendance' ? (
+          <QuickAttendanceRegistration />
+        ) : (
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 w-full">
           {/* Training Sessions */}
           <div className="xl:col-span-2">
             <Card className="argon-card h-full">
@@ -380,6 +392,7 @@ const Training = () => {
             </Card>
           </div>
         </div>
+        )}
 
         {/* Bottom Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
