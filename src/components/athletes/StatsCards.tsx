@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, TrendingUp, GraduationCap, Baby, ArrowUpRight, UserCheck, UserPlus, Shield, UserX, User, UserCircle2, Star, Award, Activity } from 'lucide-react';
+import { Users, ArrowUpRight, UserPlus, Shield, UserX, User, UserCircle2, Star, Award, Activity } from 'lucide-react';
 import { useAthleteStats } from '@/hooks/useAthleteStats';
 import GenderDistributionChart from './GenderDistributionChart';
 import CategoryDistributionChart from './CategoryDistributionChart';
@@ -79,52 +79,6 @@ const StatsCards = () => {
       isPositive: false,
       priority: "high",
       size: "medium"
-    },
-    {
-      title: "SCHOOL ATHLETES",
-      value: athleteStats?.schoolAthletes?.toString() || "0",
-      change: "+8%",
-      period: "in education",
-      icon: GraduationCap,
-      bgColor: "argon-gradient-cyan",
-      isPositive: true,
-      priority: "high",
-      size: "medium"
-    },
-    
-    // DEMOGRAPHIC DATA - Standard cards
-    {
-      title: "MINORS",
-      value: athleteStats?.menoresAthletes?.toString() || "0",
-      change: "+5%",
-      period: "menores category",
-      icon: Baby,
-      bgColor: "argon-gradient-orange",
-      isPositive: true,
-      priority: "normal",
-      size: "standard"
-    },
-    {
-      title: "TRANSITION",
-      value: athleteStats?.transicionAthletes?.toString() || "0",
-      change: "+3%",
-      period: "transicion category",
-      icon: TrendingUp,
-      bgColor: "argon-gradient-yellow",
-      isPositive: true,
-      priority: "normal",
-      size: "standard"
-    },
-    {
-      title: "SENIORS",
-      value: athleteStats?.mayoresAthletes?.toString() || "0",
-      change: "+7%",
-      period: "mayores category",
-      icon: UserCheck,
-      bgColor: "argon-gradient-teal",
-      isPositive: true,
-      priority: "normal",
-      size: "standard"
     }
   ];
 
@@ -183,7 +137,7 @@ const StatsCards = () => {
   return (
     <div className="space-y-6 mb-8">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {sortedStats.map((stat, index) => (
           <Card key={index} className={getCardClasses(stat)}>
             {/* Background gradient overlay for depth */}
