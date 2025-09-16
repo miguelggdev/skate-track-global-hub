@@ -148,91 +148,65 @@ const GenderDistributionChart: React.FC<GenderDistributionProps> = ({
   };
 
   return (
-    <Card className="argon-card relative overflow-hidden group hover:scale-[1.02] transition-all duration-300 cursor-pointer hover:shadow-xl col-span-1 sm:col-span-2">
-      {/* Background gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
-        <div className="min-w-0 flex-1">
-          <CardTitle className="text-lg font-bold text-gray-800 dark:text-white mb-1">
-            GENDER DISTRIBUTION
-          </CardTitle>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Total athletes: <span className="font-semibold">{total}</span>
-          </p>
-        </div>
-        <div className="p-3 rounded-xl argon-gradient-purple text-white shadow-lg flex-shrink-0 group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
-          <Users className="h-7 w-7" />
-        </div>
+    <Card className="xl:col-span-1 argon-card">
+      <CardHeader>
+        <CardTitle className="text-lg font-semibold text-gray-800">Gender Distribution</CardTitle>
       </CardHeader>
-      
-      <CardContent className="pt-0 relative z-10">
-        {total === 0 && (
-          <p className="text-sm text-muted-foreground mb-4">No gender data available.</p>
-        )}
-        <div className="flex items-center gap-6">
-          {/* Pie Chart */}
-          <div className="flex-1 h-32">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={displayedData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={renderCustomLabel}
-                  outerRadius={60}
-                  fill="#8884d8"
-                  dataKey="value"
-                  animationDuration={0} // We handle animation manually
-                  className={`transition-all duration-300 ${animationComplete ? 'animate-scale-in' : ''}`}
-                >
-                  {displayedData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={entry.color}
-                      className="hover:opacity-80 transition-opacity duration-200"
-                    />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+      <CardContent className="space-y-4 px-6">
+        {total === 0 ? (
+          <p className="text-sm text-gray-500">No gender data available.</p>
+        ) : (
+          <>
+            {/* Small Chart */}
+            <div className="h-20 mb-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={displayedData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={35}
+                    fill="#8884d8"
+                    dataKey="value"
+                    animationDuration={0}
+                  >
+                    {displayedData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
 
-          {/* Legend */}
-          <div className="space-y-3">
+            {/* List-style Legend */}
             {finalData.map((item, index) => {
-              const percentage = totalAthletes ? Math.round((item.value / totalAthletes) * 100) : 0;
+              const percentage = total ? Math.round((item.value / total) * 100) : 0;
               const displayValue = displayedData[index]?.value || 0;
               
               return (
-                <div key={item.name} className="flex items-center gap-3">
-                  <div 
-                    className="w-4 h-4 rounded-full flex-shrink-0 animate-fade-in"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <item.icon className="h-4 w-4 text-gray-600 dark:text-gray-400 flex-shrink-0" />
-                      <span className="text-sm font-medium text-gray-800 dark:text-white">
+                <div key={item.name} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3 min-w-0 flex-1">
+                    <div 
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-800 text-sm truncate flex items-center gap-2">
+                        <item.icon className="h-4 w-4" />
                         {item.name}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-lg font-bold text-gray-800 dark:text-white">
-                        {displayValue}
-                      </span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        ({percentage}%)
-                      </span>
+                      </p>
+                      <p className="text-sm text-gray-600 truncate">
+                        {displayValue} athletes
+                      </p>
                     </div>
                   </div>
+                  <span className="text-xs text-gray-500 flex-shrink-0 ml-2">{percentage}%</span>
                 </div>
               );
             })}
-          </div>
-        </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
