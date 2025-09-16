@@ -38,6 +38,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2 } from 'lucide-react';
 import { Athlete } from '@/hooks/useAthletes';
@@ -476,16 +477,18 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-8 gap-0">
-                <TabsTrigger value="basic" className="px-2 text-xs">Básico</TabsTrigger>
-                <TabsTrigger value="personal" className="px-2 text-xs">Personal</TabsTrigger>
-                <TabsTrigger value="contact" className="px-2 text-xs">Contacto</TabsTrigger>
-                <TabsTrigger value="family" className="px-2 text-xs">Familia</TabsTrigger>
-                <TabsTrigger value="medical" className="px-2 text-xs">Médico</TabsTrigger>
-                <TabsTrigger value="studies" className="px-2 text-xs">Estudios</TabsTrigger>
-                <TabsTrigger value="equipment" className="px-2 text-xs">Equipo</TabsTrigger>
-                <TabsTrigger value="history" className="px-2 text-xs">Historial</TabsTrigger>
-              </TabsList>
+              <ScrollArea className="w-full">
+                <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 gap-0 min-w-max">
+                  <TabsTrigger value="basic" className="px-2 text-xs">Básico</TabsTrigger>
+                  <TabsTrigger value="personal" className="px-2 text-xs">Personal</TabsTrigger>
+                  <TabsTrigger value="contact" className="px-2 text-xs">Contacto</TabsTrigger>
+                  <TabsTrigger value="family" className="px-2 text-xs">Familia</TabsTrigger>
+                  <TabsTrigger value="medical" className="px-2 text-xs">Médico</TabsTrigger>
+                  <TabsTrigger value="studies" className="px-2 text-xs">Estudios</TabsTrigger>
+                  <TabsTrigger value="equipment" className="px-2 text-xs">Equipo</TabsTrigger>
+                  <TabsTrigger value="history" className="px-2 text-xs">Historial</TabsTrigger>
+                </TabsList>
+              </ScrollArea>
 
               <TabsContent value="basic" className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
