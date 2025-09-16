@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAthleteDetails } from '@/hooks/useAthleteDetails';
 import {
   Dialog,
   DialogContent,
@@ -37,6 +38,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2 } from 'lucide-react';
 import { Athlete } from '@/hooks/useAthletes';
 
@@ -60,6 +62,46 @@ const editAthleteSchema = z.object({
   achievements: z.string().optional(),
   performance_score: z.coerce.number().min(0).max(100).optional(),
   bio: z.string().optional(),
+  // Family fields
+  parent_name: z.string().optional(),
+  parent_phone: z.string().optional(),
+  parent_email: z.string().optional(),
+  guardian_name: z.string().optional(),
+  guardian_relationship: z.string().optional(),
+  guardian_phone: z.string().optional(),
+  guardian_email: z.string().optional(),
+  // Medical/Body fields
+  weight: z.coerce.number().optional(),
+  height: z.coerce.number().optional(),
+  size: z.string().optional(),
+  blood_type: z.string().optional(),
+  allergies: z.string().optional(),
+  surgeries: z.string().optional(),
+  injuries: z.string().optional(),
+  limitations: z.string().optional(),
+  // Studies fields
+  education_level: z.string().optional(),
+  current_grade: z.string().optional(),
+  school_name: z.string().optional(),
+  school_address: z.string().optional(),
+  school_phone: z.string().optional(),
+  school_email: z.string().optional(),
+  // Equipment fields
+  boot_size: z.coerce.number().optional(),
+  wheel_diameter: z.coerce.number().optional(),
+  frame_size: z.string().optional(),
+  boot_brand: z.string().optional(),
+  frame_brand: z.string().optional(),
+  track_wheels_brand: z.string().optional(),
+  helmet_brand: z.string().optional(),
+  // History fields
+  years_experience: z.coerce.number().optional(),
+  start_date: z.string().optional(),
+  league_date: z.string().optional(),
+  federation_date: z.string().optional(),
+  is_league: z.boolean().optional(),
+  is_federated: z.boolean().optional(),
+  previous_club: z.string().optional(),
 });
 
 type EditAthleteFormData = z.infer<typeof editAthleteSchema>;
@@ -74,6 +116,9 @@ interface EditAthleteDialogProps {
 export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdated }: EditAthleteDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  // Fetch detailed athlete data for form population
+  const { data: athleteDetails } = useAthleteDetails(athlete?.id || null);
 
   const form = useForm<EditAthleteFormData>({
     resolver: zodResolver(editAthleteSchema),
@@ -96,34 +141,114 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
       achievements: '',
       performance_score: 0,
       bio: '',
+      // Family defaults
+      parent_name: '',
+      parent_phone: '',
+      parent_email: '',
+      guardian_name: '',
+      guardian_relationship: '',
+      guardian_phone: '',
+      guardian_email: '',
+      // Medical/Body defaults
+      weight: undefined,
+      height: undefined,
+      size: '',
+      blood_type: '',
+      allergies: '',
+      surgeries: '',
+      injuries: '',
+      limitations: '',
+      // Studies defaults
+      education_level: '',
+      current_grade: '',
+      school_name: '',
+      school_address: '',
+      school_phone: '',
+      school_email: '',
+      // Equipment defaults
+      boot_size: undefined,
+      wheel_diameter: undefined,
+      frame_size: '',
+      boot_brand: '',
+      frame_brand: '',
+      track_wheels_brand: '',
+      helmet_brand: '',
+      // History defaults
+      years_experience: undefined,
+      start_date: '',
+      league_date: '',
+      federation_date: '',
+      is_league: false,
+      is_federated: false,
+      previous_club: '',
     },
   });
 
-  // Reset form when athlete changes
+  // Reset form when athlete details change
   useEffect(() => {
-    if (athlete) {
+    if (athleteDetails) {
       form.reset({
-        first_name: athlete.first_name || '',
-        last_name: athlete.last_name || '',
-        email: athlete.email || '',
-        phone: '',
-        date_of_birth: athlete.join_date || '',
-        category: athlete.category as any,
-        level: athlete.level as any,
-        status: athlete.status as any,
-        gender: 'masculino',
-        id_type: 'Tarjeta de identidad',
-        id_number: '',
-        athlete_number: '',
-        emergency_contact_name: '',
-        emergency_contact_phone: '',
-        medical_notes: '',
-        achievements: '',
-        performance_score: athlete.performance_score || 0,
-        bio: '',
+        first_name: athleteDetails.first_name || '',
+        last_name: athleteDetails.last_name || '',
+        email: athleteDetails.email || '',
+        phone: athleteDetails.phone || '',
+        date_of_birth: athleteDetails.date_of_birth || '',
+        category: athleteDetails.category as any,
+        level: athleteDetails.level as any,
+        status: athleteDetails.status as any,
+        gender: athleteDetails.gender as any || 'masculino',
+        id_type: athleteDetails.id_type as any || 'Tarjeta de identidad',
+        id_number: athleteDetails.id_number || '',
+        athlete_number: athleteDetails.athlete_number || '',
+        emergency_contact_name: athleteDetails.emergency_contact_name || '',
+        emergency_contact_phone: athleteDetails.emergency_contact_phone || '',
+        medical_notes: athleteDetails.medical_notes || '',
+        achievements: athleteDetails.achievements || '',
+        performance_score: athleteDetails.performance_score || 0,
+        bio: athleteDetails.bio || '',
+        // Family data
+        parent_name: athleteDetails.family?.parent_name || '',
+        parent_phone: athleteDetails.family?.parent_phone || '',
+        parent_email: athleteDetails.family?.parent_email || '',
+        guardian_name: athleteDetails.family?.guardian_name || '',
+        guardian_relationship: athleteDetails.family?.guardian_relationship || '',
+        guardian_phone: athleteDetails.family?.guardian_phone || '',
+        guardian_email: athleteDetails.family?.guardian_email || '',
+        // Medical/Body data
+        weight: athleteDetails.body_info?.weight || undefined,
+        height: athleteDetails.body_info?.height || undefined,
+        size: athleteDetails.body_info?.size || '',
+        blood_type: athleteDetails.body_info?.blood_type || '',
+        allergies: athleteDetails.body_info?.allergies || '',
+        surgeries: athleteDetails.body_info?.surgeries || '',
+        injuries: athleteDetails.body_info?.injuries || '',
+        limitations: athleteDetails.body_info?.limitations || '',
+        // Studies data
+        education_level: athleteDetails.studies?.education_level || '',
+        current_grade: athleteDetails.studies?.current_grade || '',
+        school_name: athleteDetails.studies?.school_name || '',
+        school_address: athleteDetails.studies?.school_address || '',
+        school_phone: athleteDetails.studies?.school_phone || '',
+        school_email: athleteDetails.studies?.school_email || '',
+        // Equipment data
+        boot_size: athleteDetails.equipment?.boot_size || undefined,
+        wheel_diameter: athleteDetails.equipment?.wheel_diameter || undefined,
+        frame_size: athleteDetails.equipment?.frame_size || '',
+        boot_brand: athleteDetails.equipment?.boot_brand || '',
+        frame_brand: athleteDetails.equipment?.frame_brand || '',
+        track_wheels_brand: athleteDetails.equipment?.track_wheels_brand || '',
+        helmet_brand: athleteDetails.equipment?.helmet_brand || '',
+        // History data
+        years_experience: athleteDetails.history?.years_experience || undefined,
+        start_date: athleteDetails.history?.start_date || '',
+        league_date: athleteDetails.history?.league_date || '',
+        federation_date: athleteDetails.history?.federation_date || '',
+        is_league: athleteDetails.history?.is_league || false,
+        is_federated: athleteDetails.history?.is_federated || false,
+        previous_club: athleteDetails.history?.previous_club || '',
       });
     }
-  }, [athlete, form]);
+  }, [athleteDetails, form]);
 
   const onSubmit = async (data: EditAthleteFormData) => {
     if (!athlete) return;
@@ -145,6 +270,9 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
           medical_notes: data.medical_notes,
           achievements: data.achievements,
           performance_score: data.performance_score,
+          athlete_number: data.athlete_number,
+          gender: data.gender,
+          date_of_birth: data.date_of_birth || null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', athlete.id);
@@ -170,6 +298,91 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
 
         if (profileError) throw profileError;
       }
+
+      // Update or insert family data
+      const { error: familyError } = await supabase
+        .from('athlete_family')
+        .upsert({
+          athlete_id: athlete.id,
+          parent_name: data.parent_name,
+          parent_phone: data.parent_phone,
+          parent_email: data.parent_email,
+          guardian_name: data.guardian_name,
+          guardian_relationship: data.guardian_relationship,
+          guardian_phone: data.guardian_phone,
+          guardian_email: data.guardian_email,
+          updated_at: new Date().toISOString(),
+        });
+
+      if (familyError) throw familyError;
+
+      // Update or insert body info
+      const { error: bodyError } = await supabase
+        .from('athlete_body_info')
+        .upsert({
+          athlete_id: athlete.id,
+          weight: data.weight,
+          height: data.height,
+          size: data.size,
+          blood_type: data.blood_type,
+          allergies: data.allergies,
+          surgeries: data.surgeries,
+          injuries: data.injuries,
+          limitations: data.limitations,
+          updated_at: new Date().toISOString(),
+        });
+
+      if (bodyError) throw bodyError;
+
+      // Update or insert studies data
+      const { error: studiesError } = await supabase
+        .from('athlete_studies')
+        .upsert({
+          athlete_id: athlete.id,
+          education_level: data.education_level,
+          current_grade: data.current_grade,
+          school_name: data.school_name,
+          school_address: data.school_address,
+          school_phone: data.school_phone,
+          school_email: data.school_email,
+          updated_at: new Date().toISOString(),
+        });
+
+      if (studiesError) throw studiesError;
+
+      // Update or insert equipment data
+      const { error: equipmentError } = await supabase
+        .from('athlete_equipment')
+        .upsert({
+          athlete_id: athlete.id,
+          boot_size: data.boot_size,
+          wheel_diameter: data.wheel_diameter,
+          frame_size: data.frame_size,
+          boot_brand: data.boot_brand,
+          frame_brand: data.frame_brand,
+          track_wheels_brand: data.track_wheels_brand,
+          helmet_brand: data.helmet_brand,
+          updated_at: new Date().toISOString(),
+        });
+
+      if (equipmentError) throw equipmentError;
+
+      // Update or insert history data
+      const { error: historyError } = await supabase
+        .from('athlete_history')
+        .upsert({
+          athlete_id: athlete.id,
+          years_experience: data.years_experience,
+          start_date: data.start_date || null,
+          league_date: data.league_date || null,
+          federation_date: data.federation_date || null,
+          is_league: data.is_league,
+          is_federated: data.is_federated,
+          previous_club: data.previous_club,
+          updated_at: new Date().toISOString(),
+        });
+
+      if (historyError) throw historyError;
 
       toast({
         title: "Atleta actualizado",
@@ -263,11 +476,15 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-7">
                 <TabsTrigger value="basic">Básico</TabsTrigger>
                 <TabsTrigger value="personal">Personal</TabsTrigger>
                 <TabsTrigger value="contact">Contacto</TabsTrigger>
-                <TabsTrigger value="additional">Adicional</TabsTrigger>
+                <TabsTrigger value="family">Familia</TabsTrigger>
+                <TabsTrigger value="medical">Médico</TabsTrigger>
+                <TabsTrigger value="studies">Estudios</TabsTrigger>
+                <TabsTrigger value="equipment">Equipo</TabsTrigger>
+                <TabsTrigger value="history">Historial</TabsTrigger>
               </TabsList>
 
               <TabsContent value="basic" className="space-y-4">
@@ -549,31 +766,585 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
                 </div>
               </TabsContent>
 
-              <TabsContent value="additional" className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="medical_notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Notas Médicas</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Información médica relevante..."
-                          className="min-h-[80px]"
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <TabsContent value="family" className="space-y-4">
+                <h4 className="font-medium mb-4">Información Familiar</h4>
+                
+                <div className="space-y-4">
+                  <h5 className="text-sm font-medium text-muted-foreground">Padre/Madre</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="parent_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nombre del Padre/Madre</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Nombre completo" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="parent_phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Teléfono</FormLabel>
+                          <FormControl>
+                            <Input placeholder="+34 600 000 000" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="parent_email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="email@ejemplo.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <h5 className="text-sm font-medium text-muted-foreground">Tutor/Guardián</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="guardian_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nombre del Tutor</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Nombre completo" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="guardian_relationship"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Relación</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Tío, abuelo, etc." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="guardian_phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Teléfono</FormLabel>
+                          <FormControl>
+                            <Input placeholder="+34 600 000 000" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="guardian_email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="email@ejemplo.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="medical" className="space-y-4">
+                <h4 className="font-medium mb-4">Información Médica y Física</h4>
+                
+                <div className="space-y-4">
+                  <h5 className="text-sm font-medium text-muted-foreground">Medidas Físicas</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="weight"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Peso (kg)</FormLabel>
+                          <FormControl>
+                            <Input type="number" placeholder="70" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="height"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Altura (cm)</FormLabel>
+                          <FormControl>
+                            <Input type="number" placeholder="175" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="size"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Talla</FormLabel>
+                          <FormControl>
+                            <Input placeholder="M" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="blood_type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tipo de Sangre</FormLabel>
+                          <FormControl>
+                            <Input placeholder="O+" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <h5 className="text-sm font-medium text-muted-foreground">Historial Médico</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="allergies"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Alergias</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Describe alergias conocidas..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="surgeries"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cirugías</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Historial de cirugías..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="injuries"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Lesiones</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Lesiones previas..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="limitations"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Limitaciones</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Limitaciones físicas..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="medical_notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Notas Médicas Adicionales</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Información médica relevante..."
+                            className="min-h-[80px]"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="studies" className="space-y-4">
+                <h4 className="font-medium mb-4">Información Académica</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="education_level"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nivel Educativo</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccionar nivel" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="preescolar">Preescolar</SelectItem>
+                            <SelectItem value="primaria">Primaria</SelectItem>
+                            <SelectItem value="secundaria">Secundaria</SelectItem>
+                            <SelectItem value="bachillerato">Bachillerato</SelectItem>
+                            <SelectItem value="universidad">Universidad</SelectItem>
+                            <SelectItem value="posgrado">Posgrado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="current_grade"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Grado Actual</FormLabel>
+                        <FormControl>
+                          <Input placeholder="5to grado" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="school_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Centro Educativo</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nombre del colegio/universidad" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="school_address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Dirección del Centro</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Dirección completa" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="school_phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Teléfono del Centro</FormLabel>
+                        <FormControl>
+                          <Input placeholder="+34 900 000 000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="school_email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email del Centro</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="info@colegio.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="equipment" className="space-y-4">
+                <h4 className="font-medium mb-4">Equipamiento de Patinaje</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="boot_size"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Talla de Bota</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="42" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="wheel_diameter"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Diámetro de Rueda (mm)</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="110" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="frame_size"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Talla de Chasis</FormLabel>
+                        <FormControl>
+                          <Input placeholder="4x110" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="boot_brand"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Marca de Bota</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Rollerblade" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="frame_brand"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Marca de Chasis</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Powerslide" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="track_wheels_brand"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Marca de Ruedas</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Matter" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="helmet_brand"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Marca de Casco</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Bontrager" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="history" className="space-y-4">
+                <h4 className="font-medium mb-4">Historial Deportivo</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="years_experience"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Años de Experiencia</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="5" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="previous_club"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Club Anterior</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nombre del club anterior" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="start_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Fecha de Inicio en el Deporte</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="league_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Fecha de Ingreso a Liga</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="federation_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Fecha de Federación</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="is_league"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>Participa en Liga</FormLabel>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="is_federated"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>Está Federado</FormLabel>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <FormField
                   control={form.control}
                   name="achievements"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Logros</FormLabel>
+                      <FormLabel>Logros y Reconocimientos</FormLabel>
                       <FormControl>
                         <Textarea 
                           placeholder="Logros y reconocimientos del atleta..."
