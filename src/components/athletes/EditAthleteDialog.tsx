@@ -476,15 +476,15 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-7">
-                <TabsTrigger value="basic">Básico</TabsTrigger>
-                <TabsTrigger value="personal">Personal</TabsTrigger>
-                <TabsTrigger value="contact">Contacto</TabsTrigger>
-                <TabsTrigger value="family">Familia</TabsTrigger>
-                <TabsTrigger value="medical">Médico</TabsTrigger>
-                <TabsTrigger value="studies">Estudios</TabsTrigger>
-                <TabsTrigger value="equipment">Equipo</TabsTrigger>
-                <TabsTrigger value="history">Historial</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-8 gap-0">
+                <TabsTrigger value="basic" className="px-2 text-xs">Básico</TabsTrigger>
+                <TabsTrigger value="personal" className="px-2 text-xs">Personal</TabsTrigger>
+                <TabsTrigger value="contact" className="px-2 text-xs">Contacto</TabsTrigger>
+                <TabsTrigger value="family" className="px-2 text-xs">Familia</TabsTrigger>
+                <TabsTrigger value="medical" className="px-2 text-xs">Médico</TabsTrigger>
+                <TabsTrigger value="studies" className="px-2 text-xs">Estudios</TabsTrigger>
+                <TabsTrigger value="equipment" className="px-2 text-xs">Equipo</TabsTrigger>
+                <TabsTrigger value="history" className="px-2 text-xs">Historial</TabsTrigger>
               </TabsList>
 
               <TabsContent value="basic" className="space-y-4">
