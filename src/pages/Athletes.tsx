@@ -118,12 +118,10 @@ const Athletes = () => {
   }, []);
 
   const handleAthleteAdded = () => {
-    // Add a small delay to allow database triggers to complete
-    setTimeout(() => {
-      fetchAthletes(pagination.currentPage);
-    }, 500);
+    // Refresh the athletes list immediately
+    fetchAthletes(pagination.currentPage);
     toast({
-      title: "Éxito",
+      title: "Éxito", 
       description: "Atleta creado exitosamente",
     });
   };
