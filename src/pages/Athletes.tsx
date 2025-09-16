@@ -53,11 +53,12 @@ const Athletes = () => {
       const offset = (page - 1) * pagination.itemsPerPage;
       
       // Build the query with pagination and search, joining with profiles table
+      // Using left join to ensure athletes show even if profile data isn't ready yet
       let query = supabase
         .from('athletes')
         .select(`
           *,
-          profiles!inner(
+          profiles(
             avatar_url,
             id_type,
             id_number,
@@ -117,7 +118,10 @@ const Athletes = () => {
   }, []);
 
   const handleAthleteAdded = () => {
-    fetchAthletes(pagination.currentPage);
+    // Add a small delay to allow database triggers to complete
+    setTimeout(() => {
+      fetchAthletes(pagination.currentPage);
+    }, 500);
     toast({
       title: "Éxito",
       description: "Atleta creado exitosamente",
