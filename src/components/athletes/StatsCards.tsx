@@ -221,22 +221,23 @@ const StatsCards = () => {
         ))}
       </div>
       
-      {/* Gender Distribution Chart */}
-      <GenderDistributionChart
-        maleAthletes={athleteStats?.maleAthletes || 0}
-        femaleAthletes={athleteStats?.femaleAthletes || 0}
-        totalAthletes={athleteStats?.totalAthletes || 0}
-      />
-      
-      {/* Category Distribution Chart */}
-      <CategoryDistributionChart
-        escuelaAthletes={athleteStats?.escuelaAthletes || 0}
-        menoresAthletes={athleteStats?.menoresAthletes || 0}
-        transicionAthletes={athleteStats?.transicionAthletes || 0}
-        mayoresAthletes={athleteStats?.mayoresAthletes || 0}
-        juvenilAthletes={athleteStats?.juvenilAthletes || 0}
-        totalAthletes={athleteStats?.totalAthletes || 0}
-      />
+      {/* Distribution Charts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <GenderDistributionChart
+          maleAthletes={athleteStats?.maleAthletes || 0}
+          femaleAthletes={athleteStats?.femaleAthletes || 0}
+          totalAthletes={athleteStats?.totalAthletes || 0}
+        />
+        
+        <CategoryDistributionChart
+          escuelaAthletes={athleteStats?.escuelaAthletes || 0}
+          menoresAthletes={athleteStats?.menoresAthletes || 0}
+          transicionAthletes={athleteStats?.transicionAthletes || 0}
+          mayoresAthletes={athleteStats?.mayoresAthletes || 0}
+          juvenilAthletes={athleteStats?.juvenilAthletes || 0}
+          totalAthletes={athleteStats?.totalAthletes || 0}
+        />
+      </div>
     </div>
   );
 };
