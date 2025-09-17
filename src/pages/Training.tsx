@@ -229,7 +229,19 @@ const Training = () => {
 
         {/* Main Content */}
         {currentView === 'attendance' ? (
-          <QuickAttendanceRegistration />
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Attendance Registration</h2>
+              <Button 
+                variant="outline"
+                onClick={() => setCurrentView('sessions')}
+                className="text-sm"
+              >
+                Back to Sessions
+              </Button>
+            </div>
+            <QuickAttendanceRegistration />
+          </div>
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 w-full">
           {/* Training Sessions */}

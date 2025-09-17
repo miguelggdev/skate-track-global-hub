@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,11 +9,12 @@ import { Separator } from '@/components/ui/separator';
 import { useTrainingSessions } from '@/hooks/useTrainingSessions';
 import { useAthletes } from '@/hooks/useAthletes';
 import { useAttendanceManagement } from '@/hooks/useAttendanceManagement';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { Calendar, Clock, MapPin, Users, CheckCircle, XCircle, User } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, CheckCircle, XCircle, User, Loader2, AlertTriangle } from 'lucide-react';
 
 interface AttendanceRecord {
   athlete_id: string;
@@ -27,12 +28,25 @@ export default function QuickAttendanceRegistration() {
   const [attendanceStates, setAttendanceStates] = useState<{[key: string]: boolean | null}>({});
   
   const { toast } = useToast();
+  const { profile, loading: profileLoading, isAdmin, isCoach, isDelegate } = useUserProfile();
   const { trainingSessions, isLoading: sessionsLoading } = useTrainingSessions({ 
     includeCoachInfo: true,
     dateFilter: 'upcoming' 
   });
   const { data: athletes = [], isLoading: athletesLoading } = useAthletes();
   const { registerAttendance, isRegistering, canRegisterAttendance } = useAttendanceManagement();
+
+  // Debug logging
+  useEffect(() => {
+    console.log('QuickAttendanceRegistration Debug:', {
+      profile,
+      profileLoading,
+      isAdmin,
+      isCoach,
+      isDelegate,
+      canRegisterAttendance: canRegisterAttendance()
+    });
+  }, [profile, profileLoading, isAdmin, isCoach, isDelegate]);
 
   // Fetch existing attendance for selected session
   const { data: existingAttendance = [] } = useQuery({
@@ -115,14 +129,40 @@ export default function QuickAttendanceRegistration() {
     getAttendanceStatus(athlete.id) === true
   ).length;
 
-  if (!canRegisterAttendance()) {
+  // Show loading while profile is being fetched
+  if (profileLoading) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-12">
           <div className="text-center">
-            <XCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <Loader2 className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-spin" />
+            <h3 className="text-lg font-semibold">Loading...</h3>
+            <p className="text-muted-foreground">Checking permissions...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Check permissions with detailed feedback
+  if (!canRegisterAttendance()) {
+    const hasAnyRole = isAdmin || isCoach || isDelegate;
+    const userRole = profile?.role;
+    
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <AlertTriangle className="h-12 w-12 text-orange-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold">Access Denied</h3>
-            <p className="text-muted-foreground">You don't have permission to register attendance.</p>
+            <p className="text-muted-foreground mb-4">
+              You need admin, coach, or delegate permissions to register attendance.
+            </p>
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p>Current role: <span className="font-mono">{userRole || 'None'}</span></p>
+              <p>Required roles: admin, coach, or delegate</p>
+              {!profile && <p className="text-orange-600">Profile not loaded</p>}
+            </div>
           </div>
         </CardContent>
       </Card>
