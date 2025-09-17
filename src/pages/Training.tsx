@@ -8,7 +8,7 @@ import { useTrainingSessions } from '@/hooks/useTrainingSessions';
 import { useTrainingStats } from '@/hooks/useTrainingStats';
 import CreateTrainingDialog from '@/components/training/CreateTrainingDialog';
 import EditTrainingDialog from '@/components/training/EditTrainingDialog';
-import QuickAttendanceDialog from '@/components/training/QuickAttendanceDialog';
+
 import QuickAttendanceRegistration from '@/components/training/QuickAttendanceRegistration';
 import DailyAttendanceIndicator from '@/components/training/DailyAttendanceIndicator';
 import CalendarViewDialog from '@/components/training/CalendarViewDialog';
@@ -175,12 +175,6 @@ const Training = () => {
               <CheckCircle className="h-4 w-4 mr-2" />
               {currentView === 'sessions' ? 'Register Attendance' : 'View Sessions'}
             </Button>
-            <QuickAttendanceDialog>
-              <Button variant="outline" className="text-sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Create & Register
-              </Button>
-            </QuickAttendanceDialog>
             <Button variant="outline" className="text-sm">
               <Download className="h-4 w-4 mr-2" />
               Export
@@ -364,12 +358,6 @@ const Training = () => {
                         </Button>
                       </CreateTrainingDialog>
                     )}
-                    <QuickAttendanceDialog>
-                      <Button className="w-full bg-white text-purple-600 hover:bg-gray-100 text-sm">
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Register Attendance
-                      </Button>
-                    </QuickAttendanceDialog>
                     <Button 
                       variant="outline" 
                       className="w-full border-white text-white hover:bg-white hover:text-purple-600 text-sm"
