@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,6 +41,7 @@ const Training = () => {
   const [showCalendarDialog, setShowCalendarDialog] = useState(false);
   const [currentView, setCurrentView] = useState<'sessions' | 'attendance'>('sessions');
   const { isAdmin } = useUserProfile();
+  const attendanceRef = useRef<HTMLDivElement>(null);
   
   // Fetch training sessions and stats from database
   const { trainingSessions, isLoading } = useTrainingSessions({
@@ -169,7 +170,12 @@ const Training = () => {
               </CreateTrainingDialog>
             )}
             <Button 
-              onClick={() => setCurrentView(currentView === 'sessions' ? 'attendance' : 'sessions')}
+              onClick={() => {
+                setCurrentView(currentView === 'sessions' ? 'attendance' : 'sessions');
+                if (currentView === 'sessions') {
+                  setTimeout(() => attendanceRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+                }
+              }}
               className="argon-gradient-green text-white hover:opacity-90 text-sm"
             >
               <CheckCircle className="h-4 w-4 mr-2" />
@@ -183,53 +189,57 @@ const Training = () => {
         </div>
 
         {/* Stats Cards */}
-        <DailyAttendanceIndicator />
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {stats.map((stat, index) => (
-            <Card key={index} className="argon-card relative overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div className="min-w-0 flex-1 pr-2">
-                  <CardDescription className="text-xs font-medium text-gray-600 uppercase tracking-wider truncate">
-                    {stat.title}
-                  </CardDescription>
-                  <CardTitle className="text-xl font-bold text-gray-800 truncate">
-                    {isStatsLoading ? "..." : stat.value}
-                  </CardTitle>
-                </div>
-                <div className={`p-2 rounded-lg ${stat.bgColor} text-white shadow-lg flex-shrink-0`}>
-                  <stat.icon className="h-5 w-5" />
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <p className="text-xs text-gray-600 truncate">
-                  <span className={`font-semibold ${stat.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                    {stat.change}
-                  </span>{' '}
-                  {stat.period}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {currentView === 'sessions' && (
+          <>
+            <DailyAttendanceIndicator />
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+              {stats.map((stat, index) => (
+                <Card key={index} className="argon-card relative overflow-hidden">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <div className="min-w-0 flex-1 pr-2">
+                      <CardDescription className="text-xs font-medium text-gray-600 uppercase tracking-wider truncate">
+                        {stat.title}
+                      </CardDescription>
+                      <CardTitle className="text-xl font-bold text-gray-800 truncate">
+                        {isStatsLoading ? "..." : stat.value}
+                      </CardTitle>
+                    </div>
+                    <div className={`p-2 rounded-lg ${stat.bgColor} text-white shadow-lg flex-shrink-0`}>
+                      <stat.icon className="h-5 w-5" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-xs text-gray-600 truncate">
+                      <span className={`font-semibold ${stat.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                        {stat.change}
+                      </span>{' '}
+                      {stat.period}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
-        {/* Training Analytics Charts */}
-        {trainingStats && (
-          <div className="mt-6">
-            <Card className="argon-card">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-gray-800">Training Analytics</CardTitle>
-                <CardDescription className="text-sm text-gray-600">Performance insights and trends</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <TrainingStatsCharts stats={trainingStats} isLoading={isStatsLoading} />
-              </CardContent>
-            </Card>
-          </div>
+            {/* Training Analytics Charts */}
+            {trainingStats && (
+              <div className="mt-6">
+                <Card className="argon-card">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-semibold text-gray-800">Training Analytics</CardTitle>
+                    <CardDescription className="text-sm text-gray-600">Performance insights and trends</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <TrainingStatsCharts stats={trainingStats} isLoading={isStatsLoading} />
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </>
         )}
 
         {/* Main Content */}
         {currentView === 'attendance' ? (
-          <div className="space-y-4">
+          <div ref={attendanceRef} className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">Attendance Registration</h2>
               <Button 

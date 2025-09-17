@@ -48,6 +48,20 @@ export default function QuickAttendanceRegistration() {
     });
   }, [profile, profileLoading, isAdmin, isCoach, isDelegate]);
 
+  // Auto-select first upcoming session
+  useEffect(() => {
+    if (!sessionsLoading && trainingSessions.length > 0 && !selectedSessionId) {
+      const upcomingSessions = trainingSessions.filter(session => 
+        new Date(session.date) >= new Date()
+      ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      
+      if (upcomingSessions.length > 0) {
+        setSelectedSessionId(upcomingSessions[0].id);
+        console.log('Auto-selected first upcoming session:', upcomingSessions[0].name);
+      }
+    }
+  }, [sessionsLoading, trainingSessions, selectedSessionId]);
+
   // Fetch existing attendance for selected session
   const { data: existingAttendance = [] } = useQuery({
     queryKey: ['session-attendance', selectedSessionId],
