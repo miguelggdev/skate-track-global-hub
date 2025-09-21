@@ -13,6 +13,7 @@ import QuickAttendanceRegistration from '@/components/training/QuickAttendanceRe
 import DailyAttendanceIndicator from '@/components/training/DailyAttendanceIndicator';
 import CalendarViewDialog from '@/components/training/CalendarViewDialog';
 import { TrainingStatsCharts } from '@/components/training/TrainingStatsCharts';
+import AttendanceReportGenerator from '@/components/training/AttendanceReportGenerator';
 import { 
   Calendar,
   Clock,
@@ -39,7 +40,7 @@ const Training = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showCalendarDialog, setShowCalendarDialog] = useState(false);
-  const [currentView, setCurrentView] = useState<'sessions' | 'attendance'>('sessions');
+  const [currentView, setCurrentView] = useState<'sessions' | 'attendance' | 'reports'>('sessions');
   const { isAdmin } = useUserProfile();
   const attendanceRef = useRef<HTMLDivElement>(null);
   
@@ -171,19 +172,37 @@ const Training = () => {
             )}
             <Button 
               onClick={() => {
-                setCurrentView(currentView === 'sessions' ? 'attendance' : 'sessions');
                 if (currentView === 'sessions') {
+                  setCurrentView('attendance');
                   setTimeout(() => attendanceRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+                } else if (currentView === 'attendance') {
+                  setCurrentView('reports');
+                } else {
+                  setCurrentView('sessions');
                 }
               }}
               className="argon-gradient-green text-white hover:opacity-90 text-sm"
             >
               <CheckCircle className="h-4 w-4 mr-2" />
-              {currentView === 'sessions' ? 'Register Attendance' : 'View Sessions'}
+              {currentView === 'sessions' ? 'Register Attendance' : 
+               currentView === 'attendance' ? 'View Reports' : 'View Sessions'}
             </Button>
-            <Button variant="outline" className="text-sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export
+            <Button 
+              onClick={() => {
+                if (currentView === 'sessions') {
+                  setCurrentView('reports');
+                } else if (currentView === 'reports') {
+                  setCurrentView('attendance');
+                  setTimeout(() => attendanceRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+                } else {
+                  setCurrentView('sessions');
+                }
+              }}
+              variant="outline" 
+              className="text-sm"
+            >
+              <TrendingUp className="h-4 w-4 mr-2" />
+              {currentView === 'reports' ? 'Register Attendance' : 'Attendance Reports'}
             </Button>
           </div>
         </div>
@@ -242,15 +261,49 @@ const Training = () => {
           <div ref={attendanceRef} className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">Attendance Registration</h2>
-              <Button 
-                variant="outline"
-                onClick={() => setCurrentView('sessions')}
-                className="text-sm"
-              >
-                Back to Sessions
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline"
+                  onClick={() => setCurrentView('reports')}
+                  className="text-sm"
+                >
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  View Reports
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => setCurrentView('sessions')}
+                  className="text-sm"
+                >
+                  Back to Sessions
+                </Button>
+              </div>
             </div>
             <QuickAttendanceRegistration />
+          </div>
+        ) : currentView === 'reports' ? (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Attendance Reports</h2>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline"
+                  onClick={() => setCurrentView('attendance')}
+                  className="text-sm"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Register Attendance
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => setCurrentView('sessions')}
+                  className="text-sm"
+                >
+                  Back to Sessions
+                </Button>
+              </div>
+            </div>
+            <AttendanceReportGenerator />
           </div>
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 w-full">
