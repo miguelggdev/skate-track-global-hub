@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subDays, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { generateAttendanceReportPDF, type AttendanceReport } from '@/utils/pdfGenerator';
 
 interface AttendanceReportData {
   athlete_id: string;
@@ -177,6 +178,39 @@ const AttendanceReportGenerator: React.FC = () => {
     toast.success('Reporte exportado exitosamente');
   };
 
+  const handleExportPDF = async () => {
+    if (!reportData || reportData.length === 0) {
+      toast.error('No hay datos para exportar');
+      return;
+    }
+
+    try {
+      const summaryStats = {
+        totalAthletes: reportData.length,
+        totalSessions: reportData.reduce((sum, athlete) => sum + athlete.total_sessions, 0),
+        averageAttendance: reportData.reduce((sum, athlete) => sum + athlete.attendance_rate, 0) / reportData.length || 0,
+        highAttendanceCount: reportData.filter(athlete => athlete.attendance_rate >= 80).length
+      };
+
+      const attendanceReport: AttendanceReport = {
+        data: reportData,
+        summary: summaryStats,
+        period: reportPeriod,
+        dateRange: {
+          startDate: parseISO(dateRange.start),
+          endDate: parseISO(dateRange.end)
+        },
+        category: selectedCategory
+      };
+
+      await generateAttendanceReportPDF(attendanceReport);
+      toast.success('PDF generado exitosamente');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Error al generar el PDF. Inténtalo de nuevo.');
+    }
+  };
+
   const getAttendanceRateColor = (rate: number) => {
     if (rate >= 90) return 'bg-green-500';
     if (rate >= 75) return 'bg-yellow-500';
@@ -267,6 +301,10 @@ const AttendanceReportGenerator: React.FC = () => {
             <Button variant="outline" onClick={handleExportReport} disabled={!reportData || reportData.length === 0}>
               <FileDown className="h-4 w-4 mr-2" />
               Exportar CSV
+            </Button>
+            <Button onClick={handleExportPDF} disabled={!reportData || reportData.length === 0}>
+              <FileDown className="h-4 w-4 mr-2" />
+              Exportar PDF
             </Button>
           </div>
         </CardContent>
