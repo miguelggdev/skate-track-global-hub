@@ -47,8 +47,9 @@ const ClubConfiguration = ({ control }: ClubConfigurationProps) => {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
+                <SelectItem value="COP">Peso Colombiano (COP$)</SelectItem>
+                <SelectItem value="USD">Dólar (USD $)</SelectItem>
                 <SelectItem value="EUR">Euro (€)</SelectItem>
-                <SelectItem value="USD">Dólar ($)</SelectItem>
                 <SelectItem value="GBP">Libra (£)</SelectItem>
               </SelectContent>
             </Select>
