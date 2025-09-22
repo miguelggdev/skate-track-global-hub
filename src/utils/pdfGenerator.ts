@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { FinancialReport } from '@/hooks/useFinancialReports';
+import { formatCurrency, type CurrencyCode } from '@/utils/currency';
 
 export interface AttendanceReportData {
   athlete_id: string;
@@ -29,7 +30,9 @@ export interface AttendanceReport {
   category: string;
 }
 
-export const generateFinancialReportPDF = async (report: FinancialReport): Promise<void> => {
+export const generateFinancialReportPDF = async (report: FinancialReport, currency: CurrencyCode = 'COP'): Promise<void> => {
+  const formatCurrencyValue = (value: number) => formatCurrency(value, currency);
+  
   try {
     // Create a temporary container for the report
     const tempContainer = document.createElement('div');
@@ -41,7 +44,6 @@ export const generateFinancialReportPDF = async (report: FinancialReport): Promi
     tempContainer.style.fontFamily = 'Arial, sans-serif';
     
     // Generate HTML content for the report
-    const formatCurrency = (amount: number) => `€${amount.toFixed(2)}`;
     const formatDate = (date: Date) => date.toLocaleDateString('es-ES');
     
     const getReportTitle = (type: string) => {
@@ -65,19 +67,19 @@ export const generateFinancialReportPDF = async (report: FinancialReport): Promi
       <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px;">
         <div style="padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px;">
           <h3 style="margin: 0 0 10px 0; color: #059669; font-size: 14px;">INGRESOS TOTALES</h3>
-          <p style="margin: 0; font-size: 20px; font-weight: bold; color: #059669;">${formatCurrency(report.summary.totalIncome)}</p>
+          <p style="margin: 0; font-size: 20px; font-weight: bold; color: #059669;">${formatCurrencyValue(report.summary.totalIncome)}</p>
         </div>
         <div style="padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px;">
           <h3 style="margin: 0 0 10px 0; color: #dc2626; font-size: 14px;">GASTOS TOTALES</h3>
-          <p style="margin: 0; font-size: 20px; font-weight: bold; color: #dc2626;">${formatCurrency(report.summary.totalExpenses)}</p>
+          <p style="margin: 0; font-size: 20px; font-weight: bold; color: #dc2626;">${formatCurrencyValue(report.summary.totalExpenses)}</p>
         </div>
         <div style="padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px;">
           <h3 style="margin: 0 0 10px 0; color: #2563eb; font-size: 14px;">BALANCE NETO</h3>
-          <p style="margin: 0; font-size: 20px; font-weight: bold; color: ${report.summary.netBalance >= 0 ? '#059669' : '#dc2626'}">${formatCurrency(report.summary.netBalance)}</p>
+          <p style="margin: 0; font-size: 20px; font-weight: bold; color: ${report.summary.netBalance >= 0 ? '#059669' : '#dc2626'}">${formatCurrencyValue(report.summary.netBalance)}</p>
         </div>
         <div style="padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px;">
           <h3 style="margin: 0 0 10px 0; color: #d97706; font-size: 14px;">PENDIENTES</h3>
-          <p style="margin: 0; font-size: 20px; font-weight: bold; color: #d97706;">${formatCurrency(report.summary.pendingAmount)}</p>
+          <p style="margin: 0; font-size: 20px; font-weight: bold; color: #d97706;">${formatCurrencyValue(report.summary.pendingAmount)}</p>
         </div>
       </div>
 
@@ -91,7 +93,7 @@ export const generateFinancialReportPDF = async (report: FinancialReport): Promi
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
                   <span style="font-weight: 500;">${category}</span>
                   <div>
-                    <span style="font-weight: bold;">${formatCurrency(amount)}</span>
+                    <span style="font-weight: bold;">${formatCurrencyValue(amount)}</span>
                     <span style="color: #6b7280; font-size: 12px; margin-left: 8px;">(${percentage.toFixed(1)}%)</span>
                   </div>
                 </div>
@@ -111,7 +113,7 @@ export const generateFinancialReportPDF = async (report: FinancialReport): Promi
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
                   <span style="font-weight: 500;">${category}</span>
                   <div>
-                    <span style="font-weight: bold;">${formatCurrency(amount)}</span>
+                    <span style="font-weight: bold;">${formatCurrencyValue(amount)}</span>
                     <span style="color: #6b7280; font-size: 12px; margin-left: 8px;">(${percentage.toFixed(1)}%)</span>
                   </div>
                 </div>
@@ -149,7 +151,7 @@ export const generateFinancialReportPDF = async (report: FinancialReport): Promi
                   transaction.payment_status === 'pending' ? '#92400e' : '#991b1b'
                 };">${statusLabel}</span>
                 <span style="font-weight: bold; color: ${isIncome ? '#059669' : '#dc2626'};">
-                  ${isIncome ? '+' : '-'}${formatCurrency(Math.abs(transaction.amount))}
+                  ${isIncome ? '+' : '-'}${formatCurrencyValue(Math.abs(transaction.amount))}
                 </span>
               </div>
             `;

@@ -17,6 +17,8 @@ import { ReportPreviewDialog } from '@/components/finance/ReportPreviewDialog';
 import { useTransactions, useFinancialStats, useUpdateTransaction } from '@/hooks/useTransactions';
 import { useFinancialReports, type ReportType, type ReportPeriod } from '@/hooks/useFinancialReports';
 import { generateFinancialReportPDF } from '@/utils/pdfGenerator';
+import { formatCurrency } from '@/utils/currency';
+import { useCurrency } from '@/hooks/useCurrency';
 import { toast } from '@/hooks/use-toast';
 import { 
   DollarSign, 
@@ -70,11 +72,13 @@ const Finance = () => {
     return matchesSearch && matchesType;
   });
 
-  // Format stats for display
+  // Format stats for display with dynamic currency
+  const { currency } = useCurrency();
+  
   const stats = [
     { 
       title: "INGRESOS TOTALES", 
-      value: financialStats ? `€${financialStats.totalIncome.toFixed(2)}` : "€0.00", 
+      value: financialStats ? formatCurrency(financialStats.totalIncome, currency) : formatCurrency(0, currency), 
       change: financialStats?.incomeChange ? `${financialStats.incomeChange > 0 ? '+' : ''}${financialStats.incomeChange.toFixed(1)}%` : "0%", 
       period: "desde el mes pasado",
       icon: DollarSign,
@@ -83,7 +87,7 @@ const Finance = () => {
     },
     { 
       title: "GASTOS TOTALES", 
-      value: financialStats ? `€${Math.abs(financialStats.totalExpenses).toFixed(2)}` : "€0.00", 
+      value: financialStats ? formatCurrency(Math.abs(financialStats.totalExpenses), currency) : formatCurrency(0, currency), 
       change: financialStats?.expensesChange ? `${financialStats.expensesChange > 0 ? '+' : ''}${financialStats.expensesChange.toFixed(1)}%` : "0%", 
       period: "desde el mes pasado",
       icon: TrendingDown,
@@ -92,7 +96,7 @@ const Finance = () => {
     },
     { 
       title: "PAGOS PENDIENTES", 
-      value: financialStats ? `€${financialStats.pendingPayments.toFixed(2)}` : "€0.00", 
+      value: financialStats ? formatCurrency(financialStats.pendingPayments, currency) : formatCurrency(0, currency), 
       change: "Pendientes", 
       period: "por cobrar",
       icon: AlertCircle,
@@ -101,7 +105,7 @@ const Finance = () => {
     },
     { 
       title: "BENEFICIO NETO", 
-      value: financialStats ? `€${financialStats.netProfit.toFixed(2)}` : "€0.00", 
+      value: financialStats ? formatCurrency(financialStats.netProfit, currency) : formatCurrency(0, currency), 
       change: financialStats?.netProfit > 0 ? "+Positivo" : "Negativo", 
       period: "balance actual",
       icon: TrendingUp,
@@ -172,7 +176,7 @@ const Finance = () => {
     }
 
     try {
-      await generateFinancialReportPDF(reportData);
+      await generateFinancialReportPDF(reportData, currency);
       toast({
         title: "Éxito",
         description: "PDF generado y descargado correctamente",
@@ -302,21 +306,21 @@ const Finance = () => {
                       <p className="font-medium">Cuotas Enero</p>
                       <p className="text-sm text-gray-500">Vence: 31/01/2024</p>
                     </div>
-                    <span className="text-lg font-bold text-green-600">€2,450</span>
+                    <span className="text-lg font-bold text-green-600">{formatCurrency(2450, currency)}</span>
                   </div>
                   <div className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium">Alquiler Instalaciones</p>
                       <p className="text-sm text-gray-500">Vence: 15/01/2024</p>
                     </div>
-                    <span className="text-lg font-bold text-orange-600">€1,200</span>
+                    <span className="text-lg font-bold text-orange-600">{formatCurrency(1200, currency)}</span>
                   </div>
                   <div className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium">Seguros</p>
                       <p className="text-sm text-gray-500">Vence: 20/01/2024</p>
                     </div>
-                    <span className="text-lg font-bold text-red-600">€850</span>
+                    <span className="text-lg font-bold text-red-600">{formatCurrency(850, currency)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -399,7 +403,7 @@ const Finance = () => {
                           {['mensualidad', 'anualidad', 'registration_fee'].includes(transaction.transaction_type) ? 'Ingreso' : 'Gasto'}
                         </Badge>
                         <span className={`font-bold ${transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          €{Math.abs(transaction.amount).toFixed(2)}
+                          {formatCurrency(Math.abs(transaction.amount), currency)}
                         </span>
                         <div className="flex items-center gap-1">
                           {transaction.payment_status === 'paid' && <CheckCircle className="h-4 w-4 text-green-500" />}

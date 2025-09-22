@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Settings as SettingsIcon,
   User,
@@ -518,6 +519,22 @@ const Settings = () => {
                       <Button variant="outline" size="sm">Light</Button>
                       <Button variant="outline" size="sm">Dark</Button>
                       <Button variant="outline" size="sm">Auto</Button>
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Currency</Label>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <Select defaultValue="COP">
+                        <SelectTrigger className="col-span-2">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="COP">Peso Colombiano (COP$)</SelectItem>
+                          <SelectItem value="USD">US Dollar ($)</SelectItem>
+                          <SelectItem value="EUR">Euro (€)</SelectItem>
+                          <SelectItem value="GBP">British Pound (£)</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <div>

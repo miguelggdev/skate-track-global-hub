@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import AddTransactionDialog from '@/components/finance/AddTransactionDialog';
+import { formatCurrency } from '@/utils/currency';
+import { useCurrency } from '@/hooks/useCurrency';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -27,6 +29,7 @@ import {
 
 const FinanceDashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
+  const { currency } = useCurrency();
 
   return (
     <DashboardLayout title="Panel Financiero" userRole="Gestor Financiero">
@@ -39,7 +42,7 @@ const FinanceDashboard = () => {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">€45,231.89</div>
+              <div className="text-2xl font-bold">{formatCurrency(45231.89, currency)}</div>
               <p className="text-xs text-muted-foreground">
                 <TrendingUp className="inline h-3 w-3 mr-1" />
                 +20.1% desde el mes pasado
@@ -53,7 +56,7 @@ const FinanceDashboard = () => {
               <TrendingDown className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">€23,456.78</div>
+              <div className="text-2xl font-bold">{formatCurrency(23456.78, currency)}</div>
               <p className="text-xs text-muted-foreground">
                 -5.2% desde el mes pasado
               </p>
@@ -66,7 +69,7 @@ const FinanceDashboard = () => {
               <AlertCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">€8,924.00</div>
+              <div className="text-2xl font-bold">{formatCurrency(8924.00, currency)}</div>
               <p className="text-xs text-muted-foreground">
                 24 facturas pendientes
               </p>
@@ -149,21 +152,21 @@ const FinanceDashboard = () => {
                         <p className="font-medium">Cuotas Enero</p>
                         <p className="text-sm text-muted-foreground">Vence: 31/01/2024</p>
                       </div>
-                      <span className="text-lg font-bold">€2,450</span>
+                      <span className="text-lg font-bold">{formatCurrency(2450, currency)}</span>
                     </div>
                     <div className="flex items-center justify-between p-2 border rounded">
                       <div>
                         <p className="font-medium">Alquiler Instalaciones</p>
                         <p className="text-sm text-muted-foreground">Vence: 15/01/2024</p>
                       </div>
-                      <span className="text-lg font-bold">€1,200</span>
+                      <span className="text-lg font-bold">{formatCurrency(1200, currency)}</span>
                     </div>
                     <div className="flex items-center justify-between p-2 border rounded">
                       <div>
                         <p className="font-medium">Seguros</p>
                         <p className="text-sm text-muted-foreground">Vence: 20/01/2024</p>
                       </div>
-                      <span className="text-lg font-bold">€850</span>
+                      <span className="text-lg font-bold">{formatCurrency(850, currency)}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -218,7 +221,7 @@ const FinanceDashboard = () => {
                     <div className="grid grid-cols-5 gap-4 p-4 border-b">
                       <span>Ana García</span>
                       <span>Cuota Enero 2024</span>
-                      <span>€85.00</span>
+                      <span>{formatCurrency(85.00, currency)}</span>
                       <span className="flex items-center gap-1">
                         <CheckCircle className="h-4 w-4 text-green-500" />
                         Pagado
@@ -229,7 +232,7 @@ const FinanceDashboard = () => {
                     <div className="grid grid-cols-5 gap-4 p-4 border-b">
                       <span>Carlos Ruiz</span>
                       <span>Cuota Enero 2024</span>
-                      <span>€85.00</span>
+                      <span>{formatCurrency(85.00, currency)}</span>
                       <span className="flex items-center gap-1">
                         <Clock className="h-4 w-4 text-yellow-500" />
                         Pendiente
@@ -240,7 +243,7 @@ const FinanceDashboard = () => {
                     <div className="grid grid-cols-5 gap-4 p-4">
                       <span>María López</span>
                       <span>Competición Nacional</span>
-                      <span>€150.00</span>
+                      <span>{formatCurrency(150.00, currency)}</span>
                       <span className="flex items-center gap-1">
                         <AlertCircle className="h-4 w-4 text-red-500" />
                         Vencido
@@ -273,7 +276,7 @@ const FinanceDashboard = () => {
                         <CardTitle className="text-sm">Presupuesto Anual</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold">€120,000</div>
+                        <div className="text-2xl font-bold">{formatCurrency(120000, currency)}</div>
                         <Progress value={45} className="mt-2" />
                         <p className="text-xs text-muted-foreground mt-1">45% ejecutado</p>
                       </CardContent>
@@ -284,7 +287,7 @@ const FinanceDashboard = () => {
                         <CardTitle className="text-sm">Gastos Operativos</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold">€78,500</div>
+                        <div className="text-2xl font-bold">{formatCurrency(78500, currency)}</div>
                         <Progress value={62} className="mt-2" />
                         <p className="text-xs text-muted-foreground mt-1">62% ejecutado</p>
                       </CardContent>
@@ -295,7 +298,7 @@ const FinanceDashboard = () => {
                         <CardTitle className="text-sm">Inversiones</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold">€25,000</div>
+                        <div className="text-2xl font-bold">{formatCurrency(25000, currency)}</div>
                         <Progress value={30} className="mt-2" />
                         <p className="text-xs text-muted-foreground mt-1">30% ejecutado</p>
                       </CardContent>
@@ -310,7 +313,7 @@ const FinanceDashboard = () => {
                       <div className="flex justify-between items-center p-3 border rounded">
                         <span>Personal y Entrenadores</span>
                         <div className="text-right">
-                          <div className="font-medium">€45,000 / €60,000</div>
+                          <div className="font-medium">{formatCurrency(45000, currency)} / {formatCurrency(60000, currency)}</div>
                           <Progress value={75} className="w-32 mt-1" />
                         </div>
                       </div>
@@ -318,7 +321,7 @@ const FinanceDashboard = () => {
                       <div className="flex justify-between items-center p-3 border rounded">
                         <span>Instalaciones y Mantenimiento</span>
                         <div className="text-right">
-                          <div className="font-medium">€18,000 / €25,000</div>
+                          <div className="font-medium">{formatCurrency(18000, currency)} / {formatCurrency(25000, currency)}</div>
                           <Progress value={72} className="w-32 mt-1" />
                         </div>
                       </div>
@@ -326,7 +329,7 @@ const FinanceDashboard = () => {
                       <div className="flex justify-between items-center p-3 border rounded">
                         <span>Equipamiento Deportivo</span>
                         <div className="text-right">
-                          <div className="font-medium">€8,500 / €15,000</div>
+                          <div className="font-medium">{formatCurrency(8500, currency)} / {formatCurrency(15000, currency)}</div>
                           <Progress value={57} className="w-32 mt-1" />
                         </div>
                       </div>
@@ -334,7 +337,7 @@ const FinanceDashboard = () => {
                       <div className="flex justify-between items-center p-3 border rounded">
                         <span>Competiciones y Viajes</span>
                         <div className="text-right">
-                          <div className="font-medium">€12,000 / €20,000</div>
+                          <div className="font-medium">{formatCurrency(12000, currency)} / {formatCurrency(20000, currency)}</div>
                           <Progress value={60} className="w-32 mt-1" />
                         </div>
                       </div>
@@ -503,7 +506,7 @@ const FinanceDashboard = () => {
                         <span>15/01/2024</span>
                         <span>Mantenimiento pista</span>
                         <span>Instalaciones</span>
-                        <span>€450.00</span>
+                        <span>{formatCurrency(450.00, currency)}</span>
                         <Button variant="outline" size="sm">Editar</Button>
                       </div>
                       
@@ -511,7 +514,7 @@ const FinanceDashboard = () => {
                         <span>12/01/2024</span>
                         <span>Uniformes nuevos</span>
                         <span>Equipamiento</span>
-                        <span>€1,250.00</span>
+                        <span>{formatCurrency(1250.00, currency)}</span>
                         <Button variant="outline" size="sm">Editar</Button>
                       </div>
                       
@@ -519,7 +522,7 @@ const FinanceDashboard = () => {
                         <span>10/01/2024</span>
                         <span>Viaje competición</span>
                         <span>Viajes</span>
-                        <span>€890.00</span>
+                        <span>{formatCurrency(890.00, currency)}</span>
                         <Button variant="outline" size="sm">Editar</Button>
                       </div>
                     </div>

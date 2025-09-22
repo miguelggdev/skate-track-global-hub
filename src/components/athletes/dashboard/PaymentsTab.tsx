@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { CreditCard, Download, ExternalLink, Mail, Phone, User, FileText } from 'lucide-react';
 import { useAthleteTransactions } from '@/hooks/useTransactions';
 import { useCurrentAthlete } from '@/hooks/useCurrentAthlete';
+import { useCurrency } from '@/hooks/useCurrency';
+import { formatCurrency } from '@/utils/currency';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -49,6 +51,7 @@ export const PaymentsTab = () => {
   const [selectedType, setSelectedType] = useState<string>('all');
   const { athlete } = useCurrentAthlete();
   const { data: transactions, isLoading } = useAthleteTransactions(athlete?.id);
+  const { currency } = useCurrency();
 
   if (isLoading) {
     return (
@@ -103,11 +106,11 @@ export const PaymentsTab = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <Label className="text-green-700">Total Pagado ({selectedYear})</Label>
-              <div className="text-2xl font-bold text-green-600">€{totalPaid.toFixed(2)}</div>
+              <div className="text-2xl font-bold text-green-600">{formatCurrency(totalPaid, currency)}</div>
             </div>
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
               <Label className="text-orange-700">Total Pendiente</Label>
-              <div className="text-2xl font-bold text-orange-600">€{totalPending.toFixed(2)}</div>
+              <div className="text-2xl font-bold text-orange-600">{formatCurrency(totalPending, currency)}</div>
             </div>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <Label className="text-blue-700">Total Transacciones</Label>
@@ -184,7 +187,7 @@ export const PaymentsTab = () => {
                     <div className={`text-2xl font-bold ${
                       transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      €{Math.abs(transaction.amount).toFixed(2)}
+                      {formatCurrency(Math.abs(transaction.amount), currency)}
                     </div>
                     {transaction.receipt_url && (
                       <Button size="sm" variant="outline" className="mt-2" asChild>
