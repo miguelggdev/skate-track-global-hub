@@ -8,6 +8,8 @@ import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import { useAthletes } from '@/hooks/useAthletes';
 import { useLastMonthPayment, useClubSettings } from '@/hooks/useLastMonthPayment';
+import { useReportTemplate } from '@/hooks/useReportTemplate';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface AthleteData {
   id: string;
@@ -24,6 +26,8 @@ export const AthleteLetterGenerator: React.FC = () => {
   const { data: athletes = [], isLoading: athletesLoading } = useAthletes();
   const { data: paymentData, isLoading: paymentLoading } = useLastMonthPayment(selectedAthleteId);
   const { data: clubSettings } = useClubSettings();
+  const { createReportTemplate } = useReportTemplate();
+  const { currency } = useCurrency();
 
   const selectedAthlete = athletes.find(a => a.id === selectedAthleteId);
 
@@ -34,44 +38,13 @@ export const AthleteLetterGenerator: React.FC = () => {
 
     try {
       const pdf = new jsPDF();
-      const pageWidth = pdf.internal.pageSize.width;
-      const margin = 20;
-      let yPosition = margin;
-
-      // Helper function to add text
-      const addText = (text: string, fontSize = 10, isBold = false, align: 'left' | 'center' | 'right' = 'left') => {
-        pdf.setFontSize(fontSize);
-        if (isBold) {
-          pdf.setFont(undefined, 'bold');
-        } else {
-          pdf.setFont(undefined, 'normal');
-        }
-        
-        let xPosition = margin;
-        if (align === 'center') {
-          xPosition = pageWidth / 2;
-        } else if (align === 'right') {
-          xPosition = pageWidth - margin;
-        }
-        
-        pdf.text(text, xPosition, yPosition, { align });
-        yPosition += fontSize * 0.4 + 5;
-      };
-
-      // Add space
-      const addSpace = (space = 10) => {
-        yPosition += space;
-      };
-
-      // Club header
-      if (clubSettings?.club_logo_url) {
-        // You could add logo loading logic here
-        addText('[LOGO DEL CLUB]', 12, true, 'center');
-      }
       
-      const clubName = clubSettings?.club_name || 'Mi Club de Patinaje';
-      addText(clubName.toUpperCase(), 16, true, 'center');
-      addSpace(15);
+      // Create report template with club configuration
+      const template = await createReportTemplate(pdf);
+      
+      // Generate professional header
+      let yPosition = template.generateHeader();
+      yPosition += 20;
 
       // Date and location
       const today = new Date();
@@ -80,63 +53,50 @@ export const AthleteLetterGenerator: React.FC = () => {
         'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
       ];
       
-      const city = clubSettings?.address?.split(',')[0] || 'Madrid';
       const day = today.getDate();
       const month = months[today.getMonth()];
       const year = today.getFullYear();
 
-      addText(`${city}, ${day} de ${month} de ${year}`, 12, false, 'right');
-      addSpace(20);
+      pdf.setFontSize(12);
+      pdf.text(`${day} de ${month} de ${year}`, pdf.internal.pageSize.width - 20, yPosition, { align: 'right' });
+      yPosition += 20;
 
       // Subject
       const subject = letterType === 'freedom' ? 'CARTA DE LIBERTAD' : 'PAZ Y SALVO';
-      addText(`ASUNTO: ${subject}`, 12, true);
-      addSpace(15);
+      yPosition = template.addTitle(`ASUNTO: ${subject}`, 12);
+      yPosition = template.addSpace(15);
 
       // Letter content
       const athleteFullName = `${selectedAthlete.first_name} ${selectedAthlete.last_name}`;
       const athleteNumber = (selectedAthlete as any).athlete_number || 'Sin número';
 
       if (letterType === 'freedom') {
-        addText(
-          `Por medio de la presente, ${clubName} concede la Carta de Libertad al/la deportista ${athleteFullName}, ` +
+        yPosition = template.addText(
+          `Por medio de la presente, nuestro club concede la Carta de Libertad al/la deportista ${athleteFullName}, ` +
           `identificado/a con documento No. ${athleteNumber}, para que pueda trasladarse al club y/o liga de su preferencia.`,
-          11,
-          false
+          11
         );
       } else {
-        addText(
-          `Por medio de la presente, ${clubName} certifica que el/la deportista ${athleteFullName}, ` +
+        yPosition = template.addText(
+          `Por medio de la presente, nuestro club certifica que el/la deportista ${athleteFullName}, ` +
           `identificado/a con documento No. ${athleteNumber}, se encuentra a paz y salvo por todo concepto ` +
           `con este club hasta la fecha de su retiro.`,
-          11,
-          false
+          11
         );
       }
 
-      addSpace(25);
+      yPosition = template.addSpace(25);
 
       // Closing
-      addText(`Dada en ${city}, a los ${day} días del mes de ${month} de ${year}.`, 11);
-      addSpace(25);
+      yPosition = template.addText(`Dada a los ${day} días del mes de ${month} de ${year}.`, 11);
+      yPosition = template.addSpace(40);
 
-      addText('Atentamente,', 11);
-      addSpace(20);
-      addText('_________________________', 11);
+      yPosition = template.addText('Atentamente,', 11);
+      yPosition = template.addSpace(30);
+      yPosition = template.addText('_________________________', 11);
       
-      const presidentName = clubSettings?.president_name || '[NOMBRE DEL PRESIDENTE]';
-      addText(presidentName, 11, true);
-      addText(clubName, 11, true);
-      
-      addSpace(15);
-
-      // Footer
-      const address = clubSettings?.address || '[DIRECCIÓN]';
-      const phone = clubSettings?.contact_phone || '[TELÉFONO]';
-      const email = clubSettings?.contact_email || '[CORREO]';
-      const website = clubSettings?.website_url || '[WEB]';
-      
-      addText(`${address} | ${phone} | ${email} | ${website}`, 9, false, 'center');
+      // Generate footer with signature section
+      template.generateFooter();
 
       // Download the PDF
       const fileName = `${letterType === 'freedom' ? 'carta_libertad' : 'paz_y_salvo'}_${athleteFullName.replace(/\s+/g, '_')}_${today.toISOString().split('T')[0]}.pdf`;
@@ -243,7 +203,7 @@ export const AthleteLetterGenerator: React.FC = () => {
                         <div key={transaction.id} className="flex justify-between items-center text-sm">
                           <span>{transaction.description}</span>
                           <div className="flex items-center gap-2">
-                            <Badge variant="default">€{transaction.amount.toFixed(2)}</Badge>
+                            <Badge variant="default">{currency === 'EUR' ? '€' : currency === 'USD' ? '$' : currency}{transaction.amount.toFixed(2)}</Badge>
                             <span className="text-green-600">
                               {new Date(transaction.transaction_date).toLocaleDateString('es-ES')}
                             </span>

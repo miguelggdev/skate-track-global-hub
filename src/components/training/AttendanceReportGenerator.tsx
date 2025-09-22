@@ -10,7 +10,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subDays, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
-import { generateAttendanceReportPDF, type AttendanceReport } from '@/utils/pdfGenerator';
+import { useReportTemplate } from '@/hooks/useReportTemplate';
+import jsPDF from 'jspdf';
 
 interface AttendanceReportData {
   athlete_id: string;
@@ -30,6 +31,7 @@ const AttendanceReportGenerator: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
   const [reportPeriod, setReportPeriod] = useState<ReportPeriod>('monthly');
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const { createReportTemplate } = useReportTemplate();
 
   // Calculate date range based on period and selected date
   const dateRange = useMemo(() => {
@@ -185,25 +187,50 @@ const AttendanceReportGenerator: React.FC = () => {
     }
 
     try {
-      const summaryStats = {
-        totalAthletes: reportData.length,
-        totalSessions: reportData.reduce((sum, athlete) => sum + athlete.total_sessions, 0),
-        averageAttendance: reportData.reduce((sum, athlete) => sum + athlete.attendance_rate, 0) / reportData.length || 0,
-        highAttendanceCount: reportData.filter(athlete => athlete.attendance_rate >= 80).length
-      };
+      const pdf = new jsPDF();
+      
+      // Create report template with club configuration
+      const template = await createReportTemplate(pdf);
+      
+      // Generate professional header
+      let yPosition = template.generateHeader();
+      yPosition += 10;
 
-      const attendanceReport: AttendanceReport = {
-        data: reportData,
-        summary: summaryStats,
-        period: reportPeriod,
-        dateRange: {
-          startDate: parseISO(dateRange.start),
-          endDate: parseISO(dateRange.end)
-        },
-        category: selectedCategory
-      };
+      // Report title
+      yPosition = template.addTitle('REPORTE DE ASISTENCIA', 18);
+      yPosition = template.addText(`Período: ${getPeriodLabel()}`, 12);
+      yPosition = template.addText(`Categoría: ${selectedCategory === 'all' ? 'Todas las categorías' : selectedCategory}`, 12);
+      yPosition = template.addSpace(15);
 
-      await generateAttendanceReportPDF(attendanceReport);
+      // Summary statistics
+      yPosition = template.addText('RESUMEN ESTADÍSTICO', 14);
+      yPosition = template.addText(`Total de atletas: ${reportData.length}`, 11);
+      yPosition = template.addText(`Sesiones totales: ${reportData.reduce((sum, athlete) => sum + athlete.total_sessions, 0)}`, 11);
+      yPosition = template.addText(`Asistencia promedio: ${(reportData.reduce((sum, athlete) => sum + athlete.attendance_rate, 0) / reportData.length || 0).toFixed(1)}%`, 11);
+      yPosition = template.addText(`Atletas con +80% asistencia: ${reportData.filter(athlete => athlete.attendance_rate >= 80).length}`, 11);
+      yPosition = template.addSpace(15);
+
+      // Athletes data
+      yPosition = template.addText('DETALLE POR ATLETA', 14);
+      yPosition = template.addSpace(5);
+      
+      reportData.forEach((athlete, index) => {
+        const athleteInfo = `${index + 1}. ${athlete.athlete_name} (${athlete.category}/${athlete.level}) - ${athlete.attended_sessions}/${athlete.total_sessions} sesiones (${athlete.attendance_rate.toFixed(1)}%)`;
+        yPosition = template.addText(athleteInfo, 10);
+        
+        if (yPosition > pdf.internal.pageSize.height - 50) {
+          pdf.addPage();
+          yPosition = 40;
+        }
+      });
+
+      // Generate footer
+      template.generateFooter();
+
+      // Save the PDF
+      const filename = `reporte-asistencia-${reportPeriod}-${format(selectedDate, 'yyyy-MM-dd')}.pdf`;
+      pdf.save(filename);
+      
       toast.success('PDF generado exitosamente');
     } catch (error) {
       console.error('Error generating PDF:', error);

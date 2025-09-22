@@ -4,6 +4,7 @@ import { FileText, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCompetitionPDFData } from '@/hooks/useCompetitions';
 import jsPDF from 'jspdf';
+import { useReportTemplate } from '@/hooks/useReportTemplate';
 
 interface CompetitionPDFReportProps {
   competitionId: string;
@@ -16,6 +17,7 @@ export const CompetitionPDFReport: React.FC<CompetitionPDFReportProps> = ({
 }) => {
   const [generating, setGenerating] = useState(false);
   const { data: pdfData, isLoading } = useCompetitionPDFData(competitionId);
+  const { createReportTemplate } = useReportTemplate();
 
   const generatePDF = async () => {
     if (!pdfData) {
@@ -27,92 +29,65 @@ export const CompetitionPDFReport: React.FC<CompetitionPDFReportProps> = ({
     
     try {
       const pdf = new jsPDF();
-      const pageWidth = pdf.internal.pageSize.width;
-      const margin = 20;
-      let yPosition = margin;
-
-      // Helper function to add text with line breaks
-      const addText = (text: string, fontSize = 10, isBold = false) => {
-        pdf.setFontSize(fontSize);
-        if (isBold) {
-          pdf.setFont(undefined, 'bold');
-        } else {
-          pdf.setFont(undefined, 'normal');
-        }
-        
-        const lines = pdf.splitTextToSize(text, pageWidth - 2 * margin);
-        pdf.text(lines, margin, yPosition);
-        yPosition += lines.length * (fontSize * 0.4) + 5;
-        
-        // Check if we need a new page
-        if (yPosition > pdf.internal.pageSize.height - margin) {
-          pdf.addPage();
-          yPosition = margin;
-        }
-      };
-
-      // Title
-      addText(`COMPETITION REPORT`, 16, true);
+      
+      // Create report template with club configuration
+      const template = await createReportTemplate(pdf);
+      
+      // Generate professional header
+      let yPosition = template.generateHeader();
       yPosition += 10;
+
+      // Report title
+      yPosition = template.addTitle('REPORTE DE COMPETICIÓN', 16);
+      yPosition = template.addSpace(10);
 
       // Competition Info
-      addText(`COMPETITION NAME: ${pdfData.competition.name}`, 12, true);
-      addText(`CLUB: ${pdfData.clubSettings?.club_name || 'N/A'}`);
-      addText(`LEAGUE: ${pdfData.clubSettings?.league || 'N/A'}`);
-      
-      yPosition += 10;
-
-      // President Info
-      addText(`PRESIDENT: ${pdfData.clubSettings?.president_name || 'N/A'}`);
-      addText(`ID: ${pdfData.clubSettings?.president_id || 'N/A'}`);
-      addText(`PHONE: ${pdfData.clubSettings?.president_phone || 'N/A'}`);
-      addText(`EMAIL: ${pdfData.clubSettings?.president_email || 'N/A'}`);
-      
-      yPosition += 10;
-
-      // Delegate Info
-      addText(`DELEGATE: ${pdfData.clubSettings?.delegate_name || 'N/A'}`);
-      addText(`DELEGATE PHONE: ${pdfData.clubSettings?.delegate_phone || 'N/A'}`);
-      
-      yPosition += 10;
-
-      // Coach Info
-      addText(`COACH: ${pdfData.clubSettings?.coach_name || 'N/A'}`);
-      addText(`COACH PHONE: ${pdfData.clubSettings?.coach_phone || 'N/A'}`);
-      
-      yPosition += 15;
+      yPosition = template.addText(`COMPETICIÓN: ${pdfData.competition.name}`, 12);
+      yPosition = template.addText(`FECHA: ${new Date().toLocaleDateString('es-ES')}`, 11);
+      yPosition = template.addSpace(15);
 
       // Athletes Data
-      addText(`ATHLETE DATA:`, 14, true);
-      yPosition += 5;
+      yPosition = template.addText('DATOS DE ATLETAS:', 14);
+      yPosition = template.addSpace(5);
 
       // DAMAS Section
       if (pdfData.damas.length > 0) {
-        addText(`DAMAS (ordered by age, youngest first):`, 12, true);
+        yPosition = template.addText('DAMAS (ordenadas por edad, de menor a mayor):', 12);
         pdfData.damas.forEach((athlete, index) => {
           const athleteInfo = `${index + 1}. ${athlete.first_name} ${athlete.last_name} - ${athlete.age} años - ${athlete.category}/${athlete.level}`;
-          addText(athleteInfo);
+          yPosition = template.addText(athleteInfo, 10);
+          
+          // Check for page break
+          if (yPosition > pdf.internal.pageSize.height - 60) {
+            pdf.addPage();
+            yPosition = 40;
+          }
         });
-        yPosition += 10;
+        yPosition = template.addSpace(10);
       }
 
       // VARONES Section
       if (pdfData.varones.length > 0) {
-        addText(`VARONES (ordered by age, youngest first):`, 12, true);
+        yPosition = template.addText('VARONES (ordenados por edad, de menor a mayor):', 12);
         pdfData.varones.forEach((athlete, index) => {
           const athleteInfo = `${index + 1}. ${athlete.first_name} ${athlete.last_name} - ${athlete.age} años - ${athlete.category}/${athlete.level}`;
-          addText(athleteInfo);
+          yPosition = template.addText(athleteInfo, 10);
+          
+          // Check for page break
+          if (yPosition > pdf.internal.pageSize.height - 60) {
+            pdf.addPage();
+            yPosition = 40;
+          }
         });
       }
 
       // No athletes case
       if (pdfData.damas.length === 0 && pdfData.varones.length === 0) {
-        addText('No athletes registered for this competition.');
+        yPosition = template.addText('No hay atletas registrados para esta competición.', 11);
       }
 
-      // Footer
-      yPosition += 20;
-      addText(`Generated on: ${new Date().toLocaleDateString('es-ES')}`, 8);
+      // Generate footer with club information and signatures
+      template.generateFooter();
 
       // Save the PDF
       const filename = `${competitionName.replace(/[^a-z0-9]/gi, '_')}_report.pdf`;

@@ -5,6 +5,8 @@ import { FileText, Download, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import { supabase } from '@/integrations/supabase/client';
+import { useReportTemplate } from '@/hooks/useReportTemplate';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface Transaction {
   id: string;
@@ -34,6 +36,8 @@ export const TransactionReceiptGenerator: React.FC<TransactionReceiptGeneratorPr
 }) => {
   const [generating, setGenerating] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
+  const { createReportTemplate, loading: templateLoading } = useReportTemplate();
+  const { currency } = useCurrency();
 
   const generateReceiptNumber = () => {
     const year = new Date().getFullYear();
@@ -48,97 +52,68 @@ export const TransactionReceiptGenerator: React.FC<TransactionReceiptGeneratorPr
     
     try {
       const pdf = new jsPDF();
-      const pageWidth = pdf.internal.pageSize.width;
-      const margin = 20;
-      let yPosition = margin;
-
-      // Helper function to add text
-      const addText = (text: string, fontSize = 10, isBold = false, align: 'left' | 'center' | 'right' = 'left') => {
-        pdf.setFontSize(fontSize);
-        if (isBold) {
-          pdf.setFont(undefined, 'bold');
-        } else {
-          pdf.setFont(undefined, 'normal');
-        }
-        
-        let xPosition = margin;
-        if (align === 'center') {
-          xPosition = pageWidth / 2;
-        } else if (align === 'right') {
-          xPosition = pageWidth - margin;
-        }
-        
-        pdf.text(text, xPosition, yPosition, { align });
-        yPosition += fontSize * 0.4 + 5;
-      };
-
-      // Add line
-      const addLine = () => {
-        pdf.line(margin, yPosition, pageWidth - margin, yPosition);
-        yPosition += 10;
-      };
-
-      // Header
-      addText('RECIBO DE PAGO', 18, true, 'center');
+      
+      // Create report template with club configuration
+      const template = await createReportTemplate(pdf);
+      
+      // Generate professional header
+      let yPosition = template.generateHeader();
       yPosition += 10;
 
-      // Club info (you might want to fetch this from settings)
-      addText('Club de Patinaje Artístico', 14, true, 'center');
-      addText('NIF: B12345678', 10, false, 'center');
-      addText('Dirección del Club, Ciudad, CP', 10, false, 'center');
-      yPosition += 15;
-
-      addLine();
+      // Receipt title
+      yPosition = template.addTitle('RECIBO DE PAGO', 18);
+      yPosition += 10;
 
       // Receipt details
       const receiptNumber = generateReceiptNumber();
-      addText(`Número de Recibo: ${receiptNumber}`, 12, true);
-      addText(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, 10);
-      yPosition += 10;
+      yPosition = template.addText(`Número de Recibo: ${receiptNumber}`, 12);
+      yPosition = template.addText(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, 10);
+      yPosition = template.addSpace(10);
 
       // Payer information
-      addText('DATOS DEL PAGADOR:', 12, true);
-      addText(`Nombre: ${transaction.payer_name || 'No especificado'}`, 10);
+      yPosition = template.addText('DATOS DEL PAGADOR:', 12);
+      yPosition = template.addText(`Nombre: ${transaction.payer_name || 'No especificado'}`, 10);
       if (transaction.payer_identification) {
-        addText(`DNI/NIE: ${transaction.payer_identification}`, 10);
+        yPosition = template.addText(`DNI/NIE: ${transaction.payer_identification}`, 10);
       }
       if (transaction.payer_phone) {
-        addText(`Teléfono: ${transaction.payer_phone}`, 10);
+        yPosition = template.addText(`Teléfono: ${transaction.payer_phone}`, 10);
       }
       if (transaction.payer_email) {
-        addText(`Email: ${transaction.payer_email}`, 10);
+        yPosition = template.addText(`Email: ${transaction.payer_email}`, 10);
       }
-      yPosition += 10;
+      yPosition = template.addSpace(10);
 
       // Athlete information
       if (transaction.athletes) {
-        addText('DATOS DEL ATLETA:', 12, true);
-        addText(`Nombre: ${transaction.athletes.first_name} ${transaction.athletes.last_name}`, 10);
+        yPosition = template.addText('DATOS DEL ATLETA:', 12);
+        yPosition = template.addText(`Nombre: ${transaction.athletes.first_name} ${transaction.athletes.last_name}`, 10);
         if (transaction.athletes.athlete_number) {
-          addText(`Número de Atleta: ${transaction.athletes.athlete_number}`, 10);
+          yPosition = template.addText(`Número de Atleta: ${transaction.athletes.athlete_number}`, 10);
         }
-        yPosition += 10;
+        yPosition = template.addSpace(10);
       }
 
-      addLine();
-
       // Transaction details
-      addText('DETALLE DEL PAGO:', 12, true);
-      addText(`Concepto: ${transaction.description}`, 10);
-      addText(`Tipo: ${transaction.transaction_type}`, 10);
-      addText(`Fecha de Transacción: ${new Date(transaction.transaction_date).toLocaleDateString('es-ES')}`, 10);
-      yPosition += 10;
+      yPosition = template.addText('DETALLE DEL PAGO:', 12);
+      yPosition = template.addText(`Concepto: ${transaction.description}`, 10);
+      yPosition = template.addText(`Tipo: ${transaction.transaction_type}`, 10);
+      yPosition = template.addText(`Fecha de Transacción: ${new Date(transaction.transaction_date).toLocaleDateString('es-ES')}`, 10);
+      yPosition = template.addSpace(10);
 
-      // Amount
-      addText(`IMPORTE: €${transaction.amount.toFixed(2)}`, 14, true, 'right');
-      yPosition += 15;
+      // Amount with dynamic currency
+      const currencySymbol = currency === 'EUR' ? '€' : currency === 'USD' ? '$' : currency;
+      yPosition = template.addText(`IMPORTE: ${currencySymbol}${transaction.amount.toFixed(2)}`, 14);
+      yPosition = template.addSpace(15);
 
-      addLine();
-
-      // Footer
-      yPosition += 10;
-      addText('Este recibo certifica el pago realizado.', 8, false, 'center');
-      addText('Conserve este documento para sus registros.', 8, false, 'center');
+      // Generate footer with club information and legal text
+      template.generateFooter();
+      
+      // Add receipt specific footer text
+      const footerY = pdf.internal.pageSize.height - 40;
+      pdf.setFontSize(8);
+      pdf.text('Este recibo certifica el pago realizado.', pdf.internal.pageSize.width / 2, footerY - 10, { align: 'center' });
+      pdf.text('Conserve este documento para sus registros.', pdf.internal.pageSize.width / 2, footerY, { align: 'center' });
 
       if (isPreview) {
         // Open PDF in new window for preview
@@ -232,7 +207,7 @@ export const TransactionReceiptGenerator: React.FC<TransactionReceiptGeneratorPr
               <h4 className="font-semibold">Detalle del Pago</h4>
               <p>Concepto: {transaction.description}</p>
               <p>Tipo: {transaction.transaction_type}</p>
-              <p>Importe: €{transaction.amount.toFixed(2)}</p>
+              <p>Importe: {currency === 'EUR' ? '€' : currency === 'USD' ? '$' : currency}{transaction.amount.toFixed(2)}</p>
               <p>Fecha: {new Date(transaction.transaction_date).toLocaleDateString('es-ES')}</p>
             </div>
           </div>
