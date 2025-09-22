@@ -1,5 +1,7 @@
-import jsPDF from 'jspdf';
+import { useReportTemplate } from '@/hooks/useReportTemplate';
+import { generateHTMLTemplate } from '@/utils/reportTemplateGenerator';
 import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { FinancialReport } from '@/hooks/useFinancialReports';
 import { formatCurrency, type CurrencyCode } from '@/utils/currency';
 

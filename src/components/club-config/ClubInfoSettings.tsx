@@ -16,6 +16,7 @@ import MedicalStaff from './sections/MedicalStaff';
 import LeagueCountryInfo from './sections/LeagueCountryInfo';
 import CoachInfo from './sections/CoachInfo';
 import SocialMediaLinks from './sections/SocialMediaLinks';
+import ReportTemplateSettings from './sections/ReportTemplateSettings';
 import LogoUpload from './LogoUpload';
 
 interface ClubInfoSettingsProps {
@@ -67,6 +68,14 @@ const ClubInfoSettings = ({ clubSettings, onUpdate }: ClubInfoSettingsProps) => 
       coach_name: clubSettings?.coach_name || '',
       coach_phone: clubSettings?.coach_phone || '',
       coach_email: clubSettings?.coach_email || '',
+      report_include_logo: clubSettings?.report_include_logo ?? true,
+      report_include_address: clubSettings?.report_include_address ?? true,
+      report_include_contact: clubSettings?.report_include_contact ?? true,
+      report_include_social: clubSettings?.report_include_social ?? false,
+      report_include_president: clubSettings?.report_include_president ?? true,
+      report_include_delegate: clubSettings?.report_include_delegate ?? false,
+      report_include_league: clubSettings?.report_include_league ?? false,
+      report_header_style: clubSettings?.report_header_style || 'full',
     },
   });
 
@@ -101,6 +110,14 @@ const ClubInfoSettings = ({ clubSettings, onUpdate }: ClubInfoSettingsProps) => 
         coach_name: clubSettings.coach_name || '',
         coach_phone: clubSettings.coach_phone || '',
         coach_email: clubSettings.coach_email || '',
+        report_include_logo: clubSettings.report_include_logo ?? true,
+        report_include_address: clubSettings.report_include_address ?? true,
+        report_include_contact: clubSettings.report_include_contact ?? true,
+        report_include_social: clubSettings.report_include_social ?? false,
+        report_include_president: clubSettings.report_include_president ?? true,
+        report_include_delegate: clubSettings.report_include_delegate ?? false,
+        report_include_league: clubSettings.report_include_league ?? false,
+        report_header_style: clubSettings.report_header_style || 'full',
       });
     }
   }, [clubSettings, form]);
@@ -190,6 +207,7 @@ const ClubInfoSettings = ({ clubSettings, onUpdate }: ClubInfoSettingsProps) => 
               <LeagueCountryInfo control={form.control} />
               <CoachInfo control={form.control} />
               <SocialMediaLinks control={form.control} />
+              <ReportTemplateSettings control={form.control} />
 
               <div className="flex justify-end">
                 <Button type="submit">

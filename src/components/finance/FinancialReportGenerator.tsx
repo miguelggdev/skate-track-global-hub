@@ -4,6 +4,11 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { FinancialReport } from '@/hooks/useFinancialReports';
+import { formatCurrency } from '@/utils/currency';
+import { generateHTMLTemplate } from '@/utils/reportTemplateGenerator';
+import { useReportTemplate } from '@/hooks/useReportTemplate';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -11,7 +16,8 @@ import {
   Calendar,
   Receipt,
   PieChart,
-  BarChart3
+  BarChart3,
+  Download
 } from 'lucide-react';
 
 interface FinancialReportGeneratorProps {
@@ -19,8 +25,169 @@ interface FinancialReportGeneratorProps {
 }
 
 export const FinancialReportGenerator: React.FC<FinancialReportGeneratorProps> = ({ report }) => {
-  const formatCurrency = (amount: number) => `€${amount.toFixed(2)}`;
+  const { clubInfo, reportSettings } = useReportTemplate();
+  
   const formatDate = (date: Date) => date.toLocaleDateString('es-ES');
+
+  const downloadPDF = async () => {
+    const content = `
+      <div style="margin-bottom: 40px;">
+        <h1 style="font-size: 32px; font-weight: bold; text-align: center; margin-bottom: 20px; color: #1a1a1a;">
+          Informe Financiero - ${report.type === 'income' ? 'Ingresos' : 
+                                 report.type === 'expenses' ? 'Gastos' : 
+                                 report.type === 'balance' ? 'Balance General' : 'Informe Completo'}
+        </h1>
+        <p style="text-align: center; font-size: 16px; color: #666; margin-bottom: 30px;">
+          Período: ${formatDate(report.dateRange.startDate)} - ${formatDate(report.dateRange.endDate)}
+        </p>
+      </div>
+
+      <!-- Summary Cards -->
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 40px;">
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #22c55e;">
+          <h3 style="margin: 0 0 10px 0; color: #16a34a; font-weight: bold;">Total Ingresos</h3>
+          <p style="margin: 0; font-size: 24px; font-weight: bold; color: #1a1a1a;">${formatCurrency(report.summary.totalIncome)}</p>
+        </div>
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #ef4444;">
+          <h3 style="margin: 0 0 10px 0; color: #dc2626; font-weight: bold;">Total Gastos</h3>
+          <p style="margin: 0; font-size: 24px; font-weight: bold; color: #1a1a1a;">${formatCurrency(report.summary.totalExpenses)}</p>
+        </div>
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+          <h3 style="margin: 0 0 10px 0; color: #2563eb; font-weight: bold;">Balance Neto</h3>
+          <p style="margin: 0; font-size: 24px; font-weight: bold; color: ${report.summary.netBalance >= 0 ? '#16a34a' : '#dc2626'};">${formatCurrency(report.summary.netBalance)}</p>
+        </div>
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+          <h3 style="margin: 0 0 10px 0; color: #d97706; font-weight: bold;">Pendientes</h3>
+          <p style="margin: 0; font-size: 24px; font-weight: bold; color: #1a1a1a;">${formatCurrency(report.summary.pendingAmount)}</p>
+        </div>
+      </div>
+
+      <!-- Category Breakdown -->
+      ${Object.keys(report.categoryBreakdown.income).length > 0 || Object.keys(report.categoryBreakdown.expenses).length > 0 ? `
+        <div style="margin-bottom: 40px;">
+          <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 20px; color: #1a1a1a;">Distribución por Categorías</h2>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px;">
+            ${Object.keys(report.categoryBreakdown.income).length > 0 ? `
+              <div>
+                <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 15px; color: #16a34a;">Ingresos</h3>
+                ${Object.entries(report.categoryBreakdown.income).map(([category, amount]) => {
+                  const percentage = (amount / report.summary.totalIncome) * 100;
+                  return `
+                    <div style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                      <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span style="font-weight: 500;">${category}</span>
+                        <span>${formatCurrency(amount)} (${percentage.toFixed(1)}%)</span>
+                      </div>
+                      <div style="background: #e5e5e5; height: 6px; border-radius: 3px;">
+                        <div style="background: #22c55e; height: 100%; width: ${percentage}%; border-radius: 3px;"></div>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            ` : ''}
+            ${Object.keys(report.categoryBreakdown.expenses).length > 0 ? `
+              <div>
+                <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 15px; color: #dc2626;">Gastos</h3>
+                ${Object.entries(report.categoryBreakdown.expenses).map(([category, amount]) => {
+                  const percentage = (amount / report.summary.totalExpenses) * 100;
+                  return `
+                    <div style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                      <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span style="font-weight: 500;">${category}</span>
+                        <span>${formatCurrency(amount)} (${percentage.toFixed(1)}%)</span>
+                      </div>
+                      <div style="background: #e5e5e5; height: 6px; border-radius: 3px;">
+                        <div style="background: #ef4444; height: 100%; width: ${percentage}%; border-radius: 3px;"></div>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Transactions List -->
+      <div style="margin-bottom: 40px;">
+        <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 20px; color: #1a1a1a;">Transacciones (${report.transactions.length})</h2>
+        ${report.transactions.length > 0 ? `
+          <table style="width: 100%; border-collapse: collapse; border: 1px solid #e5e5e5;">
+            <thead>
+              <tr style="background: #f8f9fa;">
+                <th style="padding: 12px; text-align: left; border: 1px solid #e5e5e5; font-weight: bold;">Descripción</th>
+                <th style="padding: 12px; text-align: center; border: 1px solid #e5e5e5; font-weight: bold;">Fecha</th>
+                <th style="padding: 12px; text-align: center; border: 1px solid #e5e5e5; font-weight: bold;">Tipo</th>
+                <th style="padding: 12px; text-align: center; border: 1px solid #e5e5e5; font-weight: bold;">Estado</th>
+                <th style="padding: 12px; text-align: right; border: 1px solid #e5e5e5; font-weight: bold;">Monto</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${report.transactions.slice(0, 20).map(transaction => `
+                <tr>
+                  <td style="padding: 10px; border: 1px solid #e5e5e5;">${transaction.description}${transaction.payer_name ? ` - ${transaction.payer_name}` : ''}</td>
+                  <td style="padding: 10px; text-align: center; border: 1px solid #e5e5e5;">${formatDate(new Date(transaction.transaction_date))}</td>
+                  <td style="padding: 10px; text-align: center; border: 1px solid #e5e5e5;">${getTransactionTypeLabel(transaction.transaction_type)}</td>
+                  <td style="padding: 10px; text-align: center; border: 1px solid #e5e5e5;">${getStatusLabel(transaction.payment_status)}</td>
+                  <td style="padding: 10px; text-align: right; border: 1px solid #e5e5e5; color: ${['mensualidad', 'anualidad', 'registration_fee'].includes(transaction.transaction_type) ? '#16a34a' : '#dc2626'};">
+                    ${['mensualidad', 'anualidad', 'registration_fee'].includes(transaction.transaction_type) ? '+' : '-'}${formatCurrency(Math.abs(transaction.amount))}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          ${report.transactions.length > 20 ? `<p style="margin-top: 10px; font-size: 12px; color: #666; font-style: italic;">Mostrando las primeras 20 transacciones de ${report.transactions.length} total.</p>` : ''}
+        ` : `
+          <p style="text-align: center; color: #666; font-style: italic;">No hay transacciones en el período seleccionado</p>
+        `}
+      </div>
+    `;
+
+    const htmlContent = generateHTMLTemplate(clubInfo, reportSettings, content);
+
+    // Create a temporary container
+    const container = document.createElement('div');
+    container.innerHTML = htmlContent;
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    container.style.top = '-9999px';
+    container.style.width = '800px';
+    document.body.appendChild(container);
+
+    try {
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const fileName = `informe-financiero-${report.type}-${formatDate(report.dateRange.startDate).replace(/\//g, '-')}.pdf`;
+      pdf.save(fileName);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    } finally {
+      document.body.removeChild(container);
+    }
+  };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -283,6 +450,16 @@ export const FinancialReportGenerator: React.FC<FinancialReportGeneratorProps> =
   return (
     <div className="space-y-6 print:space-y-4">
       {renderReportHeader()}
+      
+      <div className="mb-6 flex justify-end">
+        <button 
+          onClick={downloadPDF}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+        >
+          <Download className="h-4 w-4" />
+          Descargar PDF
+        </button>
+      </div>
       {renderSummaryCards()}
       {renderCategoryBreakdown()}
       {renderTransactionsList()}

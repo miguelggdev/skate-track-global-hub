@@ -478,6 +478,14 @@ export type Database = {
           president_id: string | null
           president_name: string | null
           president_phone: string | null
+          report_header_style: string | null
+          report_include_address: boolean | null
+          report_include_contact: boolean | null
+          report_include_delegate: boolean | null
+          report_include_league: boolean | null
+          report_include_logo: boolean | null
+          report_include_president: boolean | null
+          report_include_social: boolean | null
           social_facebook: string | null
           social_instagram: string | null
           social_twitter: string | null
@@ -512,6 +520,14 @@ export type Database = {
           president_id?: string | null
           president_name?: string | null
           president_phone?: string | null
+          report_header_style?: string | null
+          report_include_address?: boolean | null
+          report_include_contact?: boolean | null
+          report_include_delegate?: boolean | null
+          report_include_league?: boolean | null
+          report_include_logo?: boolean | null
+          report_include_president?: boolean | null
+          report_include_social?: boolean | null
           social_facebook?: string | null
           social_instagram?: string | null
           social_twitter?: string | null
@@ -546,6 +562,14 @@ export type Database = {
           president_id?: string | null
           president_name?: string | null
           president_phone?: string | null
+          report_header_style?: string | null
+          report_include_address?: boolean | null
+          report_include_contact?: boolean | null
+          report_include_delegate?: boolean | null
+          report_include_league?: boolean | null
+          report_include_logo?: boolean | null
+          report_include_president?: boolean | null
+          report_include_social?: boolean | null
           social_facebook?: string | null
           social_instagram?: string | null
           social_twitter?: string | null

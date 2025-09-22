@@ -42,6 +42,14 @@ export interface ClubSettings {
   coach_name?: string;
   coach_phone?: string;
   coach_email?: string;
+  report_include_logo?: boolean;
+  report_include_address?: boolean;
+  report_include_contact?: boolean;
+  report_include_social?: boolean;
+  report_include_president?: boolean;
+  report_include_delegate?: boolean;
+  report_include_league?: boolean;
+  report_header_style?: 'minimal' | 'full' | 'corporate';
   created_at: string;
   updated_at: string;
 }
@@ -79,7 +87,12 @@ const ClubConfig = () => {
         .maybeSingle();
 
       if (error) throw error;
-      setClubSettings(data);
+      if (data) {
+        setClubSettings({
+          ...data,
+          report_header_style: (data.report_header_style as 'minimal' | 'full' | 'corporate') || 'full'
+        });
+      }
     } catch (error) {
       console.error('Error fetching club settings:', error);
       toast({
