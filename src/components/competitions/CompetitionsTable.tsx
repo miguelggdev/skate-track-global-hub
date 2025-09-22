@@ -55,7 +55,7 @@ const CompetitionsTable = () => {
 
   if (error) {
     return (
-      <Card className="lg:col-span-2 argon-card">
+      <Card className="argon-card">
         <CardContent className="flex items-center justify-center h-64">
           <p className="text-red-500">Error loading competitions. Please try again.</p>
         </CardContent>
@@ -64,7 +64,7 @@ const CompetitionsTable = () => {
   }
 
   return (
-    <Card className="lg:col-span-2 argon-card">
+    <Card className="argon-card">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold text-gray-800">Competition Management</CardTitle>
