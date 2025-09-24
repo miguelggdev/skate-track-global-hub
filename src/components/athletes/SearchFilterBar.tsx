@@ -25,7 +25,7 @@ const SearchFilterBar = ({ searchTerm, setSearchTerm }: SearchFilterBarProps) =>
                 className="pl-10 text-sm"
               />
             </div>
-            <Button variant="outline" className="flex items-center space-x-2 text-sm">
+            <Button variant="toggle-secondary" className="flex items-center space-x-2 text-sm rounded-full px-4">
               <Filter className="h-4 w-4" />
               <span>Filter</span>
             </Button>

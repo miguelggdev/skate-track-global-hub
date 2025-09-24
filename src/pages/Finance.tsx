@@ -4,6 +4,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { ToggleButtonGroup, ToggleButton } from '@/components/ui/toggle-button-group';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -203,12 +204,12 @@ const Finance = () => {
         {/* Header Actions */}
         <div className="flex justify-end gap-3">
           <AddTransactionDialog>
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button variant="toggle-primary" className="rounded-full px-6">
               <Plus className="h-4 w-4 mr-2" />
               Nueva Transacción
             </Button>
           </AddTransactionDialog>
-          <Button variant="outline">
+          <Button variant="toggle-secondary" className="rounded-full px-6">
             <Download className="h-4 w-4 mr-2" />
             Exportar
           </Button>
@@ -342,7 +343,7 @@ const Finance = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex gap-4">
+                <div className="flex gap-4 items-center">
                   <div className="flex-1">
                     <Input 
                       placeholder="Buscar transacciones..." 
@@ -351,16 +352,11 @@ const Finance = () => {
                       className="w-full"
                     />
                   </div>
-                  <Select value={selectedTransactionType} onValueChange={setSelectedTransactionType}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="Filtrar por tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas</SelectItem>
-                      <SelectItem value="income">Ingresos</SelectItem>
-                      <SelectItem value="expense">Gastos</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <ToggleButtonGroup value={selectedTransactionType} onValueChange={setSelectedTransactionType}>
+                    <ToggleButton value="all">Todas</ToggleButton>
+                    <ToggleButton value="income">Ingresos</ToggleButton>
+                    <ToggleButton value="expense">Gastos</ToggleButton>
+                  </ToggleButtonGroup>
                   <Button variant="outline">
                     <Filter className="h-4 w-4" />
                   </Button>
