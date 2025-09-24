@@ -198,6 +198,11 @@ const Finance = () => {
     { name: 'Competiciones', budget: 20000, spent: 12000, color: 'bg-orange-500' },
   ];
 
+  // Budget totals
+  const totalBudget = budgetCategories.reduce((sum, cat) => sum + cat.budget, 0);
+  const totalSpent = budgetCategories.reduce((sum, cat) => sum + cat.spent, 0);
+  const totalAvailable = totalBudget - totalSpent;
+
   return (
     <DashboardLayout title="Gestión Financiera" userRole="Gestor Financiero">
       <div className="space-y-6">
@@ -440,9 +445,9 @@ const Finance = () => {
                       <CardTitle className="text-sm">Presupuesto Total</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">€120,000</div>
-                      <Progress value={45} className="mt-2" />
-                      <p className="text-xs text-gray-500 mt-1">45% ejecutado</p>
+                      <div className="text-2xl font-bold">{formatCurrency(totalBudget, currency)}</div>
+                      <Progress value={(totalSpent / totalBudget) * 100} className="mt-2" />
+                      <p className="text-xs text-gray-500 mt-1">{Math.round((totalSpent / totalBudget) * 100)}% ejecutado</p>
                     </CardContent>
                   </Card>
 
@@ -451,9 +456,9 @@ const Finance = () => {
                       <CardTitle className="text-sm">Gastado</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-red-600">€83,500</div>
-                      <Progress value={69} className="mt-2" />
-                      <p className="text-xs text-gray-500 mt-1">69% del presupuesto</p>
+                      <div className="text-2xl font-bold text-red-600">{formatCurrency(totalSpent, currency)}</div>
+                      <Progress value={(totalSpent / totalBudget) * 100} className="mt-2" />
+                      <p className="text-xs text-gray-500 mt-1">{Math.round((totalSpent / totalBudget) * 100)}% del presupuesto</p>
                     </CardContent>
                   </Card>
 
@@ -462,9 +467,9 @@ const Finance = () => {
                       <CardTitle className="text-sm">Disponible</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-green-600">€36,500</div>
-                      <Progress value={31} className="mt-2" />
-                      <p className="text-xs text-gray-500 mt-1">31% restante</p>
+                      <div className="text-2xl font-bold text-green-600">{formatCurrency(totalAvailable, currency)}</div>
+                      <Progress value={(totalAvailable / totalBudget) * 100} className="mt-2" />
+                      <p className="text-xs text-gray-500 mt-1">{Math.round((totalAvailable / totalBudget) * 100)}% restante</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -480,7 +485,7 @@ const Finance = () => {
                         </div>
                         <div className="text-right">
                           <div className="font-medium">
-                            €{category.spent.toLocaleString()} / €{category.budget.toLocaleString()}
+                            {formatCurrency(category.spent, currency)} / {formatCurrency(category.budget, currency)}
                           </div>
                           <Progress value={(category.spent / category.budget) * 100} className="w-32 mt-1" />
                         </div>
@@ -589,7 +594,9 @@ const Finance = () => {
                   <Card>
                     <CardContent className="p-4">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">€24,680</div>
+                        <div className="text-2xl font-bold text-green-600">
+                          {financialStats ? formatCurrency(financialStats.totalIncome, currency) : formatCurrency(24680, currency)}
+                        </div>
                         <p className="text-sm text-gray-500">Pagos Recibidos</p>
                       </div>
                     </CardContent>
@@ -598,7 +605,9 @@ const Finance = () => {
                   <Card>
                     <CardContent className="p-4">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-yellow-600">€8,924</div>
+                        <div className="text-2xl font-bold text-yellow-600">
+                          {financialStats ? formatCurrency(financialStats.pendingPayments, currency) : formatCurrency(8924, currency)}
+                        </div>
                         <p className="text-sm text-gray-500">Pagos Pendientes</p>
                       </div>
                     </CardContent>
@@ -607,7 +616,7 @@ const Finance = () => {
                   <Card>
                     <CardContent className="p-4">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-red-600">€2,150</div>
+                        <div className="text-2xl font-bold text-red-600">{formatCurrency(2150, currency)}</div>
                         <p className="text-sm text-gray-500">Pagos Vencidos</p>
                       </div>
                     </CardContent>
@@ -646,11 +655,11 @@ const Finance = () => {
                   <h3 className="text-lg font-semibold mb-3">Tarifas y Cuotas</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="monthly-fee">Cuota Mensual (€)</Label>
+                      <Label htmlFor="monthly-fee">Cuota Mensual ({currency})</Label>
                       <Input id="monthly-fee" type="number" defaultValue="85" />
                     </div>
                     <div>
-                      <Label htmlFor="registration-fee">Cuota de Inscripción (€)</Label>
+                      <Label htmlFor="registration-fee">Cuota de Inscripción ({currency})</Label>
                       <Input id="registration-fee" type="number" defaultValue="50" />
                     </div>
                   </div>
