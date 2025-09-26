@@ -130,74 +130,89 @@ export const generateAthletePDF = async (
     currentY = generator.addText(`Total de atletas: ${athletes.length}`, 10);
     currentY = generator.addSpace(10);
 
-    // Table configuration
+    // Table configuration with improved styling
     const pageWidth = 297; // A4 landscape width
-    const margin = 20;
+    const margin = 15;
     const tableWidth = pageWidth - (margin * 2);
     
-    // Column definitions
+    // Column definitions with optimized widths
     const columns = [
-      { header: 'Nombre', width: 35 },
-      { header: 'Categoría', width: 20 },
+      { header: 'Nombre', width: 38 },
+      { header: 'Categoría', width: 22 },
       { header: 'Nivel', width: 25 },
-      { header: 'F. Nacimiento', width: 25 },
-      { header: 'Tipo ID', width: 20 },
-      { header: 'Núm. ID', width: 30 },
-      { header: 'Teléfono', width: 25 },
-      { header: 'Email', width: 45 },
-      { header: 'Estado', width: 20 },
-      { header: 'F. Ingreso', width: 25 }
+      { header: 'F. Nacimiento', width: 28 },
+      { header: 'Tipo ID', width: 22 },
+      { header: 'Número ID', width: 32 },
+      { header: 'Teléfono', width: 28 },
+      { header: 'Email', width: 48 },
+      { header: 'Estado', width: 22 },
+      { header: 'F. Ingreso', width: 28 }
     ];
 
-    // Draw table header
+    // Professional table header
     let x = margin;
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.setFillColor(8, 145, 178); // Primary color
+    
+    // Header background with gradient effect
+    doc.setFillColor(8, 145, 178);
+    doc.rect(margin, currentY, tableWidth, 12, 'F');
+    
+    // Header accent line
+    doc.setFillColor(6, 120, 145);
+    doc.rect(margin, currentY, tableWidth, 2, 'F');
+    
     doc.setTextColor(255, 255, 255);
     
     columns.forEach(col => {
-      doc.rect(x, currentY, col.width, 8, 'F');
-      doc.text(col.header, x + 2, currentY + 5);
+      // Center-align headers
+      const centerX = x + (col.width / 2);
+      doc.text(col.header, centerX, currentY + 8, { align: 'center' });
       x += col.width;
     });
     
-    currentY += 8;
+    currentY += 12;
     
-    // Draw table rows
+    // Draw table rows with enhanced styling
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(9);
+    doc.setTextColor(31, 31, 31);
     
     athletes.forEach((athlete, index) => {
       // Check if we need a new page
-      if (currentY > 180) {
+      if (currentY > 170) {
         doc.addPage();
         currentY = 20;
         
-        // Redraw header on new page
+        // Redraw professional header on new page
         x = margin;
         doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
         doc.setFillColor(8, 145, 178);
+        doc.rect(margin, currentY, tableWidth, 12, 'F');
+        doc.setFillColor(6, 120, 145);
+        doc.rect(margin, currentY, tableWidth, 2, 'F');
         doc.setTextColor(255, 255, 255);
         
         columns.forEach(col => {
-          doc.rect(x, currentY, col.width, 8, 'F');
-          doc.text(col.header, x + 2, currentY + 5);
+          const centerX = x + (col.width / 2);
+          doc.text(col.header, centerX, currentY + 8, { align: 'center' });
           x += col.width;
         });
         
-        currentY += 8;
+        currentY += 12;
         doc.setFont('helvetica', 'normal');
-        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(9);
+        doc.setTextColor(31, 31, 31);
       }
       
-      // Alternate row colors
+      // Enhanced alternating row colors
       if (index % 2 === 1) {
-        doc.setFillColor(248, 249, 250);
-        doc.rect(margin, currentY, tableWidth, 6, 'F');
+        doc.setFillColor(248, 250, 252);
+        doc.rect(margin, currentY, tableWidth, 8, 'F');
       }
       
-      // Row data
+      // Row data with better formatting
       const rowData = [
         `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim(),
         athlete.category || '',
@@ -213,12 +228,19 @@ export const generateAthletePDF = async (
       
       x = margin;
       rowData.forEach((data, colIndex) => {
-        const text = String(data).substring(0, 15); // Truncate long text
-        doc.text(text, x + 2, currentY + 4);
+        let text = String(data);
+        // Smart text truncation based on column width
+        const maxLength = Math.floor(columns[colIndex].width / 2.5);
+        if (text.length > maxLength) {
+          text = text.substring(0, maxLength - 2) + '..';
+        }
+        
+        // Better text positioning
+        doc.text(text, x + 2, currentY + 5.5);
         x += columns[colIndex].width;
       });
       
-      currentY += 6;
+      currentY += 8;
     });
     
     // Generate footer on last page
