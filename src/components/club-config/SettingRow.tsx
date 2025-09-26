@@ -10,14 +10,24 @@ import { Edit2, Check, X } from 'lucide-react';
 interface SettingRowProps {
   setting: SystemSetting;
   onUpdate: () => void;
+  onLocalChange?: (settingId: string, value: string) => void;
+  bulkMode?: boolean;
+  hasChanges?: boolean;
 }
 
-const SettingRow = ({ setting, onUpdate }: SettingRowProps) => {
+const SettingRow = ({ setting, onUpdate, onLocalChange, bulkMode = false, hasChanges = false }: SettingRowProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(setting.setting_value);
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
+    if (bulkMode) {
+      // In bulk mode, just notify parent of change
+      onLocalChange?.(setting.id, value);
+      setIsEditing(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const { error } = await supabase
@@ -92,7 +102,7 @@ const SettingRow = ({ setting, onUpdate }: SettingRowProps) => {
   };
 
   return (
-    <div className="flex items-center justify-between p-4 border rounded-lg">
+    <div className={`flex items-center justify-between p-4 border rounded-lg ${hasChanges ? 'border-primary bg-primary/5' : ''}`}>
       <div className="flex-1">
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
