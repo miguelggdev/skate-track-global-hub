@@ -38,9 +38,10 @@ interface UsersTableProps {
   onUserDeleted: (userId: string) => void;
   onUserBlocked: (userId: string, blocked: boolean) => void;
   onPasswordReset: (email: string) => void;
+  onRoleManage: (userId: string) => void;
 }
 
-const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted, onUserBlocked, onPasswordReset }: UsersTableProps) => {
+const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted, onUserBlocked, onPasswordReset, onRoleManage }: UsersTableProps) => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [viewingUser, setViewingUser] = useState<User | null>(null);
@@ -166,7 +167,7 @@ const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted, onUserBlocke
                             <Edit className="mr-2 h-4 w-4" />
                             Editar
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => console.log('Gestionar roles', user.id)}>
+                          <DropdownMenuItem onClick={() => onRoleManage(user.id)}>
                             <Shield className="mr-2 h-4 w-4" />
                             Gestionar Roles
                           </DropdownMenuItem>

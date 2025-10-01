@@ -6,9 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { UserPlus, Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import UsersTable from '@/components/users/UsersTable';
 import UserStatsCards from '@/components/users/UserStatsCards';
 import AddUserDialog from '@/components/users/AddUserDialog';
+import { ManageUserRolesDialog } from '@/components/users/ManageUserRolesDialog';
 
 interface User {
   id: string;
@@ -31,7 +33,9 @@ const UserManagementTab = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [managingRoleUserId, setManagingRoleUserId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
 
   const fetchUsers = async () => {
     try {
@@ -151,6 +155,12 @@ const UserManagementTab = () => {
     }
   };
 
+  const handleRoleManage = (userId: string) => {
+    setManagingRoleUserId(userId);
+  };
+
+  const managingUser = users.find(u => u.id === managingRoleUserId) || null;
+
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -230,6 +240,7 @@ const UserManagementTab = () => {
         onUserDeleted={handleUserDeleted}
         onUserBlocked={handleUserBlocked}
         onPasswordReset={handlePasswordReset}
+        onRoleManage={handleRoleManage}
       />
 
       {/* Add User Dialog */}
@@ -237,6 +248,15 @@ const UserManagementTab = () => {
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
         onUserAdded={handleUserAdded}
+      />
+
+      {/* Manage User Roles Dialog */}
+      <ManageUserRolesDialog
+        user={managingUser}
+        open={managingRoleUserId !== null}
+        onOpenChange={(open) => !open && setManagingRoleUserId(null)}
+        onRoleChanged={fetchUsers}
+        currentUserId={currentUser?.id}
       />
     </div>
   );

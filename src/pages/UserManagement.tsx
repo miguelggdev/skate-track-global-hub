@@ -4,7 +4,9 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import UserManagementHeader from '@/components/users/UserManagementHeader';
 import UsersTable from '@/components/users/UsersTable';
 import UserStatsCards from '@/components/users/UserStatsCards';
+import { ManageUserRolesDialog } from '@/components/users/ManageUserRolesDialog';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface User {
   id: string;
@@ -25,7 +27,9 @@ const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [managingRoleUserId, setManagingRoleUserId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
 
   const fetchUsers = async () => {
     try {
@@ -145,6 +149,12 @@ const UserManagement = () => {
     }
   };
 
+  const handleRoleManage = (userId: string) => {
+    setManagingRoleUserId(userId);
+  };
+
+  const managingUser = users.find(u => u.id === managingRoleUserId) || null;
+
   const filteredUsers = users.filter(user =>
     user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -181,6 +191,15 @@ const UserManagement = () => {
             onUserDeleted={handleUserDeleted}
             onUserBlocked={handleUserBlocked}
             onPasswordReset={handlePasswordReset}
+            onRoleManage={handleRoleManage}
+          />
+
+          <ManageUserRolesDialog
+            user={managingUser}
+            open={managingRoleUserId !== null}
+            onOpenChange={(open) => !open && setManagingRoleUserId(null)}
+            onRoleChanged={fetchUsers}
+            currentUserId={currentUser?.id}
           />
         </div>
       </div>
