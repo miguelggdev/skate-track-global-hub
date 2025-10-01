@@ -313,7 +313,7 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
           guardian_phone: data.guardian_phone,
           guardian_email: data.guardian_email,
           updated_at: new Date().toISOString(),
-        });
+        }, { onConflict: 'athlete_id' });
 
       if (familyError) throw familyError;
 
@@ -331,7 +331,7 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
           injuries: data.injuries,
           limitations: data.limitations,
           updated_at: new Date().toISOString(),
-        });
+        }, { onConflict: 'athlete_id' });
 
       if (bodyError) throw bodyError;
 
@@ -347,7 +347,7 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
           school_phone: data.school_phone,
           school_email: data.school_email,
           updated_at: new Date().toISOString(),
-        });
+        }, { onConflict: 'athlete_id' });
 
       if (studiesError) throw studiesError;
 
@@ -364,7 +364,7 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
           track_wheels_brand: data.track_wheels_brand,
           helmet_brand: data.helmet_brand,
           updated_at: new Date().toISOString(),
-        });
+        }, { onConflict: 'athlete_id' });
 
       if (equipmentError) throw equipmentError;
 
@@ -381,7 +381,7 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
           is_federated: data.is_federated,
           previous_club: data.previous_club,
           updated_at: new Date().toISOString(),
-        });
+        }, { onConflict: 'athlete_id' });
 
       if (historyError) throw historyError;
 
