@@ -28,6 +28,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import EditUserDialog from './EditUserDialog';
+import UserDetailsDialog from './UserDetailsDialog';
 import { User } from '@/pages/UserManagement';
 
 interface UsersTableProps {
@@ -42,6 +43,7 @@ interface UsersTableProps {
 const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted, onUserBlocked, onPasswordReset }: UsersTableProps) => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
+  const [viewingUser, setViewingUser] = useState<User | null>(null);
 
   const getRoleBadge = (role: string) => {
     const roleConfig = {
@@ -156,7 +158,7 @@ const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted, onUserBlocke
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => console.log('Ver detalles', user.id)}>
+                          <DropdownMenuItem onClick={() => setViewingUser(user)}>
                             <Eye className="mr-2 h-4 w-4" />
                             Ver Detalles
                           </DropdownMenuItem>
@@ -202,6 +204,13 @@ const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted, onUserBlocke
           </div>
         </CardContent>
       </Card>
+
+      {/* View User Details Dialog */}
+      <UserDetailsDialog
+        user={viewingUser}
+        open={!!viewingUser}
+        onOpenChange={(open) => !open && setViewingUser(null)}
+      />
 
       {/* Edit User Dialog */}
       <EditUserDialog
