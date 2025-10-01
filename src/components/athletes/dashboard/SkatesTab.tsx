@@ -73,6 +73,15 @@ export const SkatesTab = () => {
 
     setLoading(true);
     try {
+      // Check if record exists
+      const { data: existing } = await supabase
+        .from('athlete_equipment')
+        .select('id')
+        .eq('athlete_id', athlete.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
       const saveData = {
         athlete_id: athlete.id,
         boot_brand: formData.boot_brand,
@@ -84,11 +93,20 @@ export const SkatesTab = () => {
         helmet_brand: formData.helmet_brand,
       };
 
-      const { error } = await supabase
-        .from('athlete_equipment')
-        .upsert(saveData);
-
-      if (error) throw error;
+      if (existing) {
+        // Update existing record
+        const { error } = await supabase
+          .from('athlete_equipment')
+          .update(saveData)
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        // Insert new record
+        const { error } = await supabase
+          .from('athlete_equipment')
+          .insert(saveData);
+        if (error) throw error;
+      }
 
       toast({
         title: "Información de equipo actualizada",

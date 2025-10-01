@@ -73,14 +73,34 @@ export const FamilyTab = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      // Check if record exists
+      const { data: existing } = await supabase
         .from('athlete_family')
-        .upsert({
-          athlete_id: athlete.id,
-          ...formData,
-        });
+        .select('id')
+        .eq('athlete_id', athlete.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (error) throw error;
+      const saveData = {
+        athlete_id: athlete.id,
+        ...formData,
+      };
+
+      if (existing) {
+        // Update existing record
+        const { error } = await supabase
+          .from('athlete_family')
+          .update(saveData)
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        // Insert new record
+        const { error } = await supabase
+          .from('athlete_family')
+          .insert(saveData);
+        if (error) throw error;
+      }
 
       toast({
         title: "Información familiar actualizada",

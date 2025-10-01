@@ -300,24 +300,41 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
         if (profileError) throw profileError;
       }
 
-      // Update or insert family data
-      const { error: familyError } = await supabase
+      // Update or insert family data - check if exists first
+      const { data: existingFamily } = await supabase
         .from('athlete_family')
-        .upsert({
-          athlete_id: athlete.id,
-          parent_name: data.parent_name,
-          parent_phone: data.parent_phone,
-          parent_email: data.parent_email,
-          guardian_name: data.guardian_name,
-          guardian_relationship: data.guardian_relationship,
-          guardian_phone: data.guardian_phone,
-          guardian_email: data.guardian_email,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'athlete_id' });
+        .select('id')
+        .eq('athlete_id', athlete.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (familyError) throw familyError;
+      const familyData = {
+        athlete_id: athlete.id,
+        parent_name: data.parent_name,
+        parent_phone: data.parent_phone,
+        parent_email: data.parent_email,
+        guardian_name: data.guardian_name,
+        guardian_relationship: data.guardian_relationship,
+        guardian_phone: data.guardian_phone,
+        guardian_email: data.guardian_email,
+        updated_at: new Date().toISOString(),
+      };
 
-      // Update or insert body info
+      if (existingFamily) {
+        const { error: familyError } = await supabase
+          .from('athlete_family')
+          .update(familyData)
+          .eq('id', existingFamily.id);
+        if (familyError) throw familyError;
+      } else {
+        const { error: familyError } = await supabase
+          .from('athlete_family')
+          .insert(familyData);
+        if (familyError) throw familyError;
+      }
+
+      // Update or insert body info - has unique constraint, can use onConflict
       const { error: bodyError } = await supabase
         .from('athlete_body_info')
         .upsert({
@@ -335,55 +352,106 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
 
       if (bodyError) throw bodyError;
 
-      // Update or insert studies data
-      const { error: studiesError } = await supabase
+      // Update or insert studies data - check if exists first
+      const { data: existingStudies } = await supabase
         .from('athlete_studies')
-        .upsert({
-          athlete_id: athlete.id,
-          education_level: data.education_level,
-          current_grade: data.current_grade,
-          school_name: data.school_name,
-          school_address: data.school_address,
-          school_phone: data.school_phone,
-          school_email: data.school_email,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'athlete_id' });
+        .select('id')
+        .eq('athlete_id', athlete.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (studiesError) throw studiesError;
+      const studiesData = {
+        athlete_id: athlete.id,
+        education_level: data.education_level,
+        current_grade: data.current_grade,
+        school_name: data.school_name,
+        school_address: data.school_address,
+        school_phone: data.school_phone,
+        school_email: data.school_email,
+        updated_at: new Date().toISOString(),
+      };
 
-      // Update or insert equipment data
-      const { error: equipmentError } = await supabase
+      if (existingStudies) {
+        const { error: studiesError } = await supabase
+          .from('athlete_studies')
+          .update(studiesData)
+          .eq('id', existingStudies.id);
+        if (studiesError) throw studiesError;
+      } else {
+        const { error: studiesError } = await supabase
+          .from('athlete_studies')
+          .insert(studiesData);
+        if (studiesError) throw studiesError;
+      }
+
+      // Update or insert equipment data - check if exists first
+      const { data: existingEquipment } = await supabase
         .from('athlete_equipment')
-        .upsert({
-          athlete_id: athlete.id,
-          boot_size: data.boot_size,
-          wheel_diameter: data.wheel_diameter,
-          frame_size: data.frame_size,
-          boot_brand: data.boot_brand,
-          frame_brand: data.frame_brand,
-          track_wheels_brand: data.track_wheels_brand,
-          helmet_brand: data.helmet_brand,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'athlete_id' });
+        .select('id')
+        .eq('athlete_id', athlete.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (equipmentError) throw equipmentError;
+      const equipmentData = {
+        athlete_id: athlete.id,
+        boot_size: data.boot_size,
+        wheel_diameter: data.wheel_diameter,
+        frame_size: data.frame_size,
+        boot_brand: data.boot_brand,
+        frame_brand: data.frame_brand,
+        track_wheels_brand: data.track_wheels_brand,
+        helmet_brand: data.helmet_brand,
+        updated_at: new Date().toISOString(),
+      };
 
-      // Update or insert history data
-      const { error: historyError } = await supabase
+      if (existingEquipment) {
+        const { error: equipmentError } = await supabase
+          .from('athlete_equipment')
+          .update(equipmentData)
+          .eq('id', existingEquipment.id);
+        if (equipmentError) throw equipmentError;
+      } else {
+        const { error: equipmentError } = await supabase
+          .from('athlete_equipment')
+          .insert(equipmentData);
+        if (equipmentError) throw equipmentError;
+      }
+
+      // Update or insert history data - check if exists first
+      const { data: existingHistory } = await supabase
         .from('athlete_history')
-        .upsert({
-          athlete_id: athlete.id,
-          years_experience: data.years_experience,
-          start_date: data.start_date || null,
-          league_date: data.league_date || null,
-          federation_date: data.federation_date || null,
-          is_league: data.is_league,
-          is_federated: data.is_federated,
-          previous_club: data.previous_club,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'athlete_id' });
+        .select('id')
+        .eq('athlete_id', athlete.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (historyError) throw historyError;
+      const historyData = {
+        athlete_id: athlete.id,
+        years_experience: data.years_experience,
+        start_date: data.start_date || null,
+        league_date: data.league_date || null,
+        federation_date: data.federation_date || null,
+        is_league: data.is_league,
+        is_federated: data.is_federated,
+        previous_club: data.previous_club,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (existingHistory) {
+        const { error: historyError } = await supabase
+          .from('athlete_history')
+          .update(historyData)
+          .eq('id', existingHistory.id);
+        if (historyError) throw historyError;
+      } else {
+        const { error: historyError } = await supabase
+          .from('athlete_history')
+          .insert(historyData);
+        if (historyError) throw historyError;
+      }
 
       toast({
         title: "Atleta actualizado",

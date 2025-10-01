@@ -112,39 +112,47 @@ export const useAthleteDetails = (athleteId: string | null) => {
         throw athleteError;
       }
 
-      // Fetch family data
+      // Fetch family data - get latest record
       const { data: familyData } = await supabase
         .from('athlete_family')
         .select('*')
         .eq('athlete_id', athleteId)
+        .order('updated_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
-      // Fetch body info
+      // Fetch body info - has unique constraint, use maybeSingle
       const { data: bodyData } = await supabase
         .from('athlete_body_info')
         .select('*')
         .eq('athlete_id', athleteId)
         .maybeSingle();
 
-      // Fetch studies data
+      // Fetch studies data - get latest record
       const { data: studiesData } = await supabase
         .from('athlete_studies')
         .select('*')
         .eq('athlete_id', athleteId)
+        .order('updated_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
-      // Fetch equipment data
+      // Fetch equipment data - get latest record
       const { data: equipmentData } = await supabase
         .from('athlete_equipment')
         .select('*')
         .eq('athlete_id', athleteId)
+        .order('updated_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
-      // Fetch history data
+      // Fetch history data - get latest record
       const { data: historyData } = await supabase
         .from('athlete_history')
         .select('*')
         .eq('athlete_id', athleteId)
+        .order('updated_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       // Combine all data
