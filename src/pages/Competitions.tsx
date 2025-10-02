@@ -6,6 +6,8 @@ import CompetitionStatsCards from '@/components/competitions/CompetitionStatsCar
 import CompetitionResults from '@/components/competitions/CompetitionResults';
 import CompetitionsTable from '@/components/competitions/CompetitionsTable';
 import UpcomingEvents from '@/components/competitions/UpcomingEvents';
+import { MedalsAnalytics } from '@/components/competitions/MedalsAnalytics';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Competitions = () => {
 
@@ -26,14 +28,30 @@ const Competitions = () => {
         {/* Stats Cards */}
         <CompetitionStatsCards />
 
-        {/* Main Dashboard Content */}
-        <CompetitionResults />
+        {/* Tabs for different sections */}
+        <Tabs defaultValue="competitions" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="competitions">Competitions</TabsTrigger>
+            <TabsTrigger value="medals">Medal Analytics</TabsTrigger>
+            <TabsTrigger value="results">Results</TabsTrigger>
+          </TabsList>
 
-        {/* Competition Management */}
-        <CompetitionsTable />
+          <TabsContent value="competitions" className="space-y-6">
+            {/* Competition Management */}
+            <CompetitionsTable />
 
-        {/* Upcoming Events */}
-        <UpcomingEvents />
+            {/* Upcoming Events */}
+            <UpcomingEvents />
+          </TabsContent>
+
+          <TabsContent value="medals">
+            <MedalsAnalytics />
+          </TabsContent>
+
+          <TabsContent value="results">
+            <CompetitionResults />
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );

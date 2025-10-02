@@ -678,6 +678,56 @@ export type Database = {
           },
         ]
       }
+      competition_events: {
+        Row: {
+          age_group: string | null
+          category: Database["public"]["Enums"]["athlete_category"] | null
+          competition_id: string
+          created_at: string | null
+          event_name: string
+          event_type: Database["public"]["Enums"]["event_type"]
+          gender: Database["public"]["Enums"]["athlete_gender"] | null
+          id: string
+          location: string | null
+          scheduled_time: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          age_group?: string | null
+          category?: Database["public"]["Enums"]["athlete_category"] | null
+          competition_id: string
+          created_at?: string | null
+          event_name: string
+          event_type: Database["public"]["Enums"]["event_type"]
+          gender?: Database["public"]["Enums"]["athlete_gender"] | null
+          id?: string
+          location?: string | null
+          scheduled_time?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          age_group?: string | null
+          category?: Database["public"]["Enums"]["athlete_category"] | null
+          competition_id?: string
+          created_at?: string | null
+          event_name?: string
+          event_type?: Database["public"]["Enums"]["event_type"]
+          gender?: Database["public"]["Enums"]["athlete_gender"] | null
+          id?: string
+          location?: string | null
+          scheduled_time?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competition_events_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "competitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       competition_registrations: {
         Row: {
           athlete_id: string
@@ -728,31 +778,49 @@ export type Database = {
           athlete_id: string
           competition_id: string
           created_at: string
+          event_id: string | null
+          event_location: string | null
           id: string
+          is_record: boolean | null
+          medal_type: Database["public"]["Enums"]["medal_type"] | null
           notes: string | null
+          personal_best: boolean | null
           points: number | null
           position: number | null
           score: number | null
+          time_achieved: unknown | null
         }
         Insert: {
           athlete_id: string
           competition_id: string
           created_at?: string
+          event_id?: string | null
+          event_location?: string | null
           id?: string
+          is_record?: boolean | null
+          medal_type?: Database["public"]["Enums"]["medal_type"] | null
           notes?: string | null
+          personal_best?: boolean | null
           points?: number | null
           position?: number | null
           score?: number | null
+          time_achieved?: unknown | null
         }
         Update: {
           athlete_id?: string
           competition_id?: string
           created_at?: string
+          event_id?: string | null
+          event_location?: string | null
           id?: string
+          is_record?: boolean | null
+          medal_type?: Database["public"]["Enums"]["medal_type"] | null
           notes?: string | null
+          personal_best?: boolean | null
           points?: number | null
           position?: number | null
           score?: number | null
+          time_achieved?: unknown | null
         }
         Relationships: [
           {
@@ -767,6 +835,13 @@ export type Database = {
             columns: ["competition_id"]
             isOneToOne: false
             referencedRelation: "competitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competition_results_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "competition_events"
             referencedColumns: ["id"]
           },
         ]
@@ -1582,11 +1657,33 @@ export type Database = {
         | "mayores_unica"
       athlete_status: "active" | "inactive" | "injured" | "suspended"
       competition_status: "upcoming" | "ongoing" | "completed" | "cancelled"
+      event_type:
+        | "speed_100m"
+        | "speed_200m"
+        | "speed_300m"
+        | "speed_500m"
+        | "speed_1000m"
+        | "speed_1500m"
+        | "speed_3000m"
+        | "speed_5000m"
+        | "speed_10000m"
+        | "speed_15000m"
+        | "speed_20000m"
+        | "artistic_figures"
+        | "artistic_freestyle"
+        | "artistic_pairs"
+        | "artistic_dance"
+        | "relay_4x100m"
+        | "relay_4x200m"
+        | "marathon"
+        | "elimination"
+        | "points_race"
       id_type:
         | "Tarjeta de identidad"
         | "Cedula de Ciudadania"
         | "Pasaporte"
         | "Cedula de Extranjeria"
+      medal_type: "gold" | "silver" | "bronze"
       payment_status: "pending" | "paid" | "overdue" | "cancelled"
       training_type:
         | "technical"
@@ -1778,12 +1875,35 @@ export const Constants = {
       ],
       athlete_status: ["active", "inactive", "injured", "suspended"],
       competition_status: ["upcoming", "ongoing", "completed", "cancelled"],
+      event_type: [
+        "speed_100m",
+        "speed_200m",
+        "speed_300m",
+        "speed_500m",
+        "speed_1000m",
+        "speed_1500m",
+        "speed_3000m",
+        "speed_5000m",
+        "speed_10000m",
+        "speed_15000m",
+        "speed_20000m",
+        "artistic_figures",
+        "artistic_freestyle",
+        "artistic_pairs",
+        "artistic_dance",
+        "relay_4x100m",
+        "relay_4x200m",
+        "marathon",
+        "elimination",
+        "points_race",
+      ],
       id_type: [
         "Tarjeta de identidad",
         "Cedula de Ciudadania",
         "Pasaporte",
         "Cedula de Extranjeria",
       ],
+      medal_type: ["gold", "silver", "bronze"],
       payment_status: ["pending", "paid", "overdue", "cancelled"],
       training_type: [
         "technical",

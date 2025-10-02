@@ -9,6 +9,7 @@ import { useCompetitions, useCompetitionRegistrations, useDeleteCompetition } fr
 import { format } from 'date-fns';
 import { EditCompetitionDialog } from './EditCompetitionDialog';
 import { CompetitionPDFReport } from './CompetitionPDFReport';
+import { MedalRecordingDialog } from './MedalRecordingDialog';
 
 
 const CompetitionsTable = () => {
@@ -142,6 +143,10 @@ const CompetitionsTable = () => {
                         <EditCompetitionDialog competition={competition} />
                         <CompetitionPDFReport 
                           competitionId={competition.id} 
+                          competitionName={competition.name}
+                        />
+                        <MedalRecordingDialog
+                          competitionId={competition.id}
                           competitionName={competition.name}
                         />
                         <DropdownMenu>
