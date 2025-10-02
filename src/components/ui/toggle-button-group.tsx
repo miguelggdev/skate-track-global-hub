@@ -49,14 +49,33 @@ export const ToggleButton: React.FC<ToggleButtonProps> = ({
   const { value: selectedValue, onValueChange } = context
   const isSelected = selectedValue === value
 
+  // Determine color variant based on value
+  const getColorClasses = () => {
+    if (!isSelected) {
+      return "hover:bg-background/80 hover:text-foreground text-muted-foreground"
+    }
+    
+    // Apply custom colors for specific values
+    if (value === "income") {
+      return "bg-green-500 text-white hover:bg-green-600"
+    }
+    if (value === "expense") {
+      return "bg-red-500 text-white hover:bg-red-600"
+    }
+    
+    // Default primary color for other values
+    return "bg-primary text-primary-foreground hover:bg-primary/90"
+  }
+
   return (
     <Button
-      variant={isSelected ? "toggle-primary" : "toggle-ghost"}
+      variant="ghost"
       size="sm"
       onClick={() => onValueChange(value)}
       className={cn(
         "rounded-xl h-9 px-4 text-sm font-medium transition-all hover:scale-100",
         isSelected && "shadow-sm",
+        getColorClasses(),
         className
       )}
     >
