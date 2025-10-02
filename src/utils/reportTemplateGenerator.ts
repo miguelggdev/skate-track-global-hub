@@ -85,9 +85,21 @@ export class ReportTemplateGenerator {
     this.doc.setFillColor(8, 145, 178);
     this.doc.rect(15, y, 180, 3, 'F');
 
-    // Logo (upper right corner as requested)
+    // Logo (upper right corner, preserve original aspect ratio)
     if (this.logoImage && this.settings.report_include_logo) {
-      this.doc.addImage(this.logoImage, 'JPEG', 155, y + 8, 35, 35);
+      const maxWidth = 35;
+      const maxHeight = 35;
+      const aspectRatio = this.logoImage.width / this.logoImage.height;
+      
+      let width = maxWidth;
+      let height = maxWidth / aspectRatio;
+      
+      if (height > maxHeight) {
+        height = maxHeight;
+        width = maxHeight * aspectRatio;
+      }
+      
+      this.doc.addImage(this.logoImage, 'JPEG', 160 - width/2, y + 10, width, height);
     }
 
     // Club name (left side, prominent)
@@ -130,9 +142,21 @@ export class ReportTemplateGenerator {
     this.doc.setFillColor(8, 145, 178);
     this.doc.rect(15, y, 4, 65, 'F');
 
-    // Logo (upper right corner as requested)
+    // Logo (upper right corner, preserve original aspect ratio)
     if (this.logoImage && this.settings.report_include_logo) {
-      this.doc.addImage(this.logoImage, 'JPEG', 150, y + 10, 40, 40);
+      const maxWidth = 40;
+      const maxHeight = 40;
+      const aspectRatio = this.logoImage.width / this.logoImage.height;
+      
+      let width = maxWidth;
+      let height = maxWidth / aspectRatio;
+      
+      if (height > maxHeight) {
+        height = maxHeight;
+        width = maxHeight * aspectRatio;
+      }
+      
+      this.doc.addImage(this.logoImage, 'JPEG', 165 - width/2, y + 15, width, height);
     }
 
     // Club name (centered, larger)
@@ -185,14 +209,32 @@ export class ReportTemplateGenerator {
     this.doc.setFillColor(236, 254, 255);
     this.doc.rect(15, y + 2, 8, 73, 'F');
 
-    // Logo (upper right corner as requested)
+    // Logo (upper right corner, preserve original aspect ratio)
     if (this.logoImage && this.settings.report_include_logo) {
       // Professional logo frame
+      const frameSize = 50;
       this.doc.setFillColor(255, 255, 255);
-      this.doc.rect(145, y + 8, 50, 50, 'F');
+      this.doc.rect(145, y + 8, frameSize, frameSize, 'F');
       this.doc.setDrawColor(229, 231, 235);
-      this.doc.rect(145, y + 8, 50, 50, 'S');
-      this.doc.addImage(this.logoImage, 'JPEG', 150, y + 13, 40, 40);
+      this.doc.rect(145, y + 8, frameSize, frameSize, 'S');
+      
+      // Calculate logo dimensions preserving aspect ratio
+      const maxWidth = 40;
+      const maxHeight = 40;
+      const aspectRatio = this.logoImage.width / this.logoImage.height;
+      
+      let width = maxWidth;
+      let height = maxWidth / aspectRatio;
+      
+      if (height > maxHeight) {
+        height = maxHeight;
+        width = maxHeight * aspectRatio;
+      }
+      
+      // Center logo in frame
+      const logoX = 145 + (frameSize - width) / 2;
+      const logoY = y + 8 + (frameSize - height) / 2;
+      this.doc.addImage(this.logoImage, 'JPEG', logoX, logoY, width, height);
     }
 
     // Club name (left side, prominent)
@@ -207,43 +249,38 @@ export class ReportTemplateGenerator {
     this.doc.setTextColor(8, 145, 178);
     this.doc.text('Reporte Oficial y Confidencial', 30, y + 45);
 
-    // Contact information section (organized professionally)
-    let infoY = y + 58;
+    // Contact information section (organized professionally with proper spacing)
+    let infoY = y + 60;
     this.doc.setFontSize(9);
     this.doc.setFont('helvetica', 'normal');
     this.doc.setTextColor(71, 85, 105);
 
-    const contactItems = [];
+    const maxWidth = (this.logoImage && this.settings.report_include_logo) ? 120 : 160;
+    
     if (this.settings.report_include_address && this.clubInfo.address) {
-      contactItems.push(`📍 ${this.clubInfo.address}`);
+      this.doc.text(`Direccion: ${this.clubInfo.address}`, 30, infoY);
+      infoY += 7;
     }
     if (this.settings.report_include_contact && this.clubInfo.contact_phone) {
-      contactItems.push(`📞 ${this.clubInfo.contact_phone}`);
+      this.doc.text(`Telefono: ${this.clubInfo.contact_phone}`, 30, infoY);
+      infoY += 7;
     }
     if (this.settings.report_include_contact && this.clubInfo.contact_email) {
-      contactItems.push(`✉️ ${this.clubInfo.contact_email}`);
+      this.doc.text(`Email: ${this.clubInfo.contact_email}`, 30, infoY);
+      infoY += 7;
     }
     if (this.settings.report_include_contact && this.clubInfo.website_url) {
-      contactItems.push(`🌐 ${this.clubInfo.website_url}`);
-    }
-    
-    // Display contact items in two columns if space allows
-    const maxWidth = (this.logoImage && this.settings.report_include_logo) ? 110 : 160;
-    if (contactItems.length > 0) {
-      const itemsPerLine = contactItems.length > 2 ? 2 : contactItems.length;
-      for (let i = 0; i < contactItems.length; i += itemsPerLine) {
-        const lineItems = contactItems.slice(i, i + itemsPerLine);
-        this.doc.text(lineItems.join('  •  '), 30, infoY);
-        infoY += 6;
-      }
+      this.doc.text(`Web: ${this.clubInfo.website_url}`, 30, infoY);
+      infoY += 7;
     }
 
-    // League and social media (if enabled)
+    // League information (if enabled)
     if (this.settings.report_include_league && this.clubInfo.league) {
-      this.doc.text(`🏆 Liga: ${this.clubInfo.league}`, 30, infoY);
-      infoY += 6;
+      this.doc.text(`Liga: ${this.clubInfo.league}`, 30, infoY);
+      infoY += 7;
     }
 
+    // Social media (if enabled)
     if (this.settings.report_include_social) {
       const social = [];
       if (this.clubInfo.social_facebook) social.push(`Facebook`);
@@ -251,11 +288,11 @@ export class ReportTemplateGenerator {
       if (this.clubInfo.social_twitter) social.push(`Twitter`);
       
       if (social.length > 0) {
-        this.doc.text(`📱 Redes Sociales: ${social.join(', ')}`, 30, infoY);
+        this.doc.text(`Redes Sociales: ${social.join(', ')}`, 30, infoY);
       }
     }
 
-    return y + 95;
+    return infoY + 15;
   }
 
   generateFooter(pageHeight: number = 297): void {
@@ -282,31 +319,34 @@ export class ReportTemplateGenerator {
     this.doc.setFont('helvetica', 'normal');
     this.doc.setTextColor(75, 85, 99);
     
-    // Comprehensive contact information
-    const contactLines = [];
-    
+    // Contact information with proper spacing
     if (this.settings.report_include_address && this.clubInfo.address) {
-      contactLines.push(`📍 ${this.clubInfo.address}`);
+      this.doc.text(`Direccion: ${this.clubInfo.address}`, 20, y);
+      y += 6;
     }
     
     if (this.settings.report_include_contact) {
-      const contactInfo = [];
-      if (this.clubInfo.contact_phone) contactInfo.push(`📞 ${this.clubInfo.contact_phone}`);
-      if (this.clubInfo.contact_email) contactInfo.push(`✉️ ${this.clubInfo.contact_email}`);
-      if (this.clubInfo.website_url) contactInfo.push(`🌐 ${this.clubInfo.website_url}`);
-      contactLines.push(...contactInfo);
+      if (this.clubInfo.contact_phone) {
+        this.doc.text(`Telefono: ${this.clubInfo.contact_phone}`, 20, y);
+        y += 6;
+      }
+      if (this.clubInfo.contact_email) {
+        this.doc.text(`Email: ${this.clubInfo.contact_email}`, 20, y);
+        y += 6;
+      }
+      if (this.clubInfo.website_url) {
+        this.doc.text(`Web: ${this.clubInfo.website_url}`, 20, y);
+        y += 6;
+      }
     }
     
-    // Display contact information
-    contactLines.forEach(line => {
-      this.doc.text(line, 20, y);
-      y += 5;
-    });
-    
-    // Additional club information
+    // League information
     if (this.settings.report_include_league && this.clubInfo.league) {
-      this.doc.text(`🏆 Liga: ${this.clubInfo.league} • ${this.clubInfo.country || 'País'}`, 20, y);
-      y += 5;
+      const leagueText = this.clubInfo.country 
+        ? `Liga: ${this.clubInfo.league} - ${this.clubInfo.country}`
+        : `Liga: ${this.clubInfo.league}`;
+      this.doc.text(leagueText, 20, y);
+      y += 6;
     }
 
     // Right side - Date, page and president signature
@@ -448,9 +488,9 @@ function generateHeaderHTML(clubInfo: ClubInfo, settings: ReportSettings, style:
           ${(settings.report_include_contact || settings.report_include_address) ? 
             `<div style="font-size: 14px; color: #64748b; line-height: 1.6;">
                ${[
-                 settings.report_include_address && clubInfo.address ? `📍 ${clubInfo.address}` : '',
-                 settings.report_include_contact && clubInfo.contact_phone ? `📞 ${clubInfo.contact_phone}` : '',
-                 settings.report_include_contact && clubInfo.contact_email ? `✉️ ${clubInfo.contact_email}` : ''
+                 settings.report_include_address && clubInfo.address ? `Direccion: ${clubInfo.address}` : '',
+                 settings.report_include_contact && clubInfo.contact_phone ? `Tel: ${clubInfo.contact_phone}` : '',
+                 settings.report_include_contact && clubInfo.contact_email ? `Email: ${clubInfo.contact_email}` : ''
                ].filter(Boolean).join(' • ')}
              </div>` : ''}
         </div>
@@ -464,13 +504,13 @@ function generateHeaderHTML(clubInfo: ClubInfo, settings: ReportSettings, style:
               <h1 style="margin: 0 0 12px 0; font-size: 38px; font-weight: bold; color: #0f172a;">${clubInfo.club_name || 'Club Deportivo'}</h1>
               <p style="margin: 0 0 20px 0; font-size: 16px; color: #0891b2; font-weight: 500;">Reporte Oficial y Confidencial</p>
               <div style="font-size: 14px; color: #475569; line-height: 1.8;">
-                ${settings.report_include_address && clubInfo.address ? `<div style="margin-bottom: 6px;"><strong style="color: #334155;">📍 Dirección:</strong> ${clubInfo.address}</div>` : ''}
-                ${settings.report_include_contact && clubInfo.contact_phone ? `<div style="margin-bottom: 6px;"><strong style="color: #334155;">📞 Teléfono:</strong> ${clubInfo.contact_phone}</div>` : ''}
-                ${settings.report_include_contact && clubInfo.contact_email ? `<div style="margin-bottom: 6px;"><strong style="color: #334155;">✉️ Email:</strong> ${clubInfo.contact_email}</div>` : ''}
-                ${settings.report_include_contact && clubInfo.website_url ? `<div style="margin-bottom: 6px;"><strong style="color: #334155;">🌐 Web:</strong> ${clubInfo.website_url}</div>` : ''}
-                ${settings.report_include_league && clubInfo.league ? `<div style="margin-bottom: 6px;"><strong style="color: #334155;">🏆 Liga:</strong> ${clubInfo.league}</div>` : ''}
+                ${settings.report_include_address && clubInfo.address ? `<div style="margin-bottom: 6px;"><strong style="color: #334155;">Direccion:</strong> ${clubInfo.address}</div>` : ''}
+                ${settings.report_include_contact && clubInfo.contact_phone ? `<div style="margin-bottom: 6px;"><strong style="color: #334155;">Telefono:</strong> ${clubInfo.contact_phone}</div>` : ''}
+                ${settings.report_include_contact && clubInfo.contact_email ? `<div style="margin-bottom: 6px;"><strong style="color: #334155;">Email:</strong> ${clubInfo.contact_email}</div>` : ''}
+                ${settings.report_include_contact && clubInfo.website_url ? `<div style="margin-bottom: 6px;"><strong style="color: #334155;">Web:</strong> ${clubInfo.website_url}</div>` : ''}
+                ${settings.report_include_league && clubInfo.league ? `<div style="margin-bottom: 6px;"><strong style="color: #334155;">Liga:</strong> ${clubInfo.league}</div>` : ''}
                 ${settings.report_include_social && (clubInfo.social_facebook || clubInfo.social_instagram || clubInfo.social_twitter) ? 
-                  `<div><strong style="color: #334155;">📱 Redes:</strong> ${[
+                  `<div><strong style="color: #334155;">Redes Sociales:</strong> ${[
                     clubInfo.social_facebook ? `Facebook` : '',
                     clubInfo.social_instagram ? `Instagram` : '',
                     clubInfo.social_twitter ? `Twitter` : ''
@@ -494,11 +534,11 @@ function generateFooterHTML(clubInfo: ClubInfo, settings: ReportSettings): strin
         <div style="flex: 1;">
           <div style="font-weight: bold; font-size: 14px; color: #1f2937; margin-bottom: 8px;">${clubInfo.club_name || 'Club Deportivo'}</div>
           <div style="font-size: 12px; color: #6b7280; line-height: 1.6;">
-            ${settings.report_include_address && clubInfo.address ? `<div style="margin-bottom: 4px;">📍 ${clubInfo.address}</div>` : ''}
-            ${settings.report_include_contact && clubInfo.contact_phone ? `<div style="margin-bottom: 4px;">📞 ${clubInfo.contact_phone}</div>` : ''}
-            ${settings.report_include_contact && clubInfo.contact_email ? `<div style="margin-bottom: 4px;">✉️ ${clubInfo.contact_email}</div>` : ''}
-            ${settings.report_include_contact && clubInfo.website_url ? `<div style="margin-bottom: 4px;">🌐 ${clubInfo.website_url}</div>` : ''}
-            ${settings.report_include_league && clubInfo.league ? `<div>🏆 Liga: ${clubInfo.league}</div>` : ''}
+            ${settings.report_include_address && clubInfo.address ? `<div style="margin-bottom: 4px;">Direccion: ${clubInfo.address}</div>` : ''}
+            ${settings.report_include_contact && clubInfo.contact_phone ? `<div style="margin-bottom: 4px;">Telefono: ${clubInfo.contact_phone}</div>` : ''}
+            ${settings.report_include_contact && clubInfo.contact_email ? `<div style="margin-bottom: 4px;">Email: ${clubInfo.contact_email}</div>` : ''}
+            ${settings.report_include_contact && clubInfo.website_url ? `<div style="margin-bottom: 4px;">Web: ${clubInfo.website_url}</div>` : ''}
+            ${settings.report_include_league && clubInfo.league ? `<div>Liga: ${clubInfo.league}</div>` : ''}
           </div>
         </div>
         <div style="text-align: right; flex-shrink: 0; margin-left: 30px;">
