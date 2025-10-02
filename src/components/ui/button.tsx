@@ -18,9 +18,9 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:bg-[hsl(var(--muted)/0.1)]",
         ghost: "hover:bg-accent hover:text-accent-foreground hover:bg-[hsl(var(--muted)/0.1)]",
         link: "text-primary underline-offset-4 hover:underline hover:bg-[hsl(var(--muted)/0.05)]",
-        "toggle-primary": "rounded-full bg-primary text-primary-foreground hover:bg-primary/90 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground",
-        "toggle-secondary": "rounded-full border border-input bg-background hover:bg-accent hover:text-accent-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary",
-        "toggle-ghost": "rounded-full hover:bg-accent hover:text-accent-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground",
+        "toggle-primary": "rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
+        "toggle-secondary": "rounded-xl border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        "toggle-ghost": "rounded-xl hover:bg-background/80 hover:text-foreground text-muted-foreground",
       },
       size: {
         default: "h-10 px-4 py-2",

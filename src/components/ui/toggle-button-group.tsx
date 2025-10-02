@@ -28,7 +28,7 @@ export const ToggleButtonGroup: React.FC<ToggleButtonGroupProps> = ({
 }) => {
   return (
     <ToggleButtonGroupContext.Provider value={{ value, onValueChange }}>
-      <div className={cn("flex items-center rounded-full bg-muted p-1", className)}>
+      <div className={cn("inline-flex items-center rounded-xl bg-muted/50 p-0.5 gap-0.5", className)}>
         {children}
       </div>
     </ToggleButtonGroupContext.Provider>
@@ -55,7 +55,7 @@ export const ToggleButton: React.FC<ToggleButtonProps> = ({
       size="sm"
       onClick={() => onValueChange(value)}
       className={cn(
-        "rounded-full px-4 py-2 text-sm font-medium transition-all",
+        "rounded-xl h-9 px-4 text-sm font-medium transition-all hover:scale-100",
         isSelected && "shadow-sm",
         className
       )}
