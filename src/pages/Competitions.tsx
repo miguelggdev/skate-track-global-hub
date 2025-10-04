@@ -7,6 +7,7 @@ import CompetitionResults from '@/components/competitions/CompetitionResults';
 import CompetitionsTable from '@/components/competitions/CompetitionsTable';
 import UpcomingEvents from '@/components/competitions/UpcomingEvents';
 import { MedalsAnalytics } from '@/components/competitions/MedalsAnalytics';
+import { MedalPodium } from '@/components/competitions/MedalPodium';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Competitions = () => {
@@ -39,6 +40,9 @@ const Competitions = () => {
           <TabsContent value="competitions" className="space-y-6">
             {/* Competition Management */}
             <CompetitionsTable />
+
+            {/* Medal Podium */}
+            <MedalPodium />
 
             {/* Upcoming Events */}
             <UpcomingEvents />
