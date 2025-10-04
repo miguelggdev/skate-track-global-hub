@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trophy, Medal, Award } from 'lucide-react';
 import { useMedalAnalytics } from '@/hooks/useMedalRecording';
+import { useCompetitions } from '@/hooks/useCompetitions';
 
 interface PodiumAthlete {
   name: string;
@@ -16,7 +18,11 @@ interface PodiumAthlete {
 }
 
 export const MedalPodium = () => {
-  const { data: medals, isLoading } = useMedalAnalytics();
+  const { data: medals, isLoading: medalsLoading } = useMedalAnalytics();
+  const { data: competitions, isLoading: competitionsLoading } = useCompetitions();
+  const [selectedCompetition, setSelectedCompetition] = useState<string>('all');
+
+  const isLoading = medalsLoading || competitionsLoading;
 
   if (isLoading) {
     return (
@@ -28,15 +34,33 @@ export const MedalPodium = () => {
     );
   }
 
+  // Filter medals by selected competition
+  const filteredMedals = useMemo(() => {
+    if (!medals) return [];
+    if (selectedCompetition === 'all') return medals;
+    return medals.filter((medal: any) => medal.competition_id === selectedCompetition);
+  }, [medals, selectedCompetition]);
+
+  // Get competition name for display
+  const selectedCompetitionName = useMemo(() => {
+    if (selectedCompetition === 'all') return 'Todas las competencias';
+    const comp = competitions?.find((c: any) => c.id === selectedCompetition);
+    return comp?.name || 'Competencia seleccionada';
+  }, [selectedCompetition, competitions]);
+
   if (!medals || medals.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-yellow-500" />
-            Podio de Medallas
-          </CardTitle>
-          <CardDescription>Mejores atletas por medallas obtenidas</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="h-5 w-5 text-yellow-500" />
+                Podio de Medallas
+              </CardTitle>
+              <CardDescription>Mejores atletas por medallas obtenidas</CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <p className="text-center text-muted-foreground py-8">
@@ -47,8 +71,8 @@ export const MedalPodium = () => {
     );
   }
 
-  // Calculate athlete statistics
-  const athleteStats = medals.reduce((acc: any, medal: any) => {
+  // Calculate athlete statistics from filtered medals
+  const athleteStats = filteredMedals.reduce((acc: any, medal: any) => {
     const athleteName = `${medal.athletes?.first_name} ${medal.athletes?.last_name}`;
     if (!acc[athleteName]) {
       acc[athleteName] = {
@@ -85,10 +109,10 @@ export const MedalPodium = () => {
   // Reorder for podium display: 2nd, 1st, 3rd
   const podiumOrder = topAthletes.length >= 2 ? [topAthletes[1], topAthletes[0], topAthletes[2]].filter(Boolean) : topAthletes;
 
-  // Calculate total medals
-  const totalGold = medals.filter((m: any) => m.medal_type === 'gold').length;
-  const totalSilver = medals.filter((m: any) => m.medal_type === 'silver').length;
-  const totalBronze = medals.filter((m: any) => m.medal_type === 'bronze').length;
+  // Calculate total medals from filtered data
+  const totalGold = filteredMedals.filter((m: any) => m.medal_type === 'gold').length;
+  const totalSilver = filteredMedals.filter((m: any) => m.medal_type === 'silver').length;
+  const totalBronze = filteredMedals.filter((m: any) => m.medal_type === 'bronze').length;
 
   const getMedalIcon = (athlete: PodiumAthlete) => {
     if (athlete.goldCount >= 2) return <Trophy className="h-5 w-5 text-yellow-500" />;
@@ -112,16 +136,40 @@ export const MedalPodium = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-yellow-500" />
-          Podio de Medallas
-        </CardTitle>
-        <CardDescription>Mejores atletas por medallas obtenidas</CardDescription>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-yellow-500" />
+              Podio de Medallas
+            </CardTitle>
+            <CardDescription>Mejores atletas por medallas obtenidas</CardDescription>
+          </div>
+          <Select value={selectedCompetition} onValueChange={setSelectedCompetition}>
+            <SelectTrigger className="w-[280px] bg-background">
+              <SelectValue placeholder="Seleccionar competencia" />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">Todas las competencias</SelectItem>
+              {competitions?.map((competition: any) => (
+                <SelectItem key={competition.id} value={competition.id}>
+                  {competition.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-8">
+          {/* Competition Name Display */}
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-muted-foreground">
+              {selectedCompetitionName}
+            </h3>
+          </div>
+
           {/* Podium Display */}
-          {podiumOrder.length > 0 && (
+          {podiumOrder.length > 0 ? (
             <div className="flex items-end justify-center gap-6 py-8">
               {podiumOrder.map((athlete) => (
                 <div
@@ -160,6 +208,10 @@ export const MedalPodium = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              No hay atletas con 2 o más medallas en esta competencia
             </div>
           )}
 
