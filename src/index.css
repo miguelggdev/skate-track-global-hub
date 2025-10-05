@@ -22,11 +22,11 @@
     --secondary: 240 82% 47%;  /* indigo-700 */
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 40% 96.1%;
+    --muted: 210 40% 92%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 48 96% 68%;  /* amber-400 */
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 210 40% 92%;
+    --accent-foreground: 222.2 84% 4.9%;
     
     /* Enhanced Dashboard Colors - indigo/amber theme */
     --dashboard-primary: 238 94% 55%;   /* indigo-700 for performance metrics */

@@ -166,10 +166,10 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
               {navigationItems.map((item) => (
                 <div 
                   key={item.title}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-muted dark:hover:bg-gray-700 ${
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 ${
                     window.location.pathname === item.path 
                       ? 'bg-primary text-primary-foreground shadow-md' 
-                      : 'text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-gray-200'
+                      : 'text-foreground dark:text-gray-300 hover:bg-muted dark:hover:bg-gray-700 hover:text-foreground dark:hover:text-gray-100'
                   }`}
                   onClick={() => {
                     navigate(item.path);
