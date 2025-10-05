@@ -36,7 +36,7 @@ export const MedalPodium = () => {
 
   // Filter medals by selected competition
   const filteredMedals = useMemo(() => {
-    if (!medals) return [];
+    if (!medals || medals.length === 0) return [];
     if (selectedCompetition === 'all') return medals;
     return medals.filter((medal: any) => medal.competition_id === selectedCompetition);
   }, [medals, selectedCompetition]);
@@ -72,47 +72,55 @@ export const MedalPodium = () => {
   }
 
   // Calculate athlete statistics from filtered medals
-  const athleteStats = filteredMedals.reduce((acc: any, medal: any) => {
-    const athleteName = `${medal.athletes?.first_name} ${medal.athletes?.last_name}`;
-    if (!acc[athleteName]) {
-      acc[athleteName] = {
-        name: athleteName,
-        initials: `${medal.athletes?.first_name?.[0] || ''}${medal.athletes?.last_name?.[0] || ''}`,
-        goldCount: 0,
-        silverCount: 0,
-        bronzeCount: 0,
-        totalMedals: 0,
-      };
-    }
-    if (medal.medal_type === 'gold') acc[athleteName].goldCount += 1;
-    if (medal.medal_type === 'silver') acc[athleteName].silverCount += 1;
-    if (medal.medal_type === 'bronze') acc[athleteName].bronzeCount += 1;
-    acc[athleteName].totalMedals += 1;
-    return acc;
-  }, {});
+  const athleteStats = useMemo(() => {
+    return filteredMedals.reduce((acc: any, medal: any) => {
+      const athleteName = `${medal.athletes?.first_name} ${medal.athletes?.last_name}`;
+      if (!acc[athleteName]) {
+        acc[athleteName] = {
+          name: athleteName,
+          initials: `${medal.athletes?.first_name?.[0] || ''}${medal.athletes?.last_name?.[0] || ''}`,
+          goldCount: 0,
+          silverCount: 0,
+          bronzeCount: 0,
+          totalMedals: 0,
+        };
+      }
+      if (medal.medal_type === 'gold') acc[athleteName].goldCount += 1;
+      if (medal.medal_type === 'silver') acc[athleteName].silverCount += 1;
+      if (medal.medal_type === 'bronze') acc[athleteName].bronzeCount += 1;
+      acc[athleteName].totalMedals += 1;
+      return acc;
+    }, {});
+  }, [filteredMedals]);
 
   // Get top 3 athletes with 2+ medals
-  const topAthletes: PodiumAthlete[] = Object.values(athleteStats)
-    .filter((athlete: any) => athlete.totalMedals >= 2)
-    .sort((a: any, b: any) => {
-      // Sort by gold first, then silver, then bronze
-      if (b.goldCount !== a.goldCount) return b.goldCount - a.goldCount;
-      if (b.silverCount !== a.silverCount) return b.silverCount - a.silverCount;
-      return b.bronzeCount - a.bronzeCount;
-    })
-    .slice(0, 3)
-    .map((athlete: any, index: number) => ({
-      ...athlete,
-      position: index + 1,
-    }));
+  const topAthletes: PodiumAthlete[] = useMemo(() => {
+    return Object.values(athleteStats)
+      .filter((athlete: any) => athlete.totalMedals >= 2)
+      .sort((a: any, b: any) => {
+        // Sort by gold first, then silver, then bronze
+        if (b.goldCount !== a.goldCount) return b.goldCount - a.goldCount;
+        if (b.silverCount !== a.silverCount) return b.silverCount - a.silverCount;
+        return b.bronzeCount - a.bronzeCount;
+      })
+      .slice(0, 3)
+      .map((athlete: any, index: number) => ({
+        ...athlete,
+        position: index + 1,
+      }));
+  }, [athleteStats]);
 
   // Reorder for podium display: 2nd, 1st, 3rd
-  const podiumOrder = topAthletes.length >= 2 ? [topAthletes[1], topAthletes[0], topAthletes[2]].filter(Boolean) : topAthletes;
+  const podiumOrder = useMemo(() => {
+    return topAthletes.length >= 2 ? [topAthletes[1], topAthletes[0], topAthletes[2]].filter(Boolean) : topAthletes;
+  }, [topAthletes]);
 
   // Calculate total medals from filtered data
-  const totalGold = filteredMedals.filter((m: any) => m.medal_type === 'gold').length;
-  const totalSilver = filteredMedals.filter((m: any) => m.medal_type === 'silver').length;
-  const totalBronze = filteredMedals.filter((m: any) => m.medal_type === 'bronze').length;
+  const medalTotals = useMemo(() => ({
+    gold: filteredMedals.filter((m: any) => m.medal_type === 'gold').length,
+    silver: filteredMedals.filter((m: any) => m.medal_type === 'silver').length,
+    bronze: filteredMedals.filter((m: any) => m.medal_type === 'bronze').length,
+  }), [filteredMedals]);
 
   const getMedalIcon = (athlete: PodiumAthlete) => {
     if (athlete.goldCount >= 2) return <Trophy className="h-5 w-5 text-yellow-500" />;
@@ -220,21 +228,21 @@ export const MedalPodium = () => {
             <div className="text-center">
               <div className="flex items-center justify-center mb-2">
                 <Trophy className="h-6 w-6 text-yellow-500 mr-2" />
-                <span className="text-3xl font-bold text-yellow-600">{totalGold}</span>
+                <span className="text-3xl font-bold text-yellow-600">{medalTotals.gold}</span>
               </div>
               <p className="text-sm text-muted-foreground">Medallas de Oro</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center mb-2">
                 <Medal className="h-6 w-6 text-gray-400 mr-2" />
-                <span className="text-3xl font-bold text-gray-600">{totalSilver}</span>
+                <span className="text-3xl font-bold text-gray-600">{medalTotals.silver}</span>
               </div>
               <p className="text-sm text-muted-foreground">Medallas de Plata</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center mb-2">
                 <Award className="h-6 w-6 text-amber-600 mr-2" />
-                <span className="text-3xl font-bold text-amber-600">{totalBronze}</span>
+                <span className="text-3xl font-bold text-amber-600">{medalTotals.bronze}</span>
               </div>
               <p className="text-sm text-muted-foreground">Medallas de Bronce</p>
             </div>
