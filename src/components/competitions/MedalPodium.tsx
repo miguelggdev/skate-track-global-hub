@@ -34,20 +34,6 @@ export const MedalPodium = () => {
     );
   }
 
-  // Filter medals by selected competition
-  const filteredMedals = useMemo(() => {
-    if (!medals || medals.length === 0) return [];
-    if (selectedCompetition === 'all') return medals;
-    return medals.filter((medal: any) => medal.competition_id === selectedCompetition);
-  }, [medals, selectedCompetition]);
-
-  // Get competition name for display
-  const selectedCompetitionName = useMemo(() => {
-    if (selectedCompetition === 'all') return 'Todas las competencias';
-    const comp = competitions?.find((c: any) => c.id === selectedCompetition);
-    return comp?.name || 'Competencia seleccionada';
-  }, [selectedCompetition, competitions]);
-
   if (!medals || medals.length === 0) {
     return (
       <Card>
@@ -70,6 +56,19 @@ export const MedalPodium = () => {
       </Card>
     );
   }
+
+  // Filter medals by selected competition
+  const filteredMedals = useMemo(() => {
+    if (selectedCompetition === 'all') return medals;
+    return medals.filter((medal: any) => medal.competition_id === selectedCompetition);
+  }, [medals, selectedCompetition]);
+
+  // Get competition name for display
+  const selectedCompetitionName = useMemo(() => {
+    if (selectedCompetition === 'all') return 'Todas las competencias';
+    const comp = competitions?.find((c: any) => c.id === selectedCompetition);
+    return comp?.name || 'Competencia seleccionada';
+  }, [selectedCompetition, competitions]);
 
   // Calculate athlete statistics from filtered medals
   const athleteStats = useMemo(() => {
