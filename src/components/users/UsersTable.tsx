@@ -37,11 +37,12 @@ interface UsersTableProps {
   onUserUpdated: () => void;
   onUserDeleted: (userId: string) => void;
   onUserBlocked: (userId: string, blocked: boolean) => void;
-  onPasswordReset: (email: string) => void;
+  onPasswordReset: (userId: string) => void;
   onRoleManage: (userId: string) => void;
+  isAdmin?: boolean;
 }
 
-const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted, onUserBlocked, onPasswordReset, onRoleManage }: UsersTableProps) => {
+const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted, onUserBlocked, onPasswordReset, onRoleManage, isAdmin = true }: UsersTableProps) => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [viewingUser, setViewingUser] = useState<User | null>(null);
@@ -184,10 +185,12 @@ const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted, onUserBlocke
                               </>
                             )}
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onPasswordReset(user.email)}>
-                            <KeyRound className="mr-2 h-4 w-4" />
-                            Restablecer Contraseña
-                          </DropdownMenuItem>
+                          {isAdmin && (
+                            <DropdownMenuItem onClick={() => onPasswordReset(user.id)}>
+                              <KeyRound className="mr-2 h-4 w-4" />
+                              Restablecer Contraseña
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem 
                             className="text-red-600"
                             onClick={() => setDeletingUser(user)}

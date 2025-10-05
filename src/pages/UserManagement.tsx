@@ -5,8 +5,10 @@ import UserManagementHeader from '@/components/users/UserManagementHeader';
 import UsersTable from '@/components/users/UsersTable';
 import UserStatsCards from '@/components/users/UserStatsCards';
 import { ManageUserRolesDialog } from '@/components/users/ManageUserRolesDialog';
+import ResetPasswordDialog from '@/components/users/ResetPasswordDialog';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 export interface User {
   id: string;
@@ -28,8 +30,10 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [managingRoleUserId, setManagingRoleUserId] = useState<string | null>(null);
+  const [resettingPasswordUser, setResettingPasswordUser] = useState<User | null>(null);
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
+  const { isAdmin } = useUserProfile();
 
   const fetchUsers = async () => {
     try {
@@ -127,23 +131,50 @@ const UserManagement = () => {
     }
   };
 
-  const handlePasswordReset = async (email: string) => {
+  const handlePasswordReset = async (userId: string) => {
+    if (!isAdmin) {
+      toast({
+        title: "Error",
+        description: "Solo los administradores pueden restablecer contraseñas",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      setResettingPasswordUser(user);
+    }
+  };
+
+  const handlePasswordResetConfirm = async (newPassword: string) => {
+    if (!resettingPasswordUser) return;
+
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const { data, error } = await supabase.functions.invoke('admin-reset-password', {
+        body: {
+          userId: resettingPasswordUser.id,
+          newPassword: newPassword,
+        },
       });
 
       if (error) throw error;
-      
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
       toast({
         title: "Éxito",
-        description: "Se ha enviado un correo para restablecer la contraseña",
+        description: "Contraseña actualizada exitosamente",
       });
-    } catch (error) {
-      console.error('Error sending password reset:', error);
+
+      setResettingPasswordUser(null);
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
       toast({
         title: "Error",
-        description: "No se pudo enviar el correo de restablecimiento",
+        description: error.message || "No se pudo actualizar la contraseña",
         variant: "destructive",
       });
     }
@@ -192,6 +223,7 @@ const UserManagement = () => {
             onUserBlocked={handleUserBlocked}
             onPasswordReset={handlePasswordReset}
             onRoleManage={handleRoleManage}
+            isAdmin={isAdmin}
           />
 
           <ManageUserRolesDialog
@@ -200,6 +232,13 @@ const UserManagement = () => {
             onOpenChange={(open) => !open && setManagingRoleUserId(null)}
             onRoleChanged={fetchUsers}
             currentUserId={currentUser?.id}
+          />
+
+          <ResetPasswordDialog
+            open={resettingPasswordUser !== null}
+            onOpenChange={(open) => !open && setResettingPasswordUser(null)}
+            onConfirm={handlePasswordResetConfirm}
+            userEmail={resettingPasswordUser?.email || ''}
           />
         </div>
       </div>
