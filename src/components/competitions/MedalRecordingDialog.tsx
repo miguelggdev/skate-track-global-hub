@@ -22,7 +22,9 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -34,6 +36,7 @@ import { useMedalRecording, useCompetitionEvents, useCompetitionParticipants } f
 
 const medalSchema = z.object({
   athlete_id: z.string().min(1, 'Athlete is required'),
+  event_type: z.string().min(1, 'Event type is required'),
   medal_type: z.enum(['gold', 'silver', 'bronze']),
   time_achieved: z.string().optional(),
   event_location: z.string().optional(),
@@ -48,23 +51,34 @@ interface MedalRecordingDialogProps {
   competitionName: string;
 }
 
-const EVENT_TYPES = [
-  { value: 'speed_100m', label: '100m Speed' },
-  { value: 'speed_200m', label: '200m Speed' },
-  { value: 'speed_300m', label: '300m Speed' },
-  { value: 'speed_500m', label: '500m Speed' },
-  { value: 'speed_1000m', label: '1000m Speed' },
-  { value: 'speed_1500m', label: '1500m Speed' },
-  { value: 'speed_3000m', label: '3000m Speed' },
-  { value: 'speed_5000m', label: '5000m Speed' },
-  { value: 'speed_10000m', label: '10000m Speed' },
-  { value: 'artistic_figures', label: 'Artistic Figures' },
-  { value: 'artistic_freestyle', label: 'Freestyle' },
-  { value: 'relay_4x100m', label: '4x100m Relay' },
-  { value: 'marathon', label: 'Marathon' },
-  { value: 'elimination', label: 'Elimination' },
-  { value: 'points_race', label: 'Points Race' },
-];
+const SKATING_EVENTS = {
+  'Velocidad (Pista Corta)': [
+    { value: 'speed_short_track_500m', label: '500m' },
+    { value: 'speed_short_track_1000m', label: '1000m' },
+    { value: 'speed_short_track_1500m', label: '1500m' },
+  ],
+  'Relevos (Pista Corta)': [
+    { value: 'relay_5000m_men', label: 'Relevo 5000m Masculino' },
+    { value: 'relay_3000m_women', label: 'Relevo 3000m Femenino' },
+    { value: 'relay_mixed', label: 'Relevo Mixto' },
+  ],
+  'Velocidad (Pista Larga)': [
+    { value: 'speed_200m_time_trial', label: '200m Contra Reloj' },
+    { value: 'speed_group_500m_distance', label: '500m + Distancia (Grupal)' },
+    { value: 'speed_group_1000m', label: '1000m (Grupal)' },
+    { value: 'points_race_5000m', label: '5000m por Puntos' },
+    { value: 'elimination_10000m', label: '10000m Eliminación' },
+  ],
+  'Pruebas de Ruta': [
+    { value: 'road_100m', label: '100m' },
+    { value: 'road_500m_distance', label: '500m + Distancia' },
+    { value: 'road_1000m', label: '1000m' },
+    { value: 'road_5000m', label: '5000m' },
+    { value: 'road_10000m', label: '10000m' },
+    { value: 'road_15000m_elimination', label: '15000m Eliminación' },
+    { value: 'road_marathon_42km', label: '42km Maratón' },
+  ],
+};
 
 export const MedalRecordingDialog = ({ competitionId, competitionName }: MedalRecordingDialogProps) => {
   const [open, setOpen] = useState(false);
@@ -76,6 +90,7 @@ export const MedalRecordingDialog = ({ competitionId, competitionName }: MedalRe
     resolver: zodResolver(medalSchema),
     defaultValues: {
       athlete_id: '',
+      event_type: '',
       medal_type: 'gold',
       time_achieved: '',
       event_location: '',
@@ -87,6 +102,7 @@ export const MedalRecordingDialog = ({ competitionId, competitionName }: MedalRe
     await recordMedal.mutateAsync({
       competition_id: competitionId,
       athlete_id: data.athlete_id,
+      event_type: data.event_type,
       medal_type: data.medal_type,
       time_achieved: data.time_achieved,
       event_location: data.event_location,
@@ -135,6 +151,36 @@ export const MedalRecordingDialog = ({ competitionId, competitionName }: MedalRe
                         <SelectItem key={participant.athlete_id} value={participant.athlete_id}>
                           {participant.athletes?.first_name} {participant.athletes?.last_name}
                         </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="event_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo de Prueba *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona el tipo de prueba" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="max-h-[300px]">
+                      {Object.entries(SKATING_EVENTS).map(([category, events]) => (
+                        <SelectGroup key={category}>
+                          <SelectLabel>{category}</SelectLabel>
+                          {events.map((event) => (
+                            <SelectItem key={event.value} value={event.value}>
+                              {event.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
                       ))}
                     </SelectContent>
                   </Select>

@@ -780,6 +780,7 @@ export type Database = {
           created_at: string
           event_id: string | null
           event_location: string | null
+          event_type: Database["public"]["Enums"]["event_type"] | null
           id: string
           is_record: boolean | null
           medal_type: Database["public"]["Enums"]["medal_type"] | null
@@ -796,6 +797,7 @@ export type Database = {
           created_at?: string
           event_id?: string | null
           event_location?: string | null
+          event_type?: Database["public"]["Enums"]["event_type"] | null
           id?: string
           is_record?: boolean | null
           medal_type?: Database["public"]["Enums"]["medal_type"] | null
@@ -812,6 +814,7 @@ export type Database = {
           created_at?: string
           event_id?: string | null
           event_location?: string | null
+          event_type?: Database["public"]["Enums"]["event_type"] | null
           id?: string
           is_record?: boolean | null
           medal_type?: Database["public"]["Enums"]["medal_type"] | null
@@ -1678,6 +1681,24 @@ export type Database = {
         | "marathon"
         | "elimination"
         | "points_race"
+        | "speed_short_track_500m"
+        | "speed_short_track_1000m"
+        | "speed_short_track_1500m"
+        | "relay_5000m_men"
+        | "relay_3000m_women"
+        | "relay_mixed"
+        | "speed_200m_time_trial"
+        | "speed_group_500m_distance"
+        | "speed_group_1000m"
+        | "points_race_5000m"
+        | "elimination_10000m"
+        | "road_100m"
+        | "road_500m_distance"
+        | "road_1000m"
+        | "road_5000m"
+        | "road_10000m"
+        | "road_15000m_elimination"
+        | "road_marathon_42km"
       id_type:
         | "Tarjeta de identidad"
         | "Cedula de Ciudadania"
@@ -1896,6 +1917,24 @@ export const Constants = {
         "marathon",
         "elimination",
         "points_race",
+        "speed_short_track_500m",
+        "speed_short_track_1000m",
+        "speed_short_track_1500m",
+        "relay_5000m_men",
+        "relay_3000m_women",
+        "relay_mixed",
+        "speed_200m_time_trial",
+        "speed_group_500m_distance",
+        "speed_group_1000m",
+        "points_race_5000m",
+        "elimination_10000m",
+        "road_100m",
+        "road_500m_distance",
+        "road_1000m",
+        "road_5000m",
+        "road_10000m",
+        "road_15000m_elimination",
+        "road_marathon_42km",
       ],
       id_type: [
         "Tarjeta de identidad",

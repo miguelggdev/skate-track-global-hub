@@ -7,6 +7,7 @@ export interface MedalRecord {
   competition_id: string;
   athlete_id: string;
   event_id?: string;
+  event_type?: string;
   medal_type: 'gold' | 'silver' | 'bronze';
   time_achieved?: string; // ISO 8601 interval format
   event_location?: string;
@@ -39,6 +40,7 @@ export const useMedalRecording = () => {
           competition_id: medalData.competition_id,
           athlete_id: medalData.athlete_id,
           event_id: medalData.event_id,
+          event_type: medalData.event_type as any,
           medal_type: medalData.medal_type,
           time_achieved: medalData.time_achieved,
           event_location: medalData.event_location,
@@ -73,7 +75,10 @@ export const useMedalRecording = () => {
     mutationFn: async ({ id, ...medalData }: MedalRecord & { id: string }) => {
       const { data, error } = await supabase
         .from('competition_results')
-        .update(medalData)
+        .update({
+          ...medalData,
+          event_type: medalData.event_type as any,
+        })
         .eq('id', id)
         .select()
         .single();
