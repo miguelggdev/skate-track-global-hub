@@ -34,7 +34,6 @@ import { useMedalRecording, useCompetitionEvents, useCompetitionParticipants } f
 
 const medalSchema = z.object({
   athlete_id: z.string().min(1, 'Athlete is required'),
-  event_id: z.string().optional(),
   medal_type: z.enum(['gold', 'silver', 'bronze']),
   time_achieved: z.string().optional(),
   event_location: z.string().optional(),
@@ -88,7 +87,6 @@ export const MedalRecordingDialog = ({ competitionId, competitionName }: MedalRe
     await recordMedal.mutateAsync({
       competition_id: competitionId,
       athlete_id: data.athlete_id,
-      event_id: data.event_id,
       medal_type: data.medal_type,
       time_achieved: data.time_achieved,
       event_location: data.event_location,
@@ -136,31 +134,6 @@ export const MedalRecordingDialog = ({ competitionId, competitionName }: MedalRe
                       {participants?.map((participant: any) => (
                         <SelectItem key={participant.athlete_id} value={participant.athlete_id}>
                           {participant.athletes?.first_name} {participant.athletes?.last_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="event_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Event (Optional)</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select event or leave empty" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {events?.map((event) => (
-                        <SelectItem key={event.id} value={event.id}>
-                          {event.event_name} ({event.event_type})
                         </SelectItem>
                       ))}
                     </SelectContent>
