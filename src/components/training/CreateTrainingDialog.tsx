@@ -85,12 +85,15 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
       
       try {
         const { data, error: fetchError } = await supabase
-          .from('coaches')
+          .from('profiles')
           .select(`
             id,
-            user_id,
-            profiles:user_id (first_name, last_name)
-          `);
+            first_name,
+            last_name,
+            email,
+            user_roles!inner(role)
+          `)
+          .eq('user_roles.role', 'coach');
         
         console.log('CreateTrainingDialog: Coaches fetched', { data, error: fetchError });
         
@@ -102,9 +105,9 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
         }
         
         if (data && data.length > 0) {
-          const coachOptions = data.map(coach => ({
-            id: coach.id,
-            name: coach.profiles ? `${coach.profiles.first_name} ${coach.profiles.last_name}`.trim() : 'Coach'
+          const coachOptions = data.map(profile => ({
+            id: profile.id, // Use profile id (which is the user_id)
+            name: `${profile.first_name} ${profile.last_name}`.trim()
           }));
           setCoaches(coachOptions);
           console.log('CreateTrainingDialog: Coaches set successfully:', coachOptions);
