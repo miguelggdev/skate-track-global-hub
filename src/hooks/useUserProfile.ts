@@ -17,62 +17,34 @@ export const useUserProfile = () => {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      console.log('useUserProfile: Starting profile fetch for user:', user?.id);
-      
       if (!user) {
-        console.log('useUserProfile: No user found, clearing profile');
         setProfile(null);
         setLoading(false);
         return;
       }
 
       try {
-        // Fetch profile data
+        // Single optimized query with join - much faster!
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('*')
+          .select(`
+            *,
+            user_roles!inner(role)
+          `)
           .eq('id', user.id)
+          .limit(1)
           .single();
-
-        console.log('useUserProfile: Profile data fetch result:', { 
-          data: profileData, 
-          error: profileError 
-        });
 
         if (profileError) throw profileError;
 
-        // Fetch user role from user_roles table
-        const { data: roleData, error: roleError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        console.log('useUserProfile: Role data fetch result:', { 
-          data: roleData, 
-          error: roleError 
-        });
-
-        if (roleError) {
-          console.warn('useUserProfile: Role fetch error (non-fatal):', roleError);
-        }
-
-        // Prefer profile role if it exists, fallback to user_roles
-        const userRole = profileData?.role || roleData?.[0]?.role || 'athlete';
-        
-        console.log('useUserProfile: Final role determined:', {
-          profileRole: profileData?.role,
-          userRolesRole: roleData?.[0]?.role,
-          finalRole: userRole
-        });
+        // Extract role from joined data
+        const userRole = profileData?.role || (profileData?.user_roles as any)?.[0]?.role || 'athlete';
         
         const finalProfile = {
           ...profileData,
           role: userRole
         };
 
-        console.log('useUserProfile: Setting final profile:', finalProfile);
         setProfile(finalProfile);
       } catch (error) {
         console.error('useUserProfile: Error fetching user profile:', error);

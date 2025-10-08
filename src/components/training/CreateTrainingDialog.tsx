@@ -399,51 +399,25 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
-      console.log('CreateTrainingDialog: Dialog open change requested', { 
-        newOpen, 
-        canCreateTraining, 
-        profileLoading,
-        profile: !!profile 
-      });
-      
-      // Prevent opening if user is not authenticated or authorized
-      if (newOpen && !canCreateTraining) {
-        console.log('CreateTrainingDialog: Preventing dialog open - user not authorized', {
-          profileLoading,
-          hasProfile: !!profile,
-          isAdmin,
-          isCoach
+      // Allow dialog to open immediately for better UX
+      // Permission checks will happen inside the dialog content
+      if (!newOpen) {
+        // Reset form when closing
+        setFormData({
+          name: '',
+          description: '',
+          date: new Date(),
+          start_time: '',
+          end_time: '',
+          location: '',
+          max_participants: '',
+          training_type: '',
+          category: '',
+          coach_id: '',
+          month: ''
         });
-        
-        if (profileLoading) {
-          toast({
-            title: "Cargando...",
-            description: "Por favor espera mientras verificamos tus permisos",
-            variant: "default"
-          });
-          return;
-        }
-        
-        if (!profile) {
-          toast({
-            title: "No autenticado",
-            description: "Debes iniciar sesión para crear entrenamientos",
-            variant: "destructive"
-          });
-          return;
-        }
-        
-        if (!isAdmin && !isCoach) {
-          toast({
-            title: "Sin permisos",
-            description: "Solo administradores y entrenadores pueden crear entrenamientos",
-            variant: "destructive"
-          });
-          return;
-        }
+        setWeeklySchedule([]);
       }
-      
-      console.log('CreateTrainingDialog: Setting open to', newOpen);
       setOpen(newOpen);
     }}>
       <DialogTrigger asChild>
@@ -465,13 +439,24 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
           <div className="flex items-center justify-center p-8">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-sm text-muted-foreground">Verificando permisos...</p>
+              <p className="text-sm text-muted-foreground">Cargando...</p>
             </div>
           </div>
         )}
 
+        {/* Show access denied if user doesn't have permission */}
+        {!profileLoading && !canCreateTraining && (
+          <div className="p-8 text-center">
+            <AlertCircle className="mx-auto h-12 w-12 text-destructive mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Acceso Restringido</h3>
+            <p className="text-muted-foreground">
+              Solo administradores y entrenadores pueden crear sesiones de entrenamiento.
+            </p>
+          </div>
+        )}
+
         {/* Show error message if there's an error */}
-        {error && !profileLoading && (
+        {error && !profileLoading && canCreateTraining && (
           <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-4">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-destructive" />
