@@ -477,18 +477,6 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
           </div>
         )}
 
-        {/* Debug information - remove in production */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 text-xs">
-            <p><strong>Debug Info:</strong></p>
-            <p>Profile Loading: {profileLoading.toString()}</p>
-            <p>Has Profile: {(!!profile).toString()}</p>
-            <p>Is Admin: {isAdmin.toString()}</p>
-            <p>Is Coach: {isCoach.toString()}</p>
-            <p>Can Create Training: {canCreateTraining.toString()}</p>
-            <p>Error: {error || 'None'}</p>
-          </div>
-        )}
 
         {/* Show main form only if user is authorized and not loading */}
         {!profileLoading && canCreateTraining && (
