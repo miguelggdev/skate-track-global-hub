@@ -65,7 +65,6 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
     max_participants: '',
     training_type: '',
     category: '',
-    level: '',
     coach_id: '',
     month: ''
   });
@@ -125,8 +124,8 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
     fetchCoaches();
   }, [open, isAdmin]);
 
-  // Training types based on category and level
-  const getTrainingTypes = (category: string, level: string): TrainingType[] => {
+  // Training types based on category
+  const getTrainingTypes = (category: string): TrainingType[] => {
     const baseTypes: TrainingType[] = [
       { value: 'technical', label: 'Técnica', icon: Target },
       { value: 'physical', label: 'Físico', icon: Activity },
@@ -140,15 +139,16 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
       { value: 'simulator', label: 'Simulador', icon: Target }
     ];
 
-    // Customize training focus based on category and level
-    if (category === 'youth') {
-      if (level === 'escuela_menores') {
-        return [
-          { value: 'technical', label: 'Técnica Básica', icon: Target, description: 'Fundamentos y postura' },
-          { value: 'physical', label: 'Acondicionamiento Lúdico', icon: Activity, description: 'Ejercicios divertidos' },
-          { value: 'mental', label: 'Concentración', icon: Users, description: 'Atención y disciplina' }
-        ];
-      }
+    // Customize training focus based on category
+    if (category === 'school') {
+      return [
+        { value: 'technical', label: 'Técnica Básica', icon: Target, description: 'Fundamentos y postura' },
+        { value: 'physical', label: 'Acondicionamiento Lúdico', icon: Activity, description: 'Ejercicios divertidos' },
+        { value: 'mental', label: 'Concentración', icon: Users, description: 'Atención y disciplina' }
+      ];
+    }
+
+    if (category === 'minors') {
       return [
         { value: 'technical', label: 'Técnica Juvenil', icon: Target, description: 'Perfeccionamiento técnico' },
         { value: 'physical', label: 'Desarrollo Físico', icon: Activity, description: 'Fuerza y resistencia' },
@@ -156,7 +156,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
       ];
     }
 
-    if (category === 'junior') {
+    if (category === 'transition') {
       return [
         { value: 'technical', label: 'Técnica Avanzada', icon: Target, description: 'Refinamiento técnico' },
         { value: 'physical', label: 'Preparación Física', icon: Activity, description: 'Potencia y velocidad' },
@@ -165,21 +165,12 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
       ];
     }
 
-    if (category === 'senior') {
+    if (category === 'seniors') {
       return [
         { value: 'technical', label: 'Técnica Competitiva', icon: Target, description: 'Precisión y eficiencia' },
         { value: 'physical', label: 'Alto Rendimiento', icon: Activity, description: 'Máximo potencial' },
         { value: 'mental', label: 'Presión Competitiva', icon: Users, description: 'Manejo del estrés' },
         { value: 'recovery', label: 'Recuperación Activa', icon: Clock, description: 'Prevención lesiones' }
-      ];
-    }
-
-    if (category === 'masters') {
-      return [
-        { value: 'technical', label: 'Técnica Adaptada', icon: Target, description: 'Eficiencia de movimiento' },
-        { value: 'physical', label: 'Mantenimiento', icon: Activity, description: 'Preservar condición' },
-        { value: 'mental', label: 'Motivación', icon: Users, description: 'Disfrute del deporte' },
-        { value: 'recovery', label: 'Recuperación', icon: Clock, description: 'Cuidado articular' }
       ];
     }
 
@@ -223,16 +214,10 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
   const normalizeDate = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
   const categories = [
-    { value: 'youth', label: 'Menores' },
-    { value: 'junior', label: 'Juvenil' },
-    { value: 'senior', label: 'Mayores' },
-    { value: 'masters', label: 'Masters' }
-  ];
-
-  const levels = [
-    { value: 'escuela_menores', label: 'Escuela Menores' },
-    { value: 'transicion', label: 'Transición' },
-    { value: 'mayores', label: 'Mayores' }
+    { value: 'school', label: 'Escuela' },
+    { value: 'minors', label: 'Menores' },
+    { value: 'transition', label: 'Transición' },
+    { value: 'seniors', label: 'Mayores' }
   ];
 
   const timeSlots = [
@@ -280,7 +265,6 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
       end_time: formData.end_time,
       training_type: formData.training_type as 'technical' | 'physical' | 'mental' | 'recovery',
       category: formData.category,
-      level: formData.level,
       max_participants: formData.max_participants,
       location: formData.location,
       coach_id: formData.coach_id
@@ -342,12 +326,12 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
 
       // Create training sessions for each item in weekly schedule
       const trainingPromises = weeklySchedule.map(async (item) => {
-        const trainingTypes = getTrainingTypes(item.category, item.level);
+        const trainingTypes = getTrainingTypes(item.category);
         const selectedType = trainingTypes.find(t => t.value === item.training_type);
 
         return supabase.from('training_sessions').insert({
           coach_id: (item.coach_id === 'unassigned' || !item.coach_id) ? coachId : item.coach_id,
-          name: `${selectedType?.label} - ${categories.find(c => c.value === item.category)?.label} ${levels.find(l => l.value === item.level)?.label}`,
+          name: `${selectedType?.label} - ${categories.find(c => c.value === item.category)?.label}`,
           description: selectedType?.description || formData.description || '',
           date: item.date,
           week_start_date: formatDateLocal(getSundayOfWeek(normalizeDate(new Date(formData.date)))),
@@ -380,7 +364,6 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
         max_participants: '',
         training_type: '',
         category: '',
-        level: '',
         coach_id: '',
         month: ''
       });
@@ -399,8 +382,8 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
     }
   };
 
-  const trainingTypes = formData.category && formData.level 
-    ? getTrainingTypes(formData.category, formData.level)
+  const trainingTypes = formData.category 
+    ? getTrainingTypes(formData.category)
     : [];
 
   console.log('CreateTrainingDialog: Rendering dialog', {
@@ -561,20 +544,6 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                   </div>
 
                   <div>
-                    <Label htmlFor="level">Nivel</Label>
-                    <Select value={formData.level} onValueChange={(value) => setFormData({...formData, level: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar nivel" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {levels.map(level => (
-                          <SelectItem key={level.value} value={level.value}>{level.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
                     <Label htmlFor="location">Ubicación</Label>
                     <Input
                       id="location"
@@ -631,7 +600,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                 <CardHeader>
                   <CardTitle className="text-lg">Tipos de Entrenamiento Disponibles</CardTitle>
                   <CardDescription>
-                    Entrenamientos adaptados para {categories.find(c => c.value === formData.category)?.label} - {levels.find(l => l.value === formData.level)?.label}
+                    Entrenamientos adaptados para {categories.find(c => c.value === formData.category)?.label}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -844,8 +813,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                                                 training.training_type === 'physical' ? 'bg-red-500' :
                                                 training.training_type === 'mental' ? 'bg-purple-500' : 'bg-green-500';
                                 
-                                const levelText = training.level === 'escuela_menores' ? 'Escuela Menores' : 
-                                                 training.level === 'transicion' ? 'Transición' : 'Mayores';
+                                const categoryText = categories.find(c => c.value === training.category)?.label || '';
                                 
                                 return (
                                   <div key={idx} className={`text-xs text-center text-white p-1 rounded mb-1 ${typeColor}`}>
@@ -856,7 +824,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                                       {training.location || 'Club'}
                                     </div>
                                     <div className="text-xs opacity-90">
-                                      {levelText}
+                                      {categoryText}
                                     </div>
                                   </div>
                                 );
