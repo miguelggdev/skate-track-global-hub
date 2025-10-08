@@ -452,9 +452,9 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
             <Plus className="h-5 w-5" />
             Crear Programación de Entrenamientos
           </DialogTitle>
-          <DialogDescription>
-            Crea una programación semanal de entrenamientos adaptados por categoría y nivel
-          </DialogDescription>
+            <DialogDescription>
+              Crea una programación semanal de entrenamientos adaptados por categoría
+            </DialogDescription>
         </DialogHeader>
 
         {/* Show loading state while profile is loading */}
