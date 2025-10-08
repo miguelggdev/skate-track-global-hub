@@ -37,11 +37,24 @@ export const useUserProfile = () => {
 
         if (profileError) throw profileError;
 
-        // Extract role from joined data
-        const userRole = profileData?.role || (profileData?.user_roles as any)?.[0]?.role || 'athlete';
+        // Extract all roles from joined data
+        const rolesArray = Array.isArray(profileData?.user_roles) 
+          ? profileData.user_roles 
+          : [profileData?.user_roles].filter(Boolean);
         
-        const finalProfile = {
-          ...profileData,
+        // Define role priority (highest to lowest)
+        const rolePriority: UserProfile['role'][] = ['admin', 'leader', 'coach', 'delegate', 'finance', 'athlete'];
+        
+        // Find the highest priority role
+        const userRole = (rolePriority.find(role => 
+          rolesArray.some((r: any) => r?.role === role)
+        ) || profileData?.role || 'athlete') as UserProfile['role'];
+        
+        const finalProfile: UserProfile = {
+          id: profileData.id,
+          email: profileData.email,
+          first_name: profileData.first_name,
+          last_name: profileData.last_name,
           role: userRole
         };
 
