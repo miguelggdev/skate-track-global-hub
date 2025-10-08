@@ -12,6 +12,7 @@ import { Plus, Clock, Users, Target, Activity, MapPin, Calendar as CalendarIcon,
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useCoaches } from '@/hooks/useCoaches';
 import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -31,29 +32,13 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [coachesLoading, setCoachesLoading] = useState(false);
   const { toast } = useToast();
   const { profile, isAdmin, isCoach, loading: profileLoading } = useUserProfile();
+  const { data: coaches = [], isLoading: coachesLoading } = useCoaches();
   const queryClient = useQueryClient();
 
-  console.log('CreateTrainingDialog: Component initialized', { 
-    isAdmin, 
-    isCoach, 
-    userRole: profile?.role,
-    profileLoading,
-    profileExists: !!profile 
-  });
-
-  // Authentication guard - prevent opening if not authenticated or not authorized
+  // Authentication guard
   const canCreateTraining = (isAdmin || isCoach) && profile;
-  
-  console.log('CreateTrainingDialog: Permission check', {
-    canCreateTraining,
-    hasProfile: !!profile,
-    isAuthenticated: !profileLoading && !!profile,
-    isAdmin,
-    isCoach
-  });
   
   const [formData, setFormData] = useState({
     name: '',
@@ -71,61 +56,6 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
 
   const [selectedDay, setSelectedDay] = useState('');
   const [weeklySchedule, setWeeklySchedule] = useState<any[]>([]);
-  const [coaches, setCoaches] = useState<Array<{id: string, name: string}>>([]);
-
-  // Fetch coaches for admin users
-  useEffect(() => {
-    const fetchCoaches = async () => {
-      if (!isAdmin || !open) return;
-      
-      console.log('CreateTrainingDialog: Fetching coaches for admin user');
-      
-      setCoachesLoading(true);
-      setError(null);
-      
-      try {
-        const { data, error: fetchError } = await supabase
-          .from('profiles')
-          .select(`
-            id,
-            first_name,
-            last_name,
-            email,
-            user_roles!inner(role)
-          `)
-          .eq('user_roles.role', 'coach');
-        
-        console.log('CreateTrainingDialog: Coaches fetched', { data, error: fetchError });
-        
-        if (fetchError) {
-          console.error('CreateTrainingDialog: Error fetching coaches:', fetchError);
-          setError('No se pudieron cargar los entrenadores');
-          setCoaches([]);
-          return;
-        }
-        
-        if (data && data.length > 0) {
-          const coachOptions = data.map(profile => ({
-            id: profile.id, // Use profile id (which is the user_id)
-            name: `${profile.first_name} ${profile.last_name}`.trim()
-          }));
-          setCoaches(coachOptions);
-          console.log('CreateTrainingDialog: Coaches set successfully:', coachOptions);
-        } else {
-          console.log('CreateTrainingDialog: No coaches found in database');
-          setCoaches([]);
-        }
-      } catch (err) {
-        console.error('CreateTrainingDialog: Unexpected error fetching coaches:', err);
-        setError('Error inesperado al cargar entrenadores');
-        setCoaches([]);
-      } finally {
-        setCoachesLoading(false);
-      }
-    };
-
-    fetchCoaches();
-  }, [open, isAdmin]);
 
   // Training types based on category
   const getTrainingTypes = (category: string): TrainingType[] => {
