@@ -24,37 +24,40 @@ export const useUserProfile = () => {
       }
 
       try {
-        // Single optimized query with join - much faster!
+        // Query 1: Fetch profile data
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select(`
-            *,
-            user_roles!inner(role)
-          `)
+          .select('id, email, first_name, last_name, role')
           .eq('id', user.id)
-          .limit(1)
-          .single();
+          .maybeSingle();
 
         if (profileError) throw profileError;
 
-        // Extract all roles from joined data
-        const rolesArray = Array.isArray(profileData?.user_roles) 
-          ? profileData.user_roles 
-          : [profileData?.user_roles].filter(Boolean);
+        // Query 2: Fetch all roles for this user
+        const { data: rolesData, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
+
+        if (rolesError) throw rolesError;
+
+        // Extract roles and apply priority
+        const roles = (rolesData || []).map((r: any) => r.role);
         
         // Define role priority (highest to lowest)
         const rolePriority: UserProfile['role'][] = ['admin', 'leader', 'coach', 'delegate', 'finance', 'athlete'];
         
-        // Find the highest priority role
-        const userRole = (rolePriority.find(role => 
-          rolesArray.some((r: any) => r?.role === role)
-        ) || profileData?.role || 'athlete') as UserProfile['role'];
+        // Find the highest priority role from user_roles, fallback to profiles.role, then 'athlete'
+        const userRole = (rolePriority.find(role => roles.includes(role)) 
+          || profileData?.role 
+          || 'athlete') as UserProfile['role'];
         
+        // Build profile object with safe defaults
         const finalProfile: UserProfile = {
-          id: profileData.id,
-          email: profileData.email,
-          first_name: profileData.first_name,
-          last_name: profileData.last_name,
+          id: user.id,
+          email: profileData?.email || user.email || '',
+          first_name: profileData?.first_name || '',
+          last_name: profileData?.last_name || '',
           role: userRole
         };
 
