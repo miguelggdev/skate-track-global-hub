@@ -110,11 +110,24 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-gray-800">SpeedSkate Academy</CardTitle>
-          <CardDescription>
+    <div 
+      className="min-h-screen flex items-center justify-center relative overflow-hidden p-4"
+      style={{ 
+        backgroundImage: 'url(/images/login-bg.png)', 
+        backgroundSize: 'cover', 
+        backgroundPosition: 'center' 
+      }}
+    >
+      {/* Dark overlay with subtle blur */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+      
+      {/* Glassmorphism card */}
+      <Card className="w-full max-w-md backdrop-blur-xl bg-white/95 dark:bg-slate-900/95 shadow-2xl border-white/20 relative z-10 animate-scale-in">
+        <CardHeader className="text-center space-y-2">
+          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            SpeedSkate Academy
+          </CardTitle>
+          <CardDescription className="text-base">
             Sistema de Gestión Deportiva
           </CardDescription>
         </CardHeader>
@@ -272,10 +285,6 @@ const Login = () => {
             </form>
           </TabsContent>
         </Tabs>
-        
-        <div className="p-6 text-center text-sm text-muted-foreground">
-          Use admin@example.com / admin123 para login de prueba
-        </div>
       </Card>
     </div>
   );
