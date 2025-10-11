@@ -122,7 +122,7 @@ const Login = () => {
       <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
       
       {/* Glassmorphism card */}
-      <Card className="w-full max-w-md backdrop-blur-xl bg-white/95 dark:bg-slate-900/95 shadow-2xl border-white/20 relative z-10 animate-scale-in">
+      <Card className="w-full max-w-md backdrop-blur-lg bg-white/85 dark:bg-slate-900/85 shadow-2xl border-white/30 relative z-10 animate-scale-in">
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             SpeedSkate Academy
