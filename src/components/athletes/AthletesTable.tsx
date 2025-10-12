@@ -51,11 +51,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MoreHorizontal, Eye, Edit, Trash2, User, Phone, Mail, Calendar, Trophy, Activity } from 'lucide-react';
+import { MoreHorizontal, Eye, Edit, Trash2, User, Phone, Mail, Calendar, Trophy, Activity, CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
 import { Athlete } from '@/hooks/useAthletes';
 import { EditAthleteDialog } from './EditAthleteDialog';
 import AthleteDetailsDialog from './AthleteDetailsDialog';
+import { AthleteCardDialog } from './AthleteCardDialog';
 
 interface PaginationData {
   currentPage: number;
@@ -78,6 +79,7 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
   const [selected, setSelected] = useState<Athlete | null>(null);
   const [viewAthleteId, setViewAthleteId] = useState<string | null>(null);
   const [editAthlete, setEditAthlete] = useState<Athlete | null>(null);
+  const [cardAthleteId, setCardAthleteId] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   // Utility functions
@@ -128,6 +130,10 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
 
   const openEdit = (athlete: Athlete) => {
     setEditAthlete(athlete);
+  };
+
+  const openCard = (athlete: Athlete) => {
+    setCardAthleteId(athlete.id);
   };
 
   const openDelete = (athlete: Athlete) => {
@@ -187,6 +193,7 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
   }
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle>Lista de Atletas</CardTitle>
@@ -260,6 +267,10 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
                         <DropdownMenuItem onClick={() => openView(athlete)}>
                           <Eye className="mr-2 h-4 w-4" />
                           Ver detalles
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openCard(athlete)}>
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          Ver carnet
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openEdit(athlete)}>
                           <Edit className="mr-2 h-4 w-4" />
@@ -356,6 +367,14 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
         )}
       </CardContent>
     </Card>
+    
+    {/* Athlete Card Dialog */}
+    <AthleteCardDialog
+      athleteId={cardAthleteId}
+      open={!!cardAthleteId}
+      onOpenChange={(open) => !open && setCardAthleteId(null)}
+    />
+    </>
   );
 };
 
