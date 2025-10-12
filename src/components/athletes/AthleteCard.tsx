@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Phone, Mail, Heart, IdCard, Trophy, FlipHorizontal, MapPin } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
