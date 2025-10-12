@@ -81,10 +81,10 @@ const Login = () => {
       }}
     >
       {/* Dark overlay with subtle blur */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+      <div className="absolute inset-0 bg-black/25 backdrop-blur-[1px]" />
       
       {/* Glassmorphism card */}
-      <Card className="w-full max-w-md backdrop-blur-xl bg-black/60 shadow-2xl border-white/20 relative z-10 animate-scale-in">
+      <Card className="w-full max-w-md backdrop-blur-lg bg-black/40 shadow-2xl border-white/30 relative z-10 animate-scale-in">
         <CardHeader className="text-center space-y-1 pb-4">
           <CardTitle className="text-3xl font-bold text-white">
             SpeedSkate Academy
@@ -106,7 +106,7 @@ const Login = () => {
                     placeholder="Ingrese su usuario"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10 bg-white/90 border-white/30 text-gray-900 placeholder:text-gray-500"
+                    className="pl-10 bg-white/75 border-white/40 text-gray-900 placeholder:text-gray-600"
                     required
                   />
                 </div>
@@ -118,7 +118,7 @@ const Login = () => {
                     placeholder="Ingrese su contraseña"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 bg-white/90 border-white/30 text-gray-900 placeholder:text-gray-500"
+                    className="pl-10 bg-white/75 border-white/40 text-gray-900 placeholder:text-gray-600"
                     required
                   />
                 </div>
@@ -151,7 +151,7 @@ const Login = () => {
                   placeholder="Ingrese su email"
                   value={resetEmail}
                   onChange={(e) => setResetEmail(e.target.value)}
-                  className="pl-10 bg-white/90 border-white/30 text-gray-900 placeholder:text-gray-500"
+                  className="pl-10 bg-white/75 border-white/40 text-gray-900 placeholder:text-gray-600"
                   required
                 />
               </div>
