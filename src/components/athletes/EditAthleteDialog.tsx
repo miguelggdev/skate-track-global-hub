@@ -261,6 +261,19 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
 
     setIsLoading(true);
     try {
+      // Update avatar_url if changed
+      if (photoUrl && athlete.user_id) {
+        const { error: avatarError } = await supabase
+          .from('profiles')
+          .update({ avatar_url: photoUrl })
+          .eq('id', athlete.user_id);
+          
+        if (avatarError) {
+          console.error('Error updating avatar:', avatarError);
+          // Don't fail the whole operation, just log
+        }
+      }
+
       // Update athlete record
       const { error: athleteError } = await supabase
         .from('athletes')

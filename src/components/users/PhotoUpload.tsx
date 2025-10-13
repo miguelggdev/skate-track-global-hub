@@ -77,22 +77,12 @@ export const PhotoUpload = ({ currentPhotoUrl, onPhotoChange, userId, className 
           .from('profiles')
           .getPublicUrl(fileName);
 
-        // Update the profile in the database immediately
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ avatar_url: data.publicUrl })
-          .eq('id', userId);
-
-        if (updateError) {
-          console.error('Error updating profile:', updateError);
-          throw new Error('No se pudo actualizar el perfil en la base de datos');
-        }
-
+        // Don't update database - let the form handle it
         onPhotoChange(data.publicUrl);
         
         toast({
           title: "Foto subida exitosamente",
-          description: "La foto de perfil se ha actualizado",
+          description: "La foto se ha guardado. Recuerda guardar el formulario para aplicar los cambios",
         });
       } else {
         // For new users, just store the file object for later upload
@@ -119,17 +109,6 @@ export const PhotoUpload = ({ currentPhotoUrl, onPhotoChange, userId, className 
         await supabase.storage
           .from('profiles')
           .remove([fileName]);
-
-        // Update profile in database to remove avatar_url
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ avatar_url: null })
-          .eq('id', userId);
-
-        if (updateError) {
-          console.error('Error updating profile:', updateError);
-          throw new Error('No se pudo actualizar el perfil en la base de datos');
-        }
       }
 
       setPreviewUrl(null);
@@ -141,7 +120,7 @@ export const PhotoUpload = ({ currentPhotoUrl, onPhotoChange, userId, className 
 
       toast({
         title: "Foto eliminada",
-        description: "La foto de perfil se ha eliminado",
+        description: "La foto se ha eliminado. Recuerda guardar el formulario para aplicar los cambios",
       });
     } catch (error: any) {
       console.error('Error removing photo:', error);
