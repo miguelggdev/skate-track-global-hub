@@ -261,16 +261,20 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
 
     setIsLoading(true);
     try {
-      // Update avatar_url if changed
-      if (photoUrl && athlete.user_id) {
+      // Update avatar_url if changed (including removal)
+      if (athlete.user_id && photoUrl !== athleteDetails?.avatar_url) {
         const { error: avatarError } = await supabase
           .from('profiles')
-          .update({ avatar_url: photoUrl })
+          .update({ avatar_url: photoUrl || null })
           .eq('id', athlete.user_id);
           
         if (avatarError) {
           console.error('Error updating avatar:', avatarError);
-          // Don't fail the whole operation, just log
+          toast({
+            title: "Advertencia",
+            description: "No se pudo actualizar la foto de perfil, pero los demás cambios se guardaron",
+            variant: "destructive",
+          });
         }
       }
 

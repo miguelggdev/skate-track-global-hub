@@ -104,11 +104,14 @@ export const PhotoUpload = ({ currentPhotoUrl, onPhotoChange, userId, className 
   const handleRemovePhoto = async () => {
     try {
       if (userId && currentPhotoUrl) {
-        // Delete from Supabase storage
-        const fileName = `${userId}/profile.jpg`; // Assuming jpg extension
-        await supabase.storage
-          .from('profiles')
-          .remove([fileName]);
+        // Delete from Supabase storage - parse the file path from the URL
+        const urlParts = currentPhotoUrl.split('/storage/v1/object/public/profiles/');
+        if (urlParts.length > 1) {
+          const filePath = urlParts[1];
+          await supabase.storage
+            .from('profiles')
+            .remove([filePath]);
+        }
       }
 
       setPreviewUrl(null);
