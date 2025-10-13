@@ -40,8 +40,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2 } from 'lucide-react';
+import { Loader2, User } from 'lucide-react';
 import { Athlete } from '@/hooks/useAthletes';
+import { PhotoUpload } from '@/components/users/PhotoUpload';
 
 // Form validation schema
 const editAthleteSchema = z.object({
@@ -116,6 +117,7 @@ interface EditAthleteDialogProps {
 
 export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdated }: EditAthleteDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Fetch detailed athlete data for form population
@@ -188,6 +190,9 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
   // Reset form when athlete details change
   useEffect(() => {
     if (athleteDetails) {
+      // Set photo URL from profile
+      setPhotoUrl(athleteDetails.avatar_url || null);
+      
       form.reset({
         first_name: athleteDetails.first_name || '',
         last_name: athleteDetails.last_name || '',
@@ -712,6 +717,18 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
               </TabsContent>
 
               <TabsContent value="personal" className="space-y-4">
+                {/* Photo Upload Section */}
+                {athlete?.user_id && (
+                  <div className="border rounded-lg p-4 bg-muted/50 mb-4">
+                    <PhotoUpload
+                      currentPhotoUrl={photoUrl || athleteDetails?.avatar_url || undefined}
+                      onPhotoChange={(url) => setPhotoUrl(url)}
+                      userId={athlete.user_id}
+                      className="max-w-md mx-auto"
+                    />
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
