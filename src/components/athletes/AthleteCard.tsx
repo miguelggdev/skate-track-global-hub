@@ -1,256 +1,196 @@
-import { Phone, Mail, Heart, IdCard, Trophy, FlipHorizontal, MapPin } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { FlipHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AthleteDetails } from '@/hooks/useAthleteDetails';
 import { ClubSettings } from '@/hooks/useClubSettings';
+import { FrontBlobs, BackBlobs } from './DecorativeBlobs';
 
 interface AthleteCardProps {
   athlete: AthleteDetails;
   clubSettings: ClubSettings | null;
   onFlip?: () => void;
   isFlipped?: boolean;
+  qrCodeUrl?: string;
 }
 
-export const AthleteCard = ({ athlete, clubSettings, onFlip, isFlipped }: AthleteCardProps) => {
-  const calculateAge = (dateOfBirth?: string) => {
-    if (!dateOfBirth) return 'N/A';
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
-
+export const AthleteCard = ({ 
+  athlete, 
+  clubSettings, 
+  onFlip, 
+  isFlipped = false,
+  qrCodeUrl 
+}: AthleteCardProps) => {
   const getCategoryLabel = (category: string) => {
     const labels: Record<string, string> = {
       escuela: 'Escuela',
       menores: 'Menores',
       transicion: 'Transición',
-      prejuvenil: 'Pre-Juvenil',
+      prejuvenil: 'Pre-juvenil',
       juvenil: 'Juvenil',
-      mayores: 'Mayores',
+      mayores: 'Mayores'
     };
     return labels[category] || category;
   };
 
+  const getValidityYear = () => {
+    if (athlete.join_date) {
+      return new Date(athlete.join_date).getFullYear();
+    }
+    return new Date().getFullYear();
+  };
+
   return (
-    <div className="relative w-full h-full" style={{ perspective: '1000px' }}>
+    <div className="relative w-full h-full perspective-1000">
       <div
-        className={`relative w-full h-full transition-all duration-700 transform-style-3d ${
+        className={`relative w-full h-full transition-transform duration-700 transform-style-3d ${
           isFlipped ? 'rotate-y-180' : ''
         }`}
-        style={{ transformStyle: 'preserve-3d' }}
       >
-        {/* Front Side */}
-        <div
-          className="absolute inset-0 backface-hidden"
-          style={{ backfaceVisibility: 'hidden' }}
-        >
-          <div className="w-full h-full bg-gradient-to-br from-primary via-primary/90 to-primary-dark rounded-2xl shadow-2xl border-2 border-white/20 overflow-hidden">
-            {/* Header */}
-            <div className="bg-white/10 backdrop-blur-sm px-6 py-4 border-b border-white/20">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {clubSettings?.club_logo_url ? (
-                    <img
-                      src={clubSettings.club_logo_url}
-                      alt={clubSettings.club_name}
-                      className="h-12 w-12 object-contain"
-                    />
-                  ) : (
-                    <div className="h-12 w-12 bg-white/20 rounded-full flex items-center justify-center">
-                      <Trophy className="h-6 w-6 text-white" />
-                    </div>
-                  )}
-                  <div>
-                    <h3 className="text-white font-bold text-lg leading-tight">
-                      {clubSettings?.club_name || 'Club'}
-                    </h3>
-                    <p className="text-white/80 text-xs">Carnet de Atleta</p>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onFlip}
-                  className="text-white hover:bg-white/20"
-                >
-                  <FlipHorizontal className="h-5 w-5" />
-                </Button>
+        {/* FRONT SIDE */}
+        <div className="absolute inset-0 backface-hidden">
+          <div className="relative w-full h-full bg-white rounded-2xl shadow-2xl overflow-hidden p-6 flex flex-col items-center justify-between">
+            <FrontBlobs />
+            
+            {/* Flip button */}
+            {onFlip && (
+              <Button
+                onClick={onFlip}
+                size="icon"
+                variant="ghost"
+                className="absolute top-4 right-4 z-10 hover:bg-blue-100"
+              >
+                <FlipHorizontal className="h-5 w-5 text-blue-600" />
+              </Button>
+            )}
+
+            {/* Club Logo */}
+            {clubSettings?.club_logo_url && (
+              <div className="w-16 h-16 mb-4">
+                <img
+                  src={clubSettings.club_logo_url}
+                  alt="Club Logo"
+                  className="w-full h-full object-contain"
+                />
               </div>
+            )}
+
+            {/* Athlete Photo */}
+            <div className="w-full max-w-[180px] aspect-[3/4] rounded-xl overflow-hidden shadow-lg border-4 border-gray-100 mb-4">
+              {athlete.avatar_url ? (
+                <img
+                  src={athlete.avatar_url}
+                  alt={`${athlete.first_name} ${athlete.last_name}`}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                  <span className="text-5xl font-bold text-blue-600">
+                    {athlete.first_name?.[0]}{athlete.last_name?.[0]}
+                  </span>
+                </div>
+              )}
             </div>
 
-            {/* Main Content */}
-            <div className="p-6 space-y-4">
-              {/* Athlete Photo and Basic Info */}
-              <div className="flex items-start gap-4">
-                <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
-                  <AvatarImage src={athlete.avatar_url} alt={`${athlete.first_name} ${athlete.last_name}`} />
-                  <AvatarFallback className="bg-white text-primary text-2xl font-bold">
-                    {athlete.first_name?.[0]}{athlete.last_name?.[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 text-white">
-                  <h2 className="text-2xl font-bold leading-tight mb-1">
-                    {athlete.first_name} {athlete.last_name}
-                  </h2>
-                  <div className="space-y-1 text-sm">
-                    <p className="text-white/90">
-                      <span className="font-semibold">Categoría:</span> {getCategoryLabel(athlete.category)}
-                    </p>
-                    <p className="text-white/90">
-                      <span className="font-semibold">Edad:</span> {calculateAge(athlete.date_of_birth)} años
-                    </p>
-                  </div>
-                </div>
-              </div>
+            {/* Athlete Information */}
+            <div className="space-y-2 text-center flex-1 flex flex-col justify-center">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-800 leading-tight">
+                {athlete.first_name} {athlete.last_name}
+              </h1>
+              
+              <p className="text-sm md:text-base text-slate-600">
+                Categoría: {getCategoryLabel(athlete.category)}
+              </p>
 
-              {/* Contact & Medical Info */}
-              <div className="grid grid-cols-1 gap-2 bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                {athlete.phone && (
-                  <div className="flex items-center gap-2 text-white text-sm">
-                    <Phone className="h-4 w-4 text-white/80" />
-                    <span>{athlete.phone}</span>
-                  </div>
-                )}
-                {athlete.email && (
-                  <div className="flex items-center gap-2 text-white text-sm">
-                    <Mail className="h-4 w-4 text-white/80" />
-                    <span className="truncate">{athlete.email}</span>
-                  </div>
-                )}
-                {athlete.body_info?.blood_type && (
-                  <div className="flex items-center gap-2 text-white text-sm">
-                    <Heart className="h-4 w-4 text-white/80" />
-                    <span>Tipo de Sangre: {athlete.body_info.blood_type}</span>
-                  </div>
-                )}
-                {athlete.id_number && (
-                  <div className="flex items-center gap-2 text-white text-sm">
-                    <IdCard className="h-4 w-4 text-white/80" />
-                    <span>ID: {athlete.id_number}</span>
-                  </div>
-                )}
-                {athlete.history?.is_league && (
-                  <div className="flex items-center gap-2 text-white text-sm">
-                    <Trophy className="h-4 w-4 text-white/80" />
-                    <span>Liga: {clubSettings?.league || 'Sí'}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Athlete Number */}
-              <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2 border border-white/30">
-                <p className="text-white text-center font-mono font-bold text-lg">
-                  {athlete.athlete_number || `ATH-${athlete.id.slice(0, 8).toUpperCase()}`}
+              <div className="pt-3 space-y-1">
+                <p className="text-xs md:text-sm text-slate-700">
+                  <span className="font-semibold">Tarjeta de identidad:</span> {athlete.athlete_number || athlete.id?.slice(0, 8) || 'N/A'}
                 </p>
+                
+                {athlete.phone && (
+                  <p className="text-xs md:text-sm text-slate-700">
+                    <span className="font-semibold">Teléfono:</span> {athlete.phone}
+                  </p>
+                )}
               </div>
+
+              <p className="text-xs text-slate-600 pt-2">
+                Válido {athlete.first_name?.toLowerCase()}: {getValidityYear()}
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Back Side */}
-        <div
-          className="absolute inset-0 backface-hidden rotate-y-180"
-          style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
-        >
-          <div className="w-full h-full bg-gradient-to-br from-slate-700 via-slate-600 to-slate-700 rounded-2xl shadow-2xl border-2 border-white/20 overflow-hidden">
-            {/* Header */}
-            <div className="bg-white/10 backdrop-blur-sm px-6 py-4 border-b border-white/20">
-              <div className="flex items-center justify-between">
-                <h3 className="text-white font-bold text-lg">Carnet de Atleta</h3>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onFlip}
-                  className="text-white hover:bg-white/20"
-                >
-                  <FlipHorizontal className="h-5 w-5" />
-                </Button>
-              </div>
-            </div>
+        {/* BACK SIDE */}
+        <div className="absolute inset-0 backface-hidden rotate-y-180">
+          <div className="relative w-full h-full bg-gradient-to-br from-indigo-900 via-blue-800 to-purple-900 rounded-2xl shadow-2xl overflow-hidden p-6 flex flex-col items-center justify-between text-white">
+            <BackBlobs />
+            
+            {/* Flip button */}
+            {onFlip && (
+              <Button
+                onClick={onFlip}
+                size="icon"
+                variant="ghost"
+                className="absolute top-4 right-4 z-10 hover:bg-white/20 text-white"
+              >
+                <FlipHorizontal className="h-5 w-5" />
+              </Button>
+            )}
 
-            {/* Content */}
-            <div className="p-6 space-y-4 text-white">
-              {/* Club Information */}
-              <div className="space-y-2">
-                <h4 className="text-sm font-bold text-white/90 uppercase tracking-wide mb-2">
-                  Información del Club
-                </h4>
-                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 space-y-1.5 text-sm border border-white/20">
-                  {clubSettings?.club_name && (
-                    <p><span className="font-semibold">Nombre:</span> {clubSettings.club_name}</p>
-                  )}
-                  {clubSettings?.address && (
-                    <div className="flex items-start gap-2">
-                      <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0 text-white/80" />
-                      <span>{clubSettings.address}</span>
-                    </div>
-                  )}
-                  {clubSettings?.contact_phone && (
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-white/80" />
-                      <span>{clubSettings.contact_phone}</span>
-                    </div>
-                  )}
-                  {clubSettings?.contact_email && (
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-white/80" />
-                      <span className="truncate">{clubSettings.contact_email}</span>
-                    </div>
-                  )}
-                  {clubSettings?.website_url && (
-                    <p className="truncate">{clubSettings.website_url}</p>
-                  )}
+            {/* QR Code Section */}
+            <div className="flex-1 flex flex-col items-center justify-center space-y-4">
+              {qrCodeUrl ? (
+                <div className="bg-white rounded-3xl p-6 shadow-xl">
+                  <img
+                    src={qrCodeUrl}
+                    alt="QR Code"
+                    className="w-40 h-40 md:w-48 md:h-48"
+                  />
                 </div>
-              </div>
-
-              {/* Emergency Contact */}
-              {(athlete.emergency_contact_name || athlete.emergency_contact_phone) && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-bold text-white/90 uppercase tracking-wide">
-                    Contacto de Emergencia
-                  </h4>
-                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 space-y-1.5 text-sm border border-white/20">
-                    {athlete.emergency_contact_name && (
-                      <p><span className="font-semibold">Nombre:</span> {athlete.emergency_contact_name}</p>
-                    )}
-                    {athlete.emergency_contact_phone && (
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-white/80" />
-                        <span>{athlete.emergency_contact_phone}</span>
-                      </div>
-                    )}
-                  </div>
+              ) : (
+                <div className="bg-white rounded-3xl p-6 shadow-xl w-40 h-40 md:w-48 md:h-48 flex items-center justify-center">
+                  <span className="text-slate-400 text-xs text-center">QR Code</span>
                 </div>
               )}
 
-              {/* Athlete Number & Validity */}
-              <div className="space-y-2">
-                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 border border-white/30">
-                  <p className="text-xs text-white/80 mb-1">Número de Atleta</p>
-                  <p className="text-white font-mono font-bold text-center text-lg">
-                    {athlete.athlete_number || `ATH-${athlete.id.slice(0, 8).toUpperCase()}`}
-                  </p>
-                </div>
-                <div className="text-center text-xs text-white/70">
-                  <p>Válido desde: {new Date(athlete.join_date).getFullYear()}</p>
-                </div>
+              {clubSettings?.website_url && (
+                <p className="text-sm font-medium text-white/90">
+                  {clubSettings.website_url}
+                </p>
+              )}
+
+              {/* Decorative Dots */}
+              <div className="flex gap-1.5 py-2">
+                {[...Array(10)].map((_, i) => (
+                  <div key={i} className="w-1 h-1 rounded-full bg-white/60" />
+                ))}
               </div>
+
+              {/* Disclaimer */}
+              <p className="text-xs text-center text-white/80 max-w-md leading-relaxed px-4">
+                Este carné es personal e intransferible y todas las acciones realizadas con el carné se entiende su titular.
+              </p>
+            </div>
+
+            {/* Club Name at Bottom */}
+            <div className="text-center">
+              <h2 className="text-lg md:text-xl font-bold text-white">
+                {clubSettings?.club_name || 'Club de Patinaje'}
+              </h2>
             </div>
           </div>
         </div>
       </div>
 
       <style>{`
+        .perspective-1000 {
+          perspective: 1000px;
+        }
         .transform-style-3d {
           transform-style: preserve-3d;
         }
         .backface-hidden {
           backface-visibility: hidden;
+          -webkit-backface-visibility: hidden;
         }
         .rotate-y-180 {
           transform: rotateY(180deg);

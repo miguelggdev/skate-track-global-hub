@@ -7,7 +7,8 @@ const CARD_HEIGHT = 53.98; // mm
 
 export const generateAthleteCardPDF = async (
   athlete: AthleteDetails,
-  clubSettings: ClubSettings
+  clubSettings: ClubSettings,
+  qrCodeUrl: string
 ) => {
   const pdf = new jsPDF({
     orientation: 'landscape',
@@ -15,219 +16,179 @@ export const generateAthleteCardPDF = async (
     format: [CARD_WIDTH, CARD_HEIGHT],
   });
 
-  // Helper function to calculate age
-  const calculateAge = (dateOfBirth?: string) => {
-    if (!dateOfBirth) return 'N/A';
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
-
   const getCategoryLabel = (category: string) => {
     const labels: Record<string, string> = {
       escuela: 'Escuela',
       menores: 'Menores',
       transicion: 'Transición',
-      prejuvenil: 'Pre-Juvenil',
+      prejuvenil: 'Pre-juvenil',
       juvenil: 'Juvenil',
-      mayores: 'Mayores',
+      mayores: 'Mayores'
     };
     return labels[category] || category;
   };
 
-  // ===== FRONT SIDE =====
+  const getValidityYear = () => {
+    if (athlete.join_date) {
+      return new Date(athlete.join_date).getFullYear();
+    }
+    return new Date().getFullYear();
+  };
+
+  // ==================== FRONT SIDE ====================
   
-  // Background gradient (simulated with rectangles)
-  pdf.setFillColor(59, 130, 246); // Primary blue
+  // White background
+  pdf.setFillColor(255, 255, 255);
   pdf.rect(0, 0, CARD_WIDTH, CARD_HEIGHT, 'F');
+
+  // Add decorative blue blobs (simplified without opacity for PDF compatibility)
+  // Top-left blob
+  pdf.setFillColor(147, 197, 253); // Lighter blue #93C5FD
+  pdf.ellipse(0, 0, 15, 15, 'F');
   
-  // Header section
-  pdf.setFillColor(255, 255, 255, 0.1);
-  pdf.rect(0, 0, CARD_WIDTH, 12, 'F');
+  // Bottom-right blob
+  pdf.setFillColor(59, 130, 246); // #3B82F6
+  pdf.ellipse(CARD_WIDTH, CARD_HEIGHT, 18, 18, 'F');
   
-  // Club logo (if available)
-  if (clubSettings.club_logo_url) {
+  // Right accent blob
+  pdf.setFillColor(191, 219, 254); // Very light blue #BFDBFE
+  pdf.circle(CARD_WIDTH, CARD_HEIGHT / 2, 12, 'F');
+
+  const centerX = CARD_WIDTH / 2;
+  let yPos = 5;
+
+  // Club logo
+  if (clubSettings?.club_logo_url) {
     try {
-      pdf.addImage(clubSettings.club_logo_url, 'PNG', 3, 2, 8, 8);
+      pdf.addImage(clubSettings.club_logo_url, 'PNG', centerX - 6, yPos, 12, 12);
+      yPos += 14;
     } catch (error) {
-      console.warn('Could not add club logo to PDF');
+      console.error('Error adding club logo:', error);
+      yPos += 2;
     }
   }
-  
-  // Club name
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(10);
+
+  // Athlete photo (if available)
+  if (athlete.avatar_url) {
+    try {
+      const photoWidth = 20;
+      const photoHeight = 26.67; // 3:4 aspect ratio
+      pdf.addImage(athlete.avatar_url, 'JPEG', centerX - photoWidth / 2, yPos, photoWidth, photoHeight);
+      yPos += photoHeight + 3;
+    } catch (error) {
+      console.error('Error adding athlete photo:', error);
+      yPos += 3;
+    }
+  } else {
+    yPos += 3;
+  }
+
+  // Athlete name (large, bold, dark)
+  pdf.setFontSize(14);
   pdf.setFont('helvetica', 'bold');
-  pdf.text(clubSettings.club_name || 'Club', 13, 6);
-  
-  pdf.setFontSize(7);
+  pdf.setTextColor(30, 41, 59); // slate-800
+  const fullName = `${athlete.first_name} ${athlete.last_name}`;
+  pdf.text(fullName, centerX, yPos, { align: 'center' });
+  yPos += 5;
+
+  // Category
+  pdf.setFontSize(9);
   pdf.setFont('helvetica', 'normal');
-  pdf.text('Carnet de Atleta', 13, 9.5);
-  
-  // Athlete photo placeholder (rectangle)
-  pdf.setFillColor(255, 255, 255, 0.2);
-  pdf.rect(5, 15, 18, 22, 'F');
-  pdf.setDrawColor(255, 255, 255);
-  pdf.setLineWidth(0.3);
-  pdf.rect(5, 15, 18, 22, 'S');
-  
-  // Athlete name
-  pdf.setFontSize(12);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text(`${athlete.first_name} ${athlete.last_name}`, 25, 18);
-  
-  // Category and age
+  pdf.setTextColor(71, 85, 105); // slate-600
+  pdf.text(`Categoría: ${getCategoryLabel(athlete.category)}`, centerX, yPos, { align: 'center' });
+  yPos += 5;
+
+  // ID Number
   pdf.setFontSize(8);
+  pdf.setTextColor(51, 65, 85); // slate-700
+  const idNumber = athlete.athlete_number || athlete.id?.slice(0, 8) || 'N/A';
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Tarjeta de identidad: ', centerX - 15, yPos);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(`Categoría: ${getCategoryLabel(athlete.category)}`, 25, 23);
-  pdf.text(`Edad: ${calculateAge(athlete.date_of_birth)} años`, 25, 27);
-  
-  // Contact & Info box
-  pdf.setFillColor(255, 255, 255, 0.1);
-  pdf.rect(5, 39, CARD_WIDTH - 10, 12, 'F');
-  
-  let yPos = 43;
-  pdf.setFontSize(7);
-  
+  pdf.text(idNumber, centerX + 15, yPos, { align: 'center' });
+  yPos += 4;
+
+  // Phone
   if (athlete.phone) {
-    pdf.text(`📞 ${athlete.phone}`, 7, yPos);
-    yPos += 3;
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Teléfono: ', centerX - 10, yPos);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(athlete.phone, centerX + 10, yPos, { align: 'center' });
+    yPos += 4;
   }
+
+  // Validity
+  pdf.setFontSize(7);
+  pdf.setTextColor(71, 85, 105); // slate-600
+  pdf.text(`Válido ${athlete.first_name?.toLowerCase()}: ${getValidityYear()}`, centerX, yPos, { align: 'center' });
   
-  if (athlete.email) {
-    const emailText = athlete.email.length > 30 ? athlete.email.substring(0, 30) + '...' : athlete.email;
-    pdf.text(`✉️  ${emailText}`, 7, yPos);
-    yPos += 3;
-  }
+  // ==================== BACK SIDE ====================
   
-  if (athlete.body_info?.blood_type) {
-    pdf.text(`🩸 Tipo de Sangre: ${athlete.body_info.blood_type}`, 7, yPos);
-    yPos += 3;
-  }
-  
-  if (athlete.id_number) {
-    pdf.text(`🆔 ID: ${athlete.id_number}`, 45, 43);
-  }
-  
-  if (athlete.history?.is_league) {
-    pdf.text(`🏆 Liga: ${clubSettings.league || 'Sí'}`, 45, 46);
-  }
-  
-  // Athlete number at bottom
-  const athleteNumber = athlete.athlete_number || `ATH-${athlete.id.slice(0, 8).toUpperCase()}`;
-  pdf.setFillColor(255, 255, 255, 0.2);
-  pdf.rect(5, CARD_HEIGHT - 7, CARD_WIDTH - 10, 5, 'F');
-  pdf.setFontSize(9);
-  pdf.setFont('courier', 'bold');
-  const numberWidth = pdf.getTextWidth(athleteNumber);
-  pdf.text(athleteNumber, (CARD_WIDTH - numberWidth) / 2, CARD_HEIGHT - 3.5);
-  
-  // ===== BACK SIDE (new page) =====
-  pdf.addPage([CARD_WIDTH, CARD_HEIGHT], 'landscape');
-  
-  // Background
-  pdf.setFillColor(71, 85, 105); // Slate gray
+  pdf.addPage();
+
+  // Dark blue gradient background (simulated with solid color)
+  pdf.setFillColor(30, 58, 138); // indigo-900
   pdf.rect(0, 0, CARD_WIDTH, CARD_HEIGHT, 'F');
+
+  // Add white decorative blobs (using lighter colors instead of opacity)
+  pdf.setFillColor(59, 130, 246); // Slightly lighter blue for contrast
+  pdf.ellipse(0, 0, 16, 16, 'F');
   
-  // Header
-  pdf.setFillColor(255, 255, 255, 0.1);
-  pdf.rect(0, 0, CARD_WIDTH, 12, 'F');
+  pdf.setFillColor(79, 70, 229); // Indigo-600
+  pdf.ellipse(CARD_WIDTH, CARD_HEIGHT, 20, 20, 'F');
+  
+  pdf.setFillColor(99, 102, 241); // Indigo-500
+  pdf.circle(0, CARD_HEIGHT / 2, 14, 'F');
+
+  yPos = 10;
+
+  // QR Code (centered, in white circle area)
+  if (qrCodeUrl) {
+    try {
+      const qrSize = 25;
+      // White background circle for QR code
+      pdf.setFillColor(255, 255, 255);
+      pdf.circle(centerX, yPos + qrSize / 2, qrSize / 2 + 3, 'F');
+      
+      pdf.addImage(qrCodeUrl, 'PNG', centerX - qrSize / 2, yPos, qrSize, qrSize);
+      yPos += qrSize + 6;
+    } catch (error) {
+      console.error('Error adding QR code:', error);
+      yPos += 6;
+    }
+  }
+
+  // Website URL
+  if (clubSettings?.website_url) {
+    pdf.setFontSize(7);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(255, 255, 255);
+    pdf.text(clubSettings.website_url, centerX, yPos, { align: 'center' });
+    yPos += 5;
+  }
+
+  // Decorative dots
+  pdf.setFontSize(6);
+  pdf.text('• • • • • • • • • •', centerX, yPos, { align: 'center' });
+  yPos += 4;
+
+  // Disclaimer text
+  pdf.setFontSize(6);
   pdf.setTextColor(255, 255, 255);
+  const disclaimer = 'Este carné es personal e intransferible y todas las';
+  const disclaimer2 = 'acciones realizadas con el carné se entiende su titular.';
+  pdf.text(disclaimer, centerX, yPos, { align: 'center', maxWidth: CARD_WIDTH - 10 });
+  yPos += 3;
+  pdf.text(disclaimer2, centerX, yPos, { align: 'center', maxWidth: CARD_WIDTH - 10 });
+
+  // Club name at bottom
+  yPos = CARD_HEIGHT - 8;
   pdf.setFontSize(10);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('Carnet de Atleta', CARD_WIDTH / 2, 7, { align: 'center' });
-  
-  let backYPos = 16;
-  
-  // Club Information
-  pdf.setFontSize(7);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('INFORMACIÓN DEL CLUB', 5, backYPos);
-  backYPos += 3;
-  
-  pdf.setFillColor(255, 255, 255, 0.1);
-  pdf.rect(5, backYPos, CARD_WIDTH - 10, 16, 'F');
-  
-  pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(6.5);
-  backYPos += 3;
-  
-  if (clubSettings.club_name) {
-    pdf.text(`Nombre: ${clubSettings.club_name}`, 7, backYPos);
-    backYPos += 2.5;
-  }
-  
-  if (clubSettings.address) {
-    const addressLines = pdf.splitTextToSize(clubSettings.address, CARD_WIDTH - 14);
-    pdf.text(addressLines, 7, backYPos);
-    backYPos += 2.5 * addressLines.length;
-  }
-  
-  if (clubSettings.contact_phone) {
-    pdf.text(`Teléfono: ${clubSettings.contact_phone}`, 7, backYPos);
-    backYPos += 2.5;
-  }
-  
-  if (clubSettings.contact_email) {
-    const emailText = clubSettings.contact_email.length > 28 ? 
-      clubSettings.contact_email.substring(0, 28) + '...' : clubSettings.contact_email;
-    pdf.text(`Email: ${emailText}`, 7, backYPos);
-    backYPos += 2.5;
-  }
-  
-  if (clubSettings.website_url) {
-    pdf.text(clubSettings.website_url, 7, backYPos);
-  }
-  
-  backYPos = 36;
-  
-  // Emergency Contact
-  if (athlete.emergency_contact_name || athlete.emergency_contact_phone) {
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(7);
-    pdf.text('CONTACTO DE EMERGENCIA', 5, backYPos);
-    backYPos += 3;
-    
-    pdf.setFillColor(255, 255, 255, 0.1);
-    pdf.rect(5, backYPos, CARD_WIDTH - 10, 8, 'F');
-    
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(6.5);
-    backYPos += 3;
-    
-    if (athlete.emergency_contact_name) {
-      pdf.text(`Nombre: ${athlete.emergency_contact_name}`, 7, backYPos);
-      backYPos += 2.5;
-    }
-    
-    if (athlete.emergency_contact_phone) {
-      pdf.text(`Teléfono: ${athlete.emergency_contact_phone}`, 7, backYPos);
-    }
-  }
-  
-  // Athlete Number box at bottom
-  pdf.setFillColor(255, 255, 255, 0.2);
-  pdf.rect(5, CARD_HEIGHT - 10, CARD_WIDTH - 10, 8, 'F');
-  
-  pdf.setFontSize(6);
-  pdf.text('Número de Atleta', CARD_WIDTH / 2, CARD_HEIGHT - 7, { align: 'center' });
-  
-  pdf.setFontSize(9);
-  pdf.setFont('courier', 'bold');
-  const backNumberWidth = pdf.getTextWidth(athleteNumber);
-  pdf.text(athleteNumber, (CARD_WIDTH - backNumberWidth) / 2, CARD_HEIGHT - 4);
-  
-  pdf.setFontSize(5.5);
-  pdf.setFont('helvetica', 'normal');
-  const validText = `Válido desde: ${new Date(athlete.join_date).getFullYear()}`;
-  pdf.text(validText, CARD_WIDTH / 2, CARD_HEIGHT - 1.5, { align: 'center' });
+  pdf.setTextColor(255, 255, 255);
+  pdf.text(clubSettings?.club_name || 'Club de Patinaje', centerX, yPos, { align: 'center' });
   
   // Save the PDF
-  const fileName = `Carnet_${athlete.first_name}_${athlete.last_name}.pdf`;
+  const fileName = `carnet_${athlete.first_name}_${athlete.last_name}_${new Date().getTime()}.pdf`;
   pdf.save(fileName);
 };
