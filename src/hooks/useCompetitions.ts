@@ -319,11 +319,87 @@ export const useCompetitionPDFData = (competitionId: string) => {
         .filter(a => a.gender === 'masculino')
         .sort((a, b) => a.age - b.age);
 
+      // Fetch medal results with athlete and event data
+      const { data: medalResults, error: medalError } = await supabase
+        .from('competition_results')
+        .select(`
+          id,
+          medal_type,
+          time_achieved,
+          position,
+          score,
+          notes,
+          event_location,
+          athletes!inner(
+            id,
+            first_name,
+            last_name
+          ),
+          competition_events!inner(
+            id,
+            event_name,
+            event_type
+          )
+        `)
+        .eq('competition_id', competitionId)
+        .not('medal_type', 'is', null);
+
+      if (medalError) {
+        console.error('Error fetching medal results:', medalError);
+      }
+
+      // Fetch competition events
+      const { data: events, error: eventsError } = await supabase
+        .from('competition_events')
+        .select('*')
+        .eq('competition_id', competitionId)
+        .order('event_name');
+
+      if (eventsError) {
+        console.error('Error fetching events:', eventsError);
+      }
+
+      // Fetch all results (including non-medal) for performance tables
+      const { data: allResults, error: resultsError } = await supabase
+        .from('competition_results')
+        .select(`
+          id,
+          medal_type,
+          time_achieved,
+          position,
+          score,
+          notes,
+          event_id,
+          athletes!inner(
+            id,
+            first_name,
+            last_name
+          )
+        `)
+        .eq('competition_id', competitionId)
+        .order('position', { ascending: true, nullsFirst: false });
+
+      if (resultsError) {
+        console.error('Error fetching all results:', resultsError);
+      }
+
+      // Calculate medal statistics
+      const medalStats = {
+        gold: medalResults?.filter(m => m.medal_type === 'gold').length || 0,
+        silver: medalResults?.filter(m => m.medal_type === 'silver').length || 0,
+        bronze: medalResults?.filter(m => m.medal_type === 'bronze').length || 0,
+        totalMedals: medalResults?.length || 0,
+      };
+
       return {
         competition,
         clubSettings,
         damas,
-        varones
+        varones,
+        medalResults: medalResults || [],
+        events: events || [],
+        allResults: allResults || [],
+        medalStats
       };
     },
     enabled: !!competitionId,

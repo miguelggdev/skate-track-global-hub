@@ -19,6 +19,47 @@ interface Athlete {
   level: string;
 }
 
+interface MedalResult {
+  id: string;
+  medal_type: 'gold' | 'silver' | 'bronze';
+  time_achieved?: unknown;
+  position?: number;
+  score?: number;
+  notes?: string;
+  event_location?: string;
+  athletes: {
+    id: string;
+    first_name: string;
+    last_name: string;
+  };
+  competition_events: {
+    id: string;
+    event_name: string;
+    event_type: string;
+  };
+}
+
+interface EventResult {
+  id: string;
+  medal_type?: 'gold' | 'silver' | 'bronze';
+  time_achieved?: unknown;
+  position?: number;
+  score?: number;
+  notes?: string;
+  event_id: string;
+  athletes: {
+    id: string;
+    first_name: string;
+    last_name: string;
+  };
+}
+
+interface CompetitionEvent {
+  id: string;
+  event_name: string;
+  event_type: string;
+}
+
 interface CompetitionReportData {
   competition: {
     name: string;
@@ -34,6 +75,15 @@ interface CompetitionReportData {
   };
   damas: Athlete[];
   varones: Athlete[];
+  medalResults?: MedalResult[];
+  events?: CompetitionEvent[];
+  allResults?: EventResult[];
+  medalStats?: {
+    gold: number;
+    silver: number;
+    bronze: number;
+    totalMedals: number;
+  };
 }
 
 interface CompetitionReportViewProps {
@@ -41,7 +91,7 @@ interface CompetitionReportViewProps {
 }
 
 export const CompetitionReportView: React.FC<CompetitionReportViewProps> = ({ data }) => {
-  const { competition, clubInfo, damas, varones } = data;
+  const { competition, clubInfo, damas, varones, medalResults = [], events = [], allResults = [], medalStats } = data;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -50,6 +100,55 @@ export const CompetitionReportView: React.FC<CompetitionReportViewProps> = ({ da
       day: 'numeric',
     });
   };
+
+  const formatTime = (interval?: unknown) => {
+    if (!interval || typeof interval !== 'string') return '-';
+    // Parse ISO 8601 duration format (PT1M23.45S)
+    const match = interval.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:([\d.]+)S)?/);
+    if (!match) return interval;
+    
+    const hours = parseInt(match[1] || '0');
+    const minutes = parseInt(match[2] || '0');
+    const seconds = parseFloat(match[3] || '0');
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toFixed(2).padStart(5, '0')}`;
+    } else if (minutes > 0) {
+      return `${minutes}:${seconds.toFixed(2).padStart(5, '0')}`;
+    }
+    return `${seconds.toFixed(2)}s`;
+  };
+
+  const getMedalColor = (type: string) => {
+    switch (type) {
+      case 'gold': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      case 'silver': return 'bg-gray-100 text-gray-800 border-gray-300';
+      case 'bronze': return 'bg-orange-100 text-orange-800 border-orange-300';
+      default: return 'bg-gray-100 text-gray-800 border-gray-300';
+    }
+  };
+
+  const getMedalLabel = (type: string) => {
+    switch (type) {
+      case 'gold': return 'Oro';
+      case 'silver': return 'Plata';
+      case 'bronze': return 'Bronce';
+      default: return type;
+    }
+  };
+
+  const groupResultsByEvent = () => {
+    const grouped: Record<string, EventResult[]> = {};
+    allResults.forEach(result => {
+      if (!grouped[result.event_id]) {
+        grouped[result.event_id] = [];
+      }
+      grouped[result.event_id].push(result);
+    });
+    return grouped;
+  };
+
+  const resultsByEvent = groupResultsByEvent();
 
   const renderAthleteTable = (athletes: Athlete[], title: string) => {
     if (athletes.length === 0) return null;
@@ -207,6 +306,199 @@ export const CompetitionReportView: React.FC<CompetitionReportViewProps> = ({ da
           )}
         </CardContent>
       </Card>
+
+      {/* Medal Results Section */}
+      {medalStats && medalStats.totalMedals > 0 && (
+        <>
+          {/* Medal Statistics Overview */}
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Trophy className="h-5 w-5 text-primary" />
+                Resumen de Medallas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-4 gap-4 mb-6">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                  <div className="text-3xl font-bold text-yellow-700">{medalStats.gold}</div>
+                  <div className="text-sm font-medium text-yellow-600 mt-1">Oro</div>
+                </div>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                  <div className="text-3xl font-bold text-gray-700">{medalStats.silver}</div>
+                  <div className="text-sm font-medium text-gray-600 mt-1">Plata</div>
+                </div>
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
+                  <div className="text-3xl font-bold text-orange-700">{medalStats.bronze}</div>
+                  <div className="text-sm font-medium text-orange-600 mt-1">Bronce</div>
+                </div>
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-center">
+                  <div className="text-3xl font-bold text-primary">{medalStats.totalMedals}</div>
+                  <div className="text-sm font-medium text-primary mt-1">Total</div>
+                </div>
+              </div>
+
+              {/* Medal Distribution Chart */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-foreground">Distribución de Medallas</h4>
+                {medalStats.gold > 0 && (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Oro</span>
+                      <span className="font-medium">{medalStats.gold}</span>
+                    </div>
+                    <div className="h-3 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-yellow-500"
+                        style={{ width: `${(medalStats.gold / medalStats.totalMedals) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+                {medalStats.silver > 0 && (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Plata</span>
+                      <span className="font-medium">{medalStats.silver}</span>
+                    </div>
+                    <div className="h-3 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gray-400"
+                        style={{ width: `${(medalStats.silver / medalStats.totalMedals) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+                {medalStats.bronze > 0 && (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Bronce</span>
+                      <span className="font-medium">{medalStats.bronze}</span>
+                    </div>
+                    <div className="h-3 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-orange-600"
+                        style={{ width: `${(medalStats.bronze / medalStats.totalMedals) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Detailed Medal Results Table */}
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-xl">Resultados de Medallas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-lg border border-border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="font-semibold">Atleta</TableHead>
+                      <TableHead className="font-semibold">Evento</TableHead>
+                      <TableHead className="font-semibold">Medalla</TableHead>
+                      <TableHead className="font-semibold">Tiempo/Puntaje</TableHead>
+                      <TableHead className="font-semibold text-center">Posición</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {medalResults.map((result) => (
+                      <TableRow key={result.id} className="hover:bg-muted/30 transition-colors">
+                        <TableCell className="font-medium">
+                          {result.athletes.first_name} {result.athletes.last_name}
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{result.competition_events.event_name}</div>
+                            <div className="text-xs text-muted-foreground">{result.competition_events.event_type}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={getMedalColor(result.medal_type)}>
+                            {getMedalLabel(result.medal_type)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {result.time_achieved ? formatTime(result.time_achieved) : result.score ? `${result.score} pts` : '-'}
+                        </TableCell>
+                        <TableCell className="text-center font-semibold">
+                          {result.position || '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      {/* Performance by Event Section */}
+      {events.length > 0 && allResults.length > 0 && (
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-xl">Rendimiento por Evento</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {events.map((event) => {
+              const eventResults = resultsByEvent[event.id] || [];
+              if (eventResults.length === 0) return null;
+
+              return (
+                <div key={event.id} className="space-y-3">
+                  <div className="flex items-center gap-2 pb-2 border-b border-border">
+                    <h3 className="font-semibold text-foreground">{event.event_name}</h3>
+                    <Badge variant="secondary" className="text-xs">
+                      {event.event_type}
+                    </Badge>
+                  </div>
+                  
+                  <div className="rounded-lg border border-border overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/30">
+                          <TableHead className="w-16 font-semibold">Pos.</TableHead>
+                          <TableHead className="font-semibold">Atleta</TableHead>
+                          <TableHead className="font-semibold">Tiempo/Puntaje</TableHead>
+                          <TableHead className="font-semibold">Medalla</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {eventResults.map((result, index) => (
+                          <TableRow key={result.id} className="hover:bg-muted/20 transition-colors">
+                            <TableCell className="font-bold text-muted-foreground">
+                              {result.position || index + 1}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {result.athletes.first_name} {result.athletes.last_name}
+                            </TableCell>
+                            <TableCell className="font-mono">
+                              {result.time_achieved ? formatTime(result.time_achieved) : result.score ? `${result.score} pts` : '-'}
+                            </TableCell>
+                            <TableCell>
+                              {result.medal_type ? (
+                                <Badge variant="outline" className={getMedalColor(result.medal_type)}>
+                                  {getMedalLabel(result.medal_type)}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">-</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Footer */}
       {clubInfo.address && (

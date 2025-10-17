@@ -45,7 +45,13 @@ export const CompetitionPDFReport: React.FC<CompetitionPDFReportProps> = ({
           <div style={{ background: 'white', padding: '40px' }}>
             <CompetitionReportView 
               data={{
-                ...pdfData,
+                competition: pdfData.competition,
+                damas: pdfData.damas,
+                varones: pdfData.varones,
+                medalResults: pdfData.medalResults,
+                events: pdfData.events,
+                allResults: pdfData.allResults,
+                medalStats: pdfData.medalStats,
                 clubInfo: {
                   club_name: pdfData.clubSettings?.club_name,
                   logo_url: pdfData.clubSettings?.club_logo_url,
