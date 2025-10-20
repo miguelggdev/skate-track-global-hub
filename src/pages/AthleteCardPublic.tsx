@@ -41,7 +41,6 @@ export const AthleteCardPublic = () => {
           clubSettings={clubSettings}
           onFlip={() => setIsFlipped(!isFlipped)}
           isFlipped={isFlipped}
-          qrCodeUrl={`${window.location.origin}/athlete-card/${athleteId}`}
         />
       </div>
     </div>

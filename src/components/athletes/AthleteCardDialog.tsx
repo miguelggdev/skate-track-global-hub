@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Download } from 'lucide-react';
 import {
   Dialog,
@@ -11,7 +11,6 @@ import { AthleteCard } from './AthleteCard';
 import { useAthleteDetails } from '@/hooks/useAthleteDetails';
 import { useClubSettings } from '@/hooks/useClubSettings';
 import { generateAthleteCardPDF } from '@/utils/athleteCardPDF';
-import { generateAthleteQRCode } from '@/utils/qrCodeGenerator';
 import { toast } from 'sonner';
 
 interface AthleteCardDialogProps {
@@ -23,25 +22,9 @@ interface AthleteCardDialogProps {
 export const AthleteCardDialog = ({ athleteId, open, onOpenChange }: AthleteCardDialogProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
-  const [qrLoading, setQrLoading] = useState(true);
   
   const { data: athlete, isLoading: athleteLoading } = useAthleteDetails(athleteId);
   const { data: clubSettings, isLoading: clubLoading } = useClubSettings();
-
-  // Generate QR code when athlete ID changes
-  useEffect(() => {
-    if (athleteId && open) {
-      setQrLoading(true);
-      generateAthleteQRCode(athleteId)
-        .then(setQrCodeUrl)
-        .catch((error) => {
-          console.error('Error generating QR code:', error);
-          toast.error('Error al generar código QR');
-        })
-        .finally(() => setQrLoading(false));
-    }
-  }, [athleteId, open]);
 
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
@@ -53,14 +36,9 @@ export const AthleteCardDialog = ({ athleteId, open, onOpenChange }: AthleteCard
       return;
     }
 
-    if (!qrCodeUrl) {
-      toast.error('Esperando código QR...');
-      return;
-    }
-
     setIsDownloading(true);
     try {
-      await generateAthleteCardPDF(athlete, clubSettings, qrCodeUrl);
+      await generateAthleteCardPDF(athlete, clubSettings);
       toast.success('Carnet descargado exitosamente');
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -70,7 +48,7 @@ export const AthleteCardDialog = ({ athleteId, open, onOpenChange }: AthleteCard
     }
   };
 
-  const isLoading = athleteLoading || clubLoading || qrLoading;
+  const isLoading = athleteLoading || clubLoading;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -80,7 +58,7 @@ export const AthleteCardDialog = ({ athleteId, open, onOpenChange }: AthleteCard
             <span>Carnet de Atleta</span>
             <Button
               onClick={handleDownload}
-              disabled={isDownloading || isLoading || !athlete || !qrCodeUrl}
+              disabled={isDownloading || isLoading || !athlete}
               size="sm"
               className="gap-2"
             >
@@ -94,9 +72,7 @@ export const AthleteCardDialog = ({ athleteId, open, onOpenChange }: AthleteCard
           {isLoading ? (
             <div className="text-center space-y-4">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
-              <p className="text-muted-foreground">
-                {qrLoading ? 'Generando código QR...' : 'Cargando información...'}
-              </p>
+              <p className="text-muted-foreground">Cargando información...</p>
             </div>
           ) : athlete ? (
             <div className="w-full max-w-2xl" style={{ aspectRatio: '85.6 / 53.98' }}>
@@ -105,7 +81,6 @@ export const AthleteCardDialog = ({ athleteId, open, onOpenChange }: AthleteCard
                 clubSettings={clubSettings}
                 onFlip={handleFlip}
                 isFlipped={isFlipped}
-                qrCodeUrl={qrCodeUrl}
               />
             </div>
           ) : (
