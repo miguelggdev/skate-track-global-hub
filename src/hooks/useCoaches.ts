@@ -11,24 +11,22 @@ export const useCoaches = () => {
     queryKey: ['coaches'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('coaches')
+        .from('profiles')
         .select(`
           id,
-          profiles!inner(
-            first_name,
-            last_name,
-            user_roles!inner(role)
-          )
+          first_name,
+          last_name,
+          user_roles!inner(role)
         `)
-        .eq('profiles.user_roles.role', 'coach');
+        .eq('user_roles.role', 'coach');
 
       if (error) {
         throw error;
       }
 
-      return (data || []).map(coach => ({
-        id: coach.id,
-        name: `${coach.profiles.first_name} ${coach.profiles.last_name}`.trim()
+      return (data || []).map(profile => ({
+        id: profile.id,
+        name: `${profile.first_name} ${profile.last_name}`.trim()
       })) as Coach[];
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
