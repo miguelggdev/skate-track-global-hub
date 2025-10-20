@@ -626,37 +626,61 @@ export type Database = {
       }
       coaches: {
         Row: {
+          academic_level: string | null
           certification_level: string | null
+          coach_category: string | null
           created_at: string
+          degree_title: string | null
+          education_institution: string | null
+          experience_description: string | null
+          federation_license_expiry: string | null
           hourly_rate: number | null
           id: string
           license_number: string | null
+          license_photo_url: string | null
           specialization: string | null
           team_id: string | null
+          training_certifications: string | null
           updated_at: string
           user_id: string | null
           years_experience: number | null
         }
         Insert: {
+          academic_level?: string | null
           certification_level?: string | null
+          coach_category?: string | null
           created_at?: string
+          degree_title?: string | null
+          education_institution?: string | null
+          experience_description?: string | null
+          federation_license_expiry?: string | null
           hourly_rate?: number | null
           id?: string
           license_number?: string | null
+          license_photo_url?: string | null
           specialization?: string | null
           team_id?: string | null
+          training_certifications?: string | null
           updated_at?: string
           user_id?: string | null
           years_experience?: number | null
         }
         Update: {
+          academic_level?: string | null
           certification_level?: string | null
+          coach_category?: string | null
           created_at?: string
+          degree_title?: string | null
+          education_institution?: string | null
+          experience_description?: string | null
+          federation_license_expiry?: string | null
           hourly_rate?: number | null
           id?: string
           license_number?: string | null
+          license_photo_url?: string | null
           specialization?: string | null
           team_id?: string | null
+          training_certifications?: string | null
           updated_at?: string
           user_id?: string | null
           years_experience?: number | null
@@ -1236,51 +1260,104 @@ export type Database = {
       }
       profiles: {
         Row: {
+          accepts_regulations: boolean | null
+          address: string | null
           avatar_url: string | null
           bio: string | null
+          city: string | null
+          country: string | null
           created_at: string
+          data_consent: boolean | null
           date_of_birth: string | null
+          department: string | null
+          digital_signature_url: string | null
           email: string
           first_name: string
+          gender: string | null
           id: string
+          id_document_photo_url: string | null
           id_number: string | null
           id_type: Database["public"]["Enums"]["id_type"] | null
+          landline_phone: string | null
+          languages: string[] | null
           last_name: string
+          nationality: string | null
+          observations: string | null
           phone: string | null
+          registered_by: string | null
           role: Database["public"]["Enums"]["user_role"]
+          status: string | null
           updated_at: string
         }
         Insert: {
+          accepts_regulations?: boolean | null
+          address?: string | null
           avatar_url?: string | null
           bio?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          data_consent?: boolean | null
           date_of_birth?: string | null
+          department?: string | null
+          digital_signature_url?: string | null
           email: string
           first_name: string
+          gender?: string | null
           id: string
+          id_document_photo_url?: string | null
           id_number?: string | null
           id_type?: Database["public"]["Enums"]["id_type"] | null
+          landline_phone?: string | null
+          languages?: string[] | null
           last_name: string
+          nationality?: string | null
+          observations?: string | null
           phone?: string | null
+          registered_by?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          status?: string | null
           updated_at?: string
         }
         Update: {
+          accepts_regulations?: boolean | null
+          address?: string | null
           avatar_url?: string | null
           bio?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          data_consent?: boolean | null
           date_of_birth?: string | null
+          department?: string | null
+          digital_signature_url?: string | null
           email?: string
           first_name?: string
+          gender?: string | null
           id?: string
+          id_document_photo_url?: string | null
           id_number?: string | null
           id_type?: Database["public"]["Enums"]["id_type"] | null
+          landline_phone?: string | null
+          languages?: string[] | null
           last_name?: string
+          nationality?: string | null
+          observations?: string | null
           phone?: string | null
+          registered_by?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          status?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_registered_by_fkey"
+            columns: ["registered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sponsorships: {
         Row: {
@@ -1547,6 +1624,116 @@ export type Database = {
             columns: ["coach_id"]
             isOneToOne: false
             referencedRelation: "coaches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_documents: {
+        Row: {
+          document_name: string
+          document_type: string
+          document_url: string
+          id: string
+          uploaded_at: string
+          uploaded_by: string | null
+          user_id: string
+        }
+        Insert: {
+          document_name: string
+          document_type: string
+          document_url: string
+          id?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          user_id: string
+        }
+        Update: {
+          document_name?: string
+          document_type?: string
+          document_url?: string
+          id?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_medical_info: {
+        Row: {
+          allergies: string | null
+          blood_type: string | null
+          created_at: string
+          disability: string | null
+          diseases: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          emergency_contact_relationship: string | null
+          health_insurance: string | null
+          id: string
+          insurance_document_url: string | null
+          insurance_expiry_date: string | null
+          rh_factor: string | null
+          sports_insurance_policy: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allergies?: string | null
+          blood_type?: string | null
+          created_at?: string
+          disability?: string | null
+          diseases?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relationship?: string | null
+          health_insurance?: string | null
+          id?: string
+          insurance_document_url?: string | null
+          insurance_expiry_date?: string | null
+          rh_factor?: string | null
+          sports_insurance_policy?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allergies?: string | null
+          blood_type?: string | null
+          created_at?: string
+          disability?: string | null
+          diseases?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relationship?: string | null
+          health_insurance?: string | null
+          id?: string
+          insurance_document_url?: string | null
+          insurance_expiry_date?: string | null
+          rh_factor?: string | null
+          sports_insurance_policy?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_medical_info_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
