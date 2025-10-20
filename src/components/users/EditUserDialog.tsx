@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useUserDetails } from '@/hooks/useUserDetails';
 import {
   Dialog,
   DialogContent,
@@ -10,27 +11,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Form } from '@/components/ui/form';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/pages/UserManagement';
-import { PhotoUpload } from './PhotoUpload';
+import { ProfileTab } from './tabs/ProfileTab';
+import { ContactTab } from './tabs/ContactTab';
+import { MedicalTab } from './tabs/MedicalTab';
+import { ProfessionalTab } from './tabs/ProfessionalTab';
+import { DocumentsTab } from './tabs/DocumentsTab';
+import { AdministrativeTab } from './tabs/AdministrativeTab';
+import { Loader2 } from 'lucide-react';
 
 interface EditUserDialogProps {
   user: User | null;
@@ -40,6 +32,7 @@ interface EditUserDialogProps {
 }
 
 interface EditUserFormData {
+  // Profile
   first_name: string;
   last_name: string;
   email: string;
@@ -47,8 +40,53 @@ interface EditUserFormData {
   date_of_birth?: string;
   role: 'admin' | 'coach' | 'athlete' | 'delegate' | 'leader' | 'finance';
   bio?: string;
-  id_type?: 'Tarjeta de identidad' | 'Cedula de Ciudadania' | 'Pasaporte' | 'Cedula de Extranjeria';
+  id_type?: string;
   id_number?: string;
+  gender?: string;
+  
+  // Contact
+  nationality?: string;
+  address?: string;
+  city?: string;
+  department?: string;
+  country?: string;
+  landline_phone?: string;
+  languages?: string[];
+  
+  // Medical
+  blood_type?: string;
+  rh_factor?: string;
+  diseases?: string;
+  allergies?: string;
+  disability?: string;
+  emergency_contact_name?: string;
+  emergency_contact_relationship?: string;
+  emergency_contact_phone?: string;
+  health_insurance?: string;
+  sports_insurance_policy?: string;
+  insurance_expiry_date?: string;
+  
+  // Coach Professional (conditional)
+  academic_level?: string;
+  degree_title?: string;
+  education_institution?: string;
+  training_certifications?: string;
+  years_experience?: number;
+  experience_description?: string;
+  coach_category?: string;
+  license_number?: string;
+  federation_license_expiry?: string;
+  certification_level?: string;
+  hourly_rate?: number;
+  specialization?: string;
+  
+  // Administrative
+  status?: string;
+  observations?: string;
+  data_consent?: boolean;
+  accepts_regulations?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDialogProps) => {
@@ -56,6 +94,9 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const { toast } = useToast();
   const { isAdmin, isLeader } = useUserProfile();
+  
+  // Fetch detailed user data
+  const { data: userDetails, refetch: refetchUserDetails } = useUserDetails(user?.id || null);
   
   // Check if current user can edit roles
   const canEditRoles = isAdmin || isLeader;
@@ -69,27 +110,102 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
       date_of_birth: '',
       role: 'athlete',
       bio: '',
-      id_type: undefined,
+      id_type: '',
       id_number: '',
+      gender: '',
+      nationality: '',
+      address: '',
+      city: '',
+      department: '',
+      country: '',
+      landline_phone: '',
+      languages: [],
+      blood_type: '',
+      rh_factor: '',
+      diseases: '',
+      allergies: '',
+      disability: '',
+      emergency_contact_name: '',
+      emergency_contact_relationship: '',
+      emergency_contact_phone: '',
+      health_insurance: '',
+      sports_insurance_policy: '',
+      insurance_expiry_date: '',
+      academic_level: '',
+      degree_title: '',
+      education_institution: '',
+      training_certifications: '',
+      years_experience: 0,
+      experience_description: '',
+      coach_category: '',
+      license_number: '',
+      federation_license_expiry: '',
+      certification_level: '',
+      hourly_rate: 0,
+      specialization: '',
+      status: 'active',
+      observations: '',
+      data_consent: false,
+      accepts_regulations: false,
     },
   });
 
   useEffect(() => {
-    if (user) {
+    if (userDetails) {
       form.reset({
-        first_name: user.first_name,
-        last_name: user.last_name,
-        email: user.email,
-        phone: user.phone || '',
-        date_of_birth: user.date_of_birth || '',
-        role: user.role,
-        bio: user.bio || '',
-        id_type: user.id_type || undefined,
-        id_number: user.id_number || '',
+        first_name: userDetails.first_name,
+        last_name: userDetails.last_name,
+        email: userDetails.email,
+        phone: userDetails.phone || '',
+        date_of_birth: userDetails.date_of_birth || '',
+        role: userDetails.role as any,
+        bio: userDetails.bio || '',
+        id_type: userDetails.id_type || '',
+        id_number: userDetails.id_number || '',
+        gender: userDetails.gender || '',
+        nationality: userDetails.nationality || '',
+        address: userDetails.address || '',
+        city: userDetails.city || '',
+        department: userDetails.department || '',
+        country: userDetails.country || '',
+        landline_phone: userDetails.landline_phone || '',
+        languages: userDetails.languages || [],
+        // Medical info
+        blood_type: userDetails.medical_info?.blood_type || '',
+        rh_factor: userDetails.medical_info?.rh_factor || '',
+        diseases: userDetails.medical_info?.diseases || '',
+        allergies: userDetails.medical_info?.allergies || '',
+        disability: userDetails.medical_info?.disability || '',
+        emergency_contact_name: userDetails.medical_info?.emergency_contact_name || '',
+        emergency_contact_relationship: userDetails.medical_info?.emergency_contact_relationship || '',
+        emergency_contact_phone: userDetails.medical_info?.emergency_contact_phone || '',
+        health_insurance: userDetails.medical_info?.health_insurance || '',
+        sports_insurance_policy: userDetails.medical_info?.sports_insurance_policy || '',
+        insurance_expiry_date: userDetails.medical_info?.insurance_expiry_date || '',
+        // Coach details
+        academic_level: userDetails.coach_details?.academic_level || '',
+        degree_title: userDetails.coach_details?.degree_title || '',
+        education_institution: userDetails.coach_details?.education_institution || '',
+        training_certifications: userDetails.coach_details?.training_certifications || '',
+        years_experience: userDetails.coach_details?.years_experience || 0,
+        experience_description: userDetails.coach_details?.experience_description || '',
+        coach_category: userDetails.coach_details?.coach_category || '',
+        license_number: userDetails.coach_details?.license_number || '',
+        federation_license_expiry: userDetails.coach_details?.federation_license_expiry || '',
+        certification_level: userDetails.coach_details?.certification_level || '',
+        hourly_rate: userDetails.coach_details?.hourly_rate || 0,
+        specialization: userDetails.coach_details?.specialization || '',
+        // Administrative
+        status: userDetails.status || 'active',
+        observations: userDetails.observations || '',
+        data_consent: userDetails.data_consent || false,
+        accepts_regulations: userDetails.accepts_regulations || false,
+        created_at: userDetails.created_at,
+        updated_at: userDetails.updated_at,
       });
-      setPhotoUrl(user.avatar_url || null);
+      setPhotoUrl(userDetails.avatar_url || null);
     }
-  }, [user, form]);
+  }, [userDetails, form]);
 
   const onSubmit = async (data: EditUserFormData) => {
     if (!user) return;
@@ -97,61 +213,109 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
     try {
       setLoading(true);
 
-      // Handle photo upload if there's a new photo
-      let finalPhotoUrl = photoUrl;
-      if (photoUrl && photoUrl.startsWith('blob:')) {
-        try {
-          const response = await fetch(photoUrl);
-          const blob = await response.blob();
-          const file = new File([blob], 'profile.jpg', { type: 'image/jpeg' });
-          
-          const fileName = `${user.id}/profile.jpg`;
-          const { error: uploadError } = await supabase.storage
-            .from('profiles')
-            .upload(fileName, file, { upsert: true });
-
-          if (!uploadError) {
-            const { data: urlData } = supabase.storage
-              .from('profiles')
-              .getPublicUrl(fileName);
-            finalPhotoUrl = urlData.publicUrl;
-          }
-        } catch (uploadError) {
-          console.error('Error uploading photo:', uploadError);
-        }
-      }
-
-      // Prepare update data - only include role if user has permission
-      const updateData: any = {
+      // Update profiles table
+      const profileData: any = {
         first_name: data.first_name,
         last_name: data.last_name,
         email: data.email,
         phone: data.phone,
-        date_of_birth: data.date_of_birth,
+        date_of_birth: data.date_of_birth || null,
         bio: data.bio,
-        avatar_url: finalPhotoUrl,
+        avatar_url: photoUrl,
         id_type: data.id_type,
         id_number: data.id_number,
+        gender: data.gender,
+        nationality: data.nationality,
+        address: data.address,
+        city: data.city,
+        department: data.department,
+        country: data.country,
+        landline_phone: data.landline_phone,
+        languages: data.languages,
+        status: data.status,
+        observations: data.observations,
+        data_consent: data.data_consent,
+        accepts_regulations: data.accepts_regulations,
         updated_at: new Date().toISOString(),
       };
 
-      // Only allow role updates for admins and leaders
       if (canEditRoles) {
-        updateData.role = data.role;
+        profileData.role = data.role;
       }
 
-      const { error } = await supabase
+      const { error: profileError } = await supabase
         .from('profiles')
-        .update(updateData)
+        .update(profileData)
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Update medical info
+      const { error: medicalError } = await supabase
+        .from('user_medical_info')
+        .upsert({
+          user_id: user.id,
+          blood_type: data.blood_type,
+          rh_factor: data.rh_factor,
+          diseases: data.diseases,
+          allergies: data.allergies,
+          disability: data.disability,
+          emergency_contact_name: data.emergency_contact_name,
+          emergency_contact_relationship: data.emergency_contact_relationship,
+          emergency_contact_phone: data.emergency_contact_phone,
+          health_insurance: data.health_insurance,
+          sports_insurance_policy: data.sports_insurance_policy,
+          insurance_expiry_date: data.insurance_expiry_date || null,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+
+      if (medicalError) throw medicalError;
+
+      // Update coach details if role is coach
+      if (data.role === 'coach' || user.role === 'coach') {
+        const { data: existingCoach } = await supabase
+          .from('coaches')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        const coachData = {
+          user_id: user.id,
+          academic_level: data.academic_level,
+          degree_title: data.degree_title,
+          education_institution: data.education_institution,
+          training_certifications: data.training_certifications,
+          years_experience: data.years_experience,
+          experience_description: data.experience_description,
+          coach_category: data.coach_category,
+          license_number: data.license_number,
+          federation_license_expiry: data.federation_license_expiry || null,
+          certification_level: data.certification_level,
+          hourly_rate: data.hourly_rate,
+          specialization: data.specialization,
+          updated_at: new Date().toISOString(),
+        };
+
+        if (existingCoach) {
+          const { error: coachError } = await supabase
+            .from('coaches')
+            .update(coachData)
+            .eq('id', existingCoach.id);
+          if (coachError) throw coachError;
+        } else {
+          const { error: coachError } = await supabase
+            .from('coaches')
+            .insert(coachData);
+          if (coachError) throw coachError;
+        }
+      }
 
       toast({
         title: "Éxito",
         description: "Usuario actualizado exitosamente",
       });
 
+      refetchUserDetails();
       onOpenChange(false);
       onUserUpdated();
     } catch (error: any) {
@@ -168,9 +332,11 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
 
   if (!user) return null;
 
+  const isCoach = form.watch('role') === 'coach' || user.role === 'coach';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Editar Usuario</DialogTitle>
           <DialogDescription>
@@ -178,212 +344,89 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
           </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Photo Upload */}
-            <PhotoUpload
-              currentPhotoUrl={photoUrl}
-              onPhotoChange={setPhotoUrl}
-              userId={user.id}
-              className="mb-4"
-            />
+        {!userDetails ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+              <Tabs defaultValue="profile" className="flex-1 flex flex-col min-h-0">
+                <TabsList className="grid w-full grid-cols-6">
+                  <TabsTrigger value="profile">Perfil</TabsTrigger>
+                  <TabsTrigger value="contact">Contacto</TabsTrigger>
+                  <TabsTrigger value="medical">Médico</TabsTrigger>
+                  {isCoach && <TabsTrigger value="professional">Profesional</TabsTrigger>}
+                  <TabsTrigger value="documents">Documentos</TabsTrigger>
+                  {isAdmin && <TabsTrigger value="administrative">Admin</TabsTrigger>}
+                </TabsList>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="first_name"
-                rules={{ required: "El nombre es requerido" }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Juan" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="last_name"
-                rules={{ required: "El apellido es requerido" }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Apellido *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Pérez" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="email"
-              rules={{ 
-                required: "El email es requerido",
-                pattern: {
-                  value: /\S+@\S+\.\S+/,
-                  message: "Email inválido"
-                }
-              }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email *</FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="usuario@email.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              {canEditRoles ? (
-                <FormField
-                  control={form.control}
-                  name="role"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Rol *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar rol" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="athlete">Atleta</SelectItem>
-                          <SelectItem value="coach">Entrenador</SelectItem>
-                          <SelectItem value="admin">Administrador</SelectItem>
-                          <SelectItem value="delegate">Delegado</SelectItem>
-                          <SelectItem value="leader">Líder</SelectItem>
-                          <SelectItem value="finance">Finanzas</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ) : (
-                <div className="space-y-2">
-                  <FormLabel>Rol</FormLabel>
-                  <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground">
-                    {user.role === 'admin' ? 'Administrador' :
-                     user.role === 'coach' ? 'Entrenador' :
-                     user.role === 'delegate' ? 'Delegado' :
-                     user.role === 'leader' ? 'Líder' :
-                     user.role === 'finance' ? 'Finanzas' : 'Atleta'}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Solo administradores y líderes pueden cambiar roles
-                  </p>
-                </div>
-              )}
-
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Teléfono</FormLabel>
-                    <FormControl>
-                      <Input placeholder="+34 600 000 000" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="date_of_birth"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Fecha de Nacimiento</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="id_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de Documento</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccione el tipo de documento" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Tarjeta de identidad">Tarjeta de identidad</SelectItem>
-                        <SelectItem value="Cedula de Ciudadania">Cédula de Ciudadanía</SelectItem>
-                        <SelectItem value="Pasaporte">Pasaporte</SelectItem>
-                        <SelectItem value="Cedula de Extranjeria">Cédula de Extranjería</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="id_number"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Número de Documento</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ingrese el número de documento" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="bio"
-                render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Biografía</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Información adicional sobre el usuario..."
-                      className="min-h-[80px]"
-                      {...field} 
+                <div className="flex-1 overflow-y-auto min-h-0">
+                  <TabsContent value="profile">
+                    <ProfileTab
+                      form={form}
+                      photoUrl={photoUrl}
+                      onPhotoChange={setPhotoUrl}
+                      userId={user.id}
+                      canEditRoles={canEditRoles}
+                      currentRole={user.role}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  </TabsContent>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={loading}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Guardando..." : "Guardar Cambios"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+                  <TabsContent value="contact">
+                    <ContactTab form={form} />
+                  </TabsContent>
+
+                  <TabsContent value="medical">
+                    <MedicalTab form={form} />
+                  </TabsContent>
+
+                  {isCoach && (
+                    <TabsContent value="professional">
+                      <ProfessionalTab form={form} />
+                    </TabsContent>
+                  )}
+
+                  <TabsContent value="documents">
+                    <DocumentsTab
+                      form={form}
+                      userId={user.id}
+                      documents={userDetails?.documents}
+                      onDocumentsUpdate={refetchUserDetails}
+                    />
+                  </TabsContent>
+
+                  {isAdmin && (
+                    <TabsContent value="administrative">
+                      <AdministrativeTab form={form} isAdmin={isAdmin} />
+                    </TabsContent>
+                  )}
+                </div>
+              </Tabs>
+
+              <DialogFooter className="mt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  disabled={loading}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    "Guardar Cambios"
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        )}
       </DialogContent>
     </Dialog>
   );
