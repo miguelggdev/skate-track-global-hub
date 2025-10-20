@@ -35,6 +35,16 @@ export const generateAthleteCardPDF = async (
     return new Date().getFullYear();
   };
 
+  const getIdDisplay = () => {
+    if (!athlete.id_number) return 'Sin registrar';
+    const idType = athlete.id_type?.toUpperCase() || 'ID';
+    return `${idType} ${athlete.id_number}`;
+  };
+
+  const getBloodTypeDisplay = () => {
+    return athlete.body_info?.blood_type || 'N/A';
+  };
+
   // ==================== FRONT SIDE ====================
   
   // White background
@@ -57,70 +67,92 @@ export const generateAthleteCardPDF = async (
   const centerX = CARD_WIDTH / 2;
   let yPos = 5;
 
-  // Club logo
+  // Club logo - Top left
+  const leftMargin = 5;
   if (clubSettings?.club_logo_url) {
     try {
-      pdf.addImage(clubSettings.club_logo_url, 'PNG', centerX - 6, yPos, 12, 12);
-      yPos += 14;
+      pdf.addImage(clubSettings.club_logo_url, 'PNG', leftMargin, yPos, 10, 10);
     } catch (error) {
       console.error('Error adding club logo:', error);
-      yPos += 2;
     }
   }
 
-  // Athlete photo (if available)
+  // Sport title next to logo
+  pdf.setFontSize(7);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(217, 119, 6); // amber-600
+  const titleX = leftMargin + 12;
+  pdf.text('PATINADOR DE VELOCIDAD', titleX, yPos + 3);
+  pdf.text('EN LÍNEA', titleX, yPos + 6);
+  
+  yPos += 12;
+
+  // Athlete photo (centered)
   if (athlete.avatar_url) {
     try {
-      const photoWidth = 20;
-      const photoHeight = 26.67; // 3:4 aspect ratio
+      const photoWidth = 18;
+      const photoHeight = 24; // 3:4 aspect ratio
       pdf.addImage(athlete.avatar_url, 'JPEG', centerX - photoWidth / 2, yPos, photoWidth, photoHeight);
-      yPos += photoHeight + 3;
+      yPos += photoHeight + 2;
     } catch (error) {
       console.error('Error adding athlete photo:', error);
-      yPos += 3;
+      yPos += 2;
     }
   } else {
-    yPos += 3;
+    yPos += 2;
   }
 
-  // Athlete name (large, bold, dark)
-  pdf.setFontSize(14);
+  // Athlete full name (large, bold, centered)
+  pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(30, 41, 59); // slate-800
   const fullName = `${athlete.first_name} ${athlete.last_name}`;
   pdf.text(fullName, centerX, yPos, { align: 'center' });
   yPos += 5;
 
-  // Category
-  pdf.setFontSize(9);
-  pdf.setFont('helvetica', 'normal');
-  pdf.setTextColor(71, 85, 105); // slate-600
-  pdf.text(`Categoría: ${getCategoryLabel(athlete.category)}`, centerX, yPos, { align: 'center' });
-  yPos += 5;
-
-  // ID Number
-  pdf.setFontSize(8);
-  pdf.setTextColor(51, 65, 85); // slate-700
-  const idNumber = athlete.athlete_number || athlete.id?.slice(0, 8) || 'N/A';
+  // Info Grid - 2 columns x 3 rows
+  const col1X = 15;
+  const col2X = 50;
+  const rowHeight = 5;
+  
+  pdf.setFontSize(6);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('Tarjeta de identidad: ', centerX - 15, yPos);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(idNumber, centerX + 15, yPos, { align: 'center' });
-  yPos += 4;
-
-  // Phone
-  if (athlete.phone) {
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Teléfono: ', centerX - 10, yPos);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(athlete.phone, centerX + 10, yPos, { align: 'center' });
-    yPos += 4;
-  }
-
-  // Validity
-  pdf.setFontSize(7);
   pdf.setTextColor(71, 85, 105); // slate-600
-  pdf.text(`Válido ${athlete.first_name?.toLowerCase()}: ${getValidityYear()}`, centerX, yPos, { align: 'center' });
+
+  // Row 1: RH and ID
+  pdf.text('RH', col1X, yPos);
+  pdf.text('ID', col2X, yPos);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(30, 41, 59); // slate-800
+  pdf.setFontSize(7);
+  pdf.text(getBloodTypeDisplay(), col1X, yPos + 3);
+  pdf.text(getIdDisplay(), col2X, yPos + 3);
+  yPos += rowHeight;
+
+  // Row 2: Liga and Club
+  pdf.setFontSize(6);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(71, 85, 105);
+  pdf.text('LIGA', col1X, yPos);
+  pdf.text('CLUB', col2X, yPos);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(30, 41, 59);
+  pdf.setFontSize(7);
+  pdf.text(clubSettings?.league || 'N/A', col1X, yPos + 3, { maxWidth: 30 });
+  pdf.text(clubSettings?.club_name || 'N/A', col2X, yPos + 3, { maxWidth: 30 });
+  yPos += rowHeight;
+
+  // Row 3: Carnet and Válido
+  pdf.setFontSize(6);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(71, 85, 105);
+  pdf.text('CARNET', col1X, yPos);
+  pdf.text('VÁLIDO', col2X, yPos);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(30, 41, 59);
+  pdf.setFontSize(7);
+  pdf.text(athlete.athlete_number || 'N/A', col1X, yPos + 3);
+  pdf.text(getValidityYear().toString(), col2X, yPos + 3);
   
   // ==================== BACK SIDE ====================
   
@@ -140,53 +172,64 @@ export const generateAthleteCardPDF = async (
   pdf.setFillColor(99, 102, 241); // Indigo-500
   pdf.circle(0, CARD_HEIGHT / 2, 14, 'F');
 
-  yPos = 10;
+  yPos = 8;
 
-  // QR Code (centered, in white circle area)
-  if (qrCodeUrl) {
+  // Club Logo - Large and Centered
+  if (clubSettings?.club_logo_url) {
     try {
-      const qrSize = 25;
-      // White background circle for QR code
-      pdf.setFillColor(255, 255, 255);
-      pdf.circle(centerX, yPos + qrSize / 2, qrSize / 2 + 3, 'F');
-      
-      pdf.addImage(qrCodeUrl, 'PNG', centerX - qrSize / 2, yPos, qrSize, qrSize);
-      yPos += qrSize + 6;
+      const logoSize = 22;
+      pdf.addImage(clubSettings.club_logo_url, 'PNG', centerX - logoSize / 2, yPos, logoSize, logoSize);
+      yPos += logoSize + 4;
     } catch (error) {
-      console.error('Error adding QR code:', error);
-      yPos += 6;
+      console.error('Error adding club logo:', error);
+      yPos += 4;
     }
   }
 
-  // Website URL
+  // Decorative line
+  pdf.setDrawColor(255, 255, 255);
+  pdf.setLineWidth(0.2);
+  pdf.line(centerX - 20, yPos, centerX + 20, yPos);
+  yPos += 4;
+
+  // Certification message
+  pdf.setFontSize(8);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(255, 255, 255);
+  pdf.text('Este documento certifica que', centerX, yPos, { align: 'center' });
+  yPos += 4;
+  pdf.text('eres miembro activo del club', centerX, yPos, { align: 'center' });
+  yPos += 6;
+
+  // Club name - Large
+  pdf.setFontSize(11);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text(clubSettings?.club_name || 'Club de Patinaje', centerX, yPos, { align: 'center', maxWidth: CARD_WIDTH - 10 });
+  
+  // QR Code - Small at bottom
+  yPos = CARD_HEIGHT - 16;
+  if (qrCodeUrl) {
+    try {
+      const qrSize = 12;
+      // White background for QR code
+      pdf.setFillColor(255, 255, 255);
+      pdf.roundedRect(centerX - qrSize / 2 - 1, yPos - 1, qrSize + 2, qrSize + 2, 1, 1, 'F');
+      
+      pdf.addImage(qrCodeUrl, 'PNG', centerX - qrSize / 2, yPos, qrSize, qrSize);
+      yPos += qrSize + 2;
+    } catch (error) {
+      console.error('Error adding QR code:', error);
+      yPos += 2;
+    }
+  }
+
+  // Website URL - Small
   if (clubSettings?.website_url) {
-    pdf.setFontSize(7);
+    pdf.setFontSize(5);
     pdf.setFont('helvetica', 'normal');
     pdf.setTextColor(255, 255, 255);
     pdf.text(clubSettings.website_url, centerX, yPos, { align: 'center' });
-    yPos += 5;
   }
-
-  // Decorative dots
-  pdf.setFontSize(6);
-  pdf.text('• • • • • • • • • •', centerX, yPos, { align: 'center' });
-  yPos += 4;
-
-  // Disclaimer text
-  pdf.setFontSize(6);
-  pdf.setTextColor(255, 255, 255);
-  const disclaimer = 'Este carné es personal e intransferible y todas las';
-  const disclaimer2 = 'acciones realizadas con el carné se entiende su titular.';
-  pdf.text(disclaimer, centerX, yPos, { align: 'center', maxWidth: CARD_WIDTH - 10 });
-  yPos += 3;
-  pdf.text(disclaimer2, centerX, yPos, { align: 'center', maxWidth: CARD_WIDTH - 10 });
-
-  // Club name at bottom
-  yPos = CARD_HEIGHT - 8;
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'bold');
-  pdf.setTextColor(255, 255, 255);
-  pdf.text(clubSettings?.club_name || 'Club de Patinaje', centerX, yPos, { align: 'center' });
   
   // Save the PDF
   const fileName = `carnet_${athlete.first_name}_${athlete.last_name}_${new Date().getTime()}.pdf`;
