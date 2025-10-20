@@ -47,6 +47,8 @@ interface EditUserFormData {
   date_of_birth?: string;
   role: 'admin' | 'coach' | 'athlete' | 'delegate' | 'leader' | 'finance';
   bio?: string;
+  id_type?: 'Tarjeta de identidad' | 'Cedula de Ciudadania' | 'Pasaporte' | 'Cedula de Extranjeria';
+  id_number?: string;
 }
 
 const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDialogProps) => {
@@ -67,6 +69,8 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
       date_of_birth: '',
       role: 'athlete',
       bio: '',
+      id_type: undefined,
+      id_number: '',
     },
   });
 
@@ -80,6 +84,8 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
         date_of_birth: user.date_of_birth || '',
         role: user.role,
         bio: user.bio || '',
+        id_type: user.id_type || undefined,
+        id_number: user.id_number || '',
       });
       setPhotoUrl(user.avatar_url || null);
     }
@@ -124,6 +130,9 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
         date_of_birth: data.date_of_birth,
         bio: data.bio,
         avatar_url: finalPhotoUrl,
+        id_type: data.id_type,
+        id_number: data.id_number,
+        updated_at: new Date().toISOString(),
       };
 
       // Only allow role updates for admins and leaders
@@ -300,14 +309,52 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
                     <Input type="date" {...field} />
                   </FormControl>
                   <FormMessage />
-                </FormItem>
-              )}
-            />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="bio"
-              render={({ field }) => (
+              <FormField
+                control={form.control}
+                name="id_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de Documento</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccione el tipo de documento" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Tarjeta de identidad">Tarjeta de identidad</SelectItem>
+                        <SelectItem value="Cedula de Ciudadania">Cédula de Ciudadanía</SelectItem>
+                        <SelectItem value="Pasaporte">Pasaporte</SelectItem>
+                        <SelectItem value="Cedula de Extranjeria">Cédula de Extranjería</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="id_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Número de Documento</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ingrese el número de documento" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="bio"
+                render={({ field }) => (
                 <FormItem>
                   <FormLabel>Biografía</FormLabel>
                   <FormControl>

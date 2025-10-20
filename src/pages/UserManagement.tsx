@@ -23,6 +23,8 @@ export interface User {
   created_at: string;
   updated_at: string;
   blocked?: boolean;
+  id_type?: 'Tarjeta de identidad' | 'Cedula de Ciudadania' | 'Pasaporte' | 'Cedula de Extranjeria';
+  id_number?: string;
 }
 
 const UserManagement = () => {
