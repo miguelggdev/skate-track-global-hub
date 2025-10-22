@@ -33,7 +33,12 @@ import {
 import { useCreateTransaction } from '@/hooks/useTransactions';
 import { useAuth } from '@/hooks/useAuth';
 import { useAthletes } from '@/hooks/useAthletes';
+import { useFeeSettings } from '@/hooks/useFeeSettings';
+import { calculateMonthlyFee, getRegistrationFee } from '@/utils/feeCalculator';
 import { toast } from '@/hooks/use-toast';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { formatCurrency } from '@/utils/currency';
+import { useCurrency } from '@/hooks/useCurrency';
 
 const transactionSchema = z.object({
   amount: z.string().refine((val) => !isNaN(Number(val)) && Number(val) !== 0, {
@@ -87,7 +92,10 @@ export default function AddTransactionDialog({ children }: AddTransactionDialogP
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
   const { data: athletes, isLoading: athletesLoading } = useAthletes();
+  const { data: feeSettings } = useFeeSettings();
+  const { currency } = useCurrency();
   const createTransactionMutation = useCreateTransaction();
+  const [calculatedFee, setCalculatedFee] = useState<{ base: number; increment: number; total: number; applied: boolean } | null>(null);
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
@@ -99,6 +107,32 @@ export default function AddTransactionDialog({ children }: AddTransactionDialogP
       receipt_url: '',
     },
   });
+
+  // Watch for transaction type and date changes
+  const watchTransactionType = form.watch('transaction_type');
+  const watchTransactionDate = form.watch('transaction_date');
+
+  // Auto-calculate fee when type or date changes
+  React.useEffect(() => {
+    if (!feeSettings) return;
+
+    if (watchTransactionType === 'mensualidad' && watchTransactionDate) {
+      const calculated = calculateMonthlyFee(feeSettings, watchTransactionDate);
+      setCalculatedFee({
+        base: calculated.baseAmount,
+        increment: calculated.incrementAmount,
+        total: calculated.totalAmount,
+        applied: calculated.incrementApplied
+      });
+      form.setValue('amount', calculated.totalAmount.toString());
+    } else if (watchTransactionType === 'registration_fee' && feeSettings) {
+      const regFee = getRegistrationFee(feeSettings);
+      form.setValue('amount', regFee.toString());
+      setCalculatedFee(null);
+    } else {
+      setCalculatedFee(null);
+    }
+  }, [watchTransactionType, watchTransactionDate, feeSettings, form]);
 
   const onSubmit = async (values: TransactionFormValues) => {
     if (!user) {
@@ -126,6 +160,10 @@ export default function AddTransactionDialog({ children }: AddTransactionDialogP
         payer_phone: values.payer_phone,
         payer_email: values.payer_email,
         created_by: user.id,
+        // Add fee tracking data
+        base_amount: calculatedFee ? calculatedFee.base : undefined,
+        increment_applied: calculatedFee ? calculatedFee.applied : false,
+        increment_amount: calculatedFee ? calculatedFee.increment : 0,
       };
 
       await createTransactionMutation.mutateAsync(transactionData);
@@ -205,19 +243,26 @@ export default function AddTransactionDialog({ children }: AddTransactionDialogP
                       <FormLabel>Cantidad *</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">€</span>
+                          <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">$</span>
                           <Input
                             {...field}
                             type="number"
                             step="0.01"
                             placeholder="0.00"
                             className="pl-8"
+                            readOnly={watchTransactionType === 'mensualidad' || watchTransactionType === 'registration_fee'}
                           />
                         </div>
                       </FormControl>
-                      <FormDescription>
-                        Ingresa valores positivos para ingresos, negativos para gastos
-                      </FormDescription>
+                      {(watchTransactionType === 'mensualidad' || watchTransactionType === 'registration_fee') ? (
+                        <FormDescription className="text-xs text-muted-foreground">
+                          Monto calculado automáticamente según configuración
+                        </FormDescription>
+                      ) : (
+                        <FormDescription>
+                          Ingresa valores positivos para ingresos, negativos para gastos
+                        </FormDescription>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -248,6 +293,24 @@ export default function AddTransactionDialog({ children }: AddTransactionDialogP
                   )}
                 />
               </div>
+
+              {/* Fee Calculation Breakdown */}
+              {calculatedFee && calculatedFee.applied && (
+                <Alert className="border-orange-200 bg-orange-50">
+                  <AlertDescription className="text-sm">
+                    <div className="space-y-1">
+                      <p className="font-medium text-orange-900">Desglose del Cálculo:</p>
+                      <div className="space-y-0.5 text-orange-800">
+                        <p>Cuota base: {formatCurrency(calculatedFee.base, currency)}</p>
+                        <p>Incremento extraordinario: {formatCurrency(calculatedFee.increment, currency)}</p>
+                        <div className="pt-1 border-t border-orange-300 mt-1">
+                          <p className="font-semibold">Total: {formatCurrency(calculatedFee.total, currency)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
 
             {/* Payer Information */}

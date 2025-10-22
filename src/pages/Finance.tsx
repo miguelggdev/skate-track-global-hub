@@ -10,11 +10,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import AddTransactionDialog from '@/components/finance/AddTransactionDialog';
 import { TransactionReceiptGenerator } from '@/components/finance/TransactionReceiptGenerator';
 import { AthleteLetterGenerator } from '@/components/finance/AthleteLetterGenerator';
 import { FinancialReportGenerator } from '@/components/finance/FinancialReportGenerator';
 import { ReportPreviewDialog } from '@/components/finance/ReportPreviewDialog';
+import { FeePreviewCard } from '@/components/finance/FeePreviewCard';
 import { useTransactions, useFinancialStats, useUpdateTransaction } from '@/hooks/useTransactions';
 import { useFinancialReports, type ReportType, type ReportPeriod } from '@/hooks/useFinancialReports';
 import { generateFinancialReportPDF } from '@/utils/pdfGenerator';
@@ -642,36 +644,28 @@ const Finance = () => {
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-6">
+            <FeePreviewCard />
+            
             <Card>
-            <CardHeader>
-              <CardTitle>Configuración Financiera</CardTitle>
-              <CardDescription>
-                Configura tarifas, métodos de pago y notificaciones
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-3">Tarifas y Cuotas</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="monthly-fee">Cuota Mensual ({currency})</Label>
-                      <Input id="monthly-fee" type="number" defaultValue="85" />
-                    </div>
-                    <div>
-                      <Label htmlFor="registration-fee">Cuota de Inscripción ({currency})</Label>
-                      <Input id="registration-fee" type="number" defaultValue="50" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end">
-                  <Button className="argon-gradient-blue text-white">Guardar Configuración</Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calculator className="h-5 w-5" />
+                  Configuración Avanzada
+                </CardTitle>
+                <CardDescription>
+                  Para modificar tarifas y configuraciones, ve a Configuración del Club → Pagos
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Alert>
+                  <AlertDescription className="text-sm">
+                    Las tarifas de cuota mensual, inscripción y el incremento extraordinario se configuran en el menú de{' '}
+                    <strong>Configuración del Club</strong> en la pestaña de <strong>Pagos</strong>.
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
 
         {/* Report Preview Dialog */}

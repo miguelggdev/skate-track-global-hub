@@ -1046,11 +1046,14 @@ export type Database = {
         Row: {
           amount: number
           athlete_id: string | null
+          base_amount: number | null
           created_at: string
           created_by: string | null
           description: string
           due_date: string | null
           id: string
+          increment_amount: number | null
+          increment_applied: boolean | null
           payer_email: string | null
           payer_identification: string | null
           payer_name: string | null
@@ -1065,11 +1068,14 @@ export type Database = {
         Insert: {
           amount: number
           athlete_id?: string | null
+          base_amount?: number | null
           created_at?: string
           created_by?: string | null
           description: string
           due_date?: string | null
           id?: string
+          increment_amount?: number | null
+          increment_applied?: boolean | null
           payer_email?: string | null
           payer_identification?: string | null
           payer_name?: string | null
@@ -1084,11 +1090,14 @@ export type Database = {
         Update: {
           amount?: number
           athlete_id?: string | null
+          base_amount?: number | null
           created_at?: string
           created_by?: string | null
           description?: string
           due_date?: string | null
           id?: string
+          increment_amount?: number | null
+          increment_applied?: boolean | null
           payer_email?: string | null
           payer_identification?: string | null
           payer_name?: string | null
