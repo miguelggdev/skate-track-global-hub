@@ -223,6 +223,80 @@ export const useDeleteTransaction = () => {
   });
 };
 
+// Hook to get paginated and filtered transactions
+export const usePaginatedTransactions = (
+  page: number = 1,
+  pageSize: number = 15,
+  month?: number | null,
+  year?: number | null,
+  type?: string
+) => {
+  return useQuery({
+    queryKey: ['paginated-transactions', page, pageSize, month, year, type],
+    queryFn: async () => {
+      // Build base query
+      let query = supabase
+        .from('financial_transactions')
+        .select(`
+          *,
+          athletes:athlete_id (
+            id,
+            first_name,
+            last_name,
+            email
+          ),
+          teams:team_id (
+            id,
+            name
+          )
+        `, { count: 'exact' });
+
+      // Apply date filters if month and year are selected
+      if (month !== null && month !== undefined && year !== null && year !== undefined) {
+        const startDate = new Date(year, month, 1);
+        const endDate = new Date(year, month + 1, 0, 23, 59, 59);
+        
+        query = query
+          .gte('transaction_date', startDate.toISOString().split('T')[0])
+          .lte('transaction_date', endDate.toISOString().split('T')[0]);
+      } else if (year !== null && year !== undefined) {
+        // Only year selected
+        const startDate = new Date(year, 0, 1);
+        const endDate = new Date(year, 11, 31);
+        
+        query = query
+          .gte('transaction_date', startDate.toISOString().split('T')[0])
+          .lte('transaction_date', endDate.toISOString().split('T')[0]);
+      }
+
+      // Apply type filter based on positive/negative amounts
+      if (type === 'income') {
+        query = query.gt('amount', 0);
+      } else if (type === 'expense') {
+        query = query.lt('amount', 0);
+      }
+
+      // Apply pagination
+      const offset = (page - 1) * pageSize;
+      query = query
+        .range(offset, offset + pageSize - 1)
+        .order('transaction_date', { ascending: false });
+
+      const { data, error, count } = await query;
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return {
+        data: data || [],
+        count: count || 0,
+        totalPages: Math.ceil((count || 0) / pageSize),
+      };
+    },
+  });
+};
+
 export const useFinancialStats = () => {
   return useQuery({
     queryKey: ['financial-stats'],

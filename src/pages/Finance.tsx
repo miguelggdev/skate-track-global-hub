@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ToggleButtonGroup, ToggleButton } from '@/components/ui/toggle-button-group';
+
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,7 +20,9 @@ import { AthleteLetterGenerator } from '@/components/finance/AthleteLetterGenera
 import { FinancialReportGenerator } from '@/components/finance/FinancialReportGenerator';
 import { ReportPreviewDialog } from '@/components/finance/ReportPreviewDialog';
 import { FeePreviewCard } from '@/components/finance/FeePreviewCard';
-import { useTransactions, useFinancialStats, useUpdateTransaction } from '@/hooks/useTransactions';
+import { TransactionFilters } from '@/components/finance/TransactionFilters';
+import { TransactionPagination } from '@/components/finance/TransactionPagination';
+import { usePaginatedTransactions, useFinancialStats, useUpdateTransaction } from '@/hooks/useTransactions';
 import { useFinancialReports, type ReportType, type ReportPeriod } from '@/hooks/useFinancialReports';
 import { generateFinancialReportPDF } from '@/utils/pdfGenerator';
 import { formatCurrency } from '@/utils/currency';
@@ -49,32 +52,111 @@ import {
 } from 'lucide-react';
 
 const Finance = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Get initial values from URL params or defaults
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  
   const [selectedPeriod, setSelectedPeriod] = useState<ReportPeriod>('month');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTransactionType, setSelectedTransactionType] = useState('all');
+  const [filterMonth, setFilterMonth] = useState<number | null>(
+    searchParams.get('month') ? parseInt(searchParams.get('month')!) : currentMonth
+  );
+  const [filterYear, setFilterYear] = useState<number | null>(
+    searchParams.get('year') ? parseInt(searchParams.get('year')!) : currentYear
+  );
+  const [selectedTransactionType, setSelectedTransactionType] = useState(
+    searchParams.get('type') || "all"
+  );
+  const [currentPage, setCurrentPage] = useState(
+    searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1
+  );
   const [selectedReportType, setSelectedReportType] = useState<ReportType>('complete');
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [generatedReport, setGeneratedReport] = useState(null);
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
 
-  // Use real data from hooks
-  const { data: transactions = [], isLoading: transactionsLoading } = useTransactions();
+  const pageSize = 15;
+  
+  // Use paginated transactions hook
+  const { data: paginatedData, isLoading: transactionsLoading } = usePaginatedTransactions(
+    currentPage,
+    pageSize,
+    filterMonth,
+    filterYear,
+    selectedTransactionType
+  );
+
+  const transactions = paginatedData?.data || [];
+  const totalRecords = paginatedData?.count || 0;
+  const totalPages = paginatedData?.totalPages || 1;
+
   const { data: financialStats, isLoading: statsLoading } = useFinancialStats();
   const updateTransactionMutation = useUpdateTransaction();
   const { data: reportData, isLoading: reportLoading } = useFinancialReports(selectedReportType, selectedPeriod);
 
-  // Filter transactions based on search and type
-  const filteredTransactions = transactions.filter(transaction => {
+  // Update URL params when filters change
+  const updateUrlParams = (newFilters: {
+    month?: number | null;
+    year?: number | null;
+    type?: string;
+    page?: number;
+  }) => {
+    const params = new URLSearchParams();
+    
+    const month = newFilters.month !== undefined ? newFilters.month : filterMonth;
+    const year = newFilters.year !== undefined ? newFilters.year : filterYear;
+    const type = newFilters.type !== undefined ? newFilters.type : selectedTransactionType;
+    const page = newFilters.page !== undefined ? newFilters.page : currentPage;
+    
+    if (month !== null) params.set('month', month.toString());
+    if (year !== null) params.set('year', year.toString());
+    if (type !== 'all') params.set('type', type);
+    if (page > 1) params.set('page', page.toString());
+    
+    setSearchParams(params);
+  };
+
+  const handleMonthChange = (month: number | null) => {
+    setFilterMonth(month);
+    setCurrentPage(1);
+    updateUrlParams({ month, page: 1 });
+  };
+
+  const handleYearChange = (year: number | null) => {
+    setFilterYear(year);
+    setCurrentPage(1);
+    updateUrlParams({ year, page: 1 });
+  };
+
+  const handleTypeChange = (type: string) => {
+    setSelectedTransactionType(type);
+    setCurrentPage(1);
+    updateUrlParams({ type, page: 1 });
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    updateUrlParams({ page });
+  };
+
+  const handleResetFilters = () => {
+    setFilterMonth(currentMonth);
+    setFilterYear(currentYear);
+    setSelectedTransactionType("all");
+    setCurrentPage(1);
+    setSearchParams({});
+  };
+
+  // Filter transactions by search term (client-side for current page)
+  const filteredTransactions = transactions.filter((transaction) => {
     const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          transaction.payer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          transaction.athletes?.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          transaction.athletes?.last_name?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesType = selectedTransactionType === 'all' || 
-                       (selectedTransactionType === 'income' && ['mensualidad', 'anualidad', 'registration_fee'].includes(transaction.transaction_type)) ||
-                       (selectedTransactionType === 'expense' && ['equipment', 'travel', 'coaching', 'other', 'poliza_deportiva', 'psicologia'].includes(transaction.transaction_type));
-    
-    return matchesSearch && matchesType;
+    return matchesSearch;
   });
 
   // Format stats for display with dynamic currency
@@ -352,23 +434,27 @@ const Finance = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                {/* Transaction Filters */}
+                <TransactionFilters
+                  selectedMonth={filterMonth}
+                  selectedYear={filterYear}
+                  selectedType={selectedTransactionType}
+                  onMonthChange={handleMonthChange}
+                  onYearChange={handleYearChange}
+                  onTypeChange={handleTypeChange}
+                  onReset={handleResetFilters}
+                />
+
+                {/* Search Bar */}
                 <div className="flex gap-4 items-center">
                   <div className="flex-1">
                     <Input 
-                      placeholder="Buscar transacciones..." 
+                      placeholder="Buscar en resultados..." 
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="w-full"
                     />
                   </div>
-                  <ToggleButtonGroup value={selectedTransactionType} onValueChange={setSelectedTransactionType}>
-                    <ToggleButton value="all">Todas</ToggleButton>
-                    <ToggleButton value="income">Ingresos</ToggleButton>
-                    <ToggleButton value="expense">Gastos</ToggleButton>
-                  </ToggleButtonGroup>
-                  <Button variant="outline">
-                    <Filter className="h-4 w-4" />
-                  </Button>
                 </div>
 
                 <div className="border rounded-lg overflow-hidden">
@@ -428,6 +514,15 @@ const Finance = () => {
                     ))
                   )}
                 </div>
+
+                {/* Pagination */}
+                <TransactionPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalRecords={totalRecords}
+                  pageSize={pageSize}
+                  onPageChange={handlePageChange}
+                />
               </div>
             </CardContent>
           </Card>
