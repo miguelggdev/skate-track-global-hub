@@ -61,6 +61,23 @@ export const AthleteLetterGenerator: React.FC = () => {
       pdf.text(`${day} de ${month} de ${year}`, pdf.internal.pageSize.width - 20, yPosition, { align: 'right' });
       yPosition += 20;
 
+      // Add payment details if athlete is up to date
+      if (paymentData?.hasPaid && paymentData.transactions.length > 0) {
+        const lastPayment = paymentData.transactions[0];
+        const paymentDate = new Date(lastPayment.transaction_date).toLocaleDateString('es-ES');
+        const paymentAmount = lastPayment.amount;
+        
+        pdf.setFontSize(10);
+        pdf.setTextColor(80, 80, 80);
+        pdf.text(
+          `Último pago registrado: ${paymentDate} – Valor: ${currency}${paymentAmount.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`,
+          20,
+          yPosition
+        );
+        pdf.setTextColor(0, 0, 0);
+        yPosition += 10;
+      }
+
       // Subject
       const subject = letterType === 'freedom' ? 'CARTA DE LIBERTAD' : 'PAZ Y SALVO';
       yPosition = template.addTitle(`ASUNTO: ${subject}`, 12);

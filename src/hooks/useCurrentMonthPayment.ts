@@ -8,7 +8,7 @@ export const useCurrentMonthPayment = (athleteId?: string) => {
     queryFn: async () => {
       if (!athleteId) return null;
 
-      // Get the athlete with payment status
+      // Get the athlete info
       const { data: athlete, error: athleteError } = await supabase
         .from('athletes')
         .select('*')
@@ -19,17 +19,17 @@ export const useCurrentMonthPayment = (athleteId?: string) => {
         throw new Error(athleteError.message);
       }
 
-      // Get current month boundaries
+      // Get current month boundaries (local time to avoid timezone issues)
       const now = new Date();
       const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
       
-      // Check if athlete has paid for current month
-      const isCurrentMonthPaid = athlete.last_payment_month 
-        ? new Date(athlete.last_payment_month) >= currentMonthStart
-        : false;
+      // Format dates as YYYY-MM-DD for Supabase
+      const startDateStr = currentMonthStart.toISOString().split('T')[0];
+      const endDateStr = nextMonthStart.toISOString().split('T')[0];
 
-      // Get recent transactions for display
-      const { data: transactions } = await supabase
+      // Query paid monthly payments within current month directly
+      const { data: currentMonthPayments, error: paymentsError } = await supabase
         .from('financial_transactions')
         .select(`
           *,
@@ -44,19 +44,29 @@ export const useCurrentMonthPayment = (athleteId?: string) => {
         .eq('athlete_id', athleteId)
         .eq('transaction_type', 'mensualidad')
         .eq('payment_status', 'paid')
+        .gte('transaction_date', startDateStr)
+        .lt('transaction_date', endDateStr)
         .order('transaction_date', { ascending: false })
         .limit(3);
 
+      if (paymentsError) {
+        throw new Error(paymentsError.message);
+      }
+
+      // Athlete has paid if at least one paid mensualidad exists in current month
+      const hasPaid = (currentMonthPayments?.length ?? 0) > 0;
+
       return {
-        hasPaid: isCurrentMonthPaid,
+        hasPaid,
         paymentStatus: athlete.payment_status || 'pending',
         lastPaymentMonth: athlete.last_payment_month,
         lastPaymentDate: athlete.last_payment_date,
-        transactions: transactions || [],
+        transactions: currentMonthPayments || [],
         athlete: athlete,
       };
     },
     enabled: !!athleteId,
+    staleTime: 0, // Always re-evaluate on invalidation
   });
 };
 

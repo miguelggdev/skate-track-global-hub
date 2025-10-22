@@ -53,11 +53,14 @@ export const useCreateTransaction = () => {
 
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['financial-stats'] });
       queryClient.invalidateQueries({ queryKey: ['current-month-payment'] });
       queryClient.invalidateQueries({ queryKey: ['athletes'] });
+      if (variables.athlete_id) {
+        queryClient.invalidateQueries({ queryKey: ['athlete-transactions', variables.athlete_id] });
+      }
     },
     onError: (error) => {
       toast({
@@ -87,11 +90,14 @@ export const useUpdateTransaction = () => {
 
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['financial-stats'] });
       queryClient.invalidateQueries({ queryKey: ['current-month-payment'] });
       queryClient.invalidateQueries({ queryKey: ['athletes'] });
+      if (data.athlete_id) {
+        queryClient.invalidateQueries({ queryKey: ['athlete-transactions', data.athlete_id] });
+      }
     },
     onError: (error) => {
       toast({
@@ -201,7 +207,7 @@ export const useDeleteTransaction = () => {
 
       return { deletedId: transactionId };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['financial-stats'] });
       queryClient.invalidateQueries({ queryKey: ['current-month-payment'] });
