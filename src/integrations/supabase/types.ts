@@ -822,7 +822,7 @@ export type Database = {
           points: number | null
           position: number | null
           score: number | null
-          time_achieved: unknown | null
+          time_achieved: unknown
         }
         Insert: {
           athlete_id: string
@@ -839,7 +839,7 @@ export type Database = {
           points?: number | null
           position?: number | null
           score?: number | null
-          time_achieved?: unknown | null
+          time_achieved?: unknown
         }
         Update: {
           athlete_id?: string
@@ -856,7 +856,7 @@ export type Database = {
           points?: number | null
           position?: number | null
           score?: number | null
-          time_achieved?: unknown | null
+          time_achieved?: unknown
         }
         Relationships: [
           {
@@ -1797,8 +1797,9 @@ export type Database = {
         }
         Returns: boolean
       }
-      mark_overdue_athletes: {
-        Args: Record<PropertyKey, never>
+      mark_overdue_athletes: { Args: never; Returns: undefined }
+      recalc_athlete_payment_status: {
+        Args: { p_athlete_id: string }
         Returns: undefined
       }
       register_attendance: {
@@ -1818,11 +1819,14 @@ export type Database = {
           performance_rating: number | null
           training_session_id: string
         }
+        SetofOptions: {
+          from: "*"
+          to: "training_attendance"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
-      register_bulk_attendance: {
-        Args: { rows: Json }
-        Returns: number
-      }
+      register_bulk_attendance: { Args: { rows: Json }; Returns: number }
       send_notification_to_athletes: {
         Args: {
           message_param: string
