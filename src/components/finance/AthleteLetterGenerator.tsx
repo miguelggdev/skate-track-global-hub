@@ -7,7 +7,7 @@ import { FileText, Download, AlertCircle, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import { useAthletes } from '@/hooks/useAthletes';
-import { useLastMonthPayment, useClubSettings } from '@/hooks/useLastMonthPayment';
+import { useCurrentMonthPayment, useClubSettings } from '@/hooks/useCurrentMonthPayment';
 import { useReportTemplate } from '@/hooks/useReportTemplate';
 import { useCurrency } from '@/hooks/useCurrency';
 
@@ -24,7 +24,7 @@ export const AthleteLetterGenerator: React.FC = () => {
   const [generating, setGenerating] = useState(false);
 
   const { data: athletes = [], isLoading: athletesLoading } = useAthletes();
-  const { data: paymentData, isLoading: paymentLoading } = useLastMonthPayment(selectedAthleteId);
+  const { data: paymentData, isLoading: paymentLoading } = useCurrentMonthPayment(selectedAthleteId);
   const { data: clubSettings } = useClubSettings();
   const { createReportTemplate } = useReportTemplate();
   const { currency } = useCurrency();
@@ -150,7 +150,10 @@ export const AthleteLetterGenerator: React.FC = () => {
         {selectedAthleteId && (
           <div className="space-y-4">
             {paymentLoading ? (
-              <div className="text-center p-4">Validando pago del último mes...</div>
+              <div className="flex items-center gap-2 text-muted-foreground p-4">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                <span>Verificando estado de pago...</span>
+              </div>
             ) : paymentData ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
@@ -158,15 +161,26 @@ export const AthleteLetterGenerator: React.FC = () => {
                     <>
                       <CheckCircle className="h-5 w-5 text-green-500" />
                       <span className="text-green-700 font-medium">
-                        El deportista tiene registrado el pago del último mes
+                        El deportista tiene pago activo para el mes actual
+                        {paymentData.lastPaymentMonth && (
+                          <span className="text-sm text-muted-foreground ml-2">
+                            ({new Date(paymentData.lastPaymentMonth).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })})
+                          </span>
+                        )}
                       </span>
+                      <Badge variant="default" className="ml-2">
+                        {paymentData.paymentStatus === 'active' ? 'Al día' : paymentData.paymentStatus}
+                      </Badge>
                     </>
                   ) : (
                     <>
-                      <AlertCircle className="h-5 w-5 text-red-500" />
-                      <span className="text-red-700 font-medium">
-                        El deportista no tiene registrado el pago del último mes
+                      <AlertCircle className="h-5 w-5 text-destructive" />
+                      <span className="text-destructive font-medium">
+                        El deportista no tiene pago registrado para el mes actual
                       </span>
+                      <Badge variant="destructive" className="ml-2">
+                        {paymentData.paymentStatus === 'overdue' ? 'Atrasado' : 'Pendiente'}
+                      </Badge>
                     </>
                   )}
                 </div>

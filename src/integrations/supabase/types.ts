@@ -279,8 +279,11 @@ export type Database = {
           id: string
           join_date: string
           last_name: string | null
+          last_payment_date: string | null
+          last_payment_month: string | null
           level: Database["public"]["Enums"]["athlete_level"]
           medical_notes: string | null
+          payment_status: string | null
           performance_score: number | null
           status: Database["public"]["Enums"]["athlete_status"]
           team_id: string | null
@@ -301,8 +304,11 @@ export type Database = {
           id?: string
           join_date?: string
           last_name?: string | null
+          last_payment_date?: string | null
+          last_payment_month?: string | null
           level: Database["public"]["Enums"]["athlete_level"]
           medical_notes?: string | null
+          payment_status?: string | null
           performance_score?: number | null
           status?: Database["public"]["Enums"]["athlete_status"]
           team_id?: string | null
@@ -323,8 +329,11 @@ export type Database = {
           id?: string
           join_date?: string
           last_name?: string | null
+          last_payment_date?: string | null
+          last_payment_month?: string | null
           level?: Database["public"]["Enums"]["athlete_level"]
           medical_notes?: string | null
+          payment_status?: string | null
           performance_score?: number | null
           status?: Database["public"]["Enums"]["athlete_status"]
           team_id?: string | null
@@ -1787,6 +1796,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      mark_overdue_athletes: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       register_attendance: {
         Args: {

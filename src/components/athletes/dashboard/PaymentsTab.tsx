@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { CreditCard, Download, ExternalLink, Mail, Phone, User, FileText } from 'lucide-react';
 import { useAthleteTransactions } from '@/hooks/useTransactions';
 import { useCurrentAthlete } from '@/hooks/useCurrentAthlete';
+import { useCurrentMonthPayment } from '@/hooks/useCurrentMonthPayment';
+import { DollarSign, AlertCircle, CheckCircle } from 'lucide-react';
 import { useCurrency } from '@/hooks/useCurrency';
 import { formatCurrency } from '@/utils/currency';
 import { format } from 'date-fns';
@@ -51,6 +53,7 @@ export const PaymentsTab = () => {
   const [selectedType, setSelectedType] = useState<string>('all');
   const { athlete } = useCurrentAthlete();
   const { data: transactions, isLoading } = useAthleteTransactions(athlete?.id);
+  const { data: paymentStatus } = useCurrentMonthPayment(athlete?.id);
   const { currency } = useCurrency();
 
   if (isLoading) {
@@ -103,18 +106,45 @@ export const PaymentsTab = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <Label className="text-green-700">Total Pagado ({selectedYear})</Label>
-              <div className="text-2xl font-bold text-green-600">{formatCurrency(totalPaid, currency)}</div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-card border rounded-lg p-4">
+              <Label className="text-muted-foreground flex items-center gap-2">
+                <CheckCircle className="h-4 w-4" />
+                Estado de Pago
+              </Label>
+              <Badge 
+                variant={
+                  paymentStatus?.paymentStatus === 'active' ? 'default' :
+                  paymentStatus?.paymentStatus === 'overdue' ? 'destructive' :
+                  'secondary'
+                }
+                className="text-sm mt-2"
+              >
+                {paymentStatus?.paymentStatus === 'active' ? '✓ Al día' :
+                 paymentStatus?.paymentStatus === 'overdue' ? '⚠ Atrasado' :
+                 '○ Pendiente'}
+              </Badge>
             </div>
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-              <Label className="text-orange-700">Total Pendiente</Label>
-              <div className="text-2xl font-bold text-orange-600">{formatCurrency(totalPending, currency)}</div>
+            <div className="bg-card border rounded-lg p-4">
+              <Label className="text-muted-foreground flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Total Pagado ({selectedYear})
+              </Label>
+              <div className="text-2xl font-bold mt-1">{formatCurrency(totalPaid, currency)}</div>
             </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <Label className="text-blue-700">Total Transacciones</Label>
-              <div className="text-2xl font-bold text-blue-600">{filteredTransactions.length}</div>
+            <div className="bg-card border rounded-lg p-4">
+              <Label className="text-muted-foreground flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                Total Pendiente
+              </Label>
+              <div className="text-2xl font-bold text-destructive mt-1">{formatCurrency(totalPending, currency)}</div>
+            </div>
+            <div className="bg-card border rounded-lg p-4">
+              <Label className="text-muted-foreground flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Total Transacciones
+              </Label>
+              <div className="text-2xl font-bold mt-1">{filteredTransactions.length}</div>
             </div>
           </div>
 

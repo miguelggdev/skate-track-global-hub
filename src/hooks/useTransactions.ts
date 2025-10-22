@@ -56,6 +56,8 @@ export const useCreateTransaction = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['financial-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['current-month-payment'] });
+      queryClient.invalidateQueries({ queryKey: ['athletes'] });
     },
     onError: (error) => {
       toast({
@@ -88,6 +90,8 @@ export const useUpdateTransaction = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['financial-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['current-month-payment'] });
+      queryClient.invalidateQueries({ queryKey: ['athletes'] });
     },
     onError: (error) => {
       toast({
