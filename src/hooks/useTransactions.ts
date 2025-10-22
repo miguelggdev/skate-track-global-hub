@@ -134,6 +134,95 @@ export const useAthleteTransactions = (athleteId?: string) => {
   });
 };
 
+export const useDeleteTransaction = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (transactionId: string) => {
+      // First get the transaction to check if it affects athlete status
+      const { data: transaction, error: fetchError } = await supabase
+        .from('financial_transactions')
+        .select('*, athletes!inner(*)')
+        .eq('id', transactionId)
+        .single();
+
+      if (fetchError) throw new Error(fetchError.message);
+
+      // Delete the transaction
+      const { error: deleteError } = await supabase
+        .from('financial_transactions')
+        .delete()
+        .eq('id', transactionId);
+
+      if (deleteError) throw new Error(deleteError.message);
+
+      // If it was a paid mensualidad, recalculate athlete payment status
+      if (transaction.transaction_type === 'mensualidad' && transaction.payment_status === 'paid') {
+        // Find the most recent payment for this athlete
+        const { data: recentPayment } = await supabase
+          .from('financial_transactions')
+          .select('transaction_date, payment_status')
+          .eq('athlete_id', transaction.athlete_id)
+          .eq('transaction_type', 'mensualidad')
+          .eq('payment_status', 'paid')
+          .order('transaction_date', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        // Update athlete status
+        if (recentPayment) {
+          const paymentMonth = new Date(recentPayment.transaction_date);
+          const currentMonth = new Date();
+          currentMonth.setDate(1);
+          currentMonth.setHours(0, 0, 0, 0);
+
+          await supabase
+            .from('athletes')
+            .update({
+              payment_status: paymentMonth >= currentMonth ? 'active' : 'overdue',
+              last_payment_month: new Date(paymentMonth.getFullYear(), paymentMonth.getMonth(), 1).toISOString().split('T')[0],
+              last_payment_date: recentPayment.transaction_date,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', transaction.athlete_id);
+        } else {
+          // No other payments, set to pending
+          await supabase
+            .from('athletes')
+            .update({
+              payment_status: 'pending',
+              last_payment_month: null,
+              last_payment_date: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', transaction.athlete_id);
+        }
+      }
+
+      return { deletedId: transactionId };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['financial-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['current-month-payment'] });
+      queryClient.invalidateQueries({ queryKey: ['athletes'] });
+      queryClient.invalidateQueries({ queryKey: ['athlete-transactions'] });
+      
+      toast({
+        title: "Transacción eliminada",
+        description: "La transacción se ha eliminado correctamente y el estado del atleta se ha actualizado.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `No se pudo eliminar la transacción: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
 export const useFinancialStats = () => {
   return useQuery({
     queryKey: ['financial-stats'],

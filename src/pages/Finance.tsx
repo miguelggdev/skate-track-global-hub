@@ -13,6 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import AddTransactionDialog from '@/components/finance/AddTransactionDialog';
 import { TransactionReceiptGenerator } from '@/components/finance/TransactionReceiptGenerator';
+import { DeleteTransactionDialog } from '@/components/finance/DeleteTransactionDialog';
+import { EditTransactionDialog } from '@/components/finance/EditTransactionDialog';
 import { AthleteLetterGenerator } from '@/components/finance/AthleteLetterGenerator';
 import { FinancialReportGenerator } from '@/components/finance/FinancialReportGenerator';
 import { ReportPreviewDialog } from '@/components/finance/ReportPreviewDialog';
@@ -414,10 +416,14 @@ const Finance = () => {
                           {transaction.payment_status === 'overdue' && <AlertCircle className="h-4 w-4 text-red-500" />}
                           <span className="text-sm capitalize">{transaction.payment_status}</span>
                         </div>
-                        <TransactionReceiptGenerator 
-                          transaction={transaction}
-                          onReceiptGenerated={(receiptUrl) => handleReceiptGenerated(transaction.id, receiptUrl)}
-                        />
+                        <div className="flex items-center gap-1">
+                          <EditTransactionDialog transaction={transaction} />
+                          <DeleteTransactionDialog transaction={transaction} />
+                          <TransactionReceiptGenerator 
+                            transaction={transaction}
+                            onReceiptGenerated={(receiptUrl) => handleReceiptGenerated(transaction.id, receiptUrl)}
+                          />
+                        </div>
                       </div>
                     ))
                   )}

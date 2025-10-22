@@ -33,12 +33,14 @@ import {
 import { useCreateTransaction } from '@/hooks/useTransactions';
 import { useAuth } from '@/hooks/useAuth';
 import { useAthletes } from '@/hooks/useAthletes';
+import { useDuplicatePaymentCheck } from '@/hooks/useDuplicatePaymentCheck';
 import { useFeeSettings } from '@/hooks/useFeeSettings';
 import { calculateMonthlyFee, getRegistrationFee } from '@/utils/feeCalculator';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { formatCurrency } from '@/utils/currency';
 import { useCurrency } from '@/hooks/useCurrency';
+import { AlertCircle } from 'lucide-react';
 
 const transactionSchema = z.object({
   amount: z.string().refine((val) => !isNaN(Number(val)) && Number(val) !== 0, {
@@ -108,9 +110,17 @@ export default function AddTransactionDialog({ children }: AddTransactionDialogP
     },
   });
 
-  // Watch for transaction type and date changes
+  // Watch for transaction type, date and athlete changes
   const watchTransactionType = form.watch('transaction_type');
   const watchTransactionDate = form.watch('transaction_date');
+  const watchAthleteId = form.watch('athlete_id');
+
+  // Duplicate check for monthly payments
+  const { data: duplicateCheck, isLoading: checkingDuplicate } = useDuplicatePaymentCheck(
+    watchAthleteId,
+    watchTransactionDate,
+    watchTransactionType
+  );
 
   // Auto-calculate fee when type or date changes
   React.useEffect(() => {
@@ -144,6 +154,16 @@ export default function AddTransactionDialog({ children }: AddTransactionDialogP
       return;
     }
 
+    // Duplicate payment validation
+    if (duplicateCheck?.hasDuplicate && values.transaction_type === 'mensualidad') {
+      toast({
+        title: "Pago duplicado detectado",
+        description: "Ya existe un pago de mensualidad registrado para este atleta en el mes seleccionado.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const transactionData = {
         amount: Number(values.amount),
@@ -172,6 +192,14 @@ export default function AddTransactionDialog({ children }: AddTransactionDialogP
         title: "Transacción creada",
         description: "La transacción se ha registrado correctamente",
       });
+
+      // Show clearance letter option for paid monthly payments
+      if (values.payment_status === 'paid' && values.transaction_type === 'mensualidad') {
+        toast({
+          title: "Carta de Paz y Salvo disponible",
+          description: "Puede generar la carta desde el módulo de Finanzas → Cartas",
+        });
+      }
       
       form.reset();
       setOpen(false);
@@ -293,6 +321,25 @@ export default function AddTransactionDialog({ children }: AddTransactionDialogP
                   )}
                 />
               </div>
+
+              {/* Duplicate Payment Warning */}
+              {duplicateCheck?.hasDuplicate && watchTransactionType === 'mensualidad' && (
+                <Alert variant="destructive" className="border-red-200 bg-red-50">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="text-sm">
+                    <p className="font-medium text-red-900">
+                      Ya existe un pago de mensualidad para este atleta en{' '}
+                      {new Date(duplicateCheck.existingPayment.transaction_date).toLocaleDateString('es-ES', { 
+                        month: 'long', 
+                        year: 'numeric' 
+                      })}
+                    </p>
+                    <p className="text-red-800 mt-1">
+                      Monto: {formatCurrency(duplicateCheck.existingPayment.amount, currency)}
+                    </p>
+                  </AlertDescription>
+                </Alert>
+              )}
 
               {/* Fee Calculation Breakdown */}
               {calculatedFee && calculatedFee.applied && (
@@ -544,7 +591,10 @@ export default function AddTransactionDialog({ children }: AddTransactionDialogP
               </Button>
               <Button 
                 type="submit"
-                disabled={createTransactionMutation.isPending}
+                disabled={
+                  createTransactionMutation.isPending || 
+                  (duplicateCheck?.hasDuplicate && watchTransactionType === 'mensualidad')
+                }
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 {createTransactionMutation.isPending ? (
