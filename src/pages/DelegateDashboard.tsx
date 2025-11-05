@@ -9,9 +9,12 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Users, Calendar, CreditCard, FileText, Bell, Heart, Phone, Mail, MapPin, User, GraduationCap, Clock } from 'lucide-react';
+import { formatCurrency } from '@/utils/currency';
+import { useCurrency } from '@/hooks/useCurrency';
 
 const DelegateDashboard = () => {
   const userRole = localStorage.getItem('userRole') || '';
+  const { currency } = useCurrency();
 
   return (
     <DashboardLayout title="Panel del Delegado" userRole={userRole}>
@@ -46,7 +49,7 @@ const DelegateDashboard = () => {
               <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">€450</div>
+              <div className="text-2xl font-bold">{formatCurrency(450, currency)}</div>
               <p className="text-xs text-muted-foreground">2 cuotas vencidas</p>
             </CardContent>
           </Card>
@@ -156,7 +159,7 @@ const DelegateDashboard = () => {
                         <CardTitle className="text-sm text-red-600">Pagos Vencidos</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold text-red-600">€250</div>
+                        <div className="text-2xl font-bold text-red-600">{formatCurrency(250, currency)}</div>
                         <p className="text-xs text-muted-foreground">Cuota Junio - Ana</p>
                       </CardContent>
                     </Card>
@@ -166,7 +169,7 @@ const DelegateDashboard = () => {
                         <CardTitle className="text-sm text-yellow-600">Próximos Vencimientos</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold text-yellow-600">€500</div>
+                        <div className="text-2xl font-bold text-yellow-600">{formatCurrency(500, currency)}</div>
                         <p className="text-xs text-muted-foreground">Vence en 5 días</p>
                       </CardContent>
                     </Card>
@@ -176,7 +179,7 @@ const DelegateDashboard = () => {
                         <CardTitle className="text-sm text-green-600">Total Pagado 2024</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold text-green-600">€2,850</div>
+                        <div className="text-2xl font-bold text-green-600">{formatCurrency(2850, currency)}</div>
                         <p className="text-xs text-muted-foreground">Ambos deportistas</p>
                       </CardContent>
                     </Card>
@@ -197,7 +200,7 @@ const DelegateDashboard = () => {
                       <TableRow>
                         <TableCell>Cuota Mensual Julio</TableCell>
                         <TableCell>Ana García</TableCell>
-                        <TableCell>€250</TableCell>
+                        <TableCell>{formatCurrency(250, currency)}</TableCell>
                         <TableCell>01/07/2024</TableCell>
                         <TableCell><Badge variant="destructive">Vencida</Badge></TableCell>
                         <TableCell>
@@ -207,7 +210,7 @@ const DelegateDashboard = () => {
                       <TableRow>
                         <TableCell>Equipo Patines</TableCell>
                         <TableCell>Miguel García</TableCell>
-                        <TableCell>€350</TableCell>
+                        <TableCell>{formatCurrency(350, currency)}</TableCell>
                         <TableCell>15/07/2024</TableCell>
                         <TableCell><Badge variant="secondary">Pendiente</Badge></TableCell>
                         <TableCell>
@@ -217,7 +220,7 @@ const DelegateDashboard = () => {
                       <TableRow>
                         <TableCell>Competencia Nacional</TableCell>
                         <TableCell>Ana García</TableCell>
-                        <TableCell>€150</TableCell>
+                        <TableCell>{formatCurrency(150, currency)}</TableCell>
                         <TableCell>20/07/2024</TableCell>
                         <TableCell><Badge variant="secondary">Pendiente</Badge></TableCell>
                         <TableCell>

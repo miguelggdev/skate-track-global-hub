@@ -4,8 +4,11 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { supabase } from '@/integrations/supabase/client';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { formatCurrency, getCurrencySymbol } from '@/utils/currency';
+import { useCurrency } from '@/hooks/useCurrency';
 
 const RevenueChart: React.FC = () => {
+  const { currency } = useCurrency();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -134,11 +137,11 @@ const RevenueChart: React.FC = () => {
                   axisLine={false}
                   tickLine={false}
                   className="text-xs"
-                  tickFormatter={(value) => `€${(value / 1000).toFixed(0)}K`}
+                  tickFormatter={(value) => `${getCurrencySymbol(currency)}${(value / 1000).toFixed(0)}K`}
                 />
                 <Tooltip 
                   formatter={(value: number, name: string) => [
-                    `€${value.toLocaleString()}`,
+                    formatCurrency(value, currency),
                     name === 'revenue' ? 'Ingresos' : name === 'target' ? 'Objetivo' : 'Gastos'
                   ]}
                   labelStyle={{ color: 'hsl(var(--foreground))' }}

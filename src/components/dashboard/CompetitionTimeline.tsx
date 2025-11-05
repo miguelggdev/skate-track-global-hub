@@ -3,6 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, MapPin, Users, Trophy, Clock, ExternalLink } from 'lucide-react';
+import { formatCurrency } from '@/utils/currency';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface Competition {
   id: string;
@@ -19,6 +21,7 @@ interface Competition {
 }
 
 const CompetitionTimeline: React.FC = () => {
+  const { currency } = useCurrency();
   const competitions: Competition[] = [
     {
       id: '1',
@@ -171,7 +174,7 @@ const CompetitionTimeline: React.FC = () => {
                   </div>
                   <div>
                     <span className="text-muted-foreground">Cuota:</span>
-                    <p className="font-medium">€{competition.entryFee}</p>
+                    <p className="font-medium">{formatCurrency(competition.entryFee, currency)}</p>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Inscritos:</span>
@@ -226,7 +229,7 @@ const CompetitionTimeline: React.FC = () => {
             <div className="text-xs text-muted-foreground">Total Inscritos</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-dashboard-secondary">€75</div>
+            <div className="text-2xl font-bold text-dashboard-secondary">{formatCurrency(75, currency)}</div>
             <div className="text-xs text-muted-foreground">Cuota Promedio</div>
           </div>
         </div>

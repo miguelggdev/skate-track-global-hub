@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import AnimatedCounter from './AnimatedCounter';
+import { formatCurrency, getCurrencySymbol } from '@/utils/currency';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface PerformanceCardProps {
   title: string;
@@ -25,10 +27,12 @@ const PerformanceCard: React.FC<PerformanceCardProps> = ({
   icon: Icon,
   className = ''
 }) => {
+  const { currency } = useCurrency();
+  
   const formatValue = (val: number) => {
     switch (format) {
       case 'currency':
-        return val.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+        return formatCurrency(val, currency);
       case 'percentage':
         return `${val}%`;
       default:
@@ -73,7 +77,7 @@ const PerformanceCard: React.FC<PerformanceCardProps> = ({
           <div className="text-2xl font-bold">
             <AnimatedCounter
               end={value}
-              prefix={format === 'currency' ? '€' : ''}
+              prefix={format === 'currency' ? getCurrencySymbol(currency) : ''}
               suffix={format === 'percentage' ? '%' : ''}
             />
           </div>
