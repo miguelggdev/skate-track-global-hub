@@ -24,9 +24,10 @@ serve(async (req) => {
       );
     }
 
-    const supabaseClient = createClient(
+    // Create admin client with service role key
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       {
         global: {
           headers: { Authorization: authHeader },
@@ -34,16 +35,16 @@ serve(async (req) => {
       }
     );
 
-    // Get the user making the request
+    // Get the user making the request using the service role client
     const {
       data: { user },
       error: userError,
-    } = await supabaseClient.auth.getUser();
+    } = await supabaseAdmin.auth.getUser();
 
     if (userError || !user) {
       console.error('Authentication error:', userError);
       return new Response(
-        JSON.stringify({ error: 'No autorizado - token inválido' }),
+        JSON.stringify({ error: 'No autorizado - sesión inválida o expirada' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -51,7 +52,7 @@ serve(async (req) => {
     console.log('User authenticated:', user.id);
 
     // Check if user is admin using the has_role function
-    const { data: isAdmin, error: roleError } = await supabaseClient.rpc('has_role', {
+    const { data: isAdmin, error: roleError } = await supabaseAdmin.rpc('has_role', {
       _user_id: user.id,
       _role: 'admin'
     });
@@ -89,12 +90,7 @@ serve(async (req) => {
       );
     }
 
-    // Create admin client to update user password
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
+    // Use the same admin client to update user password
     const { data: updateData, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
       userId,
       { password: newPassword }
