@@ -175,9 +175,13 @@ const UserManagement = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Error al conectar con el servidor');
+      }
 
       if (data?.error) {
+        console.error('Password reset error:', data.error);
         throw new Error(data.error);
       }
 
