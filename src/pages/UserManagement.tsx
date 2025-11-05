@@ -153,10 +153,25 @@ const UserManagement = () => {
     if (!resettingPasswordUser) return;
 
     try {
+      // Get the current session to include auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Error",
+          description: "No hay sesión activa",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('admin-reset-password', {
         body: {
           userId: resettingPasswordUser.id,
           newPassword: newPassword,
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
         },
       });
 
