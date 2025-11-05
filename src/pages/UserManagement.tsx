@@ -81,23 +81,55 @@ const UserManagement = () => {
 
   const handleUserDeleted = async (userId: string) => {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
+      // Prevent self-deletion
+      if (userId === currentUser?.id) {
+        toast({
+          title: "Error",
+          description: "No puedes eliminar tu propio usuario",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      if (error) throw error;
+      // Get the current session to include auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Error",
+          description: "No hay sesión activa",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('admin-delete-user', {
+        body: { userId },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Error al conectar con el servidor');
+      }
+
+      if (data?.error) {
+        console.error('Delete user error:', data.error);
+        throw new Error(data.error);
+      }
       
       fetchUsers();
       toast({
         title: "Éxito",
         description: "Usuario eliminado exitosamente",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting user:', error);
       toast({
         title: "Error",
-        description: "No se pudo eliminar el usuario",
+        description: error.message || "No se pudo eliminar el usuario",
         variant: "destructive",
       });
     }

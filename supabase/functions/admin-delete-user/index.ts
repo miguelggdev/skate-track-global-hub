@@ -74,50 +74,51 @@ serve(async (req) => {
     if (!isAdmin) {
       console.log('User is not admin:', user.id);
       return new Response(
-        JSON.stringify({ error: 'Solo los administradores pueden restablecer contraseñas' }),
+        JSON.stringify({ error: 'Solo los administradores pueden eliminar usuarios' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // Get request body
-    const { userId, newPassword } = await req.json();
+    const { userId } = await req.json();
 
-    if (!userId || !newPassword) {
+    if (!userId) {
       return new Response(
-        JSON.stringify({ error: 'ID de usuario y contraseña son requeridos' }),
+        JSON.stringify({ error: 'ID de usuario es requerido' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    if (newPassword.length < 6) {
+    // Prevent self-deletion
+    if (userId === user.id) {
+      console.log('Attempted self-deletion:', userId);
       return new Response(
-        JSON.stringify({ error: 'La contraseña debe tener al menos 6 caracteres' }),
+        JSON.stringify({ error: 'No puedes eliminar tu propio usuario' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Use the admin client to update user password
-    const { data: updateData, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-      userId,
-      { password: newPassword }
-    );
+    console.log('Deleting user:', userId);
 
-    if (updateError) {
-      console.error('Error updating password:', updateError);
+    // Delete user from auth.users - this will cascade to profiles and related tables
+    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+
+    if (deleteError) {
+      console.error('Error deleting user:', deleteError);
       return new Response(
-        JSON.stringify({ error: 'Error al actualizar la contraseña' }),
+        JSON.stringify({ error: 'Error al eliminar el usuario' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Password updated successfully for user:', userId);
+    console.log('User deleted successfully:', userId);
 
     return new Response(
-      JSON.stringify({ success: true, message: 'Contraseña actualizada exitosamente' }),
+      JSON.stringify({ success: true, message: 'Usuario eliminado exitosamente' }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error in admin-reset-password function:', error);
+    console.error('Error in admin-delete-user function:', error);
     return new Response(
       JSON.stringify({ error: 'Error interno del servidor' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
