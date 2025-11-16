@@ -86,7 +86,7 @@ export interface AthleteDetails {
 }
 
 export const useAthleteDetails = (athleteId: string | null) => {
-  return useQuery({
+  const query = useQuery({
     queryKey: ['athlete-details', athleteId],
     queryFn: async (): Promise<AthleteDetails | null> => {
       if (!athleteId) return null;
@@ -174,4 +174,6 @@ export const useAthleteDetails = (athleteId: string | null) => {
     },
     enabled: !!athleteId,
   });
+
+  return query;
 };
