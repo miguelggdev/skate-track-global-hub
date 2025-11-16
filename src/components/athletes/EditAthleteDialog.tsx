@@ -517,11 +517,18 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
       'advanced': 'Avanzado',
       'professional': 'Profesional',
       'escuela': 'Escuela',
+      'escuela_menores': 'Escuela Menores',
+      'mini_infantil': 'Mini Infantil',
+      'pre_infantil': 'Pre-Infantil',
       'infantil': 'Infantil',
-      'mayores': 'Mayores',
+      'junior': 'Junior',
+      'transicion': 'Transición',
+      'pre_juvenil': 'Pre-Juvenil',
+      'prejuveniles': 'Pre-Juveniles',
       'juvenil_primer_ano': 'Juvenil 1er Año',
       'juvenil_segundo_ano': 'Juvenil 2do Año',
       'juvenil_tercer_ano': 'Juvenil 3er Año',
+      'mayores': 'Mayores',
       'mayores_unica': 'Mayores Única',
     };
     return labels[level] || level;
@@ -664,7 +671,7 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {['beginner', 'intermediate', 'advanced', 'professional', 'escuela', 'infantil', 'mayores', 'juvenil_primer_ano', 'juvenil_segundo_ano', 'juvenil_tercer_ano', 'mayores_unica'].map((lvl) => (
+                            {['beginner', 'intermediate', 'advanced', 'professional', 'escuela', 'escuela_menores', 'mini_infantil', 'pre_infantil', 'infantil', 'junior', 'transicion', 'pre_juvenil', 'prejuveniles', 'juvenil_primer_ano', 'juvenil_segundo_ano', 'juvenil_tercer_ano', 'mayores', 'mayores_unica'].map((lvl) => (
                               <SelectItem key={lvl} value={lvl}>
                                 {getLevelLabel(lvl)}
                               </SelectItem>
