@@ -44,8 +44,10 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
     name: '',
     description: '',
     date: new Date(),
-    start_time: '',
-    end_time: '',
+    start_hour: '',
+    start_minute: '',
+    end_hour: '',
+    end_minute: '',
     location: '',
     max_participants: '',
     training_type: '',
@@ -153,11 +155,14 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
     { value: 'seniors', label: 'Mayores' }
   ];
 
-  const timeSlots = [
-    '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
-    '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
-    '18:00', '19:00', '20:00', '21:00'
-  ];
+  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+  const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
+
+  // Helper function to format time
+  const formatTime = (hour: string, minute: string) => {
+    if (!hour || !minute) return '';
+    return `${hour}:${minute}`;
+  };
 
   const months = [
     { value: '01', label: 'Enero' },
@@ -175,7 +180,8 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
   ];
 
   const addToWeeklySchedule = () => {
-    if (!selectedDay || !formData.start_time || !formData.end_time || !formData.training_type) {
+    // Validate all required fields
+    if (!selectedDay || !formData.start_hour || !formData.start_minute || !formData.end_hour || !formData.end_minute || !formData.training_type) {
       toast({
         title: "Error",
         description: "Completa todos los campos para agregar al horario semanal",
@@ -183,6 +189,10 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
       });
       return;
     }
+
+    // Format times
+    const start_time = formatTime(formData.start_hour, formData.start_minute);
+    const end_time = formatTime(formData.end_hour, formData.end_minute);
 
     // Calculate date for the selected weekday within the same Sunday–Saturday week as the programming date
     const baseDate = new Date(formData.date);
@@ -194,8 +204,8 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
     const newScheduleItem = {
       day: selectedDay,
       date: formatDateLocal(calculatedDate),
-      start_time: formData.start_time,
-      end_time: formData.end_time,
+      start_time: start_time,
+      end_time: end_time,
       training_type: formData.training_type as 'technical' | 'physical' | 'mental' | 'recovery',
       category: formData.category,
       max_participants: formData.max_participants,
@@ -208,8 +218,10 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
     // Reset form for next entry
     setFormData({
       ...formData,
-      start_time: '',
-      end_time: '',
+      start_hour: '',
+      start_minute: '',
+      end_hour: '',
+      end_minute: '',
       training_type: ''
     });
     setSelectedDay('');
@@ -291,8 +303,10 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
         name: '',
         description: '',
         date: new Date(),
-        start_time: '',
-        end_time: '',
+        start_hour: '',
+        start_minute: '',
+        end_hour: '',
+        end_minute: '',
         location: '',
         max_participants: '',
         training_type: '',
@@ -337,8 +351,10 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
           name: '',
           description: '',
           date: new Date(),
-          start_time: '',
-          end_time: '',
+          start_hour: '',
+          start_minute: '',
+          end_hour: '',
+          end_minute: '',
           location: '',
           max_participants: '',
           training_type: '',
@@ -549,30 +565,56 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
 
                   <div>
                     <Label>Hora Inicio</Label>
-                    <Select value={formData.start_time} onValueChange={(value) => setFormData({...formData, start_time: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Inicio" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {timeSlots.map(time => (
-                          <SelectItem key={time} value={time}>{time}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex gap-1 items-center">
+                      <Select value={formData.start_hour} onValueChange={(value) => setFormData({...formData, start_hour: value})}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="HH" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[200px]">
+                          {hours.map(hour => (
+                            <SelectItem key={hour} value={hour}>{hour}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span className="text-muted-foreground">:</span>
+                      <Select value={formData.start_minute} onValueChange={(value) => setFormData({...formData, start_minute: value})}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="MM" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[200px]">
+                          {minutes.map(minute => (
+                            <SelectItem key={minute} value={minute}>{minute}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
                   <div>
                     <Label>Hora Fin</Label>
-                    <Select value={formData.end_time} onValueChange={(value) => setFormData({...formData, end_time: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Fin" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {timeSlots.map(time => (
-                          <SelectItem key={time} value={time}>{time}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex gap-1 items-center">
+                      <Select value={formData.end_hour} onValueChange={(value) => setFormData({...formData, end_hour: value})}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="HH" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[200px]">
+                          {hours.map(hour => (
+                            <SelectItem key={hour} value={hour}>{hour}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span className="text-muted-foreground">:</span>
+                      <Select value={formData.end_minute} onValueChange={(value) => setFormData({...formData, end_minute: value})}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="MM" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[200px]">
+                          {minutes.map(minute => (
+                            <SelectItem key={minute} value={minute}>{minute}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
                   <div>
