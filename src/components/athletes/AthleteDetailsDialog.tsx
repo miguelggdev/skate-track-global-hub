@@ -36,6 +36,10 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAthleteDetails, AthleteDetails } from '@/hooks/useAthleteDetails';
+import { BodyInfoForm } from '@/components/athletes/forms/BodyInfoForm';
+import { StudiesInfoForm } from '@/components/athletes/forms/StudiesInfoForm';
+import { EquipmentInfoForm } from '@/components/athletes/forms/EquipmentInfoForm';
+import { HistoryInfoForm } from '@/components/athletes/forms/HistoryInfoForm';
 
 interface AthleteDetailsDialogProps {
   athleteId: string | null;
@@ -48,7 +52,7 @@ const AthleteDetailsDialog: React.FC<AthleteDetailsDialogProps> = ({
   open,
   onOpenChange,
 }) => {
-  const { data: athlete, isLoading, error } = useAthleteDetails(athleteId);
+  const { data: athlete, isLoading, error, refetch } = useAthleteDetails(athleteId);
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), 'dd/MM/yyyy');
@@ -340,69 +344,7 @@ const AthleteDetailsDialog: React.FC<AthleteDetailsDialogProps> = ({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {athlete.body_info ? (
-                  <div className="space-y-6">
-                    <div>
-                      <h4 className="font-medium mb-3">Medidas Físicas</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <InfoItem icon={<Activity className="h-4 w-4" />} label="Peso" 
-                          value={athlete.body_info.weight ? `${athlete.body_info.weight} kg` : null} />
-                        <InfoItem icon={<Activity className="h-4 w-4" />} label="Altura" 
-                          value={athlete.body_info.height ? `${athlete.body_info.height} cm` : null} />
-                        <InfoItem icon={<Settings className="h-4 w-4" />} label="Talla" value={athlete.body_info.size} />
-                        <InfoItem icon={<Heart className="h-4 w-4" />} label="Tipo de Sangre" value={athlete.body_info.blood_type} />
-                      </div>
-                    </div>
-
-                    {(athlete.body_info.allergies || athlete.body_info.surgeries || athlete.body_info.injuries || athlete.body_info.limitations) && (
-                      <>
-                        <Separator />
-                        <div>
-                          <h4 className="font-medium mb-3">Historial Médico</h4>
-                          <div className="space-y-3">
-                            {athlete.body_info.allergies && (
-                              <div>
-                                <h5 className="text-sm font-medium text-muted-foreground mb-1">Alergias</h5>
-                                <p className="text-sm">{athlete.body_info.allergies}</p>
-                              </div>
-                            )}
-                            {athlete.body_info.surgeries && (
-                              <div>
-                                <h5 className="text-sm font-medium text-muted-foreground mb-1">Cirugías</h5>
-                                <p className="text-sm">{athlete.body_info.surgeries}</p>
-                              </div>
-                            )}
-                            {athlete.body_info.injuries && (
-                              <div>
-                                <h5 className="text-sm font-medium text-muted-foreground mb-1">Lesiones</h5>
-                                <p className="text-sm">{athlete.body_info.injuries}</p>
-                              </div>
-                            )}
-                            {athlete.body_info.limitations && (
-                              <div>
-                                <h5 className="text-sm font-medium text-muted-foreground mb-1">Limitaciones</h5>
-                                <p className="text-sm">{athlete.body_info.limitations}</p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">No hay información médica registrada.</p>
-                )}
-
-                {athlete.medical_notes && (
-                  <Card className="mt-4">
-                    <CardHeader>
-                      <CardTitle>Notas Médicas Adicionales</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-muted-foreground">{athlete.medical_notes}</p>
-                    </CardContent>
-                  </Card>
-                )}
+                <BodyInfoForm athleteId={athlete.id} onSave={refetch} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -417,20 +359,7 @@ const AthleteDetailsDialog: React.FC<AthleteDetailsDialogProps> = ({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {athlete.studies ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <InfoItem icon={<GraduationCap className="h-4 w-4" />} label="Nivel Educativo" value={athlete.studies.education_level} />
-                      <InfoItem icon={<GraduationCap className="h-4 w-4" />} label="Grado Actual" value={athlete.studies.current_grade} />
-                      <InfoItem icon={<MapPin className="h-4 w-4" />} label="Centro Educativo" value={athlete.studies.school_name} />
-                      <InfoItem icon={<MapPin className="h-4 w-4" />} label="Dirección" value={athlete.studies.school_address} />
-                      <InfoItem icon={<Phone className="h-4 w-4" />} label="Teléfono del Centro" value={athlete.studies.school_phone} />
-                      <InfoItem icon={<Mail className="h-4 w-4" />} label="Email del Centro" value={athlete.studies.school_email} />
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">No hay información académica registrada.</p>
-                )}
+                <StudiesInfoForm athleteId={athlete.id} onSave={refetch} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -445,21 +374,7 @@ const AthleteDetailsDialog: React.FC<AthleteDetailsDialogProps> = ({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {athlete.equipment ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <InfoItem icon={<Settings className="h-4 w-4" />} label="Talla de Bota" 
-                      value={athlete.equipment.boot_size?.toString()} />
-                    <InfoItem icon={<Settings className="h-4 w-4" />} label="Diámetro de Rueda" 
-                      value={athlete.equipment.wheel_diameter ? `${athlete.equipment.wheel_diameter}mm` : null} />
-                    <InfoItem icon={<Settings className="h-4 w-4" />} label="Talla de Chasis" value={athlete.equipment.frame_size} />
-                    <InfoItem icon={<Settings className="h-4 w-4" />} label="Marca de Bota" value={athlete.equipment.boot_brand} />
-                    <InfoItem icon={<Settings className="h-4 w-4" />} label="Marca de Chasis" value={athlete.equipment.frame_brand} />
-                    <InfoItem icon={<Settings className="h-4 w-4" />} label="Marca de Ruedas" value={athlete.equipment.track_wheels_brand} />
-                    <InfoItem icon={<Settings className="h-4 w-4" />} label="Marca de Casco" value={athlete.equipment.helmet_brand} />
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">No hay información de equipamiento registrada.</p>
-                )}
+                <EquipmentInfoForm athleteId={athlete.id} onSave={refetch} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -474,31 +389,16 @@ const AthleteDetailsDialog: React.FC<AthleteDetailsDialogProps> = ({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {athlete.history ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <InfoItem icon={<Calendar className="h-4 w-4" />} label="Años de Experiencia" 
-                        value={athlete.history.years_experience?.toString()} />
-                      <InfoItem icon={<Calendar className="h-4 w-4" />} label="Fecha de Inicio" 
-                        value={athlete.history.start_date ? formatDate(athlete.history.start_date) : null} />
-                      <InfoItem icon={<Trophy className="h-4 w-4" />} label="Fecha Liga" 
-                        value={athlete.history.league_date ? formatDate(athlete.history.league_date) : null} />
-                      <InfoItem icon={<Trophy className="h-4 w-4" />} label="Fecha Federación" 
-                        value={athlete.history.federation_date ? formatDate(athlete.history.federation_date) : null} />
-                      <InfoItem icon={<Shield className="h-4 w-4" />} label="En Liga" 
-                        value={athlete.history.is_league ? 'Sí' : 'No'} />
-                      <InfoItem icon={<Shield className="h-4 w-4" />} label="Federado" 
-                        value={athlete.history.is_federated ? 'Sí' : 'No'} />
-                      <InfoItem icon={<MapPin className="h-4 w-4" />} label="Club Anterior" value={athlete.history.previous_club} />
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">No hay historial deportivo registrado.</p>
-                )}
+                <HistoryInfoForm athleteId={athlete.id} onSave={refetch} />
 
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InfoItem icon={<Calendar className="h-4 w-4" />} label="Fecha de Ingreso" value={formatDate(athlete.join_date)} />
-                  <InfoItem icon={<Calendar className="h-4 w-4" />} label="Fecha de Registro" value={formatDate(athlete.created_at)} />
+                <Separator className="my-6" />
+
+                <div className="mt-4">
+                  <h4 className="font-medium mb-3">Información General</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <InfoItem icon={<Calendar className="h-4 w-4" />} label="Fecha de Ingreso" value={formatDate(athlete.join_date)} />
+                    <InfoItem icon={<Calendar className="h-4 w-4" />} label="Fecha de Registro" value={formatDate(athlete.created_at)} />
+                  </div>
                 </div>
               </CardContent>
             </Card>
