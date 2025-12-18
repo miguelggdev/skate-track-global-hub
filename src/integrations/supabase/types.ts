@@ -217,6 +217,53 @@ export type Database = {
           },
         ]
       }
+      athlete_socials: {
+        Row: {
+          athlete_id: string
+          created_at: string | null
+          facebook: string | null
+          id: string
+          instagram: string | null
+          tiktok: string | null
+          twitter: string | null
+          updated_at: string | null
+          whatsapp: string | null
+          youtube: string | null
+        }
+        Insert: {
+          athlete_id: string
+          created_at?: string | null
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          tiktok?: string | null
+          twitter?: string | null
+          updated_at?: string | null
+          whatsapp?: string | null
+          youtube?: string | null
+        }
+        Update: {
+          athlete_id?: string
+          created_at?: string | null
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          tiktok?: string | null
+          twitter?: string | null
+          updated_at?: string | null
+          whatsapp?: string | null
+          youtube?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_socials_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       athlete_studies: {
         Row: {
           athlete_id: string
@@ -268,7 +315,9 @@ export type Database = {
         Row: {
           achievements: string | null
           athlete_number: string | null
+          bio: string | null
           category: Database["public"]["Enums"]["athlete_category"]
+          club_name: string | null
           created_at: string
           date_of_birth: string | null
           email: string | null
@@ -282,9 +331,14 @@ export type Database = {
           last_payment_date: string | null
           last_payment_month: string | null
           level: Database["public"]["Enums"]["athlete_level"]
+          long_term_goals: string | null
+          main_discipline: string | null
           medical_notes: string | null
           payment_status: string | null
           performance_score: number | null
+          personal_values: string | null
+          profile_image_url: string | null
+          short_term_goals: string | null
           status: Database["public"]["Enums"]["athlete_status"]
           team_id: string | null
           updated_at: string
@@ -293,7 +347,9 @@ export type Database = {
         Insert: {
           achievements?: string | null
           athlete_number?: string | null
+          bio?: string | null
           category: Database["public"]["Enums"]["athlete_category"]
+          club_name?: string | null
           created_at?: string
           date_of_birth?: string | null
           email?: string | null
@@ -307,9 +363,14 @@ export type Database = {
           last_payment_date?: string | null
           last_payment_month?: string | null
           level: Database["public"]["Enums"]["athlete_level"]
+          long_term_goals?: string | null
+          main_discipline?: string | null
           medical_notes?: string | null
           payment_status?: string | null
           performance_score?: number | null
+          personal_values?: string | null
+          profile_image_url?: string | null
+          short_term_goals?: string | null
           status?: Database["public"]["Enums"]["athlete_status"]
           team_id?: string | null
           updated_at?: string
@@ -318,7 +379,9 @@ export type Database = {
         Update: {
           achievements?: string | null
           athlete_number?: string | null
+          bio?: string | null
           category?: Database["public"]["Enums"]["athlete_category"]
+          club_name?: string | null
           created_at?: string
           date_of_birth?: string | null
           email?: string | null
@@ -332,9 +395,14 @@ export type Database = {
           last_payment_date?: string | null
           last_payment_month?: string | null
           level?: Database["public"]["Enums"]["athlete_level"]
+          long_term_goals?: string | null
+          main_discipline?: string | null
           medical_notes?: string | null
           payment_status?: string | null
           performance_score?: number | null
+          personal_values?: string | null
+          profile_image_url?: string | null
+          short_term_goals?: string | null
           status?: Database["public"]["Enums"]["athlete_status"]
           team_id?: string | null
           updated_at?: string
@@ -1138,6 +1206,50 @@ export type Database = {
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medical_sessions: {
+        Row: {
+          athlete_id: string
+          created_at: string | null
+          id: string
+          notes: string | null
+          provider_name: string | null
+          session_date: string
+          session_type: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          athlete_id: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          provider_name?: string | null
+          session_date: string
+          session_type: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          athlete_id?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          provider_name?: string | null
+          session_date?: string
+          session_type?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_sessions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
             referencedColumns: ["id"]
           },
         ]
