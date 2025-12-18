@@ -1,14 +1,28 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, Edit } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useCurrentAthlete } from '@/hooks/useCurrentAthlete';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useAthleteSocials } from '@/hooks/useAthleteSocials';
+import { useAthleteMedicalSessions } from '@/hooks/useAthleteMedicalSessions';
+import { useAthleteKPIs } from '@/hooks/useAthleteKPIs';
 import { Navigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
-// Import tab components
+// CV Components
+import AthleteIdentityCard from '@/components/athletes/dashboard/cv/AthleteIdentityCard';
+import AthleteSocialLinks from '@/components/athletes/dashboard/cv/AthleteSocialLinks';
+import AthleteKPIDashboard from '@/components/athletes/dashboard/cv/AthleteKPIDashboard';
+import AthleteMedicalSection from '@/components/athletes/dashboard/cv/AthleteMedicalSection';
+import AthleteCompetitionsSection from '@/components/athletes/dashboard/cv/AthleteCompetitionsSection';
+import AthleteProfileSummary from '@/components/athletes/dashboard/cv/AthleteProfileSummary';
+import AthletePDFExport from '@/components/athletes/dashboard/cv/AthletePDFExport';
+import AthleteProfileEditDialog from '@/components/athletes/dashboard/cv/AthleteProfileEditDialog';
+
+// Tab Components
 import { ProfileTab } from '@/components/athletes/dashboard/ProfileTab';
 import { BodyTab } from '@/components/athletes/dashboard/BodyTab';
 import { ContactTab } from '@/components/athletes/dashboard/ContactTab';
@@ -24,25 +38,34 @@ import { TrainingTab } from '@/components/athletes/dashboard/TrainingTab';
 
 const AthleteDashboard = () => {
   const [activeTab, setActiveTab] = useState('profile');
-  const { athlete, loading, error } = useCurrentAthlete();
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [awards, setAwards] = useState<any[]>([]);
+  const [bodyInfo, setBodyInfo] = useState<any>(null);
+  
+  const { athlete, loading, error, refreshAthlete } = useCurrentAthlete();
   const { profile, loading: profileLoading } = useUserProfile();
+  const { socials, refetch: refetchSocials } = useAthleteSocials(athlete?.id || null);
+  const { sessions: medicalSessions, getSessionCounts } = useAthleteMedicalSessions(athlete?.id || null);
+  const kpiData = useAthleteKPIs(athlete?.id || null);
 
-  // Redirect non-athletes to their appropriate dashboard
-  if (!profileLoading && profile && profile.role !== 'athlete') {
-    switch (profile.role) {
-      case 'admin':
-        return <Navigate to="/admin-dashboard" replace />;
-      case 'coach':
-        return <Navigate to="/coach-dashboard" replace />;
-      case 'delegate':
-        return <Navigate to="/delegate-dashboard" replace />;
-      case 'leader':
-        return <Navigate to="/leader-dashboard" replace />;
-      case 'finance':
-        return <Navigate to="/finance-dashboard" replace />;
-      default:
-        return <Navigate to="/login" replace />;
+  // Fetch awards and body info
+  useEffect(() => {
+    if (athlete?.id) {
+      supabase.from('awards').select('*').eq('athlete_id', athlete.id).then(({ data }) => setAwards(data || []));
+      supabase.from('athlete_body_info').select('*').eq('athlete_id', athlete.id).maybeSingle().then(({ data }) => setBodyInfo(data));
     }
+  }, [athlete?.id]);
+
+  // Redirect non-athletes
+  if (!profileLoading && profile && profile.role !== 'athlete') {
+    const redirectMap: Record<string, string> = {
+      admin: '/admin-dashboard',
+      coach: '/coach-dashboard',
+      delegate: '/delegate-dashboard',
+      leader: '/leader-dashboard',
+      finance: '/finance-dashboard'
+    };
+    return <Navigate to={redirectMap[profile.role] || '/login'} replace />;
   }
 
   if (loading || profileLoading) {
@@ -61,38 +84,89 @@ const AthleteDashboard = () => {
         <Card>
           <CardHeader>
             <CardTitle>Error</CardTitle>
-            <CardDescription>
-              {error || 'No se encontró información del deportista'}
-            </CardDescription>
+            <CardDescription>{error || 'No se encontró información del deportista'}</CardDescription>
           </CardHeader>
         </Card>
       </DashboardLayout>
     );
   }
 
+  const handleProfileSave = () => {
+    refreshAthlete();
+    refetchSocials();
+  };
+
+  const medicalCounts = getSessionCounts(kpiData.dateFilter.year, kpiData.dateFilter.month);
+
   return (
     <DashboardLayout title="Mi Perfil Deportivo" userRole="Deportista">
       <div className="space-y-6">
-        {/* Welcome Section */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                <User className="h-8 w-8 text-blue-600" />
-              </div>
-              <div>
-                <CardTitle className="text-2xl">
-                  ¡Hola, {athlete.first_name} {athlete.last_name}!
-                </CardTitle>
-                <CardDescription>
-                  {athlete.category} • {athlete.level}
-                </CardDescription>
+        {/* CV Header Section */}
+        <div className="space-y-4">
+          {/* Identity Card with Social Links */}
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1">
+              <AthleteIdentityCard 
+                athlete={athlete as any} 
+                profile={profile}
+                yearsExperience={(athlete as any).years_experience || 0}
+              />
+            </div>
+            <div className="flex flex-col justify-center gap-3">
+              <AthleteSocialLinks 
+                socials={socials} 
+                email={athlete.email} 
+                phone={profile?.phone}
+              />
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar Perfil
+                </Button>
+                <AthletePDFExport 
+                  data={{
+                    athlete: athlete as any,
+                    profile,
+                    kpis: kpiData,
+                    competitions: kpiData.competitions,
+                    medicalCounts,
+                    socials
+                  }}
+                />
               </div>
             </div>
-          </CardHeader>
-        </Card>
+          </div>
 
-        {/* Main Tabs */}
+          {/* KPI Dashboard */}
+          <AthleteKPIDashboard 
+            {...kpiData}
+            onFilterChange={kpiData.setDateFilter}
+          />
+
+          {/* Medical Section */}
+          <AthleteMedicalSection 
+            sessionCounts={medicalCounts}
+            injuries={bodyInfo?.injuries}
+            year={kpiData.dateFilter.year}
+            month={kpiData.dateFilter.month}
+          />
+
+          {/* Competitions & Achievements */}
+          <AthleteCompetitionsSection 
+            competitions={kpiData.competitions}
+            awards={awards}
+          />
+
+          {/* Profile Summary */}
+          <AthleteProfileSummary 
+            bio={(athlete as any).bio}
+            personalValues={(athlete as any).personal_values}
+            shortTermGoals={(athlete as any).short_term_goals}
+            longTermGoals={(athlete as any).long_term_goals}
+          />
+        </div>
+
+        {/* Existing Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-6 lg:grid-cols-12">
             <TabsTrigger value="profile">Perfil</TabsTrigger>
@@ -109,54 +183,29 @@ const AthleteDashboard = () => {
             <TabsTrigger value="hobbies">Hobbys</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="profile">
-            <ProfileTab athlete={athlete} />
-          </TabsContent>
-
-          <TabsContent value="training">
-            <TrainingTab />
-          </TabsContent>
-
-          <TabsContent value="body">
-            <BodyTab />
-          </TabsContent>
-
-          <TabsContent value="contact">
-            <ContactTab athlete={athlete} />
-          </TabsContent>
-
-          <TabsContent value="studies">
-            <StudiesTab />
-          </TabsContent>
-
-          <TabsContent value="files">
-            <FilesTab />
-          </TabsContent>
-
-          <TabsContent value="family">
-            <FamilyTab />
-          </TabsContent>
-
-          <TabsContent value="payments">
-            <PaymentsTab />
-          </TabsContent>
-
-          <TabsContent value="skates">
-            <SkatesTab />
-          </TabsContent>
-
-          <TabsContent value="maintenance">
-            <MaintenanceTab />
-          </TabsContent>
-
-          <TabsContent value="history">
-            <HistoryTab />
-          </TabsContent>
-
-          <TabsContent value="hobbies">
-            <HobbiesTab />
-          </TabsContent>
+          <TabsContent value="profile"><ProfileTab athlete={athlete} /></TabsContent>
+          <TabsContent value="training"><TrainingTab /></TabsContent>
+          <TabsContent value="body"><BodyTab /></TabsContent>
+          <TabsContent value="contact"><ContactTab athlete={athlete} /></TabsContent>
+          <TabsContent value="studies"><StudiesTab /></TabsContent>
+          <TabsContent value="files"><FilesTab /></TabsContent>
+          <TabsContent value="family"><FamilyTab /></TabsContent>
+          <TabsContent value="payments"><PaymentsTab /></TabsContent>
+          <TabsContent value="skates"><SkatesTab /></TabsContent>
+          <TabsContent value="maintenance"><MaintenanceTab /></TabsContent>
+          <TabsContent value="history"><HistoryTab /></TabsContent>
+          <TabsContent value="hobbies"><HobbiesTab /></TabsContent>
         </Tabs>
+
+        {/* Edit Dialog */}
+        <AthleteProfileEditDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          athlete={athlete}
+          profile={profile}
+          socials={socials}
+          onSave={handleProfileSave}
+        />
       </div>
     </DashboardLayout>
   );
