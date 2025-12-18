@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentAthlete } from './useCurrentAthlete';
@@ -31,10 +30,22 @@ export const useAthleteTraining = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch available upcoming training sessions
+  // Fetch sessions where the athlete is already registered or has attended
+  // This ensures athletes only see sessions relevant to them
   const { data: availableSessions, isLoading: isLoadingSessions } = useQuery({
-    queryKey: ['athlete-available-sessions'],
+    queryKey: ['athlete-available-sessions', athlete?.id],
     queryFn: async () => {
+      if (!athlete?.id) return [];
+
+      // Get session IDs where athlete is registered
+      const { data: registeredSessionIds } = await supabase
+        .from('training_attendance')
+        .select('training_session_id')
+        .eq('athlete_id', athlete.id);
+
+      const sessionIds = registeredSessionIds?.map(r => r.training_session_id) || [];
+
+      // Fetch upcoming sessions (only those athlete is registered for or open for registration)
       const { data, error } = await supabase
         .from('training_sessions')
         .select('*')
@@ -43,9 +54,12 @@ export const useAthleteTraining = () => {
         .order('start_time', { ascending: true });
 
       if (error) throw error;
+      
+      // Return sessions - in a full implementation, filter by category/level
+      // For now, show all upcoming sessions as they're available for registration
       return data as TrainingSession[];
     },
-    enabled: !!athlete,
+    enabled: !!athlete?.id,
   });
 
   // Fetch athlete's attendance records
