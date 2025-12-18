@@ -35,12 +35,15 @@ export const useAthleteKPIs = (athleteId: string | null) => {
   const fetchData = async () => {
     if (!athleteId) {
       setLoading(false);
+      setTrainingSessions([]);
+      setAttendanceRecords([]);
+      setCompetitionResults([]);
       return;
     }
 
     try {
-      // Fetch attendance records with training session info
-      const { data: attendance } = await supabase
+      // Fetch attendance records with training session info - strictly filtered by athlete_id
+      const { data: attendance, error: attendanceError } = await supabase
         .from('training_attendance')
         .select(`
           *,
@@ -51,22 +54,30 @@ export const useAthleteKPIs = (athleteId: string | null) => {
         .eq('athlete_id', athleteId)
         .eq('attended', true);
 
+      if (attendanceError) {
+        console.error('Error fetching attendance:', attendanceError);
+      }
+
       setAttendanceRecords(attendance || []);
 
-      // Extract unique training sessions
+      // Extract unique training sessions from athlete's own attendance
       const sessions = (attendance || [])
         .map(a => a.training_sessions)
         .filter(Boolean);
       setTrainingSessions(sessions);
 
-      // Fetch competition results
-      const { data: results } = await supabase
+      // Fetch competition results - RLS now enforces athlete can only see their own
+      const { data: results, error: resultsError } = await supabase
         .from('competition_results')
         .select(`
           id, competition_id, position, medal_type,
           competitions (name, start_date, category, location)
         `)
         .eq('athlete_id', athleteId);
+
+      if (resultsError) {
+        console.error('Error fetching competition results:', resultsError);
+      }
 
       setCompetitionResults(results || []);
     } catch (error) {
