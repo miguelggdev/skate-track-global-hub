@@ -8,6 +8,10 @@ interface UserProfile {
   first_name: string;
   last_name: string;
   email: string;
+  phone?: string | null;
+  city?: string | null;
+  country?: string | null;
+  avatar_url?: string | null;
 }
 
 export const useUserProfile = () => {
@@ -27,7 +31,7 @@ export const useUserProfile = () => {
         // Query 1: Fetch profile data
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('id, email, first_name, last_name, role')
+          .select('id, email, first_name, last_name, role, phone, city, country, avatar_url')
           .eq('id', user.id)
           .maybeSingle();
 
@@ -58,7 +62,11 @@ export const useUserProfile = () => {
           email: profileData?.email || user.email || '',
           first_name: profileData?.first_name || '',
           last_name: profileData?.last_name || '',
-          role: userRole
+          role: userRole,
+          phone: profileData?.phone,
+          city: profileData?.city,
+          country: profileData?.country,
+          avatar_url: profileData?.avatar_url
         };
 
         setProfile(finalProfile);
