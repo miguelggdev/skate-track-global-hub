@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Loader2, Edit } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -21,6 +21,9 @@ import AthleteCompetitionsSection from '@/components/athletes/dashboard/cv/Athle
 import AthleteProfileSummary from '@/components/athletes/dashboard/cv/AthleteProfileSummary';
 import AthletePDFExport from '@/components/athletes/dashboard/cv/AthletePDFExport';
 import AthleteProfileEditDialog from '@/components/athletes/dashboard/cv/AthleteProfileEditDialog';
+
+// Navigation Component
+import { AthleteTabNavigation } from '@/components/athletes/dashboard/AthleteTabNavigation';
 
 // Tab Components
 import { ProfileTab } from '@/components/athletes/dashboard/ProfileTab';
@@ -167,22 +170,11 @@ const AthleteDashboard = () => {
         </div>
 
         {/* Existing Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-6 lg:grid-cols-12">
-            <TabsTrigger value="profile">Perfil</TabsTrigger>
-            <TabsTrigger value="training">Entrenamientos</TabsTrigger>
-            <TabsTrigger value="body">Mi Cuerpo</TabsTrigger>
-            <TabsTrigger value="contact">Contacto</TabsTrigger>
-            <TabsTrigger value="studies">Estudios</TabsTrigger>
-            <TabsTrigger value="files">Archivos</TabsTrigger>
-            <TabsTrigger value="family">Familia</TabsTrigger>
-            <TabsTrigger value="payments">Pagos</TabsTrigger>
-            <TabsTrigger value="skates">Patines</TabsTrigger>
-            <TabsTrigger value="maintenance">Mantenimiento</TabsTrigger>
-            <TabsTrigger value="history">Historial</TabsTrigger>
-            <TabsTrigger value="hobbies">Hobbys</TabsTrigger>
-          </TabsList>
+        {/* Tab Navigation */}
+        <AthleteTabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
+        {/* Tab Contents */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
           <TabsContent value="profile"><ProfileTab athlete={athlete} /></TabsContent>
           <TabsContent value="training"><TrainingTab /></TabsContent>
           <TabsContent value="body"><BodyTab /></TabsContent>
