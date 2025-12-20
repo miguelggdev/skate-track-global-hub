@@ -19,6 +19,7 @@ import AthleteKPIDashboard from '@/components/athletes/dashboard/cv/AthleteKPIDa
 import AthleteMedicalSection from '@/components/athletes/dashboard/cv/AthleteMedicalSection';
 import AthleteCompetitionsSection from '@/components/athletes/dashboard/cv/AthleteCompetitionsSection';
 import AthleteSportsProfile from '@/components/athletes/dashboard/cv/AthleteSportsProfile';
+import AthleteGallery from '@/components/athletes/dashboard/cv/AthleteGallery';
 import AthletePDFExport from '@/components/athletes/dashboard/cv/AthletePDFExport';
 import AthleteProfileEditDialog from '@/components/athletes/dashboard/cv/AthleteProfileEditDialog';
 
@@ -104,51 +105,52 @@ const AthleteDashboard = () => {
   return (
     <DashboardLayout title="Mi Perfil Deportivo" userRole="Deportista">
       <div className="space-y-6">
-        {/* Sports Profile Section - Full Width at Top */}
+        {/* 1. Identity Card with Social Links and Actions - FIRST */}
+        <div className="space-y-3">
+          <AthleteIdentityCard 
+            athlete={athlete as any} 
+            profile={profile}
+            yearsExperience={(athlete as any).years_experience || 0}
+          />
+          <div className="flex flex-wrap justify-between items-center gap-3">
+            <AthleteSocialLinks 
+              socials={socials} 
+              email={athlete.email} 
+              phone={profile?.phone}
+            />
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Editar Perfil
+              </Button>
+              <AthletePDFExport 
+                data={{
+                  athlete: athlete as any,
+                  profile,
+                  kpis: kpiData,
+                  competitions: kpiData.competitions,
+                  medicalCounts,
+                  socials
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Image Gallery - SECOND */}
+        <AthleteGallery athleteId={athlete.id} editable={true} />
+
+        {/* 3. Sports Profile (Bio, Values, Goals) - THIRD */}
         <AthleteSportsProfile
           athleteId={athlete.id}
           bio={(athlete as any).bio}
           personalValues={(athlete as any).personal_values}
           shortTermGoals={(athlete as any).short_term_goals}
           longTermGoals={(athlete as any).long_term_goals}
-          editable={true}
         />
 
-        {/* CV Header Section */}
+        {/* CV Section */}
         <div className="space-y-4">
-          {/* Identity Card with Social Links */}
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <AthleteIdentityCard 
-                athlete={athlete as any} 
-                profile={profile}
-                yearsExperience={(athlete as any).years_experience || 0}
-              />
-            </div>
-            <div className="flex flex-col justify-center gap-3">
-              <AthleteSocialLinks 
-                socials={socials} 
-                email={athlete.email} 
-                phone={profile?.phone}
-              />
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar Perfil
-                </Button>
-                <AthletePDFExport 
-                  data={{
-                    athlete: athlete as any,
-                    profile,
-                    kpis: kpiData,
-                    competitions: kpiData.competitions,
-                    medicalCounts,
-                    socials
-                  }}
-                />
-              </div>
-            </div>
-          </div>
 
           {/* KPI Dashboard */}
           <AthleteKPIDashboard 

@@ -2,7 +2,6 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, User, Heart, Target, Sparkles } from 'lucide-react';
-import AthleteGallery from './AthleteGallery';
 
 interface AthleteSportsProfileProps {
   athleteId: string | null;
@@ -10,7 +9,6 @@ interface AthleteSportsProfileProps {
   personalValues?: string | null;
   shortTermGoals?: string | null;
   longTermGoals?: string | null;
-  editable?: boolean;
 }
 
 const AthleteSportsProfile: React.FC<AthleteSportsProfileProps> = ({
@@ -19,7 +17,6 @@ const AthleteSportsProfile: React.FC<AthleteSportsProfileProps> = ({
   personalValues,
   shortTermGoals,
   longTermGoals,
-  editable = false,
 }) => {
   // Parse personal values into chips (split by comma or line break)
   const valueChips = personalValues
@@ -131,9 +128,6 @@ const AthleteSportsProfile: React.FC<AthleteSportsProfileProps> = ({
           )}
         </CardContent>
       </Card>
-
-      {/* Gallery Section */}
-      <AthleteGallery athleteId={athleteId} editable={editable} />
     </div>
   );
 };
