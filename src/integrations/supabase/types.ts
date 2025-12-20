@@ -167,6 +167,41 @@ export type Database = {
           },
         ]
       }
+      athlete_gallery: {
+        Row: {
+          athlete_id: string
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string
+          updated_at: string
+        }
+        Insert: {
+          athlete_id: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url: string
+          updated_at?: string
+        }
+        Update: {
+          athlete_id?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_gallery_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       athlete_history: {
         Row: {
           athlete_id: string

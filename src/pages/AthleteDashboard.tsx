@@ -18,7 +18,7 @@ import AthleteSocialLinks from '@/components/athletes/dashboard/cv/AthleteSocial
 import AthleteKPIDashboard from '@/components/athletes/dashboard/cv/AthleteKPIDashboard';
 import AthleteMedicalSection from '@/components/athletes/dashboard/cv/AthleteMedicalSection';
 import AthleteCompetitionsSection from '@/components/athletes/dashboard/cv/AthleteCompetitionsSection';
-import AthleteProfileSummary from '@/components/athletes/dashboard/cv/AthleteProfileSummary';
+import AthleteSportsProfile from '@/components/athletes/dashboard/cv/AthleteSportsProfile';
 import AthletePDFExport from '@/components/athletes/dashboard/cv/AthletePDFExport';
 import AthleteProfileEditDialog from '@/components/athletes/dashboard/cv/AthleteProfileEditDialog';
 
@@ -104,6 +104,16 @@ const AthleteDashboard = () => {
   return (
     <DashboardLayout title="Mi Perfil Deportivo" userRole="Deportista">
       <div className="space-y-6">
+        {/* Sports Profile Section - Full Width at Top */}
+        <AthleteSportsProfile
+          athleteId={athlete.id}
+          bio={(athlete as any).bio}
+          personalValues={(athlete as any).personal_values}
+          shortTermGoals={(athlete as any).short_term_goals}
+          longTermGoals={(athlete as any).long_term_goals}
+          editable={true}
+        />
+
         {/* CV Header Section */}
         <div className="space-y-4">
           {/* Identity Card with Social Links */}
@@ -158,14 +168,6 @@ const AthleteDashboard = () => {
           <AthleteCompetitionsSection 
             competitions={kpiData.competitions}
             awards={awards}
-          />
-
-          {/* Profile Summary */}
-          <AthleteProfileSummary 
-            bio={(athlete as any).bio}
-            personalValues={(athlete as any).personal_values}
-            shortTermGoals={(athlete as any).short_term_goals}
-            longTermGoals={(athlete as any).long_term_goals}
           />
         </div>
 

@@ -8,8 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, User, Trophy, Share2, Target, Images } from 'lucide-react';
 import { AthleteSocials } from '@/hooks/useAthleteSocials';
+import AthleteGallery from './AthleteGallery';
 
 interface AthleteProfileEditDialogProps {
   open: boolean;
@@ -155,11 +156,27 @@ const AthleteProfileEditDialog: React.FC<AthleteProfileEditDialogProps> = ({
         </DialogHeader>
 
         <Tabs defaultValue="personal" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="personal">Personal</TabsTrigger>
-            <TabsTrigger value="sports">Deportivo</TabsTrigger>
-            <TabsTrigger value="socials">Redes</TabsTrigger>
-            <TabsTrigger value="goals">Metas</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="personal" className="flex items-center gap-1.5">
+              <User className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Personal</span>
+            </TabsTrigger>
+            <TabsTrigger value="sports" className="flex items-center gap-1.5">
+              <Trophy className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Deportivo</span>
+            </TabsTrigger>
+            <TabsTrigger value="socials" className="flex items-center gap-1.5">
+              <Share2 className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Redes</span>
+            </TabsTrigger>
+            <TabsTrigger value="goals" className="flex items-center gap-1.5">
+              <Target className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Metas</span>
+            </TabsTrigger>
+            <TabsTrigger value="gallery" className="flex items-center gap-1.5">
+              <Images className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Galería</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="personal" className="space-y-4 mt-4">
@@ -315,6 +332,15 @@ const AthleteProfileEditDialog: React.FC<AthleteProfileEditDialogProps> = ({
                 rows={3}
                 placeholder="Representar al país en competencias internacionales..."
               />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="gallery" className="mt-4">
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Sube hasta 5 imágenes en formato JPEG para mostrar en tu perfil deportivo.
+              </p>
+              <AthleteGallery athleteId={athlete?.id} editable={true} />
             </div>
           </TabsContent>
         </Tabs>
