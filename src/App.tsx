@@ -26,6 +26,8 @@ import Settings from "./pages/Settings";
 import UserManagement from "./pages/UserManagement";
 import ClubConfig from "./pages/ClubConfig";
 import Reports from "./pages/Reports";
+import AthleteTraining from "./pages/AthleteTraining";
+import AthleteCompetitions from "./pages/AthleteCompetitions";
 
 const queryClient = new QueryClient();
 
@@ -238,6 +240,22 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['admin', 'leader', 'finance']}>
                 <Reports />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/athlete/training" 
+            element={
+              <ProtectedRoute allowedRoles={['athlete']}>
+                <AthleteTraining />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/athlete/competitions" 
+            element={
+              <ProtectedRoute allowedRoles={['athlete']}>
+                <AthleteCompetitions />
               </ProtectedRoute>
             } 
           />
