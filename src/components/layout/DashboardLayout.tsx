@@ -36,15 +36,29 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
     navigate('/login');
   };
 
-  const allNavigationItems = [
-    { title: "Dashboard", icon: Home, path: "/" },
-    { title: "Athletes", icon: Users, path: "/athletes" },
-    { title: "Training", icon: Calendar, path: "/training" },
-    { title: "Competitions", icon: Trophy, path: "/competitions" },
-    { title: "Finance", icon: DollarSign, path: "/finance" },
-    { title: "Configurar Club", icon: Cog, path: "/club-config" },
-    { title: "Settings", icon: Settings, path: "/settings" },
-  ];
+  // Base navigation items - paths will be overridden for athlete role
+  const getNavigationItems = (role?: string) => {
+    // Athlete-specific paths
+    if (role === 'athlete') {
+      return [
+        { title: "Dashboard", icon: Home, path: "/athlete-dashboard" },
+        { title: "Training", icon: Calendar, path: "/athlete/training" },
+        { title: "Competitions", icon: Trophy, path: "/athlete/competitions" },
+        { title: "Settings", icon: Settings, path: "/settings" },
+      ];
+    }
+    
+    // All other roles use standard paths
+    return [
+      { title: "Dashboard", icon: Home, path: "/" },
+      { title: "Athletes", icon: Users, path: "/athletes" },
+      { title: "Training", icon: Calendar, path: "/training" },
+      { title: "Competitions", icon: Trophy, path: "/competitions" },
+      { title: "Finance", icon: DollarSign, path: "/finance" },
+      { title: "Configurar Club", icon: Cog, path: "/club-config" },
+      { title: "Settings", icon: Settings, path: "/settings" },
+    ];
+  };
 
   // Map role to dashboard path and role label
   const getDashboardPath = (role?: string) => {
@@ -91,16 +105,22 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
 
     console.log('DashboardLayout: Getting navigation items for role:', role);
 
-    // Determine which items are allowed per role
+    // Get role-specific navigation items
+    const roleItems = getNavigationItems(role);
+    
+    // For athlete role, return items directly (already filtered)
+    if (role === 'athlete') {
+      console.log('DashboardLayout: Athlete navigation items:', roleItems);
+      return roleItems;
+    }
+
+    // Determine which items are allowed per role (for non-athletes)
     const allowedByRole: Record<string, string[]> = {
       admin: [
         'Dashboard', 'Athletes', 'Training', 'Competitions', 'Finance', 'Configurar Club', 'Settings'
       ],
       coach: [
         'Dashboard', 'Athletes', 'Training', 'Competitions', 'Settings'
-      ],
-      athlete: [
-        'Dashboard', 'Training', 'Competitions', 'Settings'
       ],
       delegate: [
         'Dashboard', 'Competitions', 'Settings'
@@ -113,14 +133,14 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
       ],
     } as const;
 
-    const titles = role ? allowedByRole[role as keyof typeof allowedByRole] : allNavigationItems.map(i => i.title).filter(t => t !== 'Configurar Club');
+    const titles = role ? allowedByRole[role as keyof typeof allowedByRole] : roleItems.map(i => i.title).filter(t => t !== 'Configurar Club');
 
     console.log('DashboardLayout: Allowed titles for role:', { role, titles });
 
     // Apply role-based dashboard path and filter by allowed titles
-    const items = allNavigationItems
+    const items = roleItems
       .map((item) => item.title === 'Dashboard' ? { ...item, path: getDashboardPath(role) } : item)
-      .filter((item) => titles.includes(item.title));
+      .filter((item) => titles?.includes(item.title));
 
     console.log('DashboardLayout: Final navigation items:', items);
     return items;
