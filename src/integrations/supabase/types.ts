@@ -2087,6 +2087,14 @@ export type Database = {
         | "poliza_deportiva"
         | "anualidad"
         | "psicologia"
+        | "competition_district"
+        | "competition_departmental"
+        | "competition_marathon"
+        | "competition_panamerican"
+        | "competition_interleague"
+        | "accident_insurance"
+        | "league_registration_renewal"
+        | "federation_registration_renewal"
       user_role:
         | "admin"
         | "coach"
@@ -2326,6 +2334,14 @@ export const Constants = {
         "poliza_deportiva",
         "anualidad",
         "psicologia",
+        "competition_district",
+        "competition_departmental",
+        "competition_marathon",
+        "competition_panamerican",
+        "competition_interleague",
+        "accident_insurance",
+        "league_registration_renewal",
+        "federation_registration_renewal",
       ],
       user_role: ["admin", "coach", "athlete", "delegate", "leader", "finance"],
     },
