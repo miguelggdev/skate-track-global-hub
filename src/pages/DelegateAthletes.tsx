@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,10 +15,10 @@ import { useDelegateAthletes, DelegateAthlete } from '@/hooks/useDelegateAthlete
 import { format, parseISO, differenceInYears } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useAthleteCompetitions } from '@/hooks/useAthleteCompetitions';
 import { useDelegatePayments } from '@/hooks/useDelegatePayments';
 import { formatCurrency, CurrencyCode } from '@/utils/currency';
 import { useCurrency } from '@/hooks/useCurrency';
+import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 
 type AthleteCategory = Database['public']['Enums']['athlete_category'];
@@ -243,7 +244,30 @@ interface AthleteDetailsDialogProps {
 }
 
 const AthleteDetailsDialog = ({ athlete, open, onOpenChange, currency }: AthleteDetailsDialogProps) => {
-  const { registrations: competitions } = useAthleteCompetitions(athlete?.id || '');
+  const { data: competitions } = useQuery({
+    queryKey: ['athlete-competitions-delegate', athlete?.id],
+    queryFn: async () => {
+      if (!athlete?.id) return [];
+      const { data, error } = await supabase
+        .from('competition_registrations')
+        .select(`
+          id,
+          registration_date,
+          payment_status,
+          competitions (
+            id,
+            name,
+            start_date,
+            status
+          )
+        `)
+        .eq('athlete_id', athlete.id)
+        .order('registration_date', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!athlete?.id && open
+  });
   const { data: payments } = useDelegatePayments({ athleteId: athlete?.id });
 
   if (!athlete) return null;
@@ -386,12 +410,14 @@ const AthleteDetailsDialog = ({ athlete, open, onOpenChange, currency }: Athlete
                     {competitions.map((comp) => (
                       <div key={comp.id} className="flex items-center justify-between p-2 rounded border">
                         <div>
-                          <p className="font-medium">{comp.competitions?.name}</p>
+                          <p className="font-medium">{(comp.competitions as { name?: string })?.name || '-'}</p>
                           <p className="text-sm text-muted-foreground">
-                            {comp.competitions?.start_date ? format(parseISO(comp.competitions.start_date), 'd MMM yyyy', { locale: es }) : '-'}
+                            {(comp.competitions as { start_date?: string })?.start_date 
+                              ? format(parseISO((comp.competitions as { start_date: string }).start_date), 'd MMM yyyy', { locale: es }) 
+                              : '-'}
                           </p>
                         </div>
-                        <Badge variant="outline">{comp.competitions?.status}</Badge>
+                        <Badge variant="outline">{(comp.competitions as { status?: string })?.status || '-'}</Badge>
                       </div>
                     ))}
                   </div>
