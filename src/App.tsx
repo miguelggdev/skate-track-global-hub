@@ -28,6 +28,11 @@ import ClubConfig from "./pages/ClubConfig";
 import Reports from "./pages/Reports";
 import AthleteTraining from "./pages/AthleteTraining";
 import AthleteCompetitions from "./pages/AthleteCompetitions";
+import DelegateAthletes from "./pages/DelegateAthletes";
+import DelegateCompetitions from "./pages/DelegateCompetitions";
+import DelegatePayments from "./pages/DelegatePayments";
+import DelegateTraining from "./pages/DelegateTraining";
+import DelegateReports from "./pages/DelegateReports";
 
 const queryClient = new QueryClient();
 
@@ -256,6 +261,47 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['athlete']}>
                 <AthleteCompetitions />
+              </ProtectedRoute>
+            } 
+            />
+          {/* Delegate Routes */}
+          <Route 
+            path="/delegate/athletes" 
+            element={
+              <ProtectedRoute allowedRoles={['delegate']}>
+                <DelegateAthletes />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/delegate/competitions" 
+            element={
+              <ProtectedRoute allowedRoles={['delegate']}>
+                <DelegateCompetitions />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/delegate/payments" 
+            element={
+              <ProtectedRoute allowedRoles={['delegate']}>
+                <DelegatePayments />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/delegate/training" 
+            element={
+              <ProtectedRoute allowedRoles={['delegate']}>
+                <DelegateTraining />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/delegate/reports" 
+            element={
+              <ProtectedRoute allowedRoles={['delegate']}>
+                <DelegateReports />
               </ProtectedRoute>
             } 
           />
