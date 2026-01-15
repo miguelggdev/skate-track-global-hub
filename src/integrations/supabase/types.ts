@@ -1444,6 +1444,7 @@ export type Database = {
           id_number: string | null
           id_type: Database["public"]["Enums"]["id_type"] | null
           landline_phone: string | null
+          language_code: string
           languages: string[] | null
           last_name: string
           nationality: string | null
@@ -1474,6 +1475,7 @@ export type Database = {
           id_number?: string | null
           id_type?: Database["public"]["Enums"]["id_type"] | null
           landline_phone?: string | null
+          language_code?: string
           languages?: string[] | null
           last_name: string
           nationality?: string | null
@@ -1504,6 +1506,7 @@ export type Database = {
           id_number?: string | null
           id_type?: Database["public"]["Enums"]["id_type"] | null
           landline_phone?: string | null
+          language_code?: string
           languages?: string[] | null
           last_name?: string
           nationality?: string | null
@@ -1792,6 +1795,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ui_translations: {
+        Row: {
+          created_at: string | null
+          de: string
+          en: string
+          es: string
+          fr: string
+          id: string
+          it: string
+          key: string
+          pt: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          de: string
+          en: string
+          es: string
+          fr: string
+          id?: string
+          it: string
+          key: string
+          pt: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          de?: string
+          en?: string
+          es?: string
+          fr?: string
+          id?: string
+          it?: string
+          key?: string
+          pt?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       user_documents: {
         Row: {

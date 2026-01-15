@@ -6,12 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from '@/hooks/useTranslation';
 import { User, Lock } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signIn, signUp, resetPassword, user } = useAuth();
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -33,14 +35,14 @@ const Login = () => {
 
     if (error) {
       toast({
-        title: "Error de inicio de sesión",
+        title: t('login.error'),
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Login exitoso",
-        description: "Has iniciado sesión correctamente",
+        title: t('common.success'),
+        description: t('login.welcome'),
       });
       navigate('/');
     }
@@ -56,14 +58,14 @@ const Login = () => {
 
     if (error) {
       toast({
-        title: "Error",
+        title: t('common.error'),
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Email enviado",
-        description: "Revisa tu email para las instrucciones de recuperación de contraseña",
+        title: t('common.success'),
+        description: t('common.info'),
       });
       setShowForgotPassword(false);
       setResetEmail('');
@@ -103,7 +105,7 @@ const Login = () => {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="Ingrese su usuario"
+                    placeholder={t('login.email')}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 bg-white/75 border-white/40 text-gray-900 placeholder:text-gray-600"
@@ -115,7 +117,7 @@ const Login = () => {
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Ingrese su contraseña"
+                    placeholder={t('login.password')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 bg-white/75 border-white/40 text-gray-900 placeholder:text-gray-600"
@@ -128,7 +130,7 @@ const Login = () => {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
                 disabled={isLoading}
               >
-                {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
+                {isLoading ? t('login.signing_in') : t('login.submit')}
               </Button>
               <div className="text-center pt-2">
                 <Button
@@ -137,7 +139,7 @@ const Login = () => {
                   className="text-sm text-gray-300 hover:text-white p-0 h-auto"
                   onClick={() => setShowForgotPassword(true)}
                 >
-                  ¿Olvidaste tu contraseña?
+                  {t('login.forgot_password')}
                 </Button>
               </div>
             </form>
@@ -148,7 +150,7 @@ const Login = () => {
                 <Input
                   id="reset-email"
                   type="email"
-                  placeholder="Ingrese su email"
+                  placeholder={t('login.email')}
                   value={resetEmail}
                   onChange={(e) => setResetEmail(e.target.value)}
                   className="pl-10 bg-white/75 border-white/40 text-gray-900 placeholder:text-gray-600"
@@ -160,7 +162,7 @@ const Login = () => {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
                 disabled={isLoading}
               >
-                {isLoading ? "Enviando..." : "Enviar instrucciones"}
+                {isLoading ? t('common.loading') : t('action.confirm')}
               </Button>
               <div className="text-center">
                 <Button
@@ -172,7 +174,7 @@ const Login = () => {
                     setResetEmail('');
                   }}
                 >
-                  Volver al login
+                  {t('action.back')}
                 </Button>
               </div>
             </form>

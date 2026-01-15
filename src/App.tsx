@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { AuthProvider } from "@/providers/AuthProvider";
+import { TranslationProvider } from "@/providers/TranslationProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import Index from "./pages/Index";
@@ -113,16 +114,17 @@ const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode,
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange={false}
-      >
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
+      <TranslationProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange={false}
+        >
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
             <BrowserRouter>
         <Routes>
           <Route path="/" element={<RoleBasedRedirect />} />
@@ -308,10 +310,11 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
-            </BrowserRouter>
-          </div>
-        </TooltipProvider>
-      </ThemeProvider>
+              </BrowserRouter>
+            </div>
+          </TooltipProvider>
+        </ThemeProvider>
+      </TranslationProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

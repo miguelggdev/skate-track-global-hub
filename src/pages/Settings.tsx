@@ -30,8 +30,10 @@ import {
   DollarSign
 } from 'lucide-react';
 import UserManagementTab from '@/components/settings/UserManagementTab';
+import { LanguageSelector } from '@/components/settings/LanguageSelector';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from '@/hooks/useTranslation';
 import { PhotoUpload } from '@/components/users/PhotoUpload';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -40,6 +42,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 const Settings = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const { profile, loading, isAdmin } = useUserProfile();
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -123,14 +126,14 @@ const Settings = () => {
       if (error) throw error;
 
       toast({
-        title: "Configuración guardada",
-        description: "Tus preferencias han sido actualizadas exitosamente",
+        title: t('message.saved_successfully'),
+        description: t('message.updated_successfully'),
       });
     } catch (error: any) {
       console.error('Error saving settings:', error);
       toast({
-        title: "Error al guardar",
-        description: error.message || "No se pudo guardar la configuración",
+        title: t('common.error'),
+        description: error.message || t('message.error_occurred'),
         variant: "destructive",
       });
     } finally {
@@ -178,7 +181,7 @@ const Settings = () => {
   ];
 
   return (
-    <DashboardLayout title="Settings">
+    <DashboardLayout title={t('settings.title')}>
       <div className="min-h-full pb-6">
         {/* Sticky Header Actions */}
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-4 mb-6">
@@ -189,7 +192,7 @@ const Settings = () => {
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <Save className="h-4 w-4 mr-2" />
-              {saving ? "Guardando..." : "Guardar Cambios"}
+              {saving ? t('common.loading') : t('action.save')}
             </Button>
           </div>
         </div>
@@ -226,15 +229,15 @@ const Settings = () => {
         {/* Settings Tabs */}
         <Tabs defaultValue="profile" className="space-y-6">
           <TabsList className={`grid w-full gap-1 ${isAdmin ? 'grid-cols-3 lg:grid-cols-6' : 'grid-cols-3 lg:grid-cols-5'}`}>
-            <TabsTrigger value="profile" className="text-xs lg:text-sm">Profile</TabsTrigger>
-            <TabsTrigger value="security" className="text-xs lg:text-sm">Security</TabsTrigger>
-            <TabsTrigger value="notifications" className="text-xs lg:text-sm">Notifications</TabsTrigger>
-            <TabsTrigger value="preferences" className="text-xs lg:text-sm hidden lg:block">Preferences</TabsTrigger>
-            <TabsTrigger value="system" className="text-xs lg:text-sm hidden lg:block">System</TabsTrigger>
+            <TabsTrigger value="profile" className="text-xs lg:text-sm">{t('settings.profile')}</TabsTrigger>
+            <TabsTrigger value="security" className="text-xs lg:text-sm">{t('settings.security')}</TabsTrigger>
+            <TabsTrigger value="notifications" className="text-xs lg:text-sm">{t('settings.notifications')}</TabsTrigger>
+            <TabsTrigger value="preferences" className="text-xs lg:text-sm hidden lg:block">{t('settings.preferences')}</TabsTrigger>
+            <TabsTrigger value="system" className="text-xs lg:text-sm hidden lg:block">{t('settings.system')}</TabsTrigger>
             {isAdmin && (
               <TabsTrigger value="users" className="text-xs lg:text-sm">
                 <Users className="h-3 w-3 mr-1 lg:mr-2" />
-                Users
+                {t('menu.users')}
               </TabsTrigger>
             )}
           </TabsList>
@@ -504,13 +507,16 @@ const Settings = () => {
           {/* Preferences */}
           <TabsContent value="preferences" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Language Selector - Full i18n system */}
+              <LanguageSelector />
+
               <Card className="argon-card">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Palette className="h-5 w-5" />
-                    <span>Appearance</span>
+                    <span>{t('settings.preferences')}</span>
                   </CardTitle>
-                  <CardDescription>Customize the look and feel of your dashboard</CardDescription>
+                  <CardDescription>{t('common.description')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
@@ -538,13 +544,6 @@ const Settings = () => {
                     </div>
                   </div>
                   <div>
-                    <Label>Language</Label>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      <Button variant="outline" size="sm">English</Button>
-                      <Button variant="outline" size="sm">Español</Button>
-                    </div>
-                  </div>
-                  <div>
                     <Label>Time Format</Label>
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <Button variant="outline" size="sm">12 Hour</Button>
@@ -553,39 +552,39 @@ const Settings = () => {
                   </div>
                 </CardContent>
               </Card>
-
-              <Card className="argon-card">
-                <CardHeader>
-                  <CardTitle>Dashboard Layout</CardTitle>
-                  <CardDescription>Configure your dashboard widgets and layout</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Compact View</p>
-                      <p className="text-sm text-gray-500">Show more information in less space</p>
-                    </div>
-                    <Switch />
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Auto-refresh Data</p>
-                      <p className="text-sm text-gray-500">Automatically update dashboard data</p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Show Tooltips</p>
-                      <p className="text-sm text-gray-500">Display helpful hints and tips</p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                </CardContent>
-              </Card>
             </div>
+
+            <Card className="argon-card">
+              <CardHeader>
+                <CardTitle>Dashboard Layout</CardTitle>
+                <CardDescription>Configure your dashboard widgets and layout</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Compact View</p>
+                    <p className="text-sm text-gray-500">Show more information in less space</p>
+                  </div>
+                  <Switch />
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Auto-refresh Data</p>
+                    <p className="text-sm text-gray-500">Automatically update dashboard data</p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Show Tooltips</p>
+                    <p className="text-sm text-gray-500">Display helpful hints and tips</p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* System Settings */}
