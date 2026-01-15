@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useTranslation } from '@/hooks/useTranslation';
 import TopNavigation from './TopNavigation';
 
 interface DashboardLayoutProps {
@@ -19,6 +20,7 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
   const { toast } = useToast();
   const { signOut, user } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile();
+  const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
   console.log('DashboardLayout: Rendering with profile:', {
@@ -30,8 +32,8 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
   const handleLogout = async () => {
     await signOut();
     toast({
-      title: "Sesión cerrada",
-      description: "Has cerrado sesión correctamente",
+      title: t('menu.logout'),
+      description: t('message.saved_successfully'),
     });
     navigate('/login');
   };
@@ -41,22 +43,22 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
     // Athlete-specific paths
     if (role === 'athlete') {
       return [
-        { title: "Dashboard", icon: Home, path: "/athlete-dashboard" },
-        { title: "Training", icon: Calendar, path: "/athlete/training" },
-        { title: "Competitions", icon: Trophy, path: "/athlete/competitions" },
-        { title: "Settings", icon: Settings, path: "/settings" },
+        { title: t('menu.dashboard'), icon: Home, path: "/athlete-dashboard" },
+        { title: t('menu.training'), icon: Calendar, path: "/athlete/training" },
+        { title: t('menu.competitions'), icon: Trophy, path: "/athlete/competitions" },
+        { title: t('menu.settings'), icon: Settings, path: "/settings" },
       ];
     }
     
     // All other roles use standard paths
     return [
-      { title: "Dashboard", icon: Home, path: "/" },
-      { title: "Athletes", icon: Users, path: "/athletes" },
-      { title: "Training", icon: Calendar, path: "/training" },
-      { title: "Competitions", icon: Trophy, path: "/competitions" },
-      { title: "Finance", icon: DollarSign, path: "/finance" },
-      { title: "Configurar Club", icon: Cog, path: "/club-config" },
-      { title: "Settings", icon: Settings, path: "/settings" },
+      { title: t('menu.dashboard'), icon: Home, path: "/" },
+      { title: t('menu.athletes'), icon: Users, path: "/athletes" },
+      { title: t('menu.training'), icon: Calendar, path: "/training" },
+      { title: t('menu.competitions'), icon: Trophy, path: "/competitions" },
+      { title: t('menu.finance'), icon: DollarSign, path: "/finance" },
+      { title: t('menu.club_config'), icon: Cog, path: "/club-config" },
+      { title: t('menu.settings'), icon: Settings, path: "/settings" },
     ];
   };
 
@@ -83,19 +85,19 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
   const getRoleLabel = (role?: string) => {
     switch (role) {
       case 'admin':
-        return 'Administrador';
+        return t('role.admin');
       case 'coach':
-        return 'Entrenador';
+        return t('role.coach');
       case 'athlete':
-        return 'Deportista';
+        return t('role.athlete');
       case 'delegate':
-        return 'Delegado';
+        return t('role.delegate');
       case 'leader':
-        return 'Líder';
+        return t('role.leader');
       case 'finance':
-        return 'Finanzas';
+        return t('role.finance');
       default:
-        return 'Usuario';
+        return t('role.user');
     }
   };
 
@@ -115,31 +117,30 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
     }
 
     // Determine which items are allowed per role (for non-athletes)
+    // Using translation keys for comparison
+    const dashboardTitle = t('menu.dashboard');
+    const athletesTitle = t('menu.athletes');
+    const trainingTitle = t('menu.training');
+    const competitionsTitle = t('menu.competitions');
+    const financeTitle = t('menu.finance');
+    const clubConfigTitle = t('menu.club_config');
+    const settingsTitle = t('menu.settings');
+
     const allowedByRole: Record<string, string[]> = {
-      admin: [
-        'Dashboard', 'Athletes', 'Training', 'Competitions', 'Finance', 'Configurar Club', 'Settings'
-      ],
-      coach: [
-        'Dashboard', 'Athletes', 'Training', 'Competitions', 'Settings'
-      ],
-      delegate: [
-        'Dashboard', 'Competitions', 'Settings'
-      ],
-      leader: [
-        'Dashboard', 'Athletes', 'Training', 'Competitions', 'Finance', 'Configurar Club', 'Settings'
-      ],
-      finance: [
-        'Dashboard', 'Finance', 'Settings'
-      ],
+      admin: [dashboardTitle, athletesTitle, trainingTitle, competitionsTitle, financeTitle, clubConfigTitle, settingsTitle],
+      coach: [dashboardTitle, athletesTitle, trainingTitle, competitionsTitle, settingsTitle],
+      delegate: [dashboardTitle, competitionsTitle, settingsTitle],
+      leader: [dashboardTitle, athletesTitle, trainingTitle, competitionsTitle, financeTitle, clubConfigTitle, settingsTitle],
+      finance: [dashboardTitle, financeTitle, settingsTitle],
     } as const;
 
-    const titles = role ? allowedByRole[role as keyof typeof allowedByRole] : roleItems.map(i => i.title).filter(t => t !== 'Configurar Club');
+    const titles = role ? allowedByRole[role as keyof typeof allowedByRole] : roleItems.map(i => i.title).filter(t => t !== clubConfigTitle);
 
     console.log('DashboardLayout: Allowed titles for role:', { role, titles });
 
     // Apply role-based dashboard path and filter by allowed titles
     const items = roleItems
-      .map((item) => item.title === 'Dashboard' ? { ...item, path: getDashboardPath(role) } : item)
+      .map((item) => item.title === dashboardTitle ? { ...item, path: getDashboardPath(role) } : item)
       .filter((item) => titles?.includes(item.title));
 
     console.log('DashboardLayout: Final navigation items:', items);
@@ -213,7 +214,7 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
               variant="outline"
             >
               <LogOut className="h-4 w-4 mr-2" />
-              Cerrar Sesión
+              {t('menu.logout')}
             </Button>
           </div>
         </div>
