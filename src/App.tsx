@@ -9,7 +9,6 @@ import { TranslationProvider } from "@/providers/TranslationProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import Index from "./pages/Index";
-import Landing2 from "./pages/Landing2";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -128,7 +127,7 @@ const App = () => (
             <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
             <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Landing2 />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/app" element={<RoleBasedRedirect />} />
           <Route path="/login" element={<Login />} />
           <Route path="/reset-password" element={<ResetPassword />} />
