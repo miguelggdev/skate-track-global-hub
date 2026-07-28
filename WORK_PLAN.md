@@ -72,9 +72,40 @@ CIERRE DEL DÍA
 ### Día 5
 | Tarea | Agente | Spec | Status |
 |-------|--------|------|--------|
+| Aplicar migración expansión completa en Supabase | Tú (SQL Editor) | — | ⬜ |
 | RLS review completo — todas las tablas | AG-CLAUDE-SECURITY | — | ⬜ |
 | Seed de club_settings (fila inicial) | AG-CLAUDE-DB | — | ⬜ |
 | Commit semanal + push | Tú | — | ⬜ |
+
+### Día 6
+| Tarea | Agente | Spec | Status |
+|-------|--------|------|--------|
+| Perfil completo del atleta (tabs médico/familia/colegio/deportivo) | AG-CLAUDE-FRONTEND | SPEC-005 | ⬜ |
+
+### Día 7
+| Tarea | Agente | Spec | Status |
+|-------|--------|------|--------|
+| Generación de cartas de permiso (PDF) | AG-CLAUDE-FRONTEND | SPEC-006 | ⬜ |
+| Generación de carnets (PDF + QR) | AG-CLAUDE-FRONTEND | SPEC-006 | ⬜ |
+| Exportación Excel de competencias | AG-CLAUDE-FRONTEND | SPEC-006 | ⬜ |
+
+### Día 8
+| Tarea | Agente | Spec | Status |
+|-------|--------|------|--------|
+| Registro y evolución de tiempos cronometrados | AG-CLAUDE-FRONTEND | SPEC-007 | ⬜ |
+| Ranking interno del club por prueba | AG-CLAUDE-FRONTEND | SPEC-007 | ⬜ |
+
+### Día 9
+| Tarea | Agente | Spec | Status |
+|-------|--------|------|--------|
+| Gestión de equipamiento (patines, bicicletas) | AG-CLAUDE-FRONTEND | SPEC-008 | ⬜ |
+| Historial de mantenimiento | AG-CLAUDE-FRONTEND | SPEC-008 | ⬜ |
+
+### Día 10
+| Tarea | Agente | Spec | Status |
+|-------|--------|------|--------|
+| Módulo de evaluaciones de deportistas | AG-CLAUDE-FRONTEND | SPEC-009 | ⬜ |
+| Mensajería interna básica | AG-CLAUDE-FRONTEND | SPEC-009 | ⬜ |
 
 ---
 
