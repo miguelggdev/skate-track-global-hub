@@ -1,10 +1,26 @@
 # SYSTEM DESIGN — SpeedSkateTrack Hub
 ## Análisis de requerimientos y flujo de información
-*Actualizado: Sprint 1 — antes de implementar módulos nuevos*
+*Actualizado: Validado con el usuario — decisiones de diseño confirmadas*
 
 ---
 
-## 1. FLUJO DE INFORMACIÓN DEL SISTEMA (Onboarding Order)
+## DECISIONES DE DISEÑO CONFIRMADAS
+
+| Decisión | Definición |
+|---|---|
+| **Reglamento** | World Skate (WS) — Speed Skating rulebook oficial |
+| **Puntos acumulados** | Sí, en categorías: Prejuvenil, Juvenil, Mayores — usados para ligas/escalafón |
+| **Escalafón** | Calculado de forma diferente a la suma directa de puntos de prueba |
+| **Dorsal/bib** | Diferente por evento — no fijo por atleta |
+| **Resultados incluyen** | Nombre + Tiempo + Puntos (solo en pruebas de puntos) |
+| **Atletas de otros clubes** | Se guardan en BD + dashboard separado filtrable por club |
+| **Relevos** | Sí — 3 del mismo equipo o el juez los organiza |
+| **Quién importa resultados** | Solo el Administrador |
+| **RAG disponible para** | Atletas, entrenadores, padres/acudientes |
+
+---
+
+## 1. FLUJO DE INFORMACIÓN DEL SISTEMA
 
 El sistema tiene un orden lógico de creación de datos. Si se salta un paso, los demás fallan.
 
@@ -21,13 +37,14 @@ El sistema tiene un orden lógico de creación de datos. Si se salta un paso, lo
 │  → Admin (ya existe al registrarse)                         │
 │  → Líder directivo                                          │
 │  → Financiero / Tesorero                                    │
-│  → Entrenadores (con perfil profesional y licencia)         │
+│  → Entrenadores (con perfil profesional y licencia WS)      │
 │  → Delegados de competencia                                 │
 └──────────────────────────┬──────────────────────────────────┘
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  PASO 3: REGISTRAR DEPORTISTAS                              │
+│  PASO 3: REGISTRAR DEPORTISTAS (del club)                   │
 │  → Datos personales + categoría (auto por fecha nacimiento) │
+│  → Categorías: Prejuvenil | Juvenil | Junior | Senior | Master│
 │  → Perfil médico (EPS, grupo sanguíneo, alergias)           │
 │  → Datos de familia / acudientes                            │
 │  → Datos académicos (colegio, grado)                        │
@@ -47,31 +64,41 @@ El sistema tiene un orden lógico de creación de datos. Si se salta un paso, lo
 ┌─────────────────────────────────────────────────────────────┐
 │  PASO 5: COMPETENCIAS                                       │
 │  → Crear competencia (nombre, tipo, fecha, sede)            │
-│  → Definir eventos (500m CRI Juvenil F, 3km Fondo Senior M) │
-│  → Inscribir atletas por evento                             │
-│  → CARGAR RESULTADOS (manual o OCR desde PDF/imagen)        │
-│  → Detectar records personales automáticamente              │
-│  → Generar medallería y ranking                             │
-│  → Exportar resultados a Excel                              │
+│  → Tipo: Distrital | Departamental | Nacional | Panamericano│
+│  → Definir pruebas: 300m CRI, 500m CRI, 1000m, 3km, 5km... │
+│  → Asignar dorsales por evento (cambian en cada competencia)│
+│  → Inscribir atletas del club por prueba                    │
+│  → CARGAR RESULTADOS (OCR desde PDF/imagen — solo Admin)    │
+│    → Atletas propios: match automático + record personal    │
+│    → Atletas externos: se crean como "externos" en BD       │
+│    → Relevos: 3 atletas por equipo (mismo club o mixto)     │
+│  → Generar medallería 🥇🥈🥉                                │
+│  → Actualizar puntos de liga (Prejuvenil/Juvenil/Mayores)  │
+│  → Actualizar escalafón (fórmula diferente a puntos de prueba)│
 └──────────────────────────┬──────────────────────────────────┘
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
 │  PASO 6: FINANZAS                                           │
 │  → Generar cobros de mensualidad por categoría              │
-│  → Registrar pagos con recibo numerado                      │
+│  → Registrar pagos con recibo numerado automático           │
 │  → Alertas de mora (+30 días)                               │
-│  → Cartas de permiso automáticas (PDF) para competencias    │
+│  → Cartas de permiso (PDF) para competencias con QR         │
 │  → Carnets del club con QR                                  │
+│  → Exportar Excel de pagos y morosos                        │
 └──────────────────────────┬──────────────────────────────────┘
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  PASO 7: DASHBOARDS POR ROL                                 │
+│  PASO 7: DASHBOARDS POR ROL + CHATBOTS IA                  │
 │  → Admin: métricas globales + todos los módulos             │
 │  → Entrenador: mis atletas + asistencia + KPIs + tiempos    │
 │  → Atleta: mi perfil + mis tiempos + ranking + pagos        │
 │  → Financiero: pagos + mora + recibos + reportes            │
 │  → Delegado: competencias + inscripciones + resultados      │
 │  → Líder: reportes ejecutivos + visión estratégica          │
+│                                                             │
+│  CHATBOTS DISPONIBLES EN TODOS LOS ROLES:                  │
+│  → 🤖 Reglamento WS (RAG): "¿Qué dice el art. 47 de WS?"  │
+│  → 🤖 Consultas BD: "¿Cuál es mi mejor tiempo en 500m CRI?"│
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -79,292 +106,361 @@ El sistema tiene un orden lógico de creación de datos. Si se salta un paso, lo
 
 ## 2. MÓDULO DE CARGA DE RESULTADOS (OCR + IA)
 
-### El problema
-Los resultados de competencias llegan en 3 formatos:
-1. **PDF oficial de Fedepatin** — Campeonatos Nacionales, Panamericanos
-2. **PDF/imagen de Distritales Bogotá** — Resultados por categoría
-3. **Imagen fotográfica** — Foto del tablero o resolución impresa
+### Formatos de entrada confirmados
+1. **PDF oficial World Skate / Fedepatin** — Nacionales, Panamericanos, Mundiales
+2. **PDF/imagen de Distritales Bogotá** — Resoluciones por categoría y etapa
+3. **Imagen fotográfica** — Foto del tablero de resultados o resolución impresa
 
-### Arquitectura propuesta
+### Campos a extraer según formato confirmado
 
 ```
-Usuario sube PDF/imagen
+ENCABEZADO (metadatos del evento):
+├── Nombre de la competencia
+├── Organizador (Fedepatin / Liga Bogotá / World Skate)
+├── Fecha y sede
+├── Prueba (300m CRI | 500m CRI | 1000m | 3km | 5km | 10km | maraton | relevo)
+├── Categoría (Prejuvenil | Juvenil | Junior | Senior | Master)
+└── Género (Masculino | Femenino)
+
+RESULTADOS POR FILA:
+├── Posición
+├── Número dorsal (diferente por evento)
+├── Nombre completo del atleta
+├── Club o país (para internacionales)
+├── Tiempo (formato: mm:ss.cc)
+├── Diferencia con el primero (+0.35)
+├── Puntos de la prueba (solo en pruebas de puntos, no en todas)
+└── Estado: Normal | DSQ | DNS | DNF
+
+PARA RELEVOS:
+├── Posición del equipo
+├── Club/equipo
+├── Lista de atletas que corrieron
+├── Tiempo total
+└── Puntos del equipo
+```
+
+### Flujo de importación
+
+```
+Admin sube PDF o imagen
         │
         ▼
-┌─────────────────────┐
-│  Frontend Upload UI  │  Drag & drop, muestra preview
-│  (React + shadcn)   │
-└──────────┬──────────┘
-           │ POST multipart/form-data
-           ▼
 ┌─────────────────────────────────────────────────────────┐
-│  Backend Python (FastAPI) — Endpoint /results/import    │
-│                                                         │
-│  1. Si PDF → pdfplumber extrae texto                    │
-│  2. Si imagen → Claude Vision API (base64)              │
-│  3. Texto → Claude claude-sonnet-4-6 extrae JSON:                │
-│     {                                                   │
-│       "competition": "Distritales Bogotá 2025",         │
-│       "date": "2025-08-15",                             │
-│       "venue": "Parque El Tunal",                       │
-│       "event": "500m CRI",                              │
-│       "category": "juvenil",                            │
-│       "gender": "femenino",                             │
-│       "results": [                                      │
-│         { "pos": 1, "name": "María García",             │
-│           "club": "Club Rionegro",                      │
-│           "time": "00:42.35", "points": 34 }            │
-│       ]                                                 │
-│     }                                                   │
-│  4. Fuzzy match nombres contra athletes en BD           │
-│  5. Retorna preview al frontend para validación         │
-└──────────────────────────────────────────────────────────┘
-           │
-           ▼
+│  Frontend — Paso 1: Subida                              │
+│  • Seleccionar competencia existente (o crear nueva)    │
+│  • Subir archivo (PDF o imagen)                         │
+│  • Indica si es resultado individual o relevo           │
+└──────────────────────────┬──────────────────────────────┘
+                           │ POST /api/results/extract
+                           ▼
 ┌─────────────────────────────────────────────────────────┐
-│  Frontend — Pantalla de Revisión/Validación             │
+│  Backend Python (FastAPI)                               │
 │                                                         │
-│  ┌─ Datos detectados ──────────────────────────────┐   │
-│  │ Competencia: Distritales Bogotá 2025            │   │
-│  │ Fecha: 15 Ago 2025  │  Evento: 500m CRI         │   │
-│  │ Categoría: Juvenil Femenino                     │   │
-│  └─────────────────────────────────────────────────┘   │
+│  Si PDF:  pdfplumber → texto crudo                      │
+│  Si imagen: Claude Vision API → descripción + tabla     │
 │                                                         │
-│  ┌─ Resultados ─────────────────────────────────────┐  │
-│  │ Pos │ Nombre Detectado  │ Match BD    │ Tiempo  │  │
-│  │  1  │ María García      │ ✅ Exacto   │ 0:42.35 │  │
-│  │  2  │ Ana Martínez      │ ⚠️ Similar  │ 0:43.12 │  │
-│  │  3  │ Sofia Rodríguez   │ ❌ No enc.  │ 0:43.89 │  │
-│  └─────────────────────────────────────────────────┘  │
+│  Claude claude-sonnet-4-6 extrae JSON estructurado:               │
+│  {                                                      │
+│    "competition_name": "...",                           │
+│    "date": "2025-08-15",                               │
+│    "venue": "Parque El Tunal, Bogotá",                  │
+│    "event_type": "500m_cri",                            │
+│    "category": "juvenil",                              │
+│    "gender": "femenino",                               │
+│    "is_relay": false,                                   │
+│    "results": [                                         │
+│      {                                                  │
+│        "pos": 1, "bib": "023",                          │
+│        "name": "María García López",                    │
+│        "club": "Club Rionegro",                         │
+│        "time": "42.350",  // en segundos               │
+│        "diff": "+0.000",                                │
+│        "points": 34,      // null si no aplica         │
+│        "status": "normal" // DSQ | DNS | DNF           │
+│      }                                                  │
+│    ]                                                    │
+│  }                                                      │
 │                                                         │
-│  [Seleccionar atleta para ❌/⚠️]  [Ignorar fila]       │
+│  Fuzzy match nombres vs athletes en BD:                 │
+│  • Score > 0.9 → ✅ Match exacto                        │
+│  • Score 0.7-0.9 → ⚠️ Match probable (mostrar opciones)│
+│  • Score < 0.7 → ❌ Externo (crear como atleta externo) │
+└──────────────────────────┬──────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│  Frontend — Paso 2: Validación                          │
 │                                                         │
-│  [Confirmar e Importar] ←──────────────────────────    │
+│  ┌─ Evento detectado ────────────────────────────────┐  │
+│  │ Prueba: 500m CRI  │ Cat: Juvenil F  │ Fecha: ...  │  │
+│  └───────────────────────────────────────────────────┘  │
+│                                                         │
+│  Pos │ Dorsal │ Nombre detectado   │ Match BD  │ Tiempo │
+│   1  │  023   │ María García López │ ✅ Exacto  │ 42.35  │
+│   2  │  041   │ Ana Martínez C.    │ ⚠️ Similar │ 43.12  │
+│   3  │  007   │ Sofia Rodríguez    │ ❌ Externo │ 43.89  │
+│   -  │  015   │ Luis Pérez         │ ❌ Externo │  DSQ   │
+│                                                         │
+│  Para ⚠️: dropdown para seleccionar atleta correcto    │
+│  Para ❌: badge "Externo" — se guarda como atleta ext. │
+│  Cada fila: [✓ Incluir] [✗ Excluir]                   │
+│                                                         │
+│            [← Volver]  [✅ Confirmar e Importar]       │
+└──────────────────────────┬──────────────────────────────┘
+                           │ POST /api/results/confirm
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│  Supabase — Escritura atómica (todo o nada)             │
+│                                                         │
+│  1. result_imports → trazabilidad del archivo           │
+│  2. external_athletes → atletas de otros clubes         │
+│  3. competition_results → pos, tiempo, puntos, atleta   │
+│  4. time_records → nuevo récord personal si aplica      │
+│  5. awards → medallas (pos 1,2,3)                       │
+│  6. league_standings → actualizar puntos si es liga     │
+│  7. relay_results → si es relevo                        │
+│  8. audit_log → trazabilidad de la importación          │
 └─────────────────────────────────────────────────────────┘
-           │ POST /results/confirm
-           ▼
-┌─────────────────────────────────────────────────────────┐
-│  Supabase — Insertar en:                                │
-│  • competition_results (pos, time, puntos, atleta)      │
-│  • time_records (si es nuevo récord personal)           │
-│  • awards (si es medalla 🥇🥈🥉)                        │
-│  • audit_log (trazabilidad de la importación)           │
-└─────────────────────────────────────────────────────────┘
 ```
 
-### Datos a extraer de los documentos
-
-#### Formato Fedepatin (Nacional / Panamericanos)
-```
-Campos típicos: Pos | Nro | Nombre | Club/País | Tiempo | Diferencia | Puntos
-Metadatos del encabezado: Evento, Categoría, Género, Fecha, Sede, Juez árbitro
-```
-
-#### Formato Distritales Bogotá
-```
-Campos típicos: Pos | Nombre | Club | Tiempo | Puntos acumulados
-Metadatos: Etapa (1ra/2da/Final), Fecha, Pista
-```
-
-### Casos especiales a manejar
-- **Descalificaciones (DSQ/DQ)** — registrar como DSQ en time_records
-- **No presentado (DNS)** — registrar pero no afectar ranking
-- **No terminó (DNF)** — registrar
-- **Atleta no en BD** — permitir crear nuevo atleta inline o ignorar
-- **Misma competencia ya importada** — detectar duplicados y advertir
+### Casos especiales
+- **DSQ/DNS/DNF** — se guardan con ese estado, no afectan ranking ni tiempos
+- **Misma competencia importada dos veces** — sistema detecta y advierte
+- **Atleta del club no encontrado** — se puede crear inline o marcar como externo
+- **Relevo con atletas mixtos** — el juez los define, se registra la combinación tal cual
 
 ---
 
-## 3. RAG — CHATBOT DEL REGLAMENTO
+## 3. MODELO DE ATLETAS EXTERNOS
 
-### Casos de uso
-
-| Usuario | Pregunta típica |
-|---|---|
-| Deportista | "¿Qué pasa si salgo antes de la señal de salida?" |
-| Entrenador | "¿Cuántos metros tiene la zona de descalificación en 300m CRI?" |
-| Padre | "¿Qué documentos necesita mi hijo para competir en un nacional?" |
-| Delegado | "¿Cuál es el proceso de protesta en una carrera?" |
-
-### Arquitectura
+Los resultados de otros clubes se guardan para poder mostrar contexto de rendimiento.
 
 ```
-PDF Reglamento (Fedepatin / FISU / WS)
-        │
-        ▼
-┌───────────────────────────────────┐
-│  Backend Python — Indexación      │
-│  1. pdfplumber → texto por página │
-│  2. Dividir en chunks (500 tokens)│
-│  3. Claude Embeddings → vector    │
-│  4. INSERT INTO knowledge_base    │
-│     (category: 'reglamento')      │
-└───────────────────────────────────┘
-        │
-        │ (una sola vez, o al actualizar el reglamento)
-        │
-        ▼
-┌───────────────────────────────────────────────────────┐
-│  Chat UI (React) — Disponible en dashboard atleta,    │
-│  entrenador y padres                                   │
-│                                                        │
-│  Usuario pregunta → embedding de la pregunta          │
-│  → search_knowledge_base() → top 5 chunks relevantes  │
-│  → Claude claude-sonnet-4-6 genera respuesta con contexto        │
-│  → Cita el artículo del reglamento                    │
-└───────────────────────────────────────────────────────┘
+external_athletes
+├── id
+├── full_name          -- nombre exacto del resultado
+├── club_name          -- nombre del club tal como aparece
+├── category           -- categoría en la que compitió
+├── gender
+├── country            -- Colombia por defecto, diferente en internacionales
+├── created_at
+
+-- Sus resultados van en las mismas tablas:
+competition_results.athlete_id → NULL si externo
+competition_results.external_athlete_id → FK a external_athletes
+
+-- Relevo
+relay_team_members → puede mezclar athletes + external_athletes
 ```
 
-### Agente específico: AG-11 Normativa
-- Accede SOLO a `knowledge_base` con category='reglamento'
-- Cita siempre el artículo fuente
-- Si no sabe, dice "consultar directamente a Fedepatin"
-- Disponible para atletas, entrenadores, padres (no solo admin)
+### Dashboard de resultados por club (público/admin)
+
+```
+Filtros:
+  [Club ▼] [Temporada ▼] [Categoría ▼] [Prueba ▼]
+
+Tabla:
+  Atleta | Club | Prueba | Mejor tiempo | Competencias | Posición típica
+
+Click en atleta → historial de tiempos en esa prueba a lo largo del tiempo
+```
 
 ---
 
-## 4. AGENTE CONECTADO A LA BD
+## 4. SISTEMA DE PUNTOS, LIGAS Y ESCALAFÓN
 
-### AG-01 (Admin) y AG-02 (Coach) con acceso a datos reales
+### Diferencia entre puntos de prueba y escalafón (CONFIRMADO)
 
 ```
-Usuario: "¿Cuántos atletas en categoría juvenil tienen mora?"
-        │
-        ▼
-Agente → genera SQL seguro via Supabase client
-        → ejecuta con RLS del rol del usuario
-        → formatea respuesta en lenguaje natural
+PUNTOS DE PRUEBA:
+├── Se obtienen por posición en una prueba específica
+├── Tabla configurable: 1° = 34pts, 2° = 21pts, 3° = 13pts...
+├── Solo aplica en pruebas designadas (no en todas)
+└── Se usan para calcular posición dentro de una competencia con múltiples pruebas
+
+ESCALAFÓN:
+├── Fórmula diferente — no es suma directa de puntos de prueba
+├── Considera: número de competencias, mejores tiempos, categoría de evento
+├── Calculado por la liga o federación con su propia lógica
+└── El sistema lo calcula y permite exportar para validación con Fedepatin
+
+LIGAS (Copa/Torneo con múltiples etapas):
+├── Aplica en: Prejuvenil, Juvenil, Mayores
+├── Liga = conjunto de competencias en una temporada
+├── Al final de cada etapa se acumulan puntos en league_standings
+└── Clasificatorio para Distritales → Departamental → Nacional
 ```
 
-### Tipos de consultas por rol
+### Tablas de puntos (configurables por admin)
 
-| Rol | Consultas típicas |
-|---|---|
-| Admin | Mora total, atletas inactivos, ranking general del club |
-| Entrenador | Asistencia semanal de mis atletas, quien no ha venido esta semana |
-| Atleta | Mis 5 mejores tiempos, mi progreso en 500m CRI, ¿cuándo es la próxima competencia? |
-| Financiero | Deudores del mes, total recaudado, proyección de ingresos |
-| Delegado | Atletas inscritos en Distritales, quién falta por pagar inscripción |
-
-### Restricciones de seguridad del agente
-- El agente NUNCA genera SQL directamente ejecutable por el usuario
-- Usa funciones predefinidas en Supabase (RLS protege todo)
-- No accede a datos de salud sin ser coach/admin
-- Logs en audit_log de cada consulta del agente
+```
+Tipo: "Copa Bogotá 2025 — Pruebas de puntos"
+Pos 1 → 34 pts
+Pos 2 → 21 pts
+Pos 3 → 13 pts
+Pos 4 →  8 pts
+Pos 5 →  5 pts
+Pos 6 →  3 pts
+Pos 7 →  2 pts
+Pos 8 →  1 pt
+```
 
 ---
 
-## 5. CALENDARIO POR CATEGORÍA
-
-### Vistas necesarias
+## 5. RELEVOS
 
 ```
-Vista 1: Calendario de ENTRENAMIENTOS
-  → Filtro: categoría / entrenador
-  → Color por tipo (técnico, físico, cortesía, bicicleta)
-  → Click → ver asistencia de esa sesión
+FORMACIÓN DE EQUIPOS (confirmado):
+├── 3 atletas del mismo club forman un equipo automáticamente
+├── O el juez en competencia los organiza a criterio propio
+└── Pueden ser mixtos (definidos por el juez)
 
-Vista 2: Calendario de COMPETENCIAS
-  → Filtro: categoría (Juvenil / Júnior / Senior / Mayores)
-  → Tipos: Distrital / Departamental / Nacional / Panamericano
-  → Click → ver eventos del día, inscripciones, resultados
-
-Vista 3: TIMELINE del deportista
-  → Vista personal del atleta
-  → Sus entrenamientos, sus competencias, sus pagos
+REGISTRO EN BD:
+├── relay_teams: (id, competition_id, event_id, team_name, club_name)
+├── relay_team_members: (relay_team_id, athlete_id | external_athlete_id, orden)
+├── relay_results: (relay_team_id, pos, time, points, status)
+└── Las medallas van al equipo, no individualmente (salvo definición del club)
 ```
-
-### Integración con Google Calendar (Sprint 7)
-- Admin puede sincronizar competencias al Google Calendar del club
-- Atletas reciben invitación automática a sus competencias
 
 ---
 
-## 6. IMÁGENES QUE PUEDES COMPARTIR
+## 6. RAG — CHATBOT WORLD SKATE RULES
 
-Para diseñar el extractor OCR correctamente, necesito que compartas:
+### Fuente oficial
+- **Documento**: World Skate Speed Skating Rules (último año disponible)
+- **Cobertura**: Todas las disciplinas (pista, maratón, CRI, relevo)
+- **Actualización**: Cuando World Skate publique nueva versión
 
-### Documentos a analizar
-1. **Imagen de resultados de Distritales Bogotá** — para ver el formato exacto de las columnas
-2. **Resolución/PDF de Fedepatin** (Panamericanos o Nacional) — para ver el encabezado y estructura
-3. **Si tienes: planilla de inscripción** — para ver cómo cruzan los datos con resultados
+### Disponibilidad por rol
 
-### Qué validaré en esos documentos
-- Nombres exactos de las columnas
-- Formato del tiempo (mm:ss.cc o hh:mm:ss.cc)
-- Cómo identifican categoría y género
-- Si viene el número dorsal o solo el nombre
-- Cómo están los metadatos del evento (en el encabezado)
-- Si hay tablas de puntos acumulados (para ligas)
-
----
-
-## 7. GAPS EN EL SCHEMA ACTUAL
-
-Revisando el flujo vs el schema existente:
-
-| Feature | Estado | Acción |
+| Rol | Acceso al chatbot WS | Acceso al chatbot BD |
 |---|---|---|
-| Carga de resultados OCR | ❌ No existe | Nueva tabla `result_imports` + backend Python |
-| Calendario por categoría | ✅ Datos en BD | Solo falta UI (calendar component) |
-| RAG reglamento | ✅ `knowledge_base` lista | Falta indexar el PDF + chat UI |
-| Agente con BD queries | ⏳ Parcial | Backend Python Sprint 2 |
-| Flujo onboarding | ❌ No existe | Wizard de configuración inicial |
-| Liga / puntos acumulados | ❌ No existe | Nueva tabla `league_standings` |
-| Resoluciones / actas | ❌ No existe | Tabla `competition_resolutions` |
-| Puntos por posición | ❌ No existe | Config tabla `point_tables` |
-| Calendario UI | ❌ No existe | React component (FullCalendar o similar) |
+| Admin | ✅ Reglamento | ✅ Todo |
+| Entrenador | ✅ Reglamento | ✅ Sus atletas |
+| Atleta | ✅ Reglamento | ✅ Solo sus datos |
+| Padre/Acudiente | ✅ Reglamento | ✅ Datos de su hijo |
+| Financiero | ✅ Reglamento | ✅ Solo finanzas |
+| Delegado | ✅ Reglamento | ✅ Competencias |
 
-### Tablas nuevas identificadas
+### Preguntas típicas que debe responder
+
+```
+"¿Cuál es la distancia de la zona de calentamiento en una CRI?"
+"¿Qué artículo define las sanciones por salida falsa?"
+"¿Cuántos atletas puede inscribir un club por prueba en Panamericanos?"
+"¿Qué documentos necesita un Prejuvenil para competir en Nacionales?"
+"¿Cómo se calcula el puntaje en la prueba de puntos de 5km?"
+"¿Qué pasa si un juez de salida comete un error?"
+```
+
+---
+
+## 7. SCHEMA — TABLAS NUEVAS CONFIRMADAS
 
 ```sql
--- Para importación de resultados con trazabilidad
-result_imports (id, file_url, competition_id, imported_by, status, raw_data jsonb, errors jsonb, created_at)
+-- Atletas externos (otros clubes, países)
+external_athletes (
+  id, full_name, club_name, category, gender, 
+  country DEFAULT 'Colombia', notes, created_at
+)
 
--- Para ligas con puntos acumulados por temporada  
-league_standings (id, league_id, athlete_id, category, total_points, position, season_year)
-leagues (id, name, season_year, category, organizer, start_date, end_date)
+-- Trazabilidad de importaciones
+result_imports (
+  id, competition_id, file_url, file_type (pdf|image),
+  imported_by, status (pending|validated|imported|failed),
+  raw_extracted jsonb,   -- texto/JSON extraído por IA
+  validated_data jsonb,  -- datos confirmados por admin
+  error_log jsonb,
+  created_at, completed_at
+)
 
--- Para actas y resoluciones oficiales
-competition_resolutions (id, competition_id, document_url, resolution_number, issued_by, issued_at)
+-- Relevos — equipos
+relay_teams (
+  id, competition_id, event_id, team_name, club_name, created_at
+)
+relay_team_members (
+  id, relay_team_id,
+  athlete_id,          -- NULL si externo
+  external_athlete_id, -- NULL si del club
+  leg_order            -- 1ro, 2do, 3ro que corre
+)
+relay_results (
+  id, relay_team_id, position, time_seconds numeric,
+  points integer, status (normal|dsq|dns|dnf), created_at
+)
 
--- Tabla de puntos por posición (configurable por tipo de competencia)
-point_tables (id, competition_type, position, points, created_at)
+-- Ligas / torneos con puntos acumulados
+leagues (
+  id, name, season_year, organizer,
+  categories athlete_category[],
+  start_date, end_date, is_active, created_at
+)
+league_stages (
+  id, league_id, competition_id, stage_number, stage_name
+)
+league_standings (
+  id, league_id, 
+  athlete_id,          -- NULL si externo
+  external_athlete_id,
+  category, total_points, position,
+  updated_at
+)
+
+-- Tabla de puntos configurable por admin
+point_tables (
+  id, name, competition_type, season_year,
+  points_config jsonb,  -- {1: 34, 2: 21, 3: 13, ...}
+  is_active, created_at
+)
+
+-- Resoluciones y actas oficiales
+competition_resolutions (
+  id, competition_id, document_url,
+  resolution_number, resolution_type (resultado|sancion|protesta|acta),
+  issued_by, issued_at, notes, created_at
+)
 ```
 
 ---
 
-## 8. PLAN DE ACCIÓN ACTUALIZADO
+## 8. DOCUMENTOS A COMPARTIR
 
-### Antes del Sprint 2 (Backend Python) — agregar al Sprint 1:
+Copia los archivos en:
+```
+proyecto/docs/
+├── world_skate_rules.pdf          ← Reglamento WS (para RAG)
+├── resultados_distritales_*.pdf   ← Ejemplo resultado Bogotá
+├── resultados_fedepatin_*.pdf     ← Ejemplo resultado nacional
+├── puntuacion_liga_*.pdf          ← Tabla de puntos de liga
+└── planilla_inscripcion_*.pdf     ← Si tienes planillas
+```
 
-| Prioridad | Tarea | Spec |
-|---|---|---|
-| ALTA | Analizar imágenes de resultados que compartas | Manual |
-| ALTA | Migración: `result_imports`, `leagues`, `league_standings` | SPEC-009-bis |
-| ALTA | Migración: `point_tables`, `competition_resolutions` | SPEC-009-bis |
-| ALTA | Indexar PDF del reglamento en knowledge_base | Manual + script Python |
-| MEDIA | UI: Calendario de competencias por categoría | SPEC-010 |
-| MEDIA | UI: Módulo de importación de resultados (frontend) | SPEC-011 |
-
-### Sprint 2 (Backend Python) — prioridades actualizadas:
-
-| Prioridad | Tarea |
-|---|---|
-| CRÍTICA | FastAPI endpoint `/results/import` (OCR + Claude Vision) |
-| CRÍTICA | Script de indexación del reglamento en knowledge_base |
-| ALTA | AG-11 (Normativa RAG) — chatbot del reglamento |
-| ALTA | AG-10 (Resultados) — extractor OCR con validación |
-| ALTA | AG-01 (Admin) con queries a BD vía Supabase client |
+Las **imágenes** las puedes arrastrar directamente al chat.
 
 ---
 
-## 9. PREGUNTAS PARA VALIDAR ANTES DE IMPLEMENTAR
+## 9. ORDEN DE IMPLEMENTACIÓN ACTUALIZADO
 
-1. **¿Qué PDF del reglamento usas?** ¿Reglamento Fedepatin, FISU o World Skate (WS)?
-2. **¿La app maneja ligas?** ¿Los puntos se acumulan por temporada (ej: Copa Bogotá con 3 etapas)?
-3. **¿Los dorsales/bibs se asignan por categoría o son fijos por atleta?**
-4. **¿El resultado incluye puntos de liga o solo tiempos?**
-5. **¿Quién puede importar resultados?** ¿Solo admin/delegado, o también el entrenador?
-6. **¿La app necesita manejar resultados de equipos (relevo)?** ¿O solo individual?
-7. **¿Los atletas de otros clubes que aparecen en resultados se guardan en BD o se ignoran?**
+### Sprint 1 (completar): DB + tipos de datos
+1. ✅ Schema base (migración 001)
+2. ✅ Expansión completa (migración 002)
+3. ✅ Tablas legacy (migración 003)
+4. ✅ Audit log + pgvector (migración 004)
+5. ✅ Storage policies (migración 004b)
+6. **SIGUIENTE**: Migración de tablas confirmadas (external_athletes, leagues, relay_teams, result_imports, point_tables, competition_resolutions)
+
+### Sprint 2: Backend Python
+1. FastAPI setup + Supabase client
+2. Endpoint OCR de resultados (Claude Vision)
+3. Script indexación reglamento WS → knowledge_base
+4. AG-11 Normativa (RAG reglamento)
+5. AG-01 Admin (consultas BD en lenguaje natural)
+6. AG-10 Resultados (extractor OCR con validación)
+
+### Sprint 3+: Frontend módulos
+1. Calendario por categoría
+2. UI importación de resultados (upload → validación → confirm)
+3. Dashboard "Resultados por club" (atletas externos)
+4. Chat UI para los agentes
+5. Módulo de ligas y escalafón
