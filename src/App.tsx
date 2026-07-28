@@ -117,8 +117,8 @@ const App = () => (
       <TranslationProvider>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="dark"
+          enableSystem={false}
           disableTransitionOnChange={false}
         >
           <TooltipProvider>

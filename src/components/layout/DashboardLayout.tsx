@@ -129,9 +129,9 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
       {/* Sidebar */}
       <aside className={cn(
         'fixed lg:static inset-y-0 left-0 z-40 w-64 flex flex-col',
-        'border-r border-white/6',
+        'border-r border-border',
         'transform transition-transform duration-300 ease-in-out lg:translate-x-0',
-        'bg-[#030509]/98 backdrop-blur-xl',
+        'bg-sidebar backdrop-blur-xl',
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       )}>
         {/* Ambient orb decorations */}
@@ -141,13 +141,13 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
         </div>
 
         {/* Logo */}
-        <div className="relative flex items-center gap-3 px-5 h-16 border-b border-white/6 flex-shrink-0">
+        <div className="relative flex items-center gap-3 px-5 h-16 border-b border-sidebar-border flex-shrink-0">
           <SpeedSkateLogoMark />
           <div className="leading-none">
-            <span className="text-white font-black text-base tracking-tight">
+            <span className="text-foreground font-black text-base tracking-tight">
               SpeedSkate<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-300">Track</span>
             </span>
-            <div className="text-[9px] text-slate-500 font-medium tracking-widest uppercase mt-0.5">Club Management</div>
+            <div className="text-[9px] text-muted-foreground font-medium tracking-widest uppercase mt-0.5">Club Management</div>
           </div>
         </div>
 
@@ -162,8 +162,8 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
                 className={cn(
                   'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                   isActive
-                    ? 'text-orange-400 bg-gradient-to-r from-orange-500/15 to-transparent border-l-2 border-orange-500 pl-[calc(1rem-2px)]'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    ? 'text-orange-500 dark:text-orange-400 bg-gradient-to-r from-orange-500/12 dark:from-orange-500/15 to-transparent border-l-2 border-orange-500 pl-[calc(1rem-2px)]'
+                    : 'text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent'
                 )}
               >
                 <item.icon className={cn('h-4.5 w-4.5 flex-shrink-0', isActive ? 'text-orange-400' : '')} />
@@ -174,21 +174,21 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
         </nav>
 
         {/* Footer */}
-        <div className="relative border-t border-white/6 p-4 space-y-3">
+        <div className="relative border-t border-sidebar-border p-4 space-y-3">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-500 to-orange-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
               {(user?.email?.[0] ?? 'U').toUpperCase()}
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-medium text-slate-300 truncate">
+              <p className="text-xs font-medium text-sidebar-foreground truncate">
                 {profile?.first_name ? `${profile.first_name} ${profile.last_name}` : user?.email}
               </p>
-              <p className="text-[10px] text-slate-600 truncate">{getRoleLabel(profile?.role)}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{getRoleLabel(profile?.role)}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-500 hover:text-red-400 hover:bg-red-500/5 transition-all duration-200"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/8 transition-all duration-200"
           >
             <LogOut className="h-3.5 w-3.5" />
             {t('menu.logout')}
