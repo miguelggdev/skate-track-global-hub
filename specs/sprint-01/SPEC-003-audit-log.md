@@ -1,5 +1,5 @@
 # SPEC-003 — Audit Log + pgvector
-**Status:** `draft`  
+**Status:** `done`  
 **Agente:** AG-CLAUDE-DB  
 **Sprint:** 01  
 **Prioridad:** ALTA  
