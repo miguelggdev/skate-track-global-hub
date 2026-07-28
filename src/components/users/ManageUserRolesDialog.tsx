@@ -58,15 +58,7 @@ export function ManageUserRolesDialog({ user, open, onOpenChange, onRoleChanged,
     setLoading(true);
 
     try {
-      // Update profiles table
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ role: selectedRole as any })
-        .eq('id', user.id);
-
-      if (profileError) throw profileError;
-
-      // Update user_roles table - first remove old role, then add new one
+      // Role lives exclusively in user_roles — delete existing and insert the new one
       const { error: deleteError } = await supabase
         .from('user_roles')
         .delete()

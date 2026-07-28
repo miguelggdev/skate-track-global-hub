@@ -159,47 +159,11 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
         phone: userDetails.phone || '',
         date_of_birth: userDetails.date_of_birth || '',
         role: userDetails.role as any,
-        bio: userDetails.bio || '',
-        id_type: userDetails.id_type || '',
-        id_number: userDetails.id_number || '',
-        gender: userDetails.gender || '',
-        nationality: userDetails.nationality || '',
-        address: userDetails.address || '',
-        city: userDetails.city || '',
-        department: userDetails.department || '',
-        country: userDetails.country || '',
-        landline_phone: userDetails.landline_phone || '',
-        languages: userDetails.languages || [],
-        // Medical info
-        blood_type: userDetails.medical_info?.blood_type || '',
-        rh_factor: userDetails.medical_info?.rh_factor || '',
-        diseases: userDetails.medical_info?.diseases || '',
-        allergies: userDetails.medical_info?.allergies || '',
-        disability: userDetails.medical_info?.disability || '',
-        emergency_contact_name: userDetails.medical_info?.emergency_contact_name || '',
-        emergency_contact_relationship: userDetails.medical_info?.emergency_contact_relationship || '',
-        emergency_contact_phone: userDetails.medical_info?.emergency_contact_phone || '',
-        health_insurance: userDetails.medical_info?.health_insurance || '',
-        sports_insurance_policy: userDetails.medical_info?.sports_insurance_policy || '',
-        insurance_expiry_date: userDetails.medical_info?.insurance_expiry_date || '',
-        // Coach details
-        academic_level: userDetails.coach_details?.academic_level || '',
-        degree_title: userDetails.coach_details?.degree_title || '',
-        education_institution: userDetails.coach_details?.education_institution || '',
-        training_certifications: userDetails.coach_details?.training_certifications || '',
-        years_experience: userDetails.coach_details?.years_experience || 0,
-        experience_description: userDetails.coach_details?.experience_description || '',
-        coach_category: userDetails.coach_details?.coach_category || '',
+        // Coach details (only columns that exist in our coaches table)
         license_number: userDetails.coach_details?.license_number || '',
-        federation_license_expiry: userDetails.coach_details?.federation_license_expiry || '',
         certification_level: userDetails.coach_details?.certification_level || '',
-        hourly_rate: userDetails.coach_details?.hourly_rate || 0,
+        years_experience: userDetails.coach_details?.years_experience || 0,
         specialization: userDetails.coach_details?.specialization || '',
-        // Administrative
-        status: userDetails.status || 'active',
-        observations: userDetails.observations || '',
-        data_consent: userDetails.data_consent || false,
-        accepts_regulations: userDetails.accepts_regulations || false,
         created_at: userDetails.created_at,
         updated_at: userDetails.updated_at,
       });
@@ -213,65 +177,29 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
     try {
       setLoading(true);
 
-      // Update profiles table
-      const profileData: any = {
-        first_name: data.first_name,
-        last_name: data.last_name,
-        email: data.email,
-        phone: data.phone,
-        date_of_birth: data.date_of_birth || null,
-        bio: data.bio,
-        avatar_url: photoUrl,
-        id_type: data.id_type,
-        id_number: data.id_number,
-        gender: data.gender,
-        nationality: data.nationality,
-        address: data.address,
-        city: data.city,
-        department: data.department,
-        country: data.country,
-        landline_phone: data.landline_phone,
-        languages: data.languages,
-        status: data.status,
-        observations: data.observations,
-        data_consent: data.data_consent,
-        accepts_regulations: data.accepts_regulations,
-        updated_at: new Date().toISOString(),
-      };
-
-      if (canEditRoles) {
-        profileData.role = data.role;
-      }
-
+      // Update only columns that exist in profiles schema
       const { error: profileError } = await supabase
         .from('profiles')
-        .update(profileData)
+        .update({
+          first_name: data.first_name,
+          last_name: data.last_name,
+          email: data.email,
+          phone: data.phone || null,
+          date_of_birth: data.date_of_birth || null,
+          avatar_url: photoUrl,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', user.id);
 
       if (profileError) throw profileError;
 
-      // Update medical info
-      const { error: medicalError } = await supabase
-        .from('user_medical_info')
-        .upsert({
-          user_id: user.id,
-          blood_type: data.blood_type,
-          rh_factor: data.rh_factor,
-          diseases: data.diseases,
-          allergies: data.allergies,
-          disability: data.disability,
-          emergency_contact_name: data.emergency_contact_name,
-          emergency_contact_relationship: data.emergency_contact_relationship,
-          emergency_contact_phone: data.emergency_contact_phone,
-          health_insurance: data.health_insurance,
-          sports_insurance_policy: data.sports_insurance_policy,
-          insurance_expiry_date: data.insurance_expiry_date || null,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id' });
+      // Role is stored in user_roles, not in profiles
+      if (canEditRoles) {
+        await supabase.from('user_roles').delete().eq('user_id', user.id);
+        await supabase.from('user_roles').insert([{ user_id: user.id, role: data.role as any }]);
+      }
 
-      if (medicalError) throw medicalError;
-
-      // Update coach details if role is coach
+      // Update coach details if role is coach (only columns that exist in our coaches table)
       if (data.role === 'coach' || user.role === 'coach') {
         const { data: existingCoach } = await supabase
           .from('coaches')
@@ -281,18 +209,10 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
 
         const coachData = {
           user_id: user.id,
-          academic_level: data.academic_level,
-          degree_title: data.degree_title,
-          education_institution: data.education_institution,
-          training_certifications: data.training_certifications,
-          years_experience: data.years_experience,
-          experience_description: data.experience_description,
-          coach_category: data.coach_category,
-          license_number: data.license_number,
-          federation_license_expiry: data.federation_license_expiry || null,
-          certification_level: data.certification_level,
-          hourly_rate: data.hourly_rate,
-          specialization: data.specialization,
+          license_number: data.license_number || null,
+          certification_level: data.certification_level || null,
+          specialization: data.specialization || null,
+          years_experience: data.years_experience || 0,
           updated_at: new Date().toISOString(),
         };
 
@@ -391,7 +311,7 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
                     <DocumentsTab
                       form={form}
                       userId={user.id}
-                      documents={userDetails?.documents}
+                      documents={[]}
                       onDocumentsUpdate={refetchUserDetails}
                     />
                   </TabsContent>

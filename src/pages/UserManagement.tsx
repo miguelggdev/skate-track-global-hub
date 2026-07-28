@@ -40,13 +40,31 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setUsers(data || []);
+      const [{ data: profiles, error: profilesError }, { data: roles, error: rolesError }] =
+        await Promise.all([
+          supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+          supabase.from('user_roles').select('user_id, role'),
+        ]);
+
+      if (profilesError) throw profilesError;
+      if (rolesError) throw rolesError;
+
+      const rolePriority = ['admin', 'leader', 'coach', 'delegate', 'finance', 'athlete'];
+      const roleMap = new Map<string, User['role']>();
+      for (const r of roles || []) {
+        const existing = roleMap.get(r.user_id);
+        if (!existing || rolePriority.indexOf(r.role) < rolePriority.indexOf(existing)) {
+          roleMap.set(r.user_id, r.role as User['role']);
+        }
+      }
+
+      const merged: User[] = (profiles || []).map((p) => ({
+        ...p,
+        role: roleMap.get(p.id) ?? 'athlete',
+      }));
+
+      setUsers(merged);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
