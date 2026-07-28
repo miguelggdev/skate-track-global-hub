@@ -3,6 +3,11 @@ import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  FinanceIncomePie, FinanceCashFlowArea,
+  FinanceDelinquencyLine, FinanceDebtorsList
+} from '@/components/dashboard/FinanceCharts';
+import RevenueChart from '@/components/dashboard/RevenueChart';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -103,74 +108,19 @@ const FinanceDashboard = () => {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <PieChart className="h-5 w-5" />
-                    Distribución de Ingresos
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Cuotas de Socios</span>
-                        <span>65%</span>
-                      </div>
-                      <Progress value={65} className="h-2" />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Competiciones</span>
-                        <span>20%</span>
-                      </div>
-                      <Progress value={20} className="h-2" />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Patrocinios</span>
-                        <span>15%</span>
-                      </div>
-                      <Progress value={15} className="h-2" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Revenue bar+line chart (existing, real Supabase data) */}
+            <RevenueChart />
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Próximos Vencimientos
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-2 border rounded">
-                      <div>
-                        <p className="font-medium">Cuotas Enero</p>
-                        <p className="text-sm text-muted-foreground">Vence: 31/01/2024</p>
-                      </div>
-                      <span className="text-lg font-bold">{formatCurrency(2450, currency)}</span>
-                    </div>
-                    <div className="flex items-center justify-between p-2 border rounded">
-                      <div>
-                        <p className="font-medium">Alquiler Instalaciones</p>
-                        <p className="text-sm text-muted-foreground">Vence: 15/01/2024</p>
-                      </div>
-                      <span className="text-lg font-bold">{formatCurrency(1200, currency)}</span>
-                    </div>
-                    <div className="flex items-center justify-between p-2 border rounded">
-                      <div>
-                        <p className="font-medium">Seguros</p>
-                        <p className="text-sm text-muted-foreground">Vence: 20/01/2024</p>
-                      </div>
-                      <span className="text-lg font-bold">{formatCurrency(850, currency)}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Pie + CashFlow side by side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <FinanceIncomePie />
+              <FinanceCashFlowArea />
+            </div>
+
+            {/* Delinquency + Debtors */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <FinanceDelinquencyLine />
+              <FinanceDebtorsList />
             </div>
           </TabsContent>
 

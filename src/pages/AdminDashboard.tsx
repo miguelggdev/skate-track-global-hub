@@ -12,6 +12,10 @@ import HighlightsSection from '@/components/dashboard/HighlightsSection';
 import MedalPodium from '@/components/dashboard/MedalPodium';
 import TrainingHeatmap from '@/components/dashboard/TrainingHeatmap';
 import CompetitionTimeline from '@/components/dashboard/CompetitionTimeline';
+import {
+  AdminClubHealthRadar, AdminGenderDistribution,
+  AdminMemberGrowth, AdminAuditFeed
+} from '@/components/dashboard/AdminHealthChart';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -231,6 +235,18 @@ const AdminDashboard = () => {
           <TrainingHeatmap />
           <CompetitionTimeline />
         </div>
+
+        {/* Club Health Radar */}
+        <AdminClubHealthRadar />
+
+        {/* Gender Distribution + Member Growth */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <AdminGenderDistribution />
+          <AdminMemberGrowth />
+        </div>
+
+        {/* Audit Feed */}
+        <AdminAuditFeed />
 
         {/* Highlights & Equipment Status */}
         <HighlightsSection />

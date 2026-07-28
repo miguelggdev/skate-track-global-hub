@@ -1,233 +1,119 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Users, 
-  Target, 
-  Calendar, 
-  BarChart3, 
-  Trophy, 
-  FileText, 
-  MessageSquare, 
-  Settings,
-  TrendingUp,
-  Clock,
-  AlertCircle,
-  CheckCircle
+import {
+  Users, Target, Calendar, BarChart3, Trophy, FileText,
+  MessageSquare, Settings, TrendingUp, DollarSign, Activity
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import PerformanceCard from '@/components/dashboard/PerformanceCard';
+import {
+  LeaderClubHealthRadar, LeaderAnnualTrend,
+  LeaderStrategicAlerts, LeaderExecutiveKPIs
+} from '@/components/dashboard/LeaderCharts';
+import { supabase } from '@/integrations/supabase/client';
 
 const LeaderDashboard = () => {
   const navigate = useNavigate();
+  const [stats, setStats] = useState({ athletes: 0, revenue: 0, attendance: 0, retention: 93 });
 
-  const stats = [
-    { title: "Equipos Activos", value: "8", icon: Users, change: "+2%" },
-    { title: "Proyectos en Curso", value: "12", icon: Target, change: "+15%" },
-    { title: "Objetivos Cumplidos", value: "85%", icon: Trophy, change: "+5%" },
-    { title: "Reuniones Programadas", value: "6", icon: Calendar, change: "Esta semana" },
-  ];
+  useEffect(() => {
+    Promise.all([
+      supabase.from('athletes').select('id', { count: 'exact' }).eq('status', 'active'),
+      supabase.from('financial_transactions').select('amount')
+        .eq('payment_status', 'paid')
+        .gte('transaction_date', new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0]),
+    ]).then(([athletesRes, revenueRes]) => {
+      const revenue = revenueRes.data?.reduce((s, t) => s + Number(t.amount), 0) || 0;
+      setStats(prev => ({ ...prev, athletes: athletesRes.count || 0, revenue }));
+    });
+  }, []);
 
   const quickActions = [
-    { 
-      title: "Gestión de Equipos", 
-      description: "Administrar equipos y asignaciones", 
-      icon: Users,
-      action: () => navigate('/teams-management') 
-    },
-    { 
-      title: "Planificación Estratégica", 
-      description: "Objetivos y estrategias", 
-      icon: Target,
-      action: () => navigate('/strategic-planning') 
-    },
-    { 
-      title: "Seguimiento de Proyectos", 
-      description: "Estado y progreso de proyectos", 
-      icon: BarChart3,
-      action: () => navigate('/project-tracking') 
-    },
-    { 
-      title: "Comunicaciones", 
-      description: "Mensajes y anuncios", 
-      icon: MessageSquare,
-      action: () => navigate('/communications') 
-    },
+    { title: 'Atletas', icon: Users, path: '/athletes', color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { title: 'Finanzas', icon: DollarSign, path: '/finance', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { title: 'Competencias', icon: Trophy, path: '/competitions', color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    { title: 'Configuración', icon: Settings, path: '/club-config', color: 'text-violet-500', bg: 'bg-violet-500/10' },
+    { title: 'Entrenamientos', icon: Calendar, path: '/training', color: 'text-orange-500', bg: 'bg-orange-500/10' },
+    { title: 'Reportes', icon: FileText, path: '/reports', color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
   ];
-
-  const recentActivities = [
-    { activity: "Reunión de equipo completada - Equipo Alpha", time: "1h", status: "completed" },
-    { activity: "Objetivo Q1 alcanzado - 95% cumplimiento", time: "2h", status: "completed" },
-    { activity: "Nueva asignación - Proyecto Beta", time: "4h", status: "pending" },
-    { activity: "Revisión semanal programada", time: "1d", status: "scheduled" },
-  ];
-
-  const upcomingMeetings = [
-    { title: "Reunión de Coordinación", time: "10:00 AM", participants: "5 miembros" },
-    { title: "Revisión de Objetivos", time: "2:00 PM", participants: "8 miembros" },
-    { title: "Planificación Semanal", time: "4:00 PM", participants: "3 líderes" },
-  ];
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'pending':
-        return <Clock className="h-4 w-4 text-yellow-500" />;
-      case 'scheduled':
-        return <Calendar className="h-4 w-4 text-blue-500" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-gray-500" />;
-    }
-  };
 
   return (
-    <DashboardLayout title="Dashboard Líder/Coordinador" userRole="Líder">
+    <DashboardLayout title="Dashboard Líder" userRole="Líder">
       <div className="space-y-6">
-        {/* KPIs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <Card key={index}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                <stat.icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground">
-                  <span className="text-green-600">{stat.change}</span> desde el período anterior
-                </p>
-              </CardContent>
-            </Card>
-          ))}
+        {/* Executive KPIs */}
+        <LeaderExecutiveKPIs />
+
+        {/* Main KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <PerformanceCard
+            title="Total Atletas"
+            value={stats.athletes || 52}
+            target={70}
+            change={37}
+            changeType="increase"
+            format="number"
+            icon={Users}
+          />
+          <PerformanceCard
+            title="Ingresos YTD"
+            value={stats.revenue || 95800}
+            target={140000}
+            change={12.4}
+            changeType="increase"
+            format="currency"
+            icon={DollarSign}
+          />
+          <PerformanceCard
+            title="Asistencia Global"
+            value={89}
+            target={92}
+            change={4}
+            changeType="increase"
+            format="percentage"
+            icon={Activity}
+          />
+          <PerformanceCard
+            title="Retención"
+            value={stats.retention}
+            target={96}
+            change={2.1}
+            changeType="increase"
+            format="percentage"
+            icon={TrendingUp}
+          />
         </div>
 
-        {/* Acciones Rápidas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {quickActions.map((action, index) => (
-            <Card key={index} className="cursor-pointer hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <action.icon className="h-5 w-5" />
-                  {action.title}
-                </CardTitle>
-                <CardDescription>{action.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button onClick={action.action} className="w-full">
-                  Acceder
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+        {/* Health Radar + Trend Chart */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <LeaderClubHealthRadar />
+          <LeaderAnnualTrend />
         </div>
 
-        {/* Contenido Principal */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Actividades Recientes */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Actividades Recientes
-              </CardTitle>
+        {/* Alerts + Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2">
+            <LeaderStrategicAlerts />
+          </div>
+          <Card className="animate-fade-in">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold">Acceso Rápido</CardTitle>
+              <CardDescription>Secciones frecuentes</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {recentActivities.map((activity, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    {getStatusIcon(activity.status)}
-                    <span className="text-sm font-medium">{activity.activity}</span>
+            <CardContent className="grid grid-cols-2 gap-2">
+              {quickActions.map((a, i) => (
+                <button
+                  key={i}
+                  onClick={() => navigate(a.path)}
+                  className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border hover:bg-muted/50 transition-all hover:scale-105 text-center"
+                >
+                  <div className={`w-8 h-8 rounded-lg ${a.bg} flex items-center justify-center`}>
+                    <a.icon className={`h-4 w-4 ${a.color}`} />
                   </div>
-                  <span className="text-xs text-muted-foreground">{activity.time}</span>
-                </div>
+                  <span className="text-xs font-medium">{a.title}</span>
+                </button>
               ))}
-              <Button variant="outline" className="w-full mt-4">
-                Ver todas las actividades
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Próximas Reuniones */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Próximas Reuniones
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {upcomingMeetings.map((meeting, index) => (
-                <div key={index} className="p-3 border rounded-lg">
-                  <h4 className="font-medium text-sm">{meeting.title}</h4>
-                  <p className="text-xs text-muted-foreground">{meeting.time}</p>
-                  <p className="text-xs text-blue-600">{meeting.participants}</p>
-                </div>
-              ))}
-              <Button variant="outline" className="w-full">
-                <Calendar className="h-4 w-4 mr-2" />
-                Ver calendario completo
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Reportes y Análisis */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                Rendimiento del Equipo
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Productividad General</span>
-                  <span className="text-sm font-semibold text-green-600">92%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Objetivos Cumplidos</span>
-                  <span className="text-sm font-semibold text-green-600">85%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Satisfacción del Equipo</span>
-                  <span className="text-sm font-semibold text-blue-600">88%</span>
-                </div>
-                <Button variant="outline" className="w-full mt-4">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Generar reporte detallado
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Configuración y Herramientas
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start">
-                <Users className="h-4 w-4 mr-2" />
-                Gestionar permisos de equipo
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <Target className="h-4 w-4 mr-2" />
-                Configurar objetivos
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Plantillas de comunicación
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <FileText className="h-4 w-4 mr-2" />
-                Exportar datos
-              </Button>
             </CardContent>
           </Card>
         </div>

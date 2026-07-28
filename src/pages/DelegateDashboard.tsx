@@ -1,5 +1,8 @@
 import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import {
+  DelegateResultsBar, DelegateMedalsPie, DelegateInscriptionsBar
+} from '@/components/dashboard/DelegateCharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -107,6 +110,13 @@ const DelegateDashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <DelegateResultsBar />
+          <DelegateMedalsPie />
+        </div>
+        <DelegateInscriptionsBar />
 
         {/* Quick Actions and Stats */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

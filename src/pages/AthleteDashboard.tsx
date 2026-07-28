@@ -22,6 +22,7 @@ import AthleteSportsProfile from '@/components/athletes/dashboard/cv/AthleteSpor
 import AthleteGallery from '@/components/athletes/dashboard/cv/AthleteGallery';
 import AthletePDFExport from '@/components/athletes/dashboard/cv/AthletePDFExport';
 import AthleteProfileEditDialog from '@/components/athletes/dashboard/cv/AthleteProfileEditDialog';
+import { AthleteSkillsRadar, AthleteNextCompetition, AthleteAchievements } from '@/components/dashboard/AthleteCharts';
 
 // Navigation Component
 import { AthleteTabNavigation } from '@/components/athletes/dashboard/AthleteTabNavigation';
@@ -169,8 +170,15 @@ const AthleteDashboard = () => {
             month={kpiData.dateFilter.month}
           />
 
+          {/* Skills Radar + Next Competition + Achievements */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <AthleteSkillsRadar athleteId={athlete.id} />
+            <AthleteNextCompetition athleteId={athlete.id} />
+            <AthleteAchievements awards={awards} />
+          </div>
+
           {/* Competitions & Achievements */}
-          <AthleteCompetitionsSection 
+          <AthleteCompetitionsSection
             competitions={kpiData.competitions}
             awards={awards}
           />
