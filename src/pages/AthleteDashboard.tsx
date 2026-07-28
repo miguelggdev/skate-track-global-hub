@@ -31,7 +31,6 @@ import { ProfileTab } from '@/components/athletes/dashboard/ProfileTab';
 import { BodyTab } from '@/components/athletes/dashboard/BodyTab';
 import { ContactTab } from '@/components/athletes/dashboard/ContactTab';
 import { StudiesTab } from '@/components/athletes/dashboard/StudiesTab';
-import { FilesTab } from '@/components/athletes/dashboard/FilesTab';
 import { FamilyTab } from '@/components/athletes/dashboard/FamilyTab';
 import { PaymentsTab } from '@/components/athletes/dashboard/PaymentsTab';
 import { SkatesTab } from '@/components/athletes/dashboard/SkatesTab';
@@ -39,6 +38,10 @@ import { MaintenanceTab } from '@/components/athletes/dashboard/MaintenanceTab';
 import { HistoryTab } from '@/components/athletes/dashboard/HistoryTab';
 import { HobbiesTab } from '@/components/athletes/dashboard/HobbiesTab';
 import { TrainingTab } from '@/components/athletes/dashboard/TrainingTab';
+import { DocumentsTab } from '@/components/athletes/dashboard/DocumentsTab';
+import { PerformanceTab } from '@/components/athletes/dashboard/PerformanceTab';
+import { InternationalTab } from '@/components/athletes/dashboard/InternationalTab';
+import { AttendanceHeatmapTab } from '@/components/athletes/dashboard/AttendanceHeatmapTab';
 
 const AthleteDashboard = () => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -181,10 +184,14 @@ const AthleteDashboard = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
           <TabsContent value="profile"><ProfileTab athlete={athlete} /></TabsContent>
           <TabsContent value="training"><TrainingTab /></TabsContent>
+          <TabsContent value="attendance"><AttendanceHeatmapTab /></TabsContent>
+          <TabsContent value="performance"><PerformanceTab /></TabsContent>
+          <TabsContent value="competitions"><AthleteCompetitionsSection competitions={kpiData.competitions} awards={awards} /></TabsContent>
+          <TabsContent value="international"><InternationalTab /></TabsContent>
           <TabsContent value="body"><BodyTab /></TabsContent>
           <TabsContent value="contact"><ContactTab athlete={athlete} /></TabsContent>
           <TabsContent value="studies"><StudiesTab /></TabsContent>
-          <TabsContent value="files"><FilesTab /></TabsContent>
+          <TabsContent value="documents"><DocumentsTab /></TabsContent>
           <TabsContent value="family"><FamilyTab /></TabsContent>
           <TabsContent value="payments"><PaymentsTab /></TabsContent>
           <TabsContent value="skates"><SkatesTab /></TabsContent>

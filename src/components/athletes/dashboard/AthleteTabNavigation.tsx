@@ -1,19 +1,24 @@
 import React from 'react';
-import { 
-  User, 
-  Activity, 
-  Heart, 
-  Clock, 
-  FolderOpen, 
-  Users, 
-  Phone, 
-  GraduationCap, 
-  Footprints, 
-  Wrench, 
-  CreditCard, 
+import {
+  User,
+  Activity,
+  Heart,
+  Clock,
+  FolderOpen,
+  Users,
+  Phone,
+  GraduationCap,
+  Footprints,
+  Wrench,
+  CreditCard,
   Gamepad2,
   ChevronDown,
-  Menu
+  Menu,
+  Trophy,
+  Globe,
+  CalendarCheck,
+  BarChart2,
+  FileText
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -67,8 +72,23 @@ const primaryTabs: PrimaryTab[] = [
     label: 'Entrenamientos',
     icon: Activity,
     subTabs: [
+      { id: 'attendance', label: 'Asistencia', icon: CalendarCheck },
       { id: 'skates', label: 'Patines', icon: Footprints },
       { id: 'maintenance', label: 'Mantenimiento', icon: Wrench }
+    ]
+  },
+  {
+    id: 'performance',
+    label: 'Rendimiento',
+    icon: BarChart2,
+    subTabs: []
+  },
+  {
+    id: 'competitions',
+    label: 'Competencias',
+    icon: Trophy,
+    subTabs: [
+      { id: 'international', label: 'Internacional', icon: Globe }
     ]
   },
   {
@@ -84,9 +104,9 @@ const primaryTabs: PrimaryTab[] = [
     subTabs: []
   },
   {
-    id: 'files',
-    label: 'Archivos',
-    icon: FolderOpen,
+    id: 'documents',
+    label: 'Documentos',
+    icon: FileText,
     subTabs: [
       { id: 'payments', label: 'Pagos', icon: CreditCard },
       { id: 'hobbies', label: 'Hobbys', icon: Gamepad2 }

@@ -68,6 +68,13 @@ export type Database = {
             foreignKeyName: "athlete_body_info_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: true
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_body_info_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
             referencedRelation: "athletes"
             referencedColumns: ["id"]
           },
@@ -123,6 +130,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "athlete_equipment_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "athlete_equipment_athlete_id_fkey"
             columns: ["athlete_id"]
@@ -186,6 +200,13 @@ export type Database = {
             foreignKeyName: "athlete_family_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: true
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_family_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
             referencedRelation: "athletes"
             referencedColumns: ["id"]
           },
@@ -221,6 +242,13 @@ export type Database = {
             foreignKeyName: "athlete_gallery_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_gallery_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "athletes"
             referencedColumns: ["id"]
           },
@@ -230,13 +258,18 @@ export type Database = {
         Row: {
           achievements_text: string | null
           athlete_id: string
+          category_history: Json
+          club_entry_date: string | null
           federation_date: string | null
           federation_number: string | null
           id: string
           is_federated: boolean
           is_in_league: boolean
+          is_national_team: boolean
           league_date: string | null
+          national_team_years: string | null
           previous_club: string | null
+          previous_clubs: Json
           start_date: string | null
           updated_at: string
           years_experience: number | null
@@ -244,13 +277,18 @@ export type Database = {
         Insert: {
           achievements_text?: string | null
           athlete_id: string
+          category_history?: Json
+          club_entry_date?: string | null
           federation_date?: string | null
           federation_number?: string | null
           id?: string
           is_federated?: boolean
           is_in_league?: boolean
+          is_national_team?: boolean
           league_date?: string | null
+          national_team_years?: string | null
           previous_club?: string | null
+          previous_clubs?: Json
           start_date?: string | null
           updated_at?: string
           years_experience?: number | null
@@ -258,13 +296,18 @@ export type Database = {
         Update: {
           achievements_text?: string | null
           athlete_id?: string
+          category_history?: Json
+          club_entry_date?: string | null
           federation_date?: string | null
           federation_number?: string | null
           id?: string
           is_federated?: boolean
           is_in_league?: boolean
+          is_national_team?: boolean
           league_date?: string | null
+          national_team_years?: string | null
           previous_club?: string | null
+          previous_clubs?: Json
           start_date?: string | null
           updated_at?: string
           years_experience?: number | null
@@ -274,6 +317,97 @@ export type Database = {
             foreignKeyName: "athlete_history_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: true
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_history_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      athlete_international_competitions: {
+        Row: {
+          athlete_id: string
+          category: Database["public"]["Enums"]["athlete_category"] | null
+          city: string
+          competition_date: string | null
+          competition_name: string
+          competition_year: number
+          country: string
+          created_at: string
+          event_name: string
+          gender: Database["public"]["Enums"]["athlete_gender"] | null
+          id: string
+          is_national_team_rep: boolean
+          medal_type: string | null
+          notes: string | null
+          organizer: string | null
+          points: number | null
+          position: number | null
+          status: string | null
+          time_seconds: number | null
+          updated_at: string
+        }
+        Insert: {
+          athlete_id: string
+          category?: Database["public"]["Enums"]["athlete_category"] | null
+          city: string
+          competition_date?: string | null
+          competition_name: string
+          competition_year: number
+          country: string
+          created_at?: string
+          event_name: string
+          gender?: Database["public"]["Enums"]["athlete_gender"] | null
+          id?: string
+          is_national_team_rep?: boolean
+          medal_type?: string | null
+          notes?: string | null
+          organizer?: string | null
+          points?: number | null
+          position?: number | null
+          status?: string | null
+          time_seconds?: number | null
+          updated_at?: string
+        }
+        Update: {
+          athlete_id?: string
+          category?: Database["public"]["Enums"]["athlete_category"] | null
+          city?: string
+          competition_date?: string | null
+          competition_name?: string
+          competition_year?: number
+          country?: string
+          created_at?: string
+          event_name?: string
+          gender?: Database["public"]["Enums"]["athlete_gender"] | null
+          id?: string
+          is_national_team_rep?: boolean
+          medal_type?: string | null
+          notes?: string | null
+          organizer?: string | null
+          points?: number | null
+          position?: number | null
+          status?: string | null
+          time_seconds?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_international_competitions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_international_competitions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "athletes"
             referencedColumns: ["id"]
           },
@@ -314,6 +448,13 @@ export type Database = {
           youtube?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "athlete_socials_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "athlete_socials_athlete_id_fkey"
             columns: ["athlete_id"]
@@ -362,6 +503,13 @@ export type Database = {
             foreignKeyName: "athlete_studies_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: true
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_studies_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: true
             referencedRelation: "athletes"
             referencedColumns: ["id"]
           },
@@ -370,17 +518,24 @@ export type Database = {
       athletes: {
         Row: {
           accident_insurance: string | null
+          address: string | null
           allergies: string | null
           bio: string | null
           blood_type: string | null
           category: Database["public"]["Enums"]["athlete_category"]
+          city: string | null
           city_of_birth: string | null
           coach_id: string | null
           country: string | null
           created_at: string
           date_of_birth: string | null
+          department: string | null
+          dominant_distances: string[]
           email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
           eps: string | null
+          fedepatin_license: string | null
           first_name: string
           fractures: string | null
           gender: Database["public"]["Enums"]["athlete_gender"] | null
@@ -396,6 +551,7 @@ export type Database = {
           identification_number: string | null
           identification_type: string | null
           imc: number | null
+          is_elite_athlete: boolean
           last_name: string
           level: Database["public"]["Enums"]["athlete_level"]
           long_term_goals: string | null
@@ -418,20 +574,28 @@ export type Database = {
           updated_at: string
           user_id: string | null
           weight_kg: number | null
+          world_skate_id: string | null
         }
         Insert: {
           accident_insurance?: string | null
+          address?: string | null
           allergies?: string | null
           bio?: string | null
           blood_type?: string | null
           category?: Database["public"]["Enums"]["athlete_category"]
+          city?: string | null
           city_of_birth?: string | null
           coach_id?: string | null
           country?: string | null
           created_at?: string
           date_of_birth?: string | null
+          department?: string | null
+          dominant_distances?: string[]
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           eps?: string | null
+          fedepatin_license?: string | null
           first_name: string
           fractures?: string | null
           gender?: Database["public"]["Enums"]["athlete_gender"] | null
@@ -447,6 +611,7 @@ export type Database = {
           identification_number?: string | null
           identification_type?: string | null
           imc?: number | null
+          is_elite_athlete?: boolean
           last_name: string
           level?: Database["public"]["Enums"]["athlete_level"]
           long_term_goals?: string | null
@@ -469,20 +634,28 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           weight_kg?: number | null
+          world_skate_id?: string | null
         }
         Update: {
           accident_insurance?: string | null
+          address?: string | null
           allergies?: string | null
           bio?: string | null
           blood_type?: string | null
           category?: Database["public"]["Enums"]["athlete_category"]
+          city?: string | null
           city_of_birth?: string | null
           coach_id?: string | null
           country?: string | null
           created_at?: string
           date_of_birth?: string | null
+          department?: string | null
+          dominant_distances?: string[]
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           eps?: string | null
+          fedepatin_license?: string | null
           first_name?: string
           fractures?: string | null
           gender?: Database["public"]["Enums"]["athlete_gender"] | null
@@ -498,6 +671,7 @@ export type Database = {
           identification_number?: string | null
           identification_type?: string | null
           imc?: number | null
+          is_elite_athlete?: boolean
           last_name?: string
           level?: Database["public"]["Enums"]["athlete_level"]
           long_term_goals?: string | null
@@ -520,6 +694,7 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           weight_kg?: number | null
+          world_skate_id?: string | null
         }
         Relationships: []
       }
@@ -549,6 +724,13 @@ export type Database = {
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "attendance_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "attendance_athlete_id_fkey"
             columns: ["athlete_id"]
@@ -634,6 +816,13 @@ export type Database = {
             foreignKeyName: "awards_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "awards_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "athletes"
             referencedColumns: ["id"]
           },
@@ -708,6 +897,13 @@ export type Database = {
           is_primary?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "coach_athletes_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "coach_athletes_athlete_id_fkey"
             columns: ["athlete_id"]
@@ -856,6 +1052,13 @@ export type Database = {
             foreignKeyName: "competition_registrations_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competition_registrations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "athletes"
             referencedColumns: ["id"]
           },
@@ -978,6 +1181,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "competition_results_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "competition_results_athlete_id_fkey"
             columns: ["athlete_id"]
@@ -1164,9 +1374,12 @@ export type Database = {
           athlete_id: string | null
           competition_id: string | null
           created_at: string
+          doc_status: string
           document_type: Database["public"]["Enums"]["document_type"]
           expires_at: string | null
+          expiry_date: string | null
           file_name: string | null
+          file_size_kb: number | null
           file_url: string | null
           generated_pdf: boolean
           id: string
@@ -1177,14 +1390,19 @@ export type Database = {
           signed_at: string | null
           title: string
           updated_at: string
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
           athlete_id?: string | null
           competition_id?: string | null
           created_at?: string
+          doc_status?: string
           document_type: Database["public"]["Enums"]["document_type"]
           expires_at?: string | null
+          expiry_date?: string | null
           file_name?: string | null
+          file_size_kb?: number | null
           file_url?: string | null
           generated_pdf?: boolean
           id?: string
@@ -1195,14 +1413,19 @@ export type Database = {
           signed_at?: string | null
           title: string
           updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
           athlete_id?: string | null
           competition_id?: string | null
           created_at?: string
+          doc_status?: string
           document_type?: Database["public"]["Enums"]["document_type"]
           expires_at?: string | null
+          expiry_date?: string | null
           file_name?: string | null
+          file_size_kb?: number | null
           file_url?: string | null
           generated_pdf?: boolean
           id?: string
@@ -1213,8 +1436,17 @@ export type Database = {
           signed_at?: string | null
           title?: string
           updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "documents_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "documents_athlete_id_fkey"
             columns: ["athlete_id"]
@@ -1296,6 +1528,13 @@ export type Database = {
           wheel_diameter?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "equipment_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "equipment_assigned_to_fkey"
             columns: ["assigned_to"]
@@ -1426,6 +1665,13 @@ export type Database = {
           weight_kg?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "evaluations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "evaluations_athlete_id_fkey"
             columns: ["athlete_id"]
@@ -1600,6 +1846,13 @@ export type Database = {
             foreignKeyName: "league_standings_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "league_standings_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "athletes"
             referencedColumns: ["id"]
           },
@@ -1716,6 +1969,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "medical_sessions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "medical_sessions_athlete_id_fkey"
             columns: ["athlete_id"]
@@ -1988,6 +2248,13 @@ export type Database = {
             foreignKeyName: "relay_team_members_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relay_team_members_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "athletes"
             referencedColumns: ["id"]
           },
@@ -2160,6 +2427,13 @@ export type Database = {
             foreignKeyName: "special_event_participants_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "special_event_participants_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "athletes"
             referencedColumns: ["id"]
           },
@@ -2304,6 +2578,13 @@ export type Database = {
             foreignKeyName: "time_records_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_records_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "athletes"
             referencedColumns: ["id"]
           },
@@ -2374,6 +2655,13 @@ export type Database = {
           training_type_distribution?: Json
         }
         Relationships: [
+          {
+            foreignKeyName: "training_kpis_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "training_kpis_athlete_id_fkey"
             columns: ["athlete_id"]
@@ -2510,6 +2798,13 @@ export type Database = {
             foreignKeyName: "transactions_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
+            referencedRelation: "athlete_cv_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
             referencedRelation: "athletes"
             referencedColumns: ["id"]
           },
@@ -2538,7 +2833,51 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      athlete_cv_summary: {
+        Row: {
+          bio: string | null
+          category: Database["public"]["Enums"]["athlete_category"] | null
+          category_history: Json | null
+          city: string | null
+          club_entry_date: string | null
+          coach_name: string | null
+          country: string | null
+          date_of_birth: string | null
+          department: string | null
+          dominant_distances: string[] | null
+          email: string | null
+          facebook: string | null
+          fedepatin_license: string | null
+          federation_number: string | null
+          first_name: string | null
+          gender: Database["public"]["Enums"]["athlete_gender"] | null
+          id: string | null
+          instagram: string | null
+          is_elite_athlete: boolean | null
+          is_federated: boolean | null
+          is_in_league: boolean | null
+          is_national_team: boolean | null
+          is_national_team_rep: boolean | null
+          last_name: string | null
+          level: Database["public"]["Enums"]["athlete_level"] | null
+          long_term_goals: string | null
+          medals_summary: Json | null
+          national_team_years: string | null
+          personal_bests: Json | null
+          personal_phone: string | null
+          personal_values: string | null
+          photo_url: string | null
+          previous_clubs: Json | null
+          short_term_goals: string | null
+          specialty: Database["public"]["Enums"]["athlete_specialty"] | null
+          tiktok: string | null
+          whatsapp: string | null
+          world_skate_id: string | null
+          years_experience: number | null
+          youtube: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_points_for_position: {
@@ -2560,6 +2899,7 @@ export type Database = {
         Args: { p_league_id: string }
         Returns: undefined
       }
+      refresh_document_statuses: { Args: never; Returns: undefined }
       search_knowledge_base: {
         Args: {
           filter_category?: string
@@ -2597,7 +2937,7 @@ export type Database = {
         | "juvenil_tercer_ano"
         | "mayores"
         | "mayores_unica"
-      athlete_specialty: "fondista" | "velocista"
+      athlete_specialty: "fondista" | "velocista" | "omnium"
       athlete_status: "active" | "inactive" | "suspended"
       competition_type:
         | "distrital"
@@ -2617,6 +2957,12 @@ export type Database = {
         | "planilla_inscripcion"
         | "recibo_pago"
         | "otro"
+        | "documento_identidad"
+        | "tarjeta_eps"
+        | "registro_civil"
+        | "licencia_fedepatin"
+        | "certificado_medico_deportivo"
+        | "consentimiento_imagen"
       equipment_status: "available" | "assigned" | "maintenance" | "retired"
       equipment_type:
         | "patin"
@@ -2819,7 +3165,7 @@ export const Constants = {
         "mayores",
         "mayores_unica",
       ],
-      athlete_specialty: ["fondista", "velocista"],
+      athlete_specialty: ["fondista", "velocista", "omnium"],
       athlete_status: ["active", "inactive", "suspended"],
       competition_type: [
         "distrital",
@@ -2840,6 +3186,12 @@ export const Constants = {
         "planilla_inscripcion",
         "recibo_pago",
         "otro",
+        "documento_identidad",
+        "tarjeta_eps",
+        "registro_civil",
+        "licencia_fedepatin",
+        "certificado_medico_deportivo",
+        "consentimiento_imagen",
       ],
       equipment_status: ["available", "assigned", "maintenance", "retired"],
       equipment_type: [

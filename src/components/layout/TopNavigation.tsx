@@ -527,7 +527,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 w-full bg-white dark:bg-gray-900 border-b border-border shadow-md transition-all duration-200">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full bg-[#06080f]/95 backdrop-blur-xl border-b border-white/6 shadow-lg shadow-black/30 transition-all duration-200">
       <div className="flex items-center px-4 lg:px-6 py-3">
         {/* Hamburger Menu - Always Visible */}
         <Button
@@ -564,20 +564,20 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Buscar atletas, competencias, entrenamientos, finanzas, equipos..."
+              placeholder="Buscar atletas, competencias, entrenamientos..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="pl-10 pr-4 bg-muted/50 dark:bg-gray-800/50 border-border focus:bg-background dark:focus:bg-gray-800 transition-all"
+              className="pl-10 pr-4 bg-white/5 border-white/10 text-slate-200 placeholder:text-slate-500 focus:bg-white/8 focus:border-orange-500/50 transition-all"
             />
-            
+
             {/* Search Results Dropdown */}
             {isSearchOpen && searchResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-background dark:bg-gray-800 border border-border dark:border-gray-700 rounded-md shadow-lg z-50 max-h-80 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-[#0d1117] border border-white/8 rounded-xl shadow-xl shadow-black/60 z-50 max-h-80 overflow-y-auto">
                 {searchResults.map((result) => (
                   <div
                     key={result.id}
-                    className="px-4 py-3 hover:bg-muted dark:hover:bg-gray-700 cursor-pointer transition-colors border-b border-border dark:border-gray-700 last:border-b-0"
+                    className="px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors border-b border-white/6 last:border-b-0"
                     onClick={() => handleSearchResultClick(result)}
                   >
                     <div className="flex items-center space-x-3">
@@ -654,19 +654,19 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-0 bg-background dark:bg-gray-800 border-border dark:border-gray-700" align="end">
-              <div className="p-4 border-b border-border dark:border-gray-700">
-                <h4 className="font-semibold text-foreground dark:text-gray-100">Notificaciones</h4>
+            <PopoverContent className="w-80 p-0 bg-[#0d1117] border border-white/8 shadow-xl shadow-black/60 rounded-xl" align="end">
+              <div className="p-4 border-b border-white/6">
+                <h4 className="font-semibold text-slate-100 text-sm">Notificaciones</h4>
               </div>
               <div className="max-h-80 overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-6">No hay notificaciones</p>
+                  <p className="text-center text-slate-500 py-6 text-sm">No hay notificaciones</p>
                 ) : (
                   notifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className={`p-4 border-b border-border dark:border-gray-700 last:border-b-0 hover:bg-muted dark:hover:bg-gray-700 cursor-pointer transition-colors ${
-                        !notification.read ? 'bg-muted/50 dark:bg-gray-700/50' : ''
+                      className={`p-4 border-b border-white/6 last:border-b-0 hover:bg-white/5 cursor-pointer transition-colors ${
+                        !notification.read ? 'bg-white/4' : ''
                       }`}
                       onClick={() => markNotificationAsRead(notification.id)}
                     >
@@ -699,7 +699,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
               <Button variant="ghost" className="flex items-center space-x-2 px-2 transition-all hover:scale-105">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={userAvatarUrl || userAvatar} />
-                  <AvatarFallback className="bg-primary text-primary-foreground">
+                  <AvatarFallback className="bg-gradient-to-br from-orange-500 to-orange-700 text-white font-bold">
                     {profile ? getInitials(`${profile.first_name} ${profile.last_name}`) : getInitials(userRole)}
                   </AvatarFallback>
                 </Avatar>
@@ -714,7 +714,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-background dark:bg-gray-800 border-border dark:border-gray-700">
+            <DropdownMenuContent align="end" className="w-56 bg-[#0d1117] border border-white/8 shadow-xl shadow-black/60 rounded-xl">
               <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate('/settings')}>
