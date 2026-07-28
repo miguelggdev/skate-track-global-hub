@@ -23,6 +23,7 @@ import AthleteGallery from '@/components/athletes/dashboard/cv/AthleteGallery';
 import AthletePDFExport from '@/components/athletes/dashboard/cv/AthletePDFExport';
 import AthleteProfileEditDialog from '@/components/athletes/dashboard/cv/AthleteProfileEditDialog';
 import { AthleteSkillsRadar, AthleteNextCompetition, AthleteAchievements } from '@/components/dashboard/AthleteCharts';
+import { AthleteCVDownloadButton } from '@/lib/pdf/AthleteCVDocument';
 
 // Navigation Component
 import { AthleteTabNavigation } from '@/components/athletes/dashboard/AthleteTabNavigation';
@@ -127,7 +128,7 @@ const AthleteDashboard = () => {
                 <Edit className="h-4 w-4 mr-2" />
                 Editar Perfil
               </Button>
-              <AthletePDFExport 
+              <AthletePDFExport
                 data={{
                   athlete: athlete as any,
                   profile,
@@ -135,6 +136,14 @@ const AthleteDashboard = () => {
                   competitions: kpiData.competitions,
                   medicalCounts,
                   socials
+                }}
+              />
+              <AthleteCVDownloadButton
+                data={{
+                  athlete: athlete as any,
+                  profile,
+                  kpis: kpiData,
+                  competitions: kpiData.competitions,
                 }}
               />
             </div>

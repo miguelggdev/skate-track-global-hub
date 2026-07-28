@@ -8,6 +8,10 @@ import {
   FinanceDelinquencyLine, FinanceDebtorsList
 } from '@/components/dashboard/FinanceCharts';
 import RevenueChart from '@/components/dashboard/RevenueChart';
+import { ExportExcelButton } from '@/components/ui/ExportExcelButton';
+import { exportFinanceTransactions } from '@/utils/exportExcel';
+import { FinanceReportDownloadButton } from '@/lib/pdf/FinanceReportDocument';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -346,11 +350,24 @@ const FinanceDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
-                    <Button>Generar Informe</Button>
-                    <Button variant="outline">Vista Previa</Button>
-                    <Button variant="outline">Exportar PDF</Button>
-                    <Button variant="outline">Exportar Excel</Button>
+                  <div className="flex flex-wrap gap-2">
+                    <ExportExcelButton
+                      label="Exportar Excel"
+                      onExport={async () => {
+                        const { data } = await supabase.from('financial_transactions').select('*').limit(500);
+                        exportFinanceTransactions(data ?? []);
+                      }}
+                    />
+                    <FinanceReportDownloadButton
+                      data={{
+                        period: selectedPeriod === 'month' ? 'Este Mes' : selectedPeriod === 'year' ? 'Este Año' : selectedPeriod,
+                        totalIncome: 45231,
+                        totalExpenses: 23456,
+                        pendingAmount: 8924,
+                        transactions: [],
+                        currency,
+                      }}
+                    />
                   </div>
 
                   <Separator />

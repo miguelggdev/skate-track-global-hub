@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Globe, Trophy, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentAthlete } from '@/hooks/useCurrentAthlete';
+import { CompetitionMap } from '@/components/ui/CompetitionMap';
 
 const COUNTRY_FLAGS: Record<string, string> = {
   'Colombia': '🇨🇴',
@@ -104,6 +105,12 @@ export const InternationalTab = () => {
 
   return (
     <div className="space-y-4">
+      {/* World map */}
+      <CompetitionMap
+        title="Mapa de Competencias Internacionales"
+        description="Países visitados en competencias oficiales"
+        height={300}
+      />
       {/* Stats header */}
       {competitions.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
