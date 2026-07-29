@@ -1,96 +1,80 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart } from 'recharts';
+import { BarChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { formatCurrency, getCurrencySymbol } from '@/utils/currency';
 import { useCurrency } from '@/hooks/useCurrency';
 
+const MONTHS = 6;
+const INCOME_TYPES = ['mensualidad', 'registration_fee', 'poliza_deportiva', 'anualidad'];
+const EXPENSE_TYPES = ['equipment', 'travel', 'coaching', 'other'];
+
 const RevenueChart: React.FC = () => {
   const { currency } = useCurrency();
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchFinancialData = async () => {
-      try {
-        const monthsToFetch = 6;
-        const monthlyData = [];
-        const currentDate = new Date();
+  const { data = [], isLoading } = useQuery({
+    queryKey: ['revenue-chart'],
+    queryFn: async () => {
+      const now = new Date();
 
-        for (let i = monthsToFetch - 1; i >= 0; i--) {
-          const monthStart = startOfMonth(subMonths(currentDate, i));
-          const monthEnd = endOfMonth(subMonths(currentDate, i));
-          const monthName = format(monthStart, 'MMM', { locale: es });
+      // Build date ranges for all 6 months
+      const ranges = Array.from({ length: MONTHS }, (_, i) => {
+        const month = subMonths(now, MONTHS - 1 - i);
+        return {
+          label: format(startOfMonth(month), 'MMM', { locale: es }),
+          start: startOfMonth(month).toISOString().split('T')[0],
+          end:   endOfMonth(month).toISOString().split('T')[0],
+        };
+      });
 
-          // Get revenue data (income types: mensualidad, registration_fee, poliza_deportiva, anualidad)
-          const { data: revenueTransactions, error: revenueError } = await supabase
-            .from('financial_transactions')
-            .select('amount')
-            .eq('payment_status', 'paid')
-            .in('transaction_type', ['mensualidad', 'registration_fee', 'poliza_deportiva', 'anualidad'])
-            .gte('transaction_date', monthStart.toISOString().split('T')[0])
-            .lte('transaction_date', monthEnd.toISOString().split('T')[0]);
+      // Fetch all transactions in one query covering the full 6-month window
+      const windowStart = ranges[0].start;
+      const windowEnd   = ranges[MONTHS - 1].end;
 
-          if (revenueError) throw revenueError;
+      const [incomeRes, expenseRes] = await Promise.all([
+        supabase
+          .from('financial_transactions')
+          .select('amount, transaction_date')
+          .eq('payment_status', 'paid')
+          .in('transaction_type', INCOME_TYPES)
+          .gte('transaction_date', windowStart)
+          .lte('transaction_date', windowEnd),
+        supabase
+          .from('financial_transactions')
+          .select('amount, transaction_date')
+          .eq('payment_status', 'paid')
+          .in('transaction_type', EXPENSE_TYPES)
+          .gte('transaction_date', windowStart)
+          .lte('transaction_date', windowEnd),
+      ]);
 
-          // Get expense data (expense types: equipment, travel, coaching, other)
-          const { data: expenseTransactions, error: expenseError } = await supabase
-            .from('financial_transactions')
-            .select('amount')
-            .eq('payment_status', 'paid')
-            .in('transaction_type', ['equipment', 'travel', 'coaching', 'other'])
-            .gte('transaction_date', monthStart.toISOString().split('T')[0])
-            .lte('transaction_date', monthEnd.toISOString().split('T')[0]);
+      // Group by month label
+      const incomeByMonth: Record<string, number> = {};
+      const expenseByMonth: Record<string, number> = {};
+      for (const r of ranges) { incomeByMonth[r.label] = 0; expenseByMonth[r.label] = 0; }
 
-          if (expenseError) throw expenseError;
-
-          // Calculate totals
-          const revenue = revenueTransactions?.reduce((sum, t) => sum + (Number(t.amount) || 0), 0) || 0;
-          const expenses = expenseTransactions?.reduce((sum, t) => sum + (Number(t.amount) || 0), 0) || 0;
-
-          // Set a reasonable target (10% above current revenue or minimum 30000)
-          const target = Math.max(revenue * 1.1, 30000);
-
-          monthlyData.push({
-            month: monthName,
-            revenue: Math.round(revenue),
-            expenses: Math.round(expenses),
-            target: Math.round(target)
-          });
-        }
-
-        setData(monthlyData);
-      } catch (error) {
-        console.error('Error fetching financial data:', error);
-        // Fallback to sample data if real data fails
-        setData([
-          { month: 'Ene', revenue: 0, target: 30000, expenses: 0 },
-          { month: 'Feb', revenue: 0, target: 30000, expenses: 0 },
-          { month: 'Mar', revenue: 0, target: 30000, expenses: 0 },
-          { month: 'Abr', revenue: 0, target: 30000, expenses: 0 },
-          { month: 'May', revenue: 0, target: 30000, expenses: 0 },
-          { month: 'Jun', revenue: 0, target: 30000, expenses: 0 },
-        ]);
-      } finally {
-        setLoading(false);
+      for (const t of incomeRes.data ?? []) {
+        const label = format(new Date(t.transaction_date), 'MMM', { locale: es });
+        incomeByMonth[label] = (incomeByMonth[label] ?? 0) + Number(t.amount);
       }
-    };
+      for (const t of expenseRes.data ?? []) {
+        const label = format(new Date(t.transaction_date), 'MMM', { locale: es });
+        expenseByMonth[label] = (expenseByMonth[label] ?? 0) + Number(t.amount);
+      }
 
-    fetchFinancialData();
+      return ranges.map(({ label }) => {
+        const revenue  = Math.round(incomeByMonth[label]  ?? 0);
+        const expenses = Math.round(expenseByMonth[label] ?? 0);
+        return { month: label, revenue, expenses, target: Math.max(Math.round(revenue * 1.1), 30_000) };
+      });
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-    // Set up real-time subscription for financial transactions
-    const channel = supabase
-      .channel('financial-transactions-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'financial_transactions' }, fetchFinancialData)
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-  if (loading) {
+  if (isLoading) {
     return (
       <Card className="animate-slide-up">
         <CardHeader>
@@ -99,7 +83,7 @@ const RevenueChart: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="h-80 flex items-center justify-center">
-            <div className="animate-pulse">Cargando gráfico...</div>
+            <div className="animate-pulse text-muted-foreground">Cargando gráfico...</div>
           </div>
         </CardContent>
       </Card>
@@ -111,14 +95,13 @@ const RevenueChart: React.FC = () => {
       <CardHeader>
         <CardTitle>Análisis Financiero</CardTitle>
         <CardDescription>
-          {data.length > 0 
+          {data.length > 0
             ? `Ingresos vs Objetivos y Gastos (últimos ${data.length} meses)`
-            : 'No hay datos financieros disponibles'
-          }
+            : 'No hay datos financieros disponibles'}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {data.length === 0 ? (
+        {data.every(d => d.revenue === 0 && d.expenses === 0) ? (
           <div className="h-80 flex items-center justify-center text-muted-foreground">
             No hay transacciones financieras registradas
           </div>
@@ -127,49 +110,23 @@ const RevenueChart: React.FC = () => {
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={data}>
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                <XAxis 
-                  dataKey="month" 
-                  axisLine={false}
-                  tickLine={false}
-                  className="text-xs"
+                <XAxis dataKey="month" axisLine={false} tickLine={false} className="text-xs" />
+                <YAxis
+                  axisLine={false} tickLine={false} className="text-xs"
+                  tickFormatter={v => `${getCurrencySymbol(currency)}${(v / 1000).toFixed(0)}K`}
                 />
-                <YAxis 
-                  axisLine={false}
-                  tickLine={false}
-                  className="text-xs"
-                  tickFormatter={(value) => `${getCurrencySymbol(currency)}${(value / 1000).toFixed(0)}K`}
-                />
-                <Tooltip 
+                <Tooltip
                   formatter={(value: number, name: string) => [
                     formatCurrency(value, currency),
-                    name === 'revenue' ? 'Ingresos' : name === 'target' ? 'Objetivo' : 'Gastos'
+                    name === 'revenue' ? 'Ingresos' : name === 'target' ? 'Objetivo' : 'Gastos',
                   ]}
                   labelStyle={{ color: 'hsl(var(--foreground))' }}
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
                 />
-                <Bar 
-                  dataKey="revenue" 
-                  fill="hsl(var(--dashboard-primary))" 
-                  radius={[4, 4, 0, 0]}
-                  opacity={0.8}
-                />
-                <Bar 
-                  dataKey="expenses" 
-                  fill="hsl(var(--dashboard-danger))" 
-                  radius={[4, 4, 0, 0]}
-                  opacity={0.6}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="target" 
-                  stroke="hsl(var(--dashboard-accent))" 
-                  strokeWidth={3}
-                  dot={{ fill: 'hsl(var(--dashboard-accent))', strokeWidth: 2, r: 4 }}
-                />
+                <Bar dataKey="revenue"  fill="hsl(var(--dashboard-primary))"   radius={[4, 4, 0, 0]} opacity={0.8} />
+                <Bar dataKey="expenses" fill="hsl(var(--dashboard-danger))"    radius={[4, 4, 0, 0]} opacity={0.6} />
+                <Line type="monotone" dataKey="target" stroke="hsl(var(--dashboard-accent))" strokeWidth={3}
+                  dot={{ fill: 'hsl(var(--dashboard-accent))', strokeWidth: 2, r: 4 }} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>

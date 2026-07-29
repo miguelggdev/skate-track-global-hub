@@ -1,171 +1,80 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis } from 'recharts';
 import { Users, BarChart3 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { format, startOfWeek, endOfWeek } from 'date-fns';
+
+const CATEGORY_MAP: Record<string, { label: string; color: string; ageRange: string; level: string }> = {
+  escuela:    { label: 'Escuela',    color: 'hsl(var(--chart-1))', ageRange: '6-12 años',  level: 'Iniciación' },
+  menores:    { label: 'Menores',    color: 'hsl(var(--chart-2))', ageRange: '13-15 años', level: 'Intermedio' },
+  transicion: { label: 'Transición', color: 'hsl(var(--chart-3))', ageRange: '16-17 años', level: 'Avanzado' },
+  juvenil:    { label: 'Juvenil',    color: 'hsl(var(--chart-4))', ageRange: '13-17 años', level: 'Competitivo' },
+  mayores:    { label: 'Mayores',    color: 'hsl(var(--chart-5))', ageRange: '18+ años',   level: 'Profesional' },
+};
+
+const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 const AthleteDistribution: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [categoryData, setCategoryData] = useState([
-    { 
-      name: 'School (6-12)', 
-      shortName: 'Escuela',
-      value: 0, 
-      color: 'hsl(var(--chart-1))',
-      ageRange: '6-12 años',
-      level: 'Iniciación'
+
+  const { data: categoryData = [] } = useQuery({
+    queryKey: ['athlete-distribution'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('athletes')
+        .select('category')
+        .eq('status', 'active');
+      if (error) throw error;
+
+      const counts: Record<string, number> = {};
+      for (const a of data ?? []) counts[a.category] = (counts[a.category] ?? 0) + 1;
+
+      return Object.entries(CATEGORY_MAP).map(([key, meta]) => ({
+        name:      key,
+        shortName: meta.label,
+        value:     counts[key] ?? 0,
+        color:     meta.color,
+        ageRange:  meta.ageRange,
+        level:     meta.level,
+      }));
     },
-    { 
-      name: 'Minors (13-15)', 
-      shortName: 'Menores',
-      value: 0, 
-      color: 'hsl(var(--chart-2))',
-      ageRange: '13-15 años',
-      level: 'Intermedio'
-    },
-    { 
-      name: 'Transition (16-17)', 
-      shortName: 'Transición',
-      value: 0, 
-      color: 'hsl(var(--chart-3))',
-      ageRange: '16-17 años',
-      level: 'Avanzado'
-    },
-    { 
-      name: 'Juniors (18-20)', 
-      shortName: 'Juvenil',
-      value: 0, 
-      color: 'hsl(var(--chart-4))',
-      ageRange: '13-17 años',
-      level: 'Competitivo'
-    },
-    { 
-      name: 'Seniors (21+)', 
-      shortName: 'Mayores',
-      value: 0, 
-      color: 'hsl(var(--chart-5))',
-      ageRange: '18+ años',
-      level: 'Profesional'
-    }
-  ]);
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const [attendanceData, setAttendanceData] = useState([
-    { day: 'Lun', attendance: 0 },
-    { day: 'Mar', attendance: 0 },
-    { day: 'Mié', attendance: 0 },
-    { day: 'Jue', attendance: 0 },
-    { day: 'Vie', attendance: 0 },
-    { day: 'Sáb', attendance: 0 },
-    { day: 'Dom', attendance: 0 }
-  ]);
+  const { data: attendanceData = [] } = useQuery({
+    queryKey: ['weekly-attendance-chart'],
+    queryFn: async () => {
+      const now   = new Date();
+      const start = startOfWeek(now, { weekStartsOn: 1 });
+      const end   = endOfWeek(now,   { weekStartsOn: 1 });
 
-  // Fetch real athlete distribution data
-  useEffect(() => {
-    const fetchAthleteDistribution = async () => {
-      try {
-        const { data: athletes, error } = await supabase
-          .from('athletes')
-          .select('category')
-          .eq('status', 'active');
+      const { data: sessions, error } = await supabase
+        .from('training_sessions')
+        .select(`id, date, training_attendance(id, attended)`)
+        .gte('date', format(start, 'yyyy-MM-dd'))
+        .lte('date', format(end,   'yyyy-MM-dd'));
 
-        if (error) throw error;
+      if (error) throw error;
 
-        // Count athletes by category
-        const counts = athletes.reduce((acc, athlete) => {
-          acc[athlete.category] = (acc[athlete.category] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>);
-
-        // Update category data with real counts
-        setCategoryData(prev => prev.map(category => {
-          let dbKey = '';
-          switch (category.shortName) {
-            case 'Escuela': dbKey = 'escuela'; break;
-            case 'Menores': dbKey = 'menores'; break;
-            case 'Transición': dbKey = 'transicion'; break;
-            case 'Juvenil': dbKey = 'juvenil'; break;
-            case 'Mayores': dbKey = 'mayores'; break;
-          }
-          return { ...category, value: counts[dbKey] || 0 };
-        }));
-      } catch (error) {
-        console.error('Error fetching athlete distribution:', error);
+      const byDay: Record<string, { total: number; attended: number }> = {};
+      for (const s of sessions ?? []) {
+        const dayName = DAY_NAMES[new Date(s.date).getDay()];
+        if (!byDay[dayName]) byDay[dayName] = { total: 0, attended: 0 };
+        const att = (s as any).training_attendance as { attended: boolean }[];
+        byDay[dayName].total    += att.length;
+        byDay[dayName].attended += att.filter(a => a.attended).length;
       }
-    };
 
-    // Fetch training attendance data for current week
-    const fetchAttendanceData = async () => {
-      try {
-        const today = new Date();
-        const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 1));
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 6);
-
-        const { data: sessions, error } = await supabase
-          .from('training_sessions')
-          .select(`
-            id,
-            date,
-            training_attendance(
-              id,
-              attended
-            )
-          `)
-          .gte('date', startOfWeek.toISOString().split('T')[0])
-          .lte('date', endOfWeek.toISOString().split('T')[0]);
-
-        if (error) throw error;
-
-        // Calculate attendance by day
-        const dayAttendance = {};
-        const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-        
-        sessions?.forEach(session => {
-          const sessionDate = new Date(session.date);
-          const dayIndex = sessionDate.getDay();
-          const dayName = dayNames[dayIndex];
-          
-          if (!dayAttendance[dayName]) {
-            dayAttendance[dayName] = { total: 0, attended: 0 };
-          }
-          
-          dayAttendance[dayName].total += session.training_attendance.length;
-          dayAttendance[dayName].attended += session.training_attendance.filter(a => a.attended).length;
-        });
-
-        // Update attendance data
-        setAttendanceData(prev => prev.map(day => {
-          const dayData = dayAttendance[day.day];
-          const attendance = dayData && dayData.total > 0 
-            ? Math.round((dayData.attended / dayData.total) * 100)
-            : 0;
-          return { ...day, attendance };
-        }));
-      } catch (error) {
-        console.error('Error fetching attendance data:', error);
-      }
-    };
-
-    fetchAthleteDistribution();
-    fetchAttendanceData();
-
-    // Set up real-time subscriptions
-    const athletesChannel = supabase
-      .channel('athletes-distribution-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'athletes' }, fetchAthleteDistribution)
-      .subscribe();
-
-    const attendanceChannel = supabase
-      .channel('attendance-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'training_attendance' }, fetchAttendanceData)
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(athletesChannel);
-      supabase.removeChannel(attendanceChannel);
-    };
-  }, []);
+      return ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => {
+        const d = byDay[day];
+        return { day, attendance: d && d.total > 0 ? Math.round((d.attended / d.total) * 100) : 0 };
+      });
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -181,48 +90,24 @@ const AthleteDistribution: React.FC = () => {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {categoryData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={entry.color}
-                      className="cursor-pointer hover:opacity-80 transition-opacity"
-                      onClick={() => setSelectedCategory(selectedCategory === entry.name ? null : entry.name)}
-                    />
+                <Pie data={categoryData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
+                  {categoryData.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} className="cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => setSelectedCategory(selectedCategory === entry.name ? null : entry.name)} />
                   ))}
                 </Pie>
-                <Tooltip 
-                  formatter={(value: number) => [`${value} deportistas`, 'Total']}
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
-                />
+                <Tooltip formatter={(v: number) => [`${v} deportistas`, 'Total']}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
           <div className="space-y-3 mt-4">
-            {categoryData.map((item) => (
-              <Button
-                key={item.name}
-                variant={selectedCategory === item.name ? "default" : "ghost"}
+            {categoryData.map(item => (
+              <Button key={item.name} variant={selectedCategory === item.name ? 'default' : 'ghost'}
                 className="w-full justify-start p-3 h-auto"
-                onClick={() => setSelectedCategory(selectedCategory === item.name ? null : item.name)}
-              >
+                onClick={() => setSelectedCategory(selectedCategory === item.name ? null : item.name)}>
                 <div className="flex items-center gap-3 w-full">
-                  <div 
-                    className="w-4 h-4 rounded-full flex-shrink-0" 
-                    style={{ backgroundColor: item.color }}
-                  />
+                  <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
                   <div className="flex-1 text-left">
                     <div className="font-medium">{item.shortName}</div>
                     <div className="text-xs text-muted-foreground">{item.ageRange}</div>
@@ -244,39 +129,19 @@ const AthleteDistribution: React.FC = () => {
             <BarChart3 className="h-5 w-5 text-dashboard-secondary" />
             Asistencia Semanal
           </CardTitle>
-          <CardDescription>Porcentaje de asistencia por día con comparación semanal</CardDescription>
+          <CardDescription>Porcentaje de asistencia por día esta semana</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={attendanceData}>
-                <XAxis 
-                  dataKey="day" 
-                  axisLine={false}
-                  tickLine={false}
-                  className="text-xs"
-                />
-                <YAxis 
-                  axisLine={false}
-                  tickLine={false}
-                  className="text-xs"
-                  domain={[0, 100]}
-                  tickFormatter={(value) => `${value}%`}
-                />
-                <Tooltip 
-                  formatter={(value: number) => [`${value}%`, 'Asistencia']}
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
-                />
-                <Bar 
-                  dataKey="attendance" 
-                  fill="hsl(var(--dashboard-secondary))"
-                  radius={[4, 4, 0, 0]}
-                  className="cursor-pointer hover:opacity-80 transition-opacity"
-                />
+                <XAxis dataKey="day" axisLine={false} tickLine={false} className="text-xs" />
+                <YAxis axisLine={false} tickLine={false} className="text-xs" domain={[0, 100]}
+                  tickFormatter={v => `${v}%`} />
+                <Tooltip formatter={(v: number) => [`${v}%`, 'Asistencia']}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
+                <Bar dataKey="attendance" fill="hsl(var(--dashboard-secondary))" radius={[4, 4, 0, 0]}
+                  className="cursor-pointer hover:opacity-80 transition-opacity" />
               </BarChart>
             </ResponsiveContainer>
           </div>
