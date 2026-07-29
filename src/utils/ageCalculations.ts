@@ -1,90 +1,64 @@
+// Re-exports de la nueva lógica de categorías FCP/World Skate
+export {
+  calcularEdadDeportiva,
+  obtenerCategoria,
+  calcularCategoria,
+  getWheelLimitMm,
+  getPremiadosCount,
+  getMedalType,
+  type CutoffSystem,
+  type CategoryResult,
+} from './calculateCategory';
+
+// ── Legacy exports (compatibilidad hacia atrás) ──────────────────────────────
+
+/** @deprecated Usar calcularEdadDeportiva() + obtenerCategoria() */
 export function calculateAge(dateOfBirth: Date): number {
   const today = new Date();
   const birthDate = new Date(dateOfBirth);
   let age = today.getFullYear() - birthDate.getFullYear();
   const monthDiff = today.getMonth() - birthDate.getMonth();
-  
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) age--;
   return age;
 }
 
+/** @deprecated Usar calcularCategoria() con sistema 'fcp' */
 export function getCategoryFromAge(age: number): string {
-  if (age >= 5 && age <= 6) return 'escuela';
-  if (age >= 7 && age <= 10) return 'menores';
-  if (age >= 11 && age <= 13) return 'transicion';
+  if (age <= 10) return 'menores';
+  if (age <= 13) return 'transicion';
   if (age === 14) return 'prejuvenil';
   if (age >= 15 && age <= 17) return 'juvenil';
-  if (age >= 18) return 'mayores';
-  
-  // Default fallback
-  return 'escuela';
+  if (age >= 18 && age < 35) return 'mayores';
+  if (age >= 35) return 'masters';
+  return 'menores';
 }
 
+/** @deprecated Usar obtenerCategoria() que retorna el objeto completo */
 export function getLevelFromCategoryAndAge(category: string, age: number): string {
-  switch (category) {
-    case 'escuela':
-      return 'escuela';
-      
-    case 'menores':
-      if (age === 7) return 'mini_infantil';
-      if (age === 9) return 'pre_infantil';
-      if (age === 10) return 'infantil';
-      return 'mini_infantil'; // default for age 8
-      
-    case 'transicion':
-      if (age === 11) return 'pre_infantil';
-      if (age === 12) return 'infantil';
-      if (age === 13) return 'junior';
-      return 'pre_infantil'; // default
-      
-    case 'prejuvenil':
-      return 'pre_juvenil';
-      
-    case 'juvenil':
-      if (age === 14) return 'prejuveniles';
-      if (age === 15) return 'juvenil_primer_ano';
-      if (age === 16) return 'juvenil_segundo_ano';
-      if (age === 17) return 'juvenil_tercer_ano';
-      return 'prejuveniles'; // default
-      
-    case 'mayores':
-      return 'mayores_unica';
-      
-    default:
-      return 'escuela';
+  if (category === 'juvenil') {
+    if (age === 15) return 'juvenil_primer_ano';
+    if (age === 16) return 'juvenil_segundo_ano';
+    if (age === 17) return 'juvenil_tercer_ano';
   }
+  return category;
 }
 
+/** @deprecated Usar obtenerCategoria().category */
 export function getCategoryDisplayName(category: string): string {
-  const displayNames: Record<string, string> = {
-    'escuela': 'Escuela',
-    'menores': 'Menores',
-    'transicion': 'Transición',
-    'prejuvenil': 'Pre-Juvenil',
-    'juvenil': 'Juvenil',
-    'mayores': 'Mayores'
+  const map: Record<string, string> = {
+    menores: 'Menores', transicion: 'Transición', prejuvenil: 'Prejuvenil',
+    juvenil: 'Juvenil', mayores: 'Mayores', masters: 'Masters',
   };
-  
-  return displayNames[category] || category;
+  return map[category] ?? category;
 }
 
+/** @deprecated Usar obtenerCategoria().category */
 export function getLevelDisplayName(level: string): string {
-  const displayNames: Record<string, string> = {
-    'escuela': 'Escuela',
-    'mini_infantil': 'Mini Infantil',
-    'pre_infantil': 'Pre-Infantil',
-    'infantil': 'Infantil',
-    'junior': 'Junior',
-    'pre_juvenil': 'Pre-Juvenil',
-    'prejuveniles': 'Pre-Juveniles',
-    'juvenil_primer_ano': 'Juvenil Primer Año',
-    'juvenil_segundo_ano': 'Juvenil Segundo Año',
-    'juvenil_tercer_ano': 'Juvenil Tercer Año',
-    'mayores_unica': 'Mayores - Única'
+  const map: Record<string, string> = {
+    juvenil_primer_ano: 'Juvenil 1er año',
+    juvenil_segundo_ano: 'Juvenil 2do año',
+    juvenil_tercer_ano: 'Juvenil 3er año',
+    mayores_unica: 'Mayores',
   };
-  
-  return displayNames[level] || level;
+  return map[level] ?? level;
 }

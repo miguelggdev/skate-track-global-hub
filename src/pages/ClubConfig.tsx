@@ -9,7 +9,8 @@ import SystemSettings from '@/components/club-config/SystemSettings';
 import PaymentSettings from '@/components/club-config/PaymentSettings';
 import TrainingSettings from '@/components/club-config/TrainingSettings';
 import NotificationSettings from '@/components/club-config/NotificationSettings';
-import { Settings, Building2, CreditCard, Dumbbell, Bell, ShieldAlert } from 'lucide-react';
+import { AwardSchemeSettings } from '@/components/club-config/AwardSchemeSettings';
+import { Settings, Building2, CreditCard, Dumbbell, Bell, ShieldAlert, Trophy } from 'lucide-react';
 
 export interface ClubSettings {
   id: string;
@@ -199,7 +200,7 @@ const ClubConfig = () => {
         </div>
 
         <Tabs defaultValue="club-info" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="club-info" className="flex items-center gap-2">
               <Building2 className="h-4 w-4" />
               Club
@@ -219,6 +220,10 @@ const ClubConfig = () => {
             <TabsTrigger value="notifications" className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
               Notificaciones
+            </TabsTrigger>
+            <TabsTrigger value="awards" className="flex items-center gap-2">
+              <Trophy className="h-4 w-4" />
+              Premiación
             </TabsTrigger>
           </TabsList>
 
@@ -251,10 +256,14 @@ const ClubConfig = () => {
           </TabsContent>
 
           <TabsContent value="notifications" className="space-y-6">
-            <NotificationSettings 
+            <NotificationSettings
               settings={getSettingsByCategory('notifications')}
               onUpdate={handleSystemSettingsUpdate}
             />
+          </TabsContent>
+
+          <TabsContent value="awards" className="space-y-6">
+            <AwardSchemeSettings />
           </TabsContent>
         </Tabs>
       </div>

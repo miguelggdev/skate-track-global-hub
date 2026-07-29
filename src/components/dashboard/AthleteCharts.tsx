@@ -5,6 +5,7 @@ import {
   ResponsiveContainer, Tooltip,
 } from 'recharts';
 import { Trophy, Clock } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const TT = {
   contentStyle: {
@@ -33,16 +34,30 @@ interface NextComp {
 
 function useNextCompetition(athleteId: string | null): NextComp | null {
   const [comp, setComp] = useState<NextComp | null>(null);
+
   useEffect(() => {
     if (!athleteId) return;
-    // We set a static default since we don't know which competitions the athlete is enrolled in
-    setComp({
-      name: 'Campeonato Regional',
-      date: '2026-08-15',
-      location: 'Bogotá, Colombia',
-      daysLeft: Math.max(0, Math.ceil((new Date('2026-08-15').getTime() - Date.now()) / 86400000))
-    });
+    const today = new Date().toISOString().split('T')[0];
+
+    supabase
+      .from('competitions')
+      .select('name, location, start_date')
+      .gt('start_date', today)
+      .order('start_date')
+      .limit(1)
+      .then(({ data }) => {
+        if (data?.[0]) {
+          const c = data[0];
+          setComp({
+            name: c.name,
+            date: c.start_date,
+            location: c.location ?? 'Colombia',
+            daysLeft: Math.max(0, Math.ceil((new Date(c.start_date).getTime() - Date.now()) / 86400000)),
+          });
+        }
+      });
   }, [athleteId]);
+
   return comp;
 }
 
