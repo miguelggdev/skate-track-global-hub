@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { FileText, Download, Loader2, Eye } from 'lucide-react';
+import { FileText, Download, Loader2, Eye, PenLine, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -110,6 +110,36 @@ export function PermissionLetterGenerator() {
     }
   }, [selectedAthlete, form]);
 
+  // Load stored signature for the selected athlete
+  const { data: athleteSignature } = useQuery({
+    queryKey: ['athlete-signature-doc', watchAthleteId],
+    queryFn: async () => {
+      if (!watchAthleteId) return null;
+      const { data } = await supabase
+        .from('documents')
+        .select('file_url')
+        .eq('athlete_id', watchAthleteId)
+        .eq('document_type', 'firma_digital')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!data?.file_url) return null;
+      // Fetch as data URL so jsPDF can embed it directly
+      try {
+        const res = await fetch(data.file_url);
+        const blob = await res.blob();
+        return await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!watchAthleteId,
+  });
+
   const handleGenerate = async (values: FormValues) => {
     if (!selectedAthlete || !selectedComp) return;
     setGenerating(true);
@@ -129,6 +159,7 @@ export function PermissionLetterGenerator() {
         endDate: selectedComp.end_date ?? '',
         issueDate: values.issue_date,
         additionalNotes: values.additional_notes ?? '',
+        signatureDataUrl: athleteSignature ?? undefined,
       });
 
       await saveDoc.mutateAsync({
@@ -286,6 +317,20 @@ export function PermissionLetterGenerator() {
                   <FormMessage />
                 </FormItem>
               )} />
+
+              {/* Signature status indicator */}
+              {watchAthleteId && (
+                <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-md border ${
+                  athleteSignature
+                    ? 'bg-emerald-500/10 border-emerald-300 text-emerald-700'
+                    : 'bg-amber-500/10 border-amber-300 text-amber-700'
+                }`}>
+                  {athleteSignature
+                    ? <><CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" /> Firma digital del atleta disponible — se incluirá en el PDF</>
+                    : <><PenLine className="h-3.5 w-3.5 flex-shrink-0" /> Sin firma digital — el atleta puede capturarla en su pestaña Documentos</>
+                  }
+                </div>
+              )}
 
               <div className="flex gap-2 pt-2">
                 <Button

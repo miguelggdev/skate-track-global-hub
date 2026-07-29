@@ -18,6 +18,7 @@ export interface PermissionLetterData {
   endDate: string;
   issueDate: string;
   additionalNotes: string;
+  signatureDataUrl?: string;
 }
 
 export interface AthleteCardData {
@@ -128,7 +129,19 @@ export function generatePermissionLetterPDF(data: PermissionLetterData): void {
 
   y += 4;
   doc.text('Cordialmente,', margin, y);
-  y += 20;
+  y += 6;
+
+  // Embedded signature image (if provided)
+  if (data.signatureDataUrl) {
+    try {
+      doc.addImage(data.signatureDataUrl, 'PNG', margin, y, 55, 18);
+      y += 20;
+    } catch {
+      y += 14;
+    }
+  } else {
+    y += 14;
+  }
 
   // Signature line
   doc.setDrawColor(...ORANGE);

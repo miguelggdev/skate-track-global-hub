@@ -13,8 +13,8 @@ import {
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  FileText, Upload, Download, Eye, AlertTriangle, CheckCircle,
-  Clock, XCircle, Plus, Loader2
+  FileText, Upload, Eye, AlertTriangle, CheckCircle,
+  Clock, XCircle, Plus, Loader2, PenLine, RefreshCw,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentAthlete } from '@/hooks/useCurrentAthlete';
@@ -22,6 +22,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { format, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { SignaturePad } from '@/components/signature/SignaturePad';
 
 const DOCUMENT_TYPES = [
   { value: 'documento_identidad', label: 'Documento de Identidad (TI/CC/Pasaporte)' },
@@ -83,6 +84,8 @@ export const DocumentsTab = () => {
   const [docType, setDocType] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [signaturePadOpen, setSignaturePadOpen] = useState(false);
+  const [savingSignature, setSavingSignature] = useState(false);
 
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ['athlete-documents', athlete?.id],
@@ -98,6 +101,67 @@ export const DocumentsTab = () => {
     },
     enabled: !!athlete?.id,
   });
+
+  const { data: storedSignature } = useQuery({
+    queryKey: ['athlete-signature', athlete?.id],
+    queryFn: async () => {
+      if (!athlete?.id) return null;
+      const { data } = await supabase
+        .from('documents')
+        .select('id, file_url, updated_at')
+        .eq('athlete_id', athlete.id)
+        .eq('document_type', 'firma_digital')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!athlete?.id,
+  });
+
+  const handleSaveSignature = async (dataUrl: string) => {
+    if (!athlete?.id || !user?.id) return;
+    setSavingSignature(true);
+    try {
+      // Convert base64 data URL to Blob
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const file = new File([blob], 'firma.png', { type: 'image/png' });
+      const path = `${user.id}/firma_digital/${athlete.id}_${Date.now()}.png`;
+
+      const { error: storageError } = await supabase.storage
+        .from('documents')
+        .upload(path, file, { upsert: false });
+      if (storageError) throw storageError;
+
+      const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(path);
+
+      if (storedSignature?.id) {
+        await supabase.from('documents').update({
+          file_url: publicUrl,
+          updated_at: new Date().toISOString(),
+        }).eq('id', storedSignature.id);
+      } else {
+        await supabase.from('documents').insert({
+          athlete_id: athlete.id,
+          document_type: 'firma_digital',
+          file_url: publicUrl,
+          file_name: 'firma_digital.png',
+          file_size_kb: Math.round(file.size / 1024),
+          doc_status: 'vigente',
+        });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['athlete-signature', athlete.id] });
+      queryClient.invalidateQueries({ queryKey: ['athlete-documents', athlete.id] });
+      toast({ title: 'Firma guardada correctamente' });
+      setSignaturePadOpen(false);
+    } catch (err: any) {
+      toast({ title: 'Error al guardar firma', description: err.message, variant: 'destructive' });
+    } finally {
+      setSavingSignature(false);
+    }
+  };
 
   const expiredCount = documents.filter(d => {
     const expiry = d.expiry_date ? new Date(d.expiry_date) : null;
@@ -167,6 +231,55 @@ export const DocumentsTab = () => {
 
   return (
     <div className="space-y-4">
+      {/* ── Firma digital ── */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <PenLine className="h-4 w-4 text-orange-500" />
+              Firma Digital
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setSignaturePadOpen(true)}
+            >
+              {storedSignature ? (
+                <><RefreshCw className="h-3.5 w-3.5" />Actualizar firma</>
+              ) : (
+                <><PenLine className="h-3.5 w-3.5" />Capturar firma</>
+              )}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {storedSignature ? (
+            <div className="flex flex-col items-start gap-2">
+              <img
+                src={storedSignature.file_url}
+                alt="Firma digital"
+                className="h-24 max-w-xs rounded border border-border bg-white object-contain p-2"
+              />
+              <p className="text-xs text-muted-foreground">
+                Última actualización: {format(new Date(storedSignature.updated_at || ''), 'dd/MM/yyyy HH:mm', { locale: es })}
+              </p>
+              <p className="text-xs text-muted-foreground/60">
+                Esta firma se incluirá automáticamente en las cartas de permiso generadas.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-center gap-2">
+              <PenLine className="h-10 w-10 text-muted-foreground/25" />
+              <p className="text-sm text-muted-foreground">Sin firma registrada</p>
+              <p className="text-xs text-muted-foreground/60">
+                Captura una firma para agregarla automáticamente a los documentos generados.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {(expiredCount > 0 || soonCount > 0) && (
         <Alert className="border-yellow-400 bg-yellow-50 dark:bg-yellow-950/20">
           <AlertTriangle className="h-4 w-4 text-yellow-600" />
@@ -250,6 +363,15 @@ export const DocumentsTab = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Signature Pad */}
+      <SignaturePad
+        open={signaturePadOpen}
+        onClose={() => setSignaturePadOpen(false)}
+        onConfirm={handleSaveSignature}
+        loading={savingSignature}
+        title="Capturar firma digital"
+      />
 
       {/* Upload Dialog */}
       <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
