@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Home, Users, Calendar, Trophy, DollarSign, Settings, Cog, LogOut, Timer, FileText, Package
+  Home, Users, Calendar, Trophy, DollarSign, Settings, Cog, LogOut, Timer, FileText, Package, ClipboardList
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -70,6 +70,7 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
       { title: 'Tiempos', icon: Timer, path: '/tiempos' },
       { title: 'Documentos', icon: FileText, path: '/documentos' },
       { title: 'Equipamiento', icon: Package, path: '/equipamiento' },
+      { title: 'Evaluaciones', icon: ClipboardList, path: '/evaluaciones' },
       { title: t('menu.competitions'), icon: Trophy, path: '/competitions' },
       { title: t('menu.finance'), icon: DollarSign, path: '/finance' },
       { title: t('menu.club_config'), icon: Cog, path: '/club-config' },
@@ -108,10 +109,10 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
 
     const dashboardTitle = t('menu.dashboard');
     const allowedByRole: Record<string, string[]> = {
-      admin:    [dashboardTitle, t('menu.athletes'), t('menu.training'), 'Tiempos', 'Documentos', 'Equipamiento', t('menu.competitions'), t('menu.finance'), t('menu.club_config'), t('menu.settings')],
-      coach:    [dashboardTitle, t('menu.athletes'), t('menu.training'), 'Tiempos', 'Documentos', 'Equipamiento', t('menu.competitions'), t('menu.settings')],
+      admin:    [dashboardTitle, t('menu.athletes'), t('menu.training'), 'Tiempos', 'Documentos', 'Equipamiento', 'Evaluaciones', t('menu.competitions'), t('menu.finance'), t('menu.club_config'), t('menu.settings')],
+      coach:    [dashboardTitle, t('menu.athletes'), t('menu.training'), 'Tiempos', 'Documentos', 'Equipamiento', 'Evaluaciones', t('menu.competitions'), t('menu.settings')],
       delegate: [dashboardTitle, t('menu.competitions'), t('menu.settings')],
-      leader:   [dashboardTitle, t('menu.athletes'), t('menu.training'), 'Tiempos', 'Documentos', 'Equipamiento', t('menu.competitions'), t('menu.finance'), t('menu.club_config'), t('menu.settings')],
+      leader:   [dashboardTitle, t('menu.athletes'), t('menu.training'), 'Tiempos', 'Documentos', 'Equipamiento', 'Evaluaciones', t('menu.competitions'), t('menu.finance'), t('menu.club_config'), t('menu.settings')],
       finance:  [dashboardTitle, t('menu.finance'), t('menu.settings')],
     };
     const titles = role ? allowedByRole[role] : roleItems.map(i => i.title);
