@@ -1,5 +1,5 @@
 # SPEC-005 — Perfil Completo del Deportista
-**Status:** `draft`
+**Status:** `done`
 **Agente:** AG-CLAUDE-FRONTEND
 **Sprint:** 01
 **Prioridad:** ALTA

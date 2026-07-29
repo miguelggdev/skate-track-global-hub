@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Home, Users, Calendar, Trophy, DollarSign, Settings, Cog, LogOut
+  Home, Users, Calendar, Trophy, DollarSign, Settings, Cog, LogOut, Timer
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -9,6 +9,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useTranslation } from '@/hooks/useTranslation';
 import TopNavigation from './TopNavigation';
+import { BottomNav } from './BottomNav';
+import { CommandPalette } from '@/components/ui/CommandPalette';
 import { cn } from '@/lib/utils';
 
 interface DashboardLayoutProps {
@@ -33,6 +35,18 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
   const { profile, loading: profileLoading } = useUserProfile();
   const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const [cmdOpen, setCmdOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setCmdOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleLogout = async () => {
     await signOut();
@@ -53,6 +67,7 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
       { title: t('menu.dashboard'), icon: Home, path: '/' },
       { title: t('menu.athletes'), icon: Users, path: '/athletes' },
       { title: t('menu.training'), icon: Calendar, path: '/training' },
+      { title: 'Tiempos', icon: Timer, path: '/tiempos' },
       { title: t('menu.competitions'), icon: Trophy, path: '/competitions' },
       { title: t('menu.finance'), icon: DollarSign, path: '/finance' },
       { title: t('menu.club_config'), icon: Cog, path: '/club-config' },
@@ -91,10 +106,10 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
 
     const dashboardTitle = t('menu.dashboard');
     const allowedByRole: Record<string, string[]> = {
-      admin:    [dashboardTitle, t('menu.athletes'), t('menu.training'), t('menu.competitions'), t('menu.finance'), t('menu.club_config'), t('menu.settings')],
-      coach:    [dashboardTitle, t('menu.athletes'), t('menu.training'), t('menu.competitions'), t('menu.settings')],
+      admin:    [dashboardTitle, t('menu.athletes'), t('menu.training'), 'Tiempos', t('menu.competitions'), t('menu.finance'), t('menu.club_config'), t('menu.settings')],
+      coach:    [dashboardTitle, t('menu.athletes'), t('menu.training'), 'Tiempos', t('menu.competitions'), t('menu.settings')],
       delegate: [dashboardTitle, t('menu.competitions'), t('menu.settings')],
-      leader:   [dashboardTitle, t('menu.athletes'), t('menu.training'), t('menu.competitions'), t('menu.finance'), t('menu.club_config'), t('menu.settings')],
+      leader:   [dashboardTitle, t('menu.athletes'), t('menu.training'), 'Tiempos', t('menu.competitions'), t('menu.finance'), t('menu.club_config'), t('menu.settings')],
       finance:  [dashboardTitle, t('menu.finance'), t('menu.settings')],
     };
     const titles = role ? allowedByRole[role] : roleItems.map(i => i.title);
@@ -117,6 +132,8 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
   const navigationItems = getVisibleNavigationItems();
 
   return (
+    <>
+    <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Mobile overlay */}
       {sidebarOpen && (
@@ -203,11 +220,13 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
           userEmail={user?.email ?? undefined}
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
         />
-        <main className="flex-1 overflow-auto p-4 lg:p-6 pt-20 lg:pt-20">
+        <main className="flex-1 overflow-auto p-4 lg:p-6 pt-20 lg:pt-20 pb-20 lg:pb-6">
           {children}
         </main>
       </div>
+      <BottomNav role={profile?.role} />
     </div>
+    </>
   );
 };
 

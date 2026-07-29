@@ -34,6 +34,7 @@ import DelegateCompetitions from "./pages/DelegateCompetitions";
 import DelegatePayments from "./pages/DelegatePayments";
 import DelegateTraining from "./pages/DelegateTraining";
 import DelegateReports from "./pages/DelegateReports";
+import Tiempos from "./pages/Tiempos";
 
 const queryClient = new QueryClient();
 
@@ -120,6 +121,7 @@ const App = () => (
           defaultTheme="dark"
           enableSystem={false}
           disableTransitionOnChange={false}
+          storageKey="skate-theme"
         >
           <TooltipProvider>
             <Toaster />
@@ -147,8 +149,16 @@ const App = () => (
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="/training/calendar" 
+          <Route
+            path="/tiempos"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'coach', 'leader']}>
+                <Tiempos />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/training/calendar"
             element={
               <ProtectedRoute allowedRoles={['admin', 'coach', 'athlete', 'leader']}>
                 <TrainingCalendar />

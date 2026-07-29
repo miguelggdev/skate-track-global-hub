@@ -1,5 +1,5 @@
 # SPEC-007 — Registro de Tiempos y Pruebas
-**Status:** `draft`
+**Status:** `done`
 **Agente:** AG-CLAUDE-FRONTEND
 **Sprint:** 01
 **Prioridad:** ALTA

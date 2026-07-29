@@ -43,6 +43,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, User } from 'lucide-react';
 import { Athlete } from '@/hooks/useAthletes';
 import { PhotoUpload } from '@/components/users/PhotoUpload';
+import { AthleteWheelManager } from './AthleteWheelManager';
 
 // Form validation schema
 const editAthleteSchema = z.object({
@@ -101,9 +102,25 @@ const editAthleteSchema = z.object({
   start_date: z.string().optional(),
   league_date: z.string().optional(),
   federation_date: z.string().optional(),
+  registration_number: z.string().optional(),
+  registration_type: z.enum(['ligado', 'federado', 'escuela', 'nuevo']).optional(),
   is_league: z.boolean().optional(),
   is_federated: z.boolean().optional(),
   previous_club: z.string().optional(),
+  // Medical extra
+  eps: z.string().optional(),
+  accident_insurance: z.string().optional(),
+  fractures: z.string().optional(),
+  physical_limitations: z.string().optional(),
+  lycra_size: z.string().optional(),
+  // Deportivo
+  specialty: z.enum(['fondista', 'velocista', 'omnium']).optional().or(z.literal('')),
+  personal_phone: z.string().optional(),
+  // Ubicación
+  city_of_birth: z.string().optional(),
+  neighborhood: z.string().optional(),
+  nationality: z.string().optional(),
+  country: z.string().optional(),
 });
 
 type EditAthleteFormData = z.infer<typeof editAthleteSchema>;
@@ -181,9 +198,25 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
       start_date: '',
       league_date: '',
       federation_date: '',
+      registration_type: 'escuela',
+      registration_number: '',
       is_league: false,
       is_federated: false,
       previous_club: '',
+      // Medical extra
+      eps: '',
+      accident_insurance: '',
+      fractures: '',
+      physical_limitations: '',
+      lycra_size: '',
+      // Deportivo
+      specialty: '' as any,
+      personal_phone: '',
+      // Ubicación
+      city_of_birth: '',
+      neighborhood: '',
+      nationality: 'colombiana',
+      country: 'Colombia',
     },
   });
 
@@ -249,9 +282,25 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
         start_date: athleteDetails.history?.start_date || '',
         league_date: athleteDetails.history?.league_date || '',
         federation_date: athleteDetails.history?.federation_date || '',
+        registration_type: (athleteDetails.registration_type as any) || 'escuela',
+        registration_number: athleteDetails.registration_number || '',
         is_league: athleteDetails.history?.is_league || false,
         is_federated: athleteDetails.history?.is_federated || false,
         previous_club: athleteDetails.history?.previous_club || '',
+        // Medical extra
+        eps: (athleteDetails as any).eps || '',
+        accident_insurance: (athleteDetails as any).accident_insurance || '',
+        fractures: (athleteDetails as any).fractures || '',
+        physical_limitations: (athleteDetails as any).physical_limitations || '',
+        lycra_size: (athleteDetails as any).lycra_size || '',
+        // Deportivo
+        specialty: (athleteDetails as any).specialty || '' as any,
+        personal_phone: (athleteDetails as any).personal_phone || '',
+        // Ubicación
+        city_of_birth: (athleteDetails as any).city_of_birth || '',
+        neighborhood: (athleteDetails as any).neighborhood || '',
+        nationality: (athleteDetails as any).nationality || 'colombiana',
+        country: (athleteDetails as any).country || 'Colombia',
       });
     }
   }, [athleteDetails, form]);
@@ -296,8 +345,24 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
           athlete_number: data.athlete_number,
           gender: data.gender,
           date_of_birth: data.date_of_birth || null,
+          registration_type: data.registration_type,
+          registration_number: data.registration_number || null,
+          // Medical extra (direct columns on athletes table)
+          eps: (data as any).eps || null,
+          accident_insurance: (data as any).accident_insurance || null,
+          fractures: (data as any).fractures || null,
+          physical_limitations: (data as any).physical_limitations || null,
+          lycra_size: (data as any).lycra_size || null,
+          // Deportivo
+          specialty: (data as any).specialty || null,
+          personal_phone: (data as any).personal_phone || null,
+          // Ubicación
+          city_of_birth: (data as any).city_of_birth || null,
+          neighborhood: (data as any).neighborhood || null,
+          nationality: (data as any).nationality || 'colombiana',
+          country: (data as any).country || 'Colombia',
           updated_at: new Date().toISOString(),
-        })
+        } as any)
         .eq('id', athlete.id);
 
       if (athleteError) throw athleteError;
@@ -574,7 +639,7 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 gap-1 h-auto p-1">
+              <TabsList className="grid w-full grid-cols-5 md:grid-cols-9 gap-1 h-auto p-1">
                 <TabsTrigger value="basic" className="text-xs whitespace-nowrap">Básico</TabsTrigger>
                 <TabsTrigger value="personal" className="text-xs whitespace-nowrap">Personal</TabsTrigger>
                 <TabsTrigger value="contact" className="text-xs whitespace-nowrap">Contacto</TabsTrigger>
@@ -582,6 +647,7 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
                 <TabsTrigger value="medical" className="text-xs whitespace-nowrap">Médico</TabsTrigger>
                 <TabsTrigger value="studies" className="text-xs whitespace-nowrap">Estudios</TabsTrigger>
                 <TabsTrigger value="equipment" className="text-xs whitespace-nowrap">Equipo</TabsTrigger>
+                <TabsTrigger value="deportivo" className="text-xs whitespace-nowrap">Deportivo</TabsTrigger>
                 <TabsTrigger value="history" className="text-xs whitespace-nowrap">Historial</TabsTrigger>
               </TabsList>
 
@@ -836,12 +902,44 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
                     <FormItem>
                       <FormLabel>Teléfono</FormLabel>
                       <FormControl>
-                        <Input placeholder="+34 600 000 000" {...field} />
+                        <Input placeholder="+57 300 000 0000" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
+                <h5 className="text-sm font-medium text-muted-foreground pt-2">Ubicación</h5>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField control={form.control} name="city_of_birth" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Ciudad de Nacimiento</FormLabel>
+                      <FormControl><Input placeholder="Bogotá" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="neighborhood" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Barrio</FormLabel>
+                      <FormControl><Input placeholder="Kennedy" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="nationality" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nacionalidad</FormLabel>
+                      <FormControl><Input placeholder="colombiana" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="country" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>País</FormLabel>
+                      <FormControl><Input placeholder="Colombia" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </div>
               </TabsContent>
 
               <TabsContent value="contact" className="space-y-4">
@@ -1049,6 +1147,62 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
                     />
                   </div>
 
+                  {/* EPS y seguro */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="eps" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>EPS / Aseguradora de Salud</FormLabel>
+                        <FormControl><Input placeholder="Sanitas, Compensar…" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="accident_insurance" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Seguro de Accidentes</FormLabel>
+                        <FormControl><Input placeholder="Póliza número / aseguradora" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
+
+                  {/* IMC auto-calculado */}
+                  {(() => {
+                    const w = form.watch('weight');
+                    const h = form.watch('height');
+                    if (w && h && h > 0) {
+                      const imc = (w / Math.pow(h / 100, 2)).toFixed(1);
+                      const category = Number(imc) < 18.5 ? 'Bajo peso' : Number(imc) < 25 ? 'Normal' : Number(imc) < 30 ? 'Sobrepeso' : 'Obesidad';
+                      return (
+                        <div className="flex items-center gap-3 bg-muted/50 rounded-lg px-4 py-2.5 text-sm">
+                          <span className="text-muted-foreground">IMC calculado:</span>
+                          <span className="font-bold text-primary">{imc}</span>
+                          <span className="text-muted-foreground">— {category}</span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+
+                  {/* Talla licra */}
+                  <FormField control={form.control} name="lycra_size" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Talla de Licra / Uniforme</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar talla…" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {['XS', 'S', 'M', 'L', 'XL', 'XXL', '4', '6', '8', '10', '12', '14', '16'].map(t => (
+                            <SelectItem key={t} value={t}>{t}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+
                   <h5 className="text-sm font-medium text-muted-foreground">Historial Médico</h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
@@ -1093,19 +1247,39 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
                       )}
                     />
 
+                    <FormField control={form.control} name="fractures" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Fracturas</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Fracturas previas…" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+
                     <FormField
                       control={form.control}
                       name="limitations"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Limitaciones</FormLabel>
+                          <FormLabel>Limitaciones (general)</FormLabel>
                           <FormControl>
-                            <Textarea placeholder="Limitaciones físicas..." {...field} />
+                            <Textarea placeholder="Limitaciones físicas generales..." {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+
+                    <FormField control={form.control} name="physical_limitations" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Limitaciones para Competencia</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Limitaciones específicas para entrenar o competir…" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
                   </div>
 
                   <FormField
@@ -1332,11 +1506,95 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
                     )}
                   />
                 </div>
+
+                {/* Historial de ruedas */}
+                <AthleteWheelManager
+                  athleteId={athlete.id}
+                  athleteDateOfBirth={form.watch('date_of_birth') || athleteDetails?.date_of_birth}
+                />
+              </TabsContent>
+
+              {/* ── TAB DEPORTIVO ── */}
+              <TabsContent value="deportivo" className="space-y-6">
+                <h4 className="font-medium mb-4">Perfil Deportivo</h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Especialidad */}
+                  <FormField control={form.control} name="specialty" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Especialidad</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar especialidad…" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="fondista">Fondista</SelectItem>
+                          <SelectItem value="velocista">Velocista</SelectItem>
+                          <SelectItem value="omnium">Ómnium</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+
+                  {/* Teléfono personal */}
+                  <FormField control={form.control} name="personal_phone" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Teléfono Personal</FormLabel>
+                      <FormControl>
+                        <Input type="tel" placeholder="300 123 4567" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </div>
               </TabsContent>
 
               <TabsContent value="history" className="space-y-4">
                 <h4 className="font-medium mb-4">Historial Deportivo</h4>
-                
+
+                {/* Tipo de registro */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border border-border rounded-lg bg-muted/30">
+                  <FormField
+                    control={form.control}
+                    name="registration_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo de Registro *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccionar tipo" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="ligado">🏅 Ligado (Liga Bogotá)</SelectItem>
+                            <SelectItem value="federado">🇨🇴 Federado (FCP Nacional)</SelectItem>
+                            <SelectItem value="escuela">🛼 Escuela / No Ligado</SelectItem>
+                            <SelectItem value="nuevo">🆕 Nuevo (en proceso)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="registration_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Número de Carné / Registro</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ej: LB-2026-001" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
