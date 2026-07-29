@@ -38,6 +38,7 @@ import Tiempos from "./pages/Tiempos";
 import Documents from "./pages/Documents";
 import EquipmentPage from "./pages/EquipmentPage";
 import EvaluationsPage from "./pages/EvaluationsPage";
+import MessagesPage from "./pages/MessagesPage";
 
 const queryClient = new QueryClient();
 
@@ -181,6 +182,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['admin', 'coach', 'leader']}>
                 <EvaluationsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/mensajes"
+            element={
+              <ProtectedRoute>
+                <MessagesPage />
               </ProtectedRoute>
             }
           />

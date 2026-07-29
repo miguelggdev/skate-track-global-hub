@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Search, User, LogOut, Settings, ChevronDown, Menu } from 'lucide-react';
+import { Search, User, LogOut, Settings, ChevronDown, Menu } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,16 +13,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { useTheme } from 'next-themes';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { useMarkNotificationRead } from '@/hooks/useNotifications';
 
 interface SearchResult {
   id: string;
@@ -30,15 +27,6 @@ interface SearchResult {
   type: 'athlete' | 'competition' | 'training' | 'financial' | 'equipment' | 'coach' | 'award' | 'team' | 'notification' | 'user';
   subtitle?: string;
   metadata?: string;
-}
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: 'info' | 'warning' | 'success';
-  read: boolean;
-  timestamp: string;
 }
 
 interface TopNavigationProps {
@@ -56,12 +44,11 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [clubLogo, setClubLogo] = useState<string>('');
   const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const { profile } = useUserProfile();
+  const markNotificationRead = useMarkNotificationRead();
 
   // Fetch user avatar when profile changes
   useEffect(() => {
@@ -104,38 +91,6 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
     };
     
     fetchClubLogo();
-  }, []);
-
-  // Mock notifications data
-  useEffect(() => {
-    const mockNotifications: Notification[] = [
-      {
-        id: '1',
-        title: 'Nueva competencia',
-        message: 'Se ha añadido una nueva competencia: Campeonato Nacional',
-        type: 'info',
-        read: false,
-        timestamp: new Date().toISOString(),
-      },
-      {
-        id: '2',
-        title: 'Entrenamiento cancelado',
-        message: 'El entrenamiento de mañana ha sido cancelado por condiciones climáticas',
-        type: 'warning',
-        read: false,
-        timestamp: new Date(Date.now() - 86400000).toISOString(),
-      },
-      {
-        id: '3',
-        title: 'Pago recibido',
-        message: 'Se ha recibido el pago de la cuota mensual',
-        type: 'success',
-        read: true,
-        timestamp: new Date(Date.now() - 172800000).toISOString(),
-      },
-    ];
-    setNotifications(mockNotifications);
-    setUnreadCount(mockNotifications.filter(n => !n.read).length);
   }, []);
 
   // Enhanced search functionality (role-aware)
@@ -259,8 +214,8 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
           searchPromises.push(
             supabase
               .from('notifications')
-              .select('id, title, message, notification_type')
-              .eq('recipient_id', profile?.id)
+              .select('id, title, message, type')
+              .eq('user_id', profile?.id)
               .or(`title.ilike.%${searchQuery}%,message.ilike.%${searchQuery}%`)
               .limit(3)
               .then(result => ({ type: 'notifications', data: result.data }))
@@ -386,7 +341,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
                   title: notification.title,
                   type: 'notification',
                   subtitle: notification.message,
-                  metadata: notification.notification_type,
+                  metadata: notification.type,
                 });
               });
               break;
@@ -466,8 +421,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
         navigate(`/athletes?team=${result.id}`);
         break;
       case 'notification':
-        // Keep notifications in the header, just mark as read
-        markNotificationAsRead(result.id);
+        markNotificationRead.mutate(result.id);
         break;
       case 'user':
         if (profile?.role === 'admin' || profile?.role === 'leader') {
@@ -475,15 +429,6 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
         }
         break;
     }
-  };
-
-  const markNotificationAsRead = (notificationId: string) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === notificationId ? { ...notif, read: true } : notif
-      )
-    );
-    setUnreadCount(prev => Math.max(0, prev - 1));
   };
 
   const handleLogout = async () => {
@@ -513,19 +458,6 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
       .join('')
       .toUpperCase()
       .slice(0, 2);
-  };
-
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffHours < 1) return 'Hace un momento';
-    if (diffHours < 24) return `Hace ${diffHours}h`;
-    if (diffDays < 7) return `Hace ${diffDays}d`;
-    return date.toLocaleDateString();
   };
 
   return (
@@ -631,58 +563,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
           <ThemeToggle />
 
           {/* Notifications */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="relative transition-all hover:scale-110">
-                <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
-                  <Badge 
-                    variant="destructive" 
-                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-xs p-0 min-w-[20px]"
-                  >
-                    {unreadCount}
-                  </Badge>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80 p-0 bg-popover border border-border shadow-xl rounded-xl" align="end">
-              <div className="p-4 border-b border-border">
-                <h4 className="font-semibold text-foreground text-sm">Notificaciones</h4>
-              </div>
-              <div className="max-h-80 overflow-y-auto">
-                {notifications.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-6 text-sm">No hay notificaciones</p>
-                ) : (
-                  notifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className={`p-4 border-b border-border last:border-b-0 hover:bg-muted/50 cursor-pointer transition-colors ${
-                        !notification.read ? 'bg-muted/30' : ''
-                      }`}
-                      onClick={() => markNotificationAsRead(notification.id)}
-                    >
-                      <div className="flex items-start space-x-3">
-                        <div className={`w-2 h-2 rounded-full mt-2 ${
-                          notification.type === 'info' ? 'bg-blue-500' :
-                          notification.type === 'warning' ? 'bg-yellow-500' : 'bg-green-500'
-                        }`} />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm text-foreground">{notification.title}</p>
-                          <p className="text-sm text-muted-foreground mt-1">{notification.message}</p>
-                          <p className="text-xs text-muted-foreground mt-2">
-                            {formatTimestamp(notification.timestamp)}
-                          </p>
-                        </div>
-                        {!notification.read && (
-                          <div className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </PopoverContent>
-          </Popover>
+          <NotificationBell />
 
           {/* User Profile */}
           <DropdownMenu>
