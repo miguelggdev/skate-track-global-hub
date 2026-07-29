@@ -39,6 +39,7 @@ import Documents from "./pages/Documents";
 import EquipmentPage from "./pages/EquipmentPage";
 import EvaluationsPage from "./pages/EvaluationsPage";
 import MessagesPage from "./pages/MessagesPage";
+import MedicalPage from "./pages/MedicalPage";
 
 const queryClient = new QueryClient();
 
@@ -353,6 +354,14 @@ const App = () => (
                 <DelegateReports />
               </ProtectedRoute>
             } 
+          />
+          <Route
+            path="/medico"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'coach']}>
+                <MedicalPage />
+              </ProtectedRoute>
+            }
           />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
