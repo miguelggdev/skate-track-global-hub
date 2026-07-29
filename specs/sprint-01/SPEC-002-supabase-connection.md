@@ -1,5 +1,5 @@
 # SPEC-002 — Conectar App al Schema Nuevo
-**Status:** `draft`  
+**Status:** `done`  
 **Agente:** AG-CLAUDE-FRONTEND  
 **Sprint:** 01  
 **Prioridad:** CRÍTICA  

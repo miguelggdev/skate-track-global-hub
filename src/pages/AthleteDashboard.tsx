@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -55,58 +56,67 @@ interface TrainingLoad {
 const AthleteDashboard = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [awards, setAwards] = useState<any[]>([]);
-  const [bodyInfo, setBodyInfo] = useState<any>(null);
-  const [trainingLoad, setTrainingLoad] = useState<TrainingLoad>({ weeklyKm: 0, consistencyPct: 0, tssLoad: 0, timeDeltaPct: null });
-  
+
   const { athlete, loading, error, refreshAthlete } = useCurrentAthlete();
   const { profile, loading: profileLoading } = useUserProfile();
   const { socials, refetch: refetchSocials } = useAthleteSocials(athlete?.id || null);
   const { sessions: medicalSessions, getSessionCounts } = useAthleteMedicalSessions(athlete?.id || null);
   const kpiData = useAthleteKPIs(athlete?.id || null);
 
-  // Fetch awards and body info
-  useEffect(() => {
-    if (athlete?.id) {
-      supabase.from('awards').select('*').eq('athlete_id', athlete.id).then(({ data }) => setAwards(data || []));
-      supabase.from('athlete_body_info').select('*').eq('athlete_id', athlete.id).maybeSingle().then(({ data }) => setBodyInfo(data));
-    }
-  }, [athlete?.id]);
+  const { data: awards = [] } = useQuery({
+    queryKey: ['athlete-awards', athlete?.id],
+    queryFn: async () => {
+      const { data, error: err } = await supabase.from('awards').select('*').eq('athlete_id', athlete!.id);
+      if (err) throw err;
+      return data ?? [];
+    },
+    enabled: !!athlete?.id,
+  });
 
-  // Fetch training load KPIs
-  useEffect(() => {
-    if (!athlete?.id) return;
-    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
-    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
-    const prevMonthStart = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString().split('T')[0];
-    const prevMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString().split('T')[0];
+  const { data: bodyInfo } = useQuery({
+    queryKey: ['athlete-body-info', athlete?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from('athlete_body_info').select('*').eq('athlete_id', athlete!.id).maybeSingle();
+      return data ?? null;
+    },
+    enabled: !!athlete?.id,
+  });
 
-    Promise.all([
-      supabase.from('training_attendance').select('attended').eq('athlete_id', athlete.id).gte('created_at', thirtyDaysAgo),
-      supabase.from('training_sessions').select('distance_km').gte('date', sevenDaysAgo.split('T')[0]),
-      supabase.from('competition_results').select('time_ms').eq('athlete_id', athlete.id).gte('created_at', monthStart).order('time_ms').limit(1),
-      supabase.from('competition_results').select('time_ms').eq('athlete_id', athlete.id).gte('created_at', prevMonthStart).lte('created_at', prevMonthEnd).order('time_ms').limit(1),
-    ]).then(([attRes, sessRes, currTimeRes, prevTimeRes]) => {
+  const { data: trainingLoad = { weeklyKm: 0, consistencyPct: 0, tssLoad: 0, timeDeltaPct: null } } = useQuery<TrainingLoad>({
+    queryKey: ['athlete-training-load', athlete?.id],
+    queryFn: async () => {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+      const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+      const prevMonthStart = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString().split('T')[0];
+      const prevMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString().split('T')[0];
+
+      const [attRes, sessRes, currTimeRes, prevTimeRes] = await Promise.all([
+        (supabase.from('training_attendance' as never).select('attended').eq('athlete_id', athlete!.id).gte('created_at', thirtyDaysAgo) as unknown as Promise<{ data: { attended: boolean }[] | null }>),
+        supabase.from('training_sessions').select('distance_km').gte('date', sevenDaysAgo.split('T')[0]),
+        supabase.from('competition_results').select('time_seconds').eq('athlete_id', athlete!.id).gte('created_at', monthStart).order('time_seconds').limit(1),
+        supabase.from('competition_results').select('time_seconds').eq('athlete_id', athlete!.id).gte('created_at', prevMonthStart).lte('created_at', prevMonthEnd).order('time_seconds').limit(1),
+      ]);
+
       const attendance = attRes.data ?? [];
       const consistencyPct = attendance.length > 0
         ? Math.round((attendance.filter(a => a.attended).length / attendance.length) * 100) : 0;
 
       const weeklyKm = (sessRes.data ?? []).reduce((s, r) => s + (Number(r.distance_km) || 0), 0);
 
-      const currTime = currTimeRes.data?.[0]?.time_ms ?? null;
-      const prevTime = prevTimeRes.data?.[0]?.time_ms ?? null;
-      const timeDeltaPct = (currTime && prevTime && prevTime > 0)
+      const currTime = currTimeRes.data?.[0]?.time_seconds ?? null;
+      const prevTime = prevTimeRes.data?.[0]?.time_seconds ?? null;
+      const timeDeltaPct = (currTime !== null && prevTime !== null && prevTime > 0)
         ? Math.round(((prevTime - currTime) / prevTime) * 1000) / 10
         : null;
 
-      // TSS-like: attendance_pct * weekly_sessions * intensity_factor (simplified)
       const weeklySessions = attendance.filter(a => a.attended).length;
       const tssLoad = Math.min(100, Math.round((consistencyPct / 100) * weeklySessions * 12));
 
-      setTrainingLoad({ weeklyKm, consistencyPct, tssLoad, timeDeltaPct });
-    });
-  }, [athlete?.id]);
+      return { weeklyKm, consistencyPct, tssLoad, timeDeltaPct };
+    },
+    enabled: !!athlete?.id,
+  });
 
   // Redirect non-athletes
   if (!profileLoading && profile && profile.role !== 'athlete') {

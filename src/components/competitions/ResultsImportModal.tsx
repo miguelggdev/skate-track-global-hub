@@ -169,7 +169,6 @@ export function ResultsImportModal({ competitionId, competitionName, onImported 
         position: r.posc ? parseInt(r.posc) : null,
         bib_number: r.bib_number || null,
         time_seconds: parseTime(r.final_time),
-        time_ms: parseTime(r.final_time) !== null ? Math.round(parseTime(r.final_time)! * 1000) : null,
         notes: [r.obs, r.semifinal_time ? `SF:${r.semifinal_time}` : ''].filter(Boolean).join(' | ') || null,
         status: r.obs ? r.obs.toLowerCase() : 'normal',
         athlete_id: r.matched_athlete_id ?? null,
