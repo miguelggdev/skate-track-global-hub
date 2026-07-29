@@ -1,5 +1,5 @@
 # SPEC-006 — Generación de Documentos (Cartas, Carnets, Excel)
-**Status:** `draft`
+**Status:** `done`
 **Agente:** AG-CLAUDE-FRONTEND
 **Sprint:** 01
 **Prioridad:** CRÍTICA
