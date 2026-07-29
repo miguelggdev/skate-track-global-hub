@@ -1,5 +1,5 @@
 # SPEC-008 — Gestión de Equipamiento
-**Status:** `draft`
+**Status:** `done`
 **Agente:** AG-CLAUDE-FRONTEND
 **Sprint:** 01
 **Prioridad:** MEDIA

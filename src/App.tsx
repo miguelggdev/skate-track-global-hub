@@ -36,6 +36,7 @@ import DelegateTraining from "./pages/DelegateTraining";
 import DelegateReports from "./pages/DelegateReports";
 import Tiempos from "./pages/Tiempos";
 import Documents from "./pages/Documents";
+import EquipmentPage from "./pages/EquipmentPage";
 
 const queryClient = new QueryClient();
 
@@ -163,6 +164,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['admin', 'coach', 'leader']}>
                 <Documents />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/equipamiento"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'coach', 'leader']}>
+                <EquipmentPage />
               </ProtectedRoute>
             }
           />
