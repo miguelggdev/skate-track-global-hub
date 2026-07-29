@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ClubInfo, ReportSettings, ReportTemplateGenerator } from '@/utils/reportTemplateGenerator';
 import jsPDF from 'jspdf';
@@ -7,78 +7,63 @@ interface ClubSettingsRow extends ClubInfo, ReportSettings {
   id?: string;
 }
 
-export const useReportTemplate = () => {
-  const [clubInfo, setClubInfo] = useState<ClubInfo>({});
-  const [reportSettings, setReportSettings] = useState<ReportSettings>({
-    report_include_logo: true,
-    report_include_address: true,
-    report_include_contact: true,
-    report_include_social: false,
-    report_include_president: true,
-    report_include_delegate: false,
-    report_include_league: false,
-    report_header_style: 'full'
-  });
-  const [loading, setLoading] = useState(true);
+const DEFAULT_REPORT_SETTINGS: ReportSettings = {
+  report_include_logo:      true,
+  report_include_address:   true,
+  report_include_contact:   true,
+  report_include_social:    false,
+  report_include_president: true,
+  report_include_delegate:  false,
+  report_include_league:    false,
+  report_header_style:      'full',
+};
 
-  const fetchClubData = async () => {
-    try {
-      setLoading(true);
+export const useReportTemplate = () => {
+  const queryClient = useQueryClient();
+
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['club-settings'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('club_settings')
         .select('*')
         .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
+      if (error && error.code !== 'PGRST116') throw error;
+      return (data ?? null) as ClubSettingsRow | null;
+    },
+  });
 
-      if (data) {
-        const settings = data as ClubSettingsRow;
-        
-        // Extract club info
-        setClubInfo({
-          club_name: settings.club_name,
-          club_logo_url: settings.club_logo_url,
-          address: settings.address,
-          contact_email: settings.contact_email,
-          contact_phone: settings.contact_phone,
-          website_url: settings.website_url,
-          social_facebook: settings.social_facebook,
-          social_instagram: settings.social_instagram,
-          social_twitter: settings.social_twitter,
-          president_name: settings.president_name,
-          president_phone: settings.president_phone,
-          president_email: settings.president_email,
-          delegate_name: settings.delegate_name,
-          delegate_phone: settings.delegate_phone,
-          delegate_email: settings.delegate_email,
-          league: settings.league,
-          country: settings.country,
-        });
+  const clubInfo: ClubInfo = data ? {
+    club_name:          data.club_name,
+    club_logo_url:      data.club_logo_url,
+    address:            data.address,
+    contact_email:      data.contact_email,
+    contact_phone:      data.contact_phone,
+    website_url:        data.website_url,
+    social_facebook:    data.social_facebook,
+    social_instagram:   data.social_instagram,
+    social_twitter:     data.social_twitter,
+    president_name:     data.president_name,
+    president_phone:    data.president_phone,
+    president_email:    data.president_email,
+    delegate_name:      data.delegate_name,
+    delegate_phone:     data.delegate_phone,
+    delegate_email:     data.delegate_email,
+    league:             data.league,
+    country:            data.country,
+  } : {};
 
-        // Extract report settings
-        setReportSettings({
-          report_include_logo: settings.report_include_logo ?? true,
-          report_include_address: settings.report_include_address ?? true,
-          report_include_contact: settings.report_include_contact ?? true,
-          report_include_social: settings.report_include_social ?? false,
-          report_include_president: settings.report_include_president ?? true,
-          report_include_delegate: settings.report_include_delegate ?? false,
-          report_include_league: settings.report_include_league ?? false,
-          report_header_style: settings.report_header_style || 'full'
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching club data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchClubData();
-  }, []);
+  const reportSettings: ReportSettings = data ? {
+    report_include_logo:      data.report_include_logo      ?? true,
+    report_include_address:   data.report_include_address   ?? true,
+    report_include_contact:   data.report_include_contact   ?? true,
+    report_include_social:    data.report_include_social    ?? false,
+    report_include_president: data.report_include_president ?? true,
+    report_include_delegate:  data.report_include_delegate  ?? false,
+    report_include_league:    data.report_include_league    ?? false,
+    report_header_style:      data.report_header_style      || 'full',
+  } : DEFAULT_REPORT_SETTINGS;
 
   const createReportTemplate = async (doc: jsPDF): Promise<ReportTemplateGenerator> => {
     const generator = new ReportTemplateGenerator(doc, clubInfo, reportSettings);
@@ -88,47 +73,27 @@ export const useReportTemplate = () => {
 
   const updateReportSettings = async (newSettings: Partial<ReportSettings>) => {
     try {
-      // Get existing club settings
-      const { data: existingData } = await supabase
-        .from('club_settings')
-        .select('*')
-        .maybeSingle();
-
-      const updateData = {
-        ...newSettings
-      };
-
-      if (existingData) {
-        // Update existing record
+      if (data) {
         const { error } = await supabase
           .from('club_settings')
-          .update(updateData)
-          .eq('id', existingData.id);
-
+          .update(newSettings)
+          .eq('id', data.id!);
         if (error) throw error;
       } else {
-        // Create new record with defaults
         const { error } = await supabase
           .from('club_settings')
-          .insert({
-            club_name: 'Mi Club',
-            ...updateData
-          });
-
+          .insert({ club_name: 'Mi Club', ...newSettings });
         if (error) throw error;
       }
 
-      // Update local state
-      setReportSettings(prev => ({ ...prev, ...newSettings }));
-      
+      queryClient.invalidateQueries({ queryKey: ['club-settings'] });
       return { success: true };
     } catch (error: any) {
-      console.error('Error updating report settings:', error);
-      return { 
-        success: false, 
-        error: error.message?.includes('insufficient_privilege') || error.message?.includes('policy') 
+      return {
+        success: false,
+        error: error.message?.includes('insufficient_privilege') || error.message?.includes('policy')
           ? 'No tienes permisos para modificar la configuración de reportes'
-          : 'No se pudo actualizar la configuración de reportes'
+          : 'No se pudo actualizar la configuración de reportes',
       };
     }
   };
@@ -139,6 +104,6 @@ export const useReportTemplate = () => {
     loading,
     createReportTemplate,
     updateReportSettings,
-    refetch: fetchClubData
+    refetch: () => queryClient.invalidateQueries({ queryKey: ['club-settings'] }),
   };
 };

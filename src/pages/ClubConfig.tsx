@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -67,105 +68,65 @@ export interface SystemSetting {
 }
 
 const ClubConfig = () => {
-  const [clubSettings, setClubSettings] = useState<ClubSettings | null>(null);
-  const [systemSettings, setSystemSettings] = useState<SystemSetting[]>([]);
-  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { isAdmin, loading: profileLoading } = useUserProfile();
+  const queryClient = useQueryClient();
 
-  console.log('ClubConfig: Component rendering', { 
-    isAdmin, 
-    profileLoading, 
-    pathname: window.location.pathname 
-  });
-
-  const fetchClubSettings = async () => {
-    try {
+  const { data: clubSettings = null, isLoading: clubLoading } = useQuery({
+    queryKey: ['club-settings'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('club_settings')
         .select('*')
         .limit(1)
         .maybeSingle();
-
       if (error) throw error;
-      if (data) {
-        setClubSettings({
-          ...data,
-          report_header_style: (data.report_header_style as 'minimal' | 'full' | 'corporate') || 'full'
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching club settings:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los ajustes del club",
-        variant: "destructive",
-      });
-    }
-  };
+      if (!data) return null;
+      return {
+        ...data,
+        report_header_style: (data.report_header_style as 'minimal' | 'full' | 'corporate') || 'full',
+      } as ClubSettings;
+    },
+    enabled: !profileLoading && !!isAdmin,
+  });
 
-  const fetchSystemSettings = async () => {
-    try {
+  const { data: systemSettings = [], isLoading: systemLoading } = useQuery({
+    queryKey: ['system-settings'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('system_settings')
         .select('*')
         .order('category', { ascending: true });
-
       if (error) throw error;
-      setSystemSettings(data || []);
-    } catch (error) {
-      console.error('Error fetching system settings:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los ajustes del sistema",
-        variant: "destructive",
-      });
-    }
-  };
-
-  useEffect(() => {
-    const loadSettings = async () => {
-      setLoading(true);
-      await Promise.all([fetchClubSettings(), fetchSystemSettings()]);
-      setLoading(false);
-    };
-    loadSettings();
-  }, []);
+      return (data ?? []) as SystemSetting[];
+    },
+    enabled: !profileLoading && !!isAdmin,
+  });
 
   const handleClubSettingsUpdate = () => {
-    fetchClubSettings();
-    toast({
-      title: "Éxito",
-      description: "Configuración del club actualizada correctamente",
-    });
+    queryClient.invalidateQueries({ queryKey: ['club-settings'] });
+    toast({ title: "Éxito", description: "Configuración del club actualizada correctamente" });
   };
 
   const handleSystemSettingsUpdate = () => {
-    fetchSystemSettings();
-    toast({
-      title: "Éxito",
-      description: "Configuración del sistema actualizada correctamente",
-    });
+    queryClient.invalidateQueries({ queryKey: ['system-settings'] });
+    toast({ title: "Éxito", description: "Configuración del sistema actualizada correctamente" });
   };
 
-  const getSettingsByCategory = (category: string) => {
-    return systemSettings.filter(setting => setting.category === category);
-  };
+  const getSettingsByCategory = (category: string) =>
+    systemSettings.filter(s => s.category === category);
 
   if (profileLoading) {
-    console.log('ClubConfig: Profile still loading...');
     return (
       <DashboardLayout title="Configurar Club">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-          <span className="ml-2">Cargando perfil...</span>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary" />
         </div>
       </DashboardLayout>
     );
   }
 
   if (!isAdmin) {
-    console.log('ClubConfig: Access denied - user is not admin');
     return (
       <DashboardLayout title="Configurar Club">
         <div className="flex flex-col items-center justify-center h-64 space-y-4">
@@ -179,13 +140,11 @@ const ClubConfig = () => {
     );
   }
 
-  if (loading) {
-    console.log('ClubConfig: Settings data still loading...');
+  if (clubLoading || systemLoading) {
     return (
       <DashboardLayout title="Configurar Club">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-          <span className="ml-2">Cargando configuración...</span>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary" />
         </div>
       </DashboardLayout>
     );

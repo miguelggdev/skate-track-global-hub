@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,7 +19,6 @@ import {
   Download
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { downloadICS } from '@/lib/generateICS';
@@ -42,35 +42,30 @@ const TrainingCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [sessions, setSessions] = useState<TrainingSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<TrainingSession | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [filterType, setFilterType] = useState<string>('all');
-  const { toast } = useToast();
   const { isAdmin } = useUserProfile();
+  const queryClient = useQueryClient();
   const weekStartsOn: 0 | 1 = 0;
 
-  // Load training sessions
-  useEffect(() => {
-    loadSessions();
-  }, [currentDate, viewMode]);
+  const dateKey = format(currentDate, 'yyyy-MM-dd');
 
-  const loadSessions = async () => {
-    setIsLoading(true);
-    try {
+  const { data: sessions = [], isLoading } = useQuery({
+    queryKey: ['training-calendar', viewMode, dateKey],
+    queryFn: async () => {
       let startDate: Date;
       let endDate: Date;
 
       if (viewMode === 'month') {
         startDate = startOfWeek(startOfMonth(currentDate), { weekStartsOn });
-        endDate = endOfWeek(endOfMonth(currentDate), { weekStartsOn });
+        endDate   = endOfWeek(endOfMonth(currentDate), { weekStartsOn });
       } else if (viewMode === 'week') {
         startDate = startOfWeek(currentDate, { weekStartsOn });
-        endDate = endOfWeek(currentDate, { weekStartsOn });
+        endDate   = endOfWeek(currentDate, { weekStartsOn });
       } else {
         startDate = new Date(currentDate);
-        endDate = new Date(currentDate);
+        endDate   = new Date(currentDate);
       }
 
       const { data, error } = await supabase
@@ -82,18 +77,11 @@ const TrainingCalendar = () => {
         .order('start_time', { ascending: true });
 
       if (error) throw error;
-      setSessions(data || []);
-    } catch (error) {
-      console.error('Error loading sessions:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las sesiones de entrenamiento",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return (data ?? []) as TrainingSession[];
+    },
+  });
+
+  const refreshSessions = () => queryClient.invalidateQueries({ queryKey: ['training-calendar'] });
 
   const getTrainingTypeColor = (type: string) => {
     switch (type) {
@@ -338,7 +326,7 @@ const TrainingCalendar = () => {
           session={selectedSession}
           open={showEventModal}
           onOpenChange={setShowEventModal}
-          onSessionUpdate={loadSessions}
+          onSessionUpdate={refreshSessions}
         />
       </div>
     </DashboardLayout>
