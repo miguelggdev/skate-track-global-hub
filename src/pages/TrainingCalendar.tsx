@@ -9,10 +9,10 @@ import { CalendarHeader } from '@/components/training/calendar/CalendarHeader';
 import { CalendarGrid } from '@/components/training/calendar/CalendarGrid';
 import { EventModal } from '@/components/training/calendar/EventModal';
 import CreateTrainingDialog from '@/components/training/CreateTrainingDialog';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Plus, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
   Calendar as CalendarIcon,
   Filter,
   Download
@@ -21,6 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { downloadICS } from '@/lib/generateICS';
 
 interface TrainingSession {
   id: string;
@@ -164,6 +165,28 @@ const TrainingCalendar = () => {
     setCurrentDate(new Date());
   };
 
+  const exportToCalendar = () => {
+    if (filteredSessions.length === 0) {
+      toast({ title: 'Sin sesiones en la vista actual', variant: 'destructive' });
+      return;
+    }
+    const events = filteredSessions.map(s => {
+      const startISO = `${s.date}T${s.start_time || '08:00:00'}`;
+      const endISO   = `${s.date}T${s.end_time   || '10:00:00'}`;
+      return {
+        uid: s.id,
+        summary: `${getTrainingTypeLabel(s.training_type)} — ${s.name}`,
+        description: s.description ?? '',
+        location: s.location ?? '',
+        dtstart: startISO,
+        dtend: endISO,
+      };
+    });
+    const monthLabel = format(currentDate, 'MMMM-yyyy', { locale: es });
+    downloadICS('SpeedSkateTrack Entrenamientos', events, `entrenamientos-${monthLabel}.ics`);
+    toast({ title: `${events.length} sesión${events.length !== 1 ? 'es' : ''} exportada${events.length !== 1 ? 's' : ''}` });
+  };
+
   return (
     <DashboardLayout title="Calendario de Entrenamientos">
       <div className="space-y-6 w-full">
@@ -232,6 +255,11 @@ const TrainingCalendar = () => {
               <option value="static_bicycle">Bicicleta Estática</option>
               <option value="simulator">Simulador</option>
             </select>
+
+            <Button variant="outline" size="sm" onClick={exportToCalendar} title="Exportar al calendario (.ics)">
+              <Download className="h-4 w-4 mr-2" />
+              Exportar .ics
+            </Button>
 
             {isAdmin && (
               <CreateTrainingDialog>

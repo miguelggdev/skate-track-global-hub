@@ -40,6 +40,7 @@ import EquipmentPage from "./pages/EquipmentPage";
 import EvaluationsPage from "./pages/EvaluationsPage";
 import MessagesPage from "./pages/MessagesPage";
 import MedicalPage from "./pages/MedicalPage";
+import PublicAthletePage from "./pages/PublicAthletePage";
 
 const queryClient = new QueryClient();
 
@@ -363,6 +364,8 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+          {/* Public page — no auth required, for sharing with parents */}
+          <Route path="/publico/atleta/:athleteId" element={<PublicAthletePage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

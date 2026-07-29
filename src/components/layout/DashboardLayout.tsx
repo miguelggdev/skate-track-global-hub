@@ -12,6 +12,7 @@ import TopNavigation from './TopNavigation';
 import { BottomNav } from './BottomNav';
 import { CommandPalette } from '@/components/ui/CommandPalette';
 import { cn } from '@/lib/utils';
+import { useUnreadMessageCount } from '@/hooks/useMessages';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -36,6 +37,7 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
   const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [cmdOpen, setCmdOpen] = React.useState(false);
+  const { data: unreadCount = 0 } = useUnreadMessageCount();
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -190,7 +192,12 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
                 )}
               >
                 <item.icon className={cn('h-4.5 w-4.5 flex-shrink-0', isActive ? 'text-orange-400' : '')} />
-                {item.title}
+                <span className="flex-1 text-left">{item.title}</span>
+                {item.title === 'Mensajes' && unreadCount > 0 && (
+                  <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-blue-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </button>
             );
           })}

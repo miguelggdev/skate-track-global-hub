@@ -51,7 +51,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MoreHorizontal, Eye, Edit, Trash2, User, Phone, Mail, Calendar, Trophy, Activity, CreditCard } from 'lucide-react';
+import { MoreHorizontal, Eye, Edit, Trash2, User, Phone, Mail, Calendar, Trophy, Activity, CreditCard, Share2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Athlete } from '@/hooks/useAthletes';
 import { EditAthleteDialog } from './EditAthleteDialog';
@@ -271,6 +271,17 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
                         <DropdownMenuItem onClick={() => openCard(athlete)}>
                           <CreditCard className="mr-2 h-4 w-4" />
                           Ver carnet
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            const url = `${window.location.origin}/publico/atleta/${athlete.id}`;
+                            navigator.clipboard.writeText(url).then(() => {
+                              toast({ title: 'Enlace copiado', description: 'Comparte este link con los padres del atleta' });
+                            });
+                          }}
+                        >
+                          <Share2 className="mr-2 h-4 w-4" />
+                          Compartir con padres
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openEdit(athlete)}>
                           <Edit className="mr-2 h-4 w-4" />
