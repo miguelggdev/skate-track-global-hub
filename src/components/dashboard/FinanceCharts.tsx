@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   PieChart, Pie, Cell, AreaChart, Area, LineChart, Line,
@@ -20,70 +20,68 @@ const TT = {
   }
 };
 
-const INCOME_PIE = [
-  { name: 'Cuotas', value: 65, color: '#f97316' },
-  { name: 'Competencias', value: 20, color: '#3b82f6' },
-  { name: 'Patrocinios', value: 10, color: '#10b981' },
-  { name: 'Otros', value: 5, color: '#8b5cf6' },
-];
+const PIE_COLORS = {
+  cuotas: '#f97316',
+  competencias: '#3b82f6',
+  patrocinios: '#10b981',
+  otros: '#8b5cf6',
+};
 
-const CASHFLOW_DATA = [
-  { mes: 'Abr', real: 12400, proyectado: 13000 },
-  { mes: 'May', real: 14200, proyectado: 13500 },
-  { mes: 'Jun', real: 11800, proyectado: 13500 },
-  { mes: 'Jul', real: 15100, proyectado: 14000 },
-  { mes: 'Ago', real: null, proyectado: 14500 },
-  { mes: 'Sep', real: null, proyectado: 15000 },
-];
-
-const DELINQUENCY_DATA = [
-  { mes: 'Feb', alDia: 88 },
-  { mes: 'Mar', alDia: 91 },
-  { mes: 'Abr', alDia: 85 },
-  { mes: 'May', alDia: 93 },
-  { mes: 'Jun', alDia: 89 },
-  { mes: 'Jul', alDia: 94 },
-];
-
-interface Debtor {
-  name: string;
-  amount: number;
-  daysOverdue: number;
-  category: string;
+function monthLabel(d: Date) {
+  const s = d.toLocaleDateString('es-CO', { month: 'short' });
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-const DEBTORS_MOCK: Debtor[] = [
-  { name: 'Carlos Ruiz', amount: 170, daysOverdue: 32, category: 'Juvenil' },
-  { name: 'María López', amount: 255, daysOverdue: 47, category: 'Menores' },
-  { name: 'Pedro Soto', amount: 85, daysOverdue: 15, category: 'Mayores' },
-  { name: 'Ana Vargas', amount: 340, daysOverdue: 61, category: 'Escuela' },
-];
+function last6Months() {
+  const now = new Date();
+  return Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+    return {
+      year: d.getFullYear(),
+      month: d.getMonth() + 1,
+      label: monthLabel(d),
+      start: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`,
+      end: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-31`,
+    };
+  });
+}
 
 export function FinanceIncomePie() {
-  const [data, setData] = useState(INCOME_PIE);
+  const { data: txData = [] } = useQuery({
+    queryKey: ['finance-income-pie'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('transactions')
+        .select('type, amount')
+        .eq('status', 'paid');
+      return data ?? [];
+    },
+  });
 
-  useEffect(() => {
-    supabase
-      .from('financial_transactions')
-      .select('transaction_type, amount')
-      .eq('payment_status', 'paid')
-      .then(({ data: rows }) => {
-        if (!rows?.length) return;
-        const totals: Record<string, number> = {};
-        rows.forEach(r => { totals[r.transaction_type] = (totals[r.transaction_type] || 0) + Number(r.amount); });
-        const grand = Object.values(totals).reduce((s, v) => s + v, 0);
-        if (grand === 0) return;
-        const cuotas = ((totals['mensualidad'] || 0) + (totals['anualidad'] || 0) + (totals['registration_fee'] || 0)) / grand * 100;
-        const comps = ((totals['poliza_deportiva'] || 0)) / grand * 100;
-        const otros = 100 - cuotas - comps;
-        setData([
-          { name: 'Cuotas', value: Math.round(cuotas), color: '#f97316' },
-          { name: 'Competencias', value: Math.round(comps), color: '#3b82f6' },
-          { name: 'Patrocinios', value: Math.round(Math.max(0, otros * 0.6)), color: '#10b981' },
-          { name: 'Otros', value: Math.round(Math.max(0, otros * 0.4)), color: '#8b5cf6' },
-        ]);
-      });
-  }, []);
+  const totals: Record<string, number> = {};
+  for (const r of txData) {
+    totals[r.type] = (totals[r.type] ?? 0) + Number(r.amount);
+  }
+  const grand = Object.values(totals).reduce((s, v) => s + v, 0);
+
+  const data = grand > 0
+    ? (() => {
+        const cuotas = ((totals['mensualidad'] ?? 0) + (totals['anualidad'] ?? 0) + (totals['registration_fee'] ?? 0)) / grand * 100;
+        const comps  = (totals['poliza_deportiva'] ?? 0) / grand * 100;
+        const otros  = 100 - cuotas - comps;
+        return [
+          { name: 'Cuotas',       value: Math.round(cuotas),              color: PIE_COLORS.cuotas },
+          { name: 'Competencias', value: Math.round(comps),               color: PIE_COLORS.competencias },
+          { name: 'Patrocinios',  value: Math.round(Math.max(0, otros * 0.6)), color: PIE_COLORS.patrocinios },
+          { name: 'Otros',        value: Math.round(Math.max(0, otros * 0.4)), color: PIE_COLORS.otros },
+        ];
+      })()
+    : [
+        { name: 'Cuotas', value: 65, color: PIE_COLORS.cuotas },
+        { name: 'Competencias', value: 20, color: PIE_COLORS.competencias },
+        { name: 'Patrocinios', value: 10, color: PIE_COLORS.patrocinios },
+        { name: 'Otros', value: 5, color: PIE_COLORS.otros },
+      ];
 
   return (
     <Card className="animate-fade-in">
@@ -126,16 +124,45 @@ export function FinanceIncomePie() {
 }
 
 export function FinanceCashFlowArea() {
+  const months = last6Months();
+  const sixMonthsAgo = months[0].start;
+
+  const { data: txData = [] } = useQuery({
+    queryKey: ['finance-cashflow'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('transactions')
+        .select('amount, paid_at, status')
+        .gte('created_at', sixMonthsAgo);
+      return data ?? [];
+    },
+  });
+
+  const paid = txData.filter(r => r.status === 'paid' && r.paid_at);
+  const chartData = months.map(m => {
+    const monthPaid = paid
+      .filter(r => r.paid_at!.startsWith(`${m.year}-${String(m.month).padStart(2, '0')}`))
+      .reduce((s, r) => s + Number(r.amount), 0);
+    return { mes: m.label, real: monthPaid > 0 ? monthPaid : null };
+  });
+
+  const realValues = chartData.map(d => d.real).filter((v): v is number => v !== null);
+  const avg = realValues.length > 0 ? Math.round(realValues.reduce((s, v) => s + v, 0) / realValues.length) : 0;
+  const withProjected = chartData.map((d, i) => ({
+    ...d,
+    proyectado: i >= chartData.length - 2 ? avg : undefined,
+  }));
+
   return (
     <Card className="animate-fade-in delay-75">
       <CardHeader>
         <CardTitle className="text-sm font-semibold">Flujo de Caja</CardTitle>
-        <CardDescription>Real vs proyectado — próximos 2 meses</CardDescription>
+        <CardDescription>Ingresos reales vs proyectado — últimos 6 meses</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-52">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={CASHFLOW_DATA} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+            <AreaChart data={withProjected} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
               <defs>
                 <linearGradient id="cfReal" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
@@ -162,6 +189,32 @@ export function FinanceCashFlowArea() {
 }
 
 export function FinanceDelinquencyLine() {
+  const months = last6Months();
+  const sixMonthsAgo = months[0].start;
+
+  const { data: txData = [] } = useQuery({
+    queryKey: ['finance-delinquency'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('transactions')
+        .select('status, created_at')
+        .gte('created_at', sixMonthsAgo)
+        .neq('status', 'cancelled');
+      return data ?? [];
+    },
+  });
+
+  const chartData = months.map(m => {
+    const monthTx = txData.filter(r => {
+      const d = r.created_at.slice(0, 7);
+      return d === `${m.year}-${String(m.month).padStart(2, '0')}`;
+    });
+    const total = monthTx.length;
+    const paid  = monthTx.filter(r => r.status === 'paid').length;
+    const alDia = total > 0 ? Math.round((paid / total) * 100) : null;
+    return { mes: m.label, alDia };
+  });
+
   return (
     <Card className="animate-fade-in delay-150">
       <CardHeader>
@@ -171,12 +224,12 @@ export function FinanceDelinquencyLine() {
       <CardContent>
         <div className="h-44">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={DELINQUENCY_DATA} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+            <LineChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
               <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} domain={[75, 100]} tickFormatter={v => `${v}%`} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} domain={[0, 100]} tickFormatter={v => `${v}%`} />
               <Tooltip {...TT} formatter={(v: number) => [`${v}%`, 'Al día']} />
-              <Line type="monotone" dataKey="alDia" stroke="#f97316" strokeWidth={2.5} dot={{ fill: '#f97316', r: 4 }} activeDot={{ r: 6 }} />
+              <Line type="monotone" dataKey="alDia" stroke="#f97316" strokeWidth={2.5} connectNulls dot={{ fill: '#f97316', r: 4 }} activeDot={{ r: 6 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -187,6 +240,43 @@ export function FinanceDelinquencyLine() {
 
 export function FinanceDebtorsList() {
   const { currency } = useCurrency();
+  const today = new Date().toISOString().split('T')[0];
+
+  const { data } = useQuery({
+    queryKey: ['finance-debtors'],
+    queryFn: async () => {
+      const [txRes, athletesRes] = await Promise.all([
+        supabase
+          .from('transactions')
+          .select('id, athlete_id, amount, due_date, status, payer_name')
+          .in('status', ['overdue', 'pending'])
+          .order('due_date')
+          .limit(10),
+        supabase.from('athletes').select('id, first_name, last_name, category'),
+      ]);
+      return {
+        transactions: txRes.data ?? [],
+        athletes: athletesRes.data ?? [],
+      };
+    },
+  });
+
+  const athleteMap = new Map((data?.athletes ?? []).map(a => [a.id, a]));
+
+  const debtors = (data?.transactions ?? [])
+    .filter(t => t.due_date && t.due_date <= today)
+    .map(t => {
+      const athlete = athleteMap.get(t.athlete_id);
+      const name = t.payer_name
+        || (athlete ? `${athlete.first_name} ${athlete.last_name}` : 'Atleta');
+      const category = athlete?.category ?? '';
+      const daysOverdue = t.due_date
+        ? Math.max(0, Math.round((Date.now() - new Date(t.due_date).getTime()) / 86400000))
+        : 0;
+      return { name, amount: Number(t.amount), daysOverdue, category };
+    })
+    .sort((a, b) => b.daysOverdue - a.daysOverdue)
+    .slice(0, 6);
 
   return (
     <Card className="animate-fade-in delay-225">
@@ -200,22 +290,30 @@ export function FinanceDebtorsList() {
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="divide-y divide-border">
-          {DEBTORS_MOCK.map((d, i) => (
-            <div key={i} className="flex items-center gap-3 px-5 py-3">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{d.name}</p>
-                <p className="text-xs text-muted-foreground">{d.category} · {d.daysOverdue} días de mora</p>
+        {debtors.length === 0 ? (
+          <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+            Sin pagos pendientes vencidos
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {debtors.map((d, i) => (
+              <div key={i} className="flex items-center gap-3 px-5 py-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{d.name}</p>
+                  <p className="text-xs text-muted-foreground capitalize">
+                    {d.category ? `${d.category} · ` : ''}{d.daysOverdue} días de mora
+                  </p>
+                </div>
+                <span className={`text-sm font-bold tabular-nums ${d.daysOverdue > 30 ? 'text-red-500' : 'text-amber-600'}`}>
+                  {formatCurrency(d.amount, currency)}
+                </span>
+                <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs">
+                  <Send className="h-3 w-3" /> Recordar
+                </Button>
               </div>
-              <span className={`text-sm font-bold tabular-nums ${d.daysOverdue > 30 ? 'text-red-500' : 'text-amber-600'}`}>
-                {formatCurrency(d.amount, currency)}
-              </span>
-              <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs">
-                <Send className="h-3 w-3" /> Recordar
-              </Button>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
