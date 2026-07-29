@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,125 +15,115 @@ import {
 } from '@/components/dashboard/LeaderCharts';
 import { supabase } from '@/integrations/supabase/client';
 
-interface LeaderStats {
-  athletes: number;
-  coaches: number;
-  revenue: number;
-  attendance: number;
-  retention: number;
-  totalMedals: number;
-  nextCompDays: number | null;
-  nextCompName: string;
-}
+const TARGET_ATHLETES = 70;
+const TARGET_REVENUE  = 140_000;
+const TARGET_ATTENDANCE = 92;
+const TARGET_RETENTION  = 96;
 
 const LeaderDashboard = () => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState<LeaderStats>({
-    athletes: 0,
-    coaches: 0,
-    revenue: 0,
-    attendance: 0,
-    retention: 93,
-    totalMedals: 0,
-    nextCompDays: null,
-    nextCompName: '',
-  });
 
-  useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const yearStart = `${new Date().getFullYear()}-01-01`;
-    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-      .toISOString().split('T')[0];
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+  const { data: stats } = useQuery({
+    queryKey: ['leader-dashboard-stats'],
+    queryFn: async () => {
+      const today     = new Date().toISOString().split('T')[0];
+      const yearStart = `${new Date().getFullYear()}-01-01`;
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000).toISOString();
 
-    Promise.all([
-      supabase.from('athletes').select('id', { count: 'exact' }).eq('status', 'active'),
-      supabase.from('profiles').select('id', { count: 'exact' }).eq('role', 'coach'),
-      supabase.from('financial_transactions').select('amount')
-        .eq('payment_status', 'paid').gte('transaction_date', yearStart),
-      supabase.from('training_attendance').select('attended').gte('created_at', thirtyDaysAgo),
-      supabase.from('awards').select('id', { count: 'exact' })
-        .gte('award_date', yearStart),
-      supabase.from('competitions').select('name, start_date')
-        .gt('start_date', today).order('start_date').limit(1),
-    ]).then(([athletesRes, coachesRes, revenueRes, attendanceRes, medalsRes, nextCompRes]) => {
-      const revenue = revenueRes.data?.reduce((s, t) => s + Number(t.amount), 0) ?? 0;
+      const [
+        activeAthletesRes, totalAthletesRes,
+        coachesRes, revenueRes,
+        attendanceRes, medalsRes, nextCompRes,
+      ] = await Promise.all([
+        supabase.from('athletes').select('id', { count: 'exact' }).eq('status', 'active'),
+        supabase.from('athletes').select('id', { count: 'exact' }),
+        supabase.from('profiles').select('id', { count: 'exact' }).eq('role', 'coach'),
+        supabase.from('financial_transactions').select('amount')
+          .eq('payment_status', 'paid').gte('transaction_date', yearStart),
+        (supabase
+          .from('training_attendance' as never)
+          .select('attended')
+          .gte('created_at', thirtyDaysAgo) as unknown as Promise<{ data: { attended: boolean }[] | null }>),
+        supabase.from('awards').select('id', { count: 'exact' }).gte('award_date', yearStart),
+        supabase.from('competitions').select('name, start_date')
+          .gt('start_date', today).order('start_date').limit(1),
+      ]);
+
+      const activeAthletes = activeAthletesRes.count ?? 0;
+      const totalAthletes  = totalAthletesRes.count  ?? 0;
+      const retentionRate  = totalAthletes > 0 ? Math.round((activeAthletes / totalAthletes) * 100) : 0;
+
+      const revenue  = revenueRes.data?.reduce((s, t) => s + Number(t.amount), 0) ?? 0;
       const attended = attendanceRes.data ?? [];
       const attendanceRate = attended.length > 0
         ? Math.round((attended.filter(a => a.attended).length / attended.length) * 100)
-        : 89;
+        : 0;
+
       const nextComp = nextCompRes.data?.[0];
 
-      setStats({
-        athletes: athletesRes.count ?? 0,
-        coaches: coachesRes.count ?? 0,
+      return {
+        athletes:     activeAthletes,
+        totalAthletes,
+        coaches:      coachesRes.count ?? 0,
         revenue,
-        attendance: attendanceRate,
-        retention: 93,
-        totalMedals: medalsRes.count ?? 0,
+        attendance:   attendanceRate,
+        retention:    retentionRate,
+        totalMedals:  medalsRes.count ?? 0,
         nextCompDays: nextComp
-          ? Math.ceil((new Date(nextComp.start_date).getTime() - Date.now()) / 86400000)
+          ? Math.ceil((new Date(nextComp.start_date).getTime() - Date.now()) / 86_400_000)
           : null,
         nextCompName: nextComp?.name ?? '',
-      });
-    });
-  }, []);
+      };
+    },
+  });
 
-  const athletesPerCoach = stats.coaches > 0
-    ? Math.round(stats.athletes / stats.coaches)
-    : stats.athletes;
+  const athletes         = stats?.athletes ?? 0;
+  const coaches          = stats?.coaches  ?? 0;
+  const athletesPerCoach = coaches > 0 ? Math.round(athletes / coaches) : athletes;
 
   const quickActions = [
-    { title: 'Atletas',       icon: Users,     path: '/athletes',    color: 'text-blue-500',    bg: 'bg-blue-500/10' },
-    { title: 'Finanzas',      icon: DollarSign, path: '/finance',    color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    { title: 'Competencias',  icon: Trophy,     path: '/competitions', color: 'text-amber-500', bg: 'bg-amber-500/10' },
-    { title: 'Configuración', icon: Settings,   path: '/club-config', color: 'text-violet-500', bg: 'bg-violet-500/10' },
-    { title: 'Entrenamientos',icon: Calendar,   path: '/training',   color: 'text-orange-500',  bg: 'bg-orange-500/10' },
-    { title: 'Reportes',      icon: FileText,   path: '/reports',    color: 'text-cyan-500',    bg: 'bg-cyan-500/10' },
+    { title: 'Atletas',        icon: Users,     path: '/athletes',     color: 'text-blue-500',    bg: 'bg-blue-500/10' },
+    { title: 'Finanzas',       icon: DollarSign, path: '/finance',     color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { title: 'Competencias',   icon: Trophy,     path: '/competitions', color: 'text-amber-500',  bg: 'bg-amber-500/10' },
+    { title: 'Configuración',  icon: Settings,   path: '/club-config',  color: 'text-violet-500', bg: 'bg-violet-500/10' },
+    { title: 'Entrenamientos', icon: Calendar,   path: '/training',     color: 'text-orange-500', bg: 'bg-orange-500/10' },
+    { title: 'Reportes',       icon: FileText,   path: '/reports',      color: 'text-cyan-500',   bg: 'bg-cyan-500/10' },
   ];
 
   return (
     <DashboardLayout title="Dashboard Líder" userRole="Líder">
       <div className="space-y-6">
 
-        {/* KPIs ejecutivos con iconos de tendencia */}
+        {/* KPIs ejecutivos */}
         <LeaderExecutiveKPIs />
 
         {/* KPIs principales con datos reales */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <PerformanceCard
             title="Total Atletas"
-            value={stats.athletes || 52}
-            target={70}
-            change={37}
-            changeType="increase"
+            value={athletes}
+            target={TARGET_ATHLETES}
             format="number"
             icon={Users}
           />
           <PerformanceCard
             title="Ingresos YTD"
-            value={stats.revenue || 95800}
-            target={140000}
-            change={12.4}
-            changeType="increase"
+            value={stats?.revenue ?? 0}
+            target={TARGET_REVENUE}
             format="currency"
             icon={DollarSign}
           />
           <PerformanceCard
             title="Asistencia Global"
-            value={stats.attendance || 89}
-            target={92}
-            change={4}
-            changeType="increase"
+            value={stats?.attendance ?? 0}
+            target={TARGET_ATTENDANCE}
             format="percentage"
             icon={Activity}
           />
           <PerformanceCard
             title="Retención"
-            value={stats.retention}
-            target={96}
-            change={2.1}
-            changeType="increase"
+            value={stats?.retention ?? 0}
+            target={TARGET_RETENTION}
             format="percentage"
             icon={TrendingUp}
           />
@@ -149,10 +140,10 @@ const LeaderDashboard = () => {
                 </div>
               </div>
               <p className={`text-2xl font-black ${athletesPerCoach > 25 ? 'text-amber-500' : 'text-emerald-500'}`}>
-                {athletesPerCoach}:1
+                {coaches > 0 ? `${athletesPerCoach}:1` : '—'}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                {stats.athletes} atletas / {stats.coaches} entrenadores
+                {athletes} atletas / {coaches} entrenadores
               </p>
             </CardContent>
           </Card>
@@ -165,7 +156,7 @@ const LeaderDashboard = () => {
                   <Star className="h-4 w-4 text-amber-500" />
                 </div>
               </div>
-              <p className="text-2xl font-black text-foreground">{stats.totalMedals}</p>
+              <p className="text-2xl font-black text-foreground">{stats?.totalMedals ?? 0}</p>
               <p className="text-xs text-muted-foreground mt-1">Premios y reconocimientos registrados</p>
             </CardContent>
           </Card>
@@ -179,10 +170,12 @@ const LeaderDashboard = () => {
                 </div>
               </div>
               <p className="text-2xl font-black text-foreground">
-                {stats.nextCompDays !== null ? `${stats.nextCompDays}d` : '—'}
+                {stats?.nextCompDays !== null && stats?.nextCompDays !== undefined
+                  ? `${stats.nextCompDays}d`
+                  : '—'}
               </p>
               <p className="text-xs text-muted-foreground mt-1 truncate">
-                {stats.nextCompName || 'Sin competencias próximas'}
+                {stats?.nextCompName || 'Sin competencias próximas'}
               </p>
             </CardContent>
           </Card>
@@ -196,9 +189,9 @@ const LeaderDashboard = () => {
                 </div>
               </div>
               <p className="text-2xl font-black text-foreground">
-                {Math.round((stats.athletes / 70) * 100)}%
+                {Math.round((athletes / TARGET_ATHLETES) * 100)}%
               </p>
-              <p className="text-xs text-muted-foreground mt-1">{stats.athletes} / 70 atletas meta</p>
+              <p className="text-xs text-muted-foreground mt-1">{athletes} / {TARGET_ATHLETES} atletas meta</p>
             </CardContent>
           </Card>
         </div>
@@ -220,9 +213,9 @@ const LeaderDashboard = () => {
               <CardDescription>Secciones frecuentes</CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-2">
-              {quickActions.map((a, i) => (
+              {quickActions.map((a) => (
                 <button
-                  key={i}
+                  key={a.title}
                   onClick={() => navigate(a.path)}
                   className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border hover:bg-muted/50 transition-all hover:scale-105 text-center"
                 >

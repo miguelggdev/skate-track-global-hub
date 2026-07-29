@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
-  Users, Calendar, Trophy, DollarSign, Target, TrendingUp, Award, AlertCircle
+  Users, Calendar, Trophy, DollarSign, Target, TrendingUp, Award, AlertCircle,
+  UserCog, Settings2, Plus, BarChart3,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -20,98 +22,86 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile } from '@/hooks/useUserProfile';
 
-interface DashboardState {
-  athletes: { total: number; target: number };
-  revenue: { current: number; target: number };
-  attendance: { rate: number; target: number };
-  retention: { rate: number; target: number };
-  loading: boolean;
-}
-
-interface OperationalKpis {
-  overduePayments: number;
-  todaySessions: number;
-  nextCompDays: number | null;
-  nextCompName: string;
-}
+const TARGET_ATHLETES = 175;
+const TARGET_REVENUE  = 52_000;
+const TARGET_ATTENDANCE = 90;
+const TARGET_RETENTION  = 95;
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { isAdmin, loading: profileLoading } = useUserProfile();
 
-  const [dashboardData, setDashboardData] = useState<DashboardState>({
-    athletes: { total: 0, target: 175 },
-    revenue: { current: 0, target: 52000 },
-    attendance: { rate: 0, target: 90 },
-    retention: { rate: 93.2, target: 95 },
-    loading: true,
+  const { data: kpis, isLoading } = useQuery({
+    queryKey: ['admin-dashboard-kpis'],
+    queryFn: async () => {
+      const today        = new Date().toISOString().split('T')[0];
+      const monthStart   = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+      const prevMonthStart = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString().split('T')[0];
+      const prevMonthEnd   = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString().split('T')[0];
+
+      const [
+        activeAthletesRes, totalAthletesRes,
+        revenueRes, prevRevenueRes,
+        attendanceRes,
+        overdueRes, todaySessionsRes, nextCompRes,
+      ] = await Promise.all([
+        supabase.from('athletes').select('id', { count: 'exact' }).eq('status', 'active'),
+        supabase.from('athletes').select('id', { count: 'exact' }),
+        supabase.from('financial_transactions').select('amount').gte('transaction_date', monthStart),
+        supabase.from('financial_transactions').select('amount').gte('transaction_date', prevMonthStart).lte('transaction_date', prevMonthEnd),
+        (supabase
+          .from('training_attendance' as never)
+          .select('attended')
+          .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()) as unknown as Promise<{ data: { attended: boolean }[] | null }>),
+        supabase.from('financial_transactions').select('id', { count: 'exact' }).eq('payment_status', 'pending'),
+        supabase.from('training_sessions').select('id', { count: 'exact' }).eq('date', today),
+        supabase.from('competitions').select('name, start_date').gt('start_date', today).order('start_date').limit(1),
+      ]);
+
+      const activeAthletes = activeAthletesRes.count ?? 0;
+      const totalAthletes  = totalAthletesRes.count  ?? 0;
+      const retentionRate  = totalAthletes > 0 ? Math.round((activeAthletes / totalAthletes) * 100) : 0;
+
+      const currentRevenue = revenueRes.data?.reduce((s, t) => s + Number(t.amount), 0) ?? 0;
+      const prevRevenue    = prevRevenueRes.data?.reduce((s, t) => s + Number(t.amount), 0) ?? 0;
+      const revenueChangePct = prevRevenue > 0
+        ? Math.round(((currentRevenue - prevRevenue) / prevRevenue) * 100)
+        : 0;
+
+      const attended = attendanceRes.data ?? [];
+      const attendanceRate = attended.length > 0
+        ? Math.round((attended.filter(a => a.attended).length / attended.length) * 100)
+        : 0;
+
+      const nextComp = nextCompRes.data?.[0];
+
+      return {
+        activeAthletes,
+        totalAthletes,
+        retentionRate,
+        currentRevenue,
+        revenueChangePct,
+        attendanceRate,
+        overduePayments: overdueRes.count ?? 0,
+        todaySessions:   todaySessionsRes.count ?? 0,
+        nextCompDays: nextComp
+          ? Math.ceil((new Date(nextComp.start_date).getTime() - Date.now()) / 86_400_000)
+          : null,
+        nextCompName: nextComp?.name ?? '',
+      };
+    },
+    enabled: !profileLoading && !!isAdmin,
   });
 
-  const [ops, setOps] = useState<OperationalKpis>({
-    overduePayments: 0,
-    todaySessions: 0,
-    nextCompDays: null,
-    nextCompName: '',
-  });
-
-  useEffect(() => {
-    const fetch = async () => {
-      try {
-        setDashboardData(prev => ({ ...prev, loading: true }));
-
-        const today = new Date().toISOString().split('T')[0];
-        const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-          .toISOString().split('T')[0];
-
-        const [athletesRes, revenueRes, attendanceRes, overdueRes, todaySessionsRes, nextCompRes] =
-          await Promise.all([
-            supabase.from('athletes').select('*', { count: 'exact' }),
-            supabase.from('financial_transactions').select('amount').gte('transaction_date', monthStart),
-            supabase.from('training_attendance').select('attended')
-              .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
-            supabase.from('financial_transactions').select('id', { count: 'exact' })
-              .eq('payment_status', 'pending'),
-            supabase.from('training_sessions').select('id', { count: 'exact' }).eq('date', today),
-            supabase.from('competitions').select('name, start_date')
-              .gt('start_date', today).order('start_date').limit(1),
-          ]);
-
-        const totalRevenue = revenueRes.data?.reduce((s, t) => s + Number(t.amount), 0) ?? 0;
-        const attendedRows = attendanceRes.data ?? [];
-        const attendanceRate = attendedRows.length > 0
-          ? (attendedRows.filter(a => a.attended).length / attendedRows.length) * 100
-          : 87.5;
-
-        setDashboardData({
-          athletes: { total: athletesRes.count ?? 0, target: 175 },
-          revenue: { current: totalRevenue, target: 52000 },
-          attendance: { rate: attendanceRate, target: 90 },
-          retention: { rate: 93.2, target: 95 },
-          loading: false,
-        });
-
-        const nextComp = nextCompRes.data?.[0];
-        setOps({
-          overduePayments: overdueRes.count ?? 0,
-          todaySessions: todaySessionsRes.count ?? 0,
-          nextCompDays: nextComp
-            ? Math.ceil((new Date(nextComp.start_date).getTime() - Date.now()) / 86400000)
-            : null,
-          nextCompName: nextComp?.name ?? '',
-        });
-      } catch {
-        setDashboardData(prev => ({ ...prev, loading: false }));
-      }
-    };
-
-    fetch();
-  }, []);
+  const metaPct = TARGET_ATHLETES > 0
+    ? Math.round(((kpis?.activeAthletes ?? 0) / TARGET_ATHLETES) * 100)
+    : 0;
 
   const quickActions = [
-    { title: 'Gestionar Usuarios', description: 'Crear y administrar perfiles', icon: '👥', action: () => navigate('/user-management') },
-    { title: 'Configurar Club',    description: 'Logo, colores y datos',       icon: '⚙️', action: () => navigate('/club-config') },
-    { title: 'Crear Competencia', description: 'Nueva competencia',            icon: '🏆', action: () => navigate('/competitions') },
-    { title: 'Reportes',          description: 'Generar reportes',             icon: '📊', action: () => navigate('/reports') },
+    { title: 'Gestionar Usuarios', description: 'Crear y administrar perfiles', icon: UserCog,   path: '/user-management' },
+    { title: 'Configurar Club',    description: 'Logo, colores y datos',         icon: Settings2, path: '/club-config' },
+    { title: 'Crear Competencia',  description: 'Nueva competencia',             icon: Plus,      path: '/competitions' },
+    { title: 'Reportes',           description: 'Generar reportes',              icon: BarChart3, path: '/reports' },
   ];
 
   if (profileLoading) {
@@ -137,7 +127,7 @@ const AdminDashboard = () => {
     );
   }
 
-  if (dashboardData.loading) {
+  if (isLoading) {
     return (
       <DashboardLayout title="Dashboard Administrador" userRole="Administrador">
         <div className="flex items-center justify-center h-64">
@@ -147,10 +137,6 @@ const AdminDashboard = () => {
     );
   }
 
-  const metaPct = dashboardData.athletes.target > 0
-    ? Math.round((dashboardData.athletes.total / dashboardData.athletes.target) * 100)
-    : 0;
-
   return (
     <DashboardLayout title="Dashboard Administrador" userRole="Administrador">
       <div className="space-y-8">
@@ -159,37 +145,31 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <PerformanceCard
             title="Total Deportistas"
-            value={dashboardData.athletes.total}
-            target={dashboardData.athletes.target}
-            change={8.3}
-            changeType="increase"
+            value={kpis?.activeAthletes ?? 0}
+            target={TARGET_ATHLETES}
             format="number"
             icon={Users}
           />
           <PerformanceCard
             title="Ingresos Mensuales"
-            value={dashboardData.revenue.current}
-            target={dashboardData.revenue.target}
-            change={12.5}
-            changeType="increase"
+            value={kpis?.currentRevenue ?? 0}
+            target={TARGET_REVENUE}
+            change={kpis?.revenueChangePct ?? 0}
+            changeType={kpis?.revenueChangePct && kpis.revenueChangePct >= 0 ? 'increase' : 'decrease'}
             format="currency"
             icon={DollarSign}
           />
           <PerformanceCard
             title="Asistencia Promedio"
-            value={dashboardData.attendance.rate}
-            target={dashboardData.attendance.target}
-            change={2.8}
-            changeType="increase"
+            value={kpis?.attendanceRate ?? 0}
+            target={TARGET_ATTENDANCE}
             format="percentage"
             icon={TrendingUp}
           />
           <PerformanceCard
             title="Retención de Miembros"
-            value={dashboardData.retention.rate}
-            target={dashboardData.retention.target}
-            change={1.2}
-            changeType="increase"
+            value={kpis?.retentionRate ?? 0}
+            target={TARGET_RETENTION}
             format="percentage"
             icon={Target}
           />
@@ -205,8 +185,8 @@ const AdminDashboard = () => {
                   <AlertCircle className="h-4 w-4 text-red-500" />
                 </div>
               </div>
-              <p className={`text-2xl font-black ${ops.overduePayments > 0 ? 'text-red-500' : 'text-foreground'}`}>
-                {ops.overduePayments}
+              <p className={`text-2xl font-black ${(kpis?.overduePayments ?? 0) > 0 ? 'text-red-500' : 'text-foreground'}`}>
+                {kpis?.overduePayments ?? 0}
               </p>
               <p className="text-xs text-muted-foreground mt-1">Transacciones sin pagar</p>
             </CardContent>
@@ -220,7 +200,7 @@ const AdminDashboard = () => {
                   <Calendar className="h-4 w-4 text-blue-500" />
                 </div>
               </div>
-              <p className="text-2xl font-black text-foreground">{ops.todaySessions}</p>
+              <p className="text-2xl font-black text-foreground">{kpis?.todaySessions ?? 0}</p>
               <p className="text-xs text-muted-foreground mt-1">Entrenamientos programados</p>
             </CardContent>
           </Card>
@@ -234,10 +214,12 @@ const AdminDashboard = () => {
                 </div>
               </div>
               <p className="text-2xl font-black text-foreground">
-                {ops.nextCompDays !== null ? `${ops.nextCompDays}d` : '—'}
+                {kpis?.nextCompDays !== null && kpis?.nextCompDays !== undefined
+                  ? `${kpis.nextCompDays}d`
+                  : '—'}
               </p>
               <p className="text-xs text-muted-foreground mt-1 truncate">
-                {ops.nextCompName || 'Sin competencias próximas'}
+                {kpis?.nextCompName || 'Sin competencias próximas'}
               </p>
             </CardContent>
           </Card>
@@ -252,7 +234,7 @@ const AdminDashboard = () => {
               </div>
               <p className="text-2xl font-black text-foreground">{metaPct}%</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {dashboardData.athletes.total} / {dashboardData.athletes.target} atletas
+                {kpis?.activeAthletes ?? 0} / {TARGET_ATHLETES} atletas
               </p>
             </CardContent>
           </Card>
@@ -284,14 +266,16 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {quickActions.map((action, i) => (
+              {quickActions.map((action) => (
                 <Button
-                  key={i}
+                  key={action.title}
                   variant="outline"
                   className="h-auto p-4 flex flex-col items-center gap-2 hover:scale-105 transition-all duration-200"
-                  onClick={action.action}
+                  onClick={() => navigate(action.path)}
                 >
-                  <div className="text-2xl">{action.icon}</div>
+                  <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
+                    <action.icon className="h-4 w-4 text-orange-500" />
+                  </div>
                   <div className="text-center">
                     <div className="font-semibold text-sm">{action.title}</div>
                     <div className="text-xs text-muted-foreground">{action.description}</div>

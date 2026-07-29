@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,48 +19,59 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import AddTransactionDialog from '@/components/finance/AddTransactionDialog';
 import { formatCurrency } from '@/utils/currency';
 import { useCurrency } from '@/hooks/useCurrency';
 import {
-  DollarSign, TrendingUp, TrendingDown, Users, Calendar,
-  FileText, CreditCard, PieChart, Calculator, AlertCircle, CheckCircle, Clock,
-  BarChart3, Percent
+  DollarSign, TrendingUp, TrendingDown, Users, FileText, CreditCard,
+  PieChart, Calculator, AlertCircle, CheckCircle, Clock, BarChart3, Percent
 } from 'lucide-react';
 
-interface FinanceSummary {
-  totalIncome: number;
-  totalExpenses: number;
-  pendingAmount: number;
-  activeAthletes: number;
-  paidCount: number;
-  pendingCount: number;
-  collectionRate: number;
-  incomePerAthlete: number;
-  loading: boolean;
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface Transaction {
+  id: string;
+  amount: number;
+  transaction_type: string;
+  payment_status: string;
+  transaction_date: string;
+  notes?: string | null;
+  category?: string | null;
+  athlete_id?: string | null;
+  athletes?: { first_name: string; last_name: string } | null;
 }
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function statusBadge(status: string) {
+  if (status === 'paid')      return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200 gap-1 text-xs"><CheckCircle className="h-3 w-3" />Pagado</Badge>;
+  if (status === 'pending')   return <Badge className="bg-amber-500/10 text-amber-600 border-amber-200 gap-1 text-xs"><Clock className="h-3 w-3" />Pendiente</Badge>;
+  if (status === 'overdue')   return <Badge className="bg-red-500/10 text-red-600 border-red-200 gap-1 text-xs"><AlertCircle className="h-3 w-3" />Vencido</Badge>;
+  if (status === 'cancelled') return <Badge variant="secondary" className="text-xs">Cancelado</Badge>;
+  return <Badge variant="outline" className="text-xs">{status}</Badge>;
+}
+
+const PERIOD_DATES: Record<string, string> = {
+  week:    new Date(Date.now() - 7 * 86_400_000).toISOString().split('T')[0],
+  month:   new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+  quarter: new Date(new Date().getFullYear(), Math.floor(new Date().getMonth() / 3) * 3, 1).toISOString().split('T')[0],
+  year:    `${new Date().getFullYear()}-01-01`,
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 const FinanceDashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState('all');
+  const [searchPayment, setSearchPayment] = useState('');
   const { currency } = useCurrency();
 
-  const [summary, setSummary] = useState<FinanceSummary>({
-    totalIncome: 0,
-    totalExpenses: 0,
-    pendingAmount: 0,
-    activeAthletes: 0,
-    paidCount: 0,
-    pendingCount: 0,
-    collectionRate: 0,
-    incomePerAthlete: 0,
-    loading: true,
-  });
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
 
-  useEffect(() => {
-    const fetchSummary = async () => {
-      const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-        .toISOString().split('T')[0];
-
+  const { data: summary, isLoading } = useQuery({
+    queryKey: ['finance-summary', monthStart],
+    queryFn: async () => {
       const [incomeRes, expensesRes, pendingRes, athletesRes, paidCountRes, pendingCountRes] =
         await Promise.all([
           supabase.from('financial_transactions').select('amount')
@@ -75,36 +87,60 @@ const FinanceDashboard = () => {
             .eq('payment_status', 'pending').gte('transaction_date', monthStart),
         ]);
 
-      const totalIncome = incomeRes.data?.reduce((s, t) => s + Number(t.amount), 0) ?? 0;
-      const totalExpenses = expensesRes.data?.reduce((s, t) => s + Number(t.amount), 0) ?? 0;
-      const pendingAmount = pendingRes.data?.reduce((s, t) => s + Number(t.amount), 0) ?? 0;
+      const totalIncome    = incomeRes.data?.reduce((s, t) => s + Number(t.amount), 0) ?? 0;
+      const totalExpenses  = expensesRes.data?.reduce((s, t) => s + Number(t.amount), 0) ?? 0;
+      const pendingAmount  = pendingRes.data?.reduce((s, t) => s + Number(t.amount), 0) ?? 0;
       const activeAthletes = athletesRes.count ?? 0;
-      const paidCount = paidCountRes.count ?? 0;
-      const pendingCount = pendingCountRes.count ?? 0;
-      const total = paidCount + pendingCount;
+      const paidCount      = paidCountRes.count ?? 0;
+      const pendingCount   = pendingCountRes.count ?? 0;
+      const total          = paidCount + pendingCount;
       const collectionRate = total > 0 ? Math.round((paidCount / total) * 100) : 0;
       const incomePerAthlete = activeAthletes > 0 ? Math.round(totalIncome / activeAthletes) : 0;
 
-      setSummary({
+      return {
         totalIncome, totalExpenses, pendingAmount, activeAthletes,
-        paidCount, pendingCount, collectionRate, incomePerAthlete, loading: false,
-      });
-    };
+        paidCount, pendingCount, collectionRate, incomePerAthlete,
+      };
+    },
+  });
 
-    fetchSummary();
-  }, []);
+  const periodStart = PERIOD_DATES[selectedPeriod] ?? monthStart;
 
-  const periodLabel = selectedPeriod === 'month' ? 'Este Mes'
-    : selectedPeriod === 'quarter' ? 'Este Trimestre'
-    : selectedPeriod === 'year' ? 'Este Año'
-    : selectedPeriod === 'week' ? 'Esta Semana'
-    : selectedPeriod;
+  const { data: recentTransactions = [], isLoading: txLoading } = useQuery({
+    queryKey: ['finance-recent-transactions', selectedPeriod, paymentStatusFilter],
+    queryFn: async () => {
+      let query = supabase
+        .from('financial_transactions')
+        .select('id, amount, transaction_type, payment_status, transaction_date, notes, category, athlete_id, athletes(first_name, last_name)')
+        .gte('transaction_date', periodStart)
+        .order('transaction_date', { ascending: false })
+        .limit(50);
+
+      if (paymentStatusFilter !== 'all') {
+        query = query.eq('payment_status', paymentStatusFilter);
+      }
+      const { data } = await query;
+      return (data ?? []) as unknown as Transaction[];
+    },
+  });
+
+  const payments  = recentTransactions.filter(t => t.transaction_type === 'income');
+  const expenses  = recentTransactions.filter(t => t.transaction_type === 'expense');
+
+  const filteredPayments = payments.filter(t => {
+    if (!searchPayment.trim()) return true;
+    const s = searchPayment.toLowerCase();
+    const name = t.athletes ? `${t.athletes.first_name} ${t.athletes.last_name}`.toLowerCase() : '';
+    return name.includes(s) || (t.notes ?? '').toLowerCase().includes(s) || (t.category ?? '').toLowerCase().includes(s);
+  });
+
+  const periodLabel = { week: 'Esta Semana', month: 'Este Mes', quarter: 'Este Trimestre', year: 'Este Año' }[selectedPeriod] ?? selectedPeriod;
 
   return (
     <DashboardLayout title="Panel Financiero" userRole="Gestor Financiero">
       <div className="space-y-6">
 
-        {/* KPIs principales con datos reales */}
+        {/* KPIs principales */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -113,7 +149,7 @@ const FinanceDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {summary.loading ? '...' : formatCurrency(summary.totalIncome, currency)}
+                {isLoading ? '…' : formatCurrency(summary?.totalIncome ?? 0, currency)}
               </div>
               <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                 <TrendingUp className="h-3 w-3 text-emerald-500" />
@@ -129,10 +165,10 @@ const FinanceDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {summary.loading ? '...' : formatCurrency(summary.totalExpenses, currency)}
+                {isLoading ? '…' : formatCurrency(summary?.totalExpenses ?? 0, currency)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Balance: {summary.loading ? '...' : formatCurrency(summary.totalIncome - summary.totalExpenses, currency)}
+                Balance: {isLoading ? '…' : formatCurrency((summary?.totalIncome ?? 0) - (summary?.totalExpenses ?? 0), currency)}
               </p>
             </CardContent>
           </Card>
@@ -143,11 +179,11 @@ const FinanceDashboard = () => {
               <AlertCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${summary.pendingAmount > 0 ? 'text-amber-600' : ''}`}>
-                {summary.loading ? '...' : formatCurrency(summary.pendingAmount, currency)}
+              <div className={`text-2xl font-bold ${(summary?.pendingAmount ?? 0) > 0 ? 'text-amber-600' : ''}`}>
+                {isLoading ? '…' : formatCurrency(summary?.pendingAmount ?? 0, currency)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {summary.pendingCount} pagos pendientes
+                {summary?.pendingCount ?? 0} pagos pendientes
               </p>
             </CardContent>
           </Card>
@@ -159,7 +195,7 @@ const FinanceDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {summary.loading ? '...' : summary.activeAthletes}
+                {isLoading ? '…' : (summary?.activeAthletes ?? 0)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">Deportistas con membresía</p>
             </CardContent>
@@ -176,10 +212,16 @@ const FinanceDashboard = () => {
                   <Percent className="h-4 w-4 text-emerald-500" />
                 </div>
               </div>
-              <p className={`text-2xl font-black ${summary.collectionRate >= 80 ? 'text-emerald-500' : summary.collectionRate >= 60 ? 'text-amber-500' : 'text-red-500'}`}>
-                {summary.loading ? '...' : `${summary.collectionRate}%`}
+              <p className={`text-2xl font-black ${
+                (summary?.collectionRate ?? 0) >= 80 ? 'text-emerald-500'
+                : (summary?.collectionRate ?? 0) >= 60 ? 'text-amber-500'
+                : 'text-red-500'
+              }`}>
+                {isLoading ? '…' : `${summary?.collectionRate ?? 0}%`}
               </p>
-              <p className="text-xs text-muted-foreground mt-1">{summary.paidCount} pagados vs {summary.pendingCount} pendientes</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {summary?.paidCount ?? 0} pagados vs {summary?.pendingCount ?? 0} pendientes
+              </p>
             </CardContent>
           </Card>
 
@@ -192,7 +234,7 @@ const FinanceDashboard = () => {
                 </div>
               </div>
               <p className="text-2xl font-black text-foreground">
-                {summary.loading ? '...' : formatCurrency(summary.incomePerAthlete, currency)}
+                {isLoading ? '…' : formatCurrency(summary?.incomePerAthlete ?? 0, currency)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">Promedio mensual por atleta activo</p>
             </CardContent>
@@ -207,7 +249,7 @@ const FinanceDashboard = () => {
                 </div>
               </div>
               <p className="text-2xl font-black text-green-600">
-                {summary.loading ? '...' : summary.paidCount}
+                {isLoading ? '…' : (summary?.paidCount ?? 0)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">Cobros exitosos este mes</p>
             </CardContent>
@@ -222,7 +264,7 @@ const FinanceDashboard = () => {
                 </div>
               </div>
               <p className="text-2xl font-black text-foreground">
-                {summary.loading ? '...' : formatCurrency(summary.totalIncome + summary.pendingAmount, currency)}
+                {isLoading ? '…' : formatCurrency((summary?.totalIncome ?? 0) + (summary?.pendingAmount ?? 0), currency)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">Si se cobra todo lo pendiente</p>
             </CardContent>
@@ -252,6 +294,7 @@ const FinanceDashboard = () => {
             </div>
           </TabsContent>
 
+          {/* ── Payments ── */}
           <TabsContent value="payments" className="space-y-4">
             <Card>
               <CardHeader>
@@ -259,56 +302,97 @@ const FinanceDashboard = () => {
                   <CreditCard className="h-5 w-5" />
                   Gestión de Pagos
                 </CardTitle>
-                <CardDescription>Administra los pagos de cuotas y servicios</CardDescription>
+                <CardDescription>Ingresos y pagos de cuotas del período seleccionado</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex gap-4">
+                  {/* Filters */}
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <div className="flex-1">
-                      <Label htmlFor="search-payment">Buscar Pago</Label>
-                      <Input id="search-payment" placeholder="Buscar por nombre o concepto..." />
+                      <Label htmlFor="search-payment">Buscar</Label>
+                      <Input
+                        id="search-payment"
+                        value={searchPayment}
+                        onChange={(e) => setSearchPayment(e.target.value)}
+                        placeholder="Nombre del atleta o concepto…"
+                      />
                     </div>
-                    <div className="w-48">
+                    <div className="w-full sm:w-44">
                       <Label>Estado</Label>
-                      <Select>
-                        <SelectTrigger><SelectValue placeholder="Todos los estados" /></SelectTrigger>
+                      <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="pending">Pendiente</SelectItem>
+                          <SelectItem value="all">Todos los estados</SelectItem>
                           <SelectItem value="paid">Pagado</SelectItem>
+                          <SelectItem value="pending">Pendiente</SelectItem>
                           <SelectItem value="overdue">Vencido</SelectItem>
                           <SelectItem value="cancelled">Cancelado</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
-                  <div className="border rounded-lg">
-                    <div className="grid grid-cols-5 gap-4 p-4 font-medium border-b text-sm">
-                      <span>Miembro</span><span>Concepto</span><span>Cantidad</span><span>Estado</span><span>Acciones</span>
-                    </div>
-                    <div className="grid grid-cols-5 gap-4 p-4 border-b text-sm">
-                      <span>Ana García</span><span>Cuota Mensual</span>
-                      <span>{formatCurrency(85, currency)}</span>
-                      <span className="flex items-center gap-1"><CheckCircle className="h-4 w-4 text-green-500" />Pagado</span>
-                      <Button variant="outline" size="sm">Ver Detalles</Button>
-                    </div>
-                    <div className="grid grid-cols-5 gap-4 p-4 border-b text-sm">
-                      <span>Carlos Ruiz</span><span>Cuota Mensual</span>
-                      <span>{formatCurrency(85, currency)}</span>
-                      <span className="flex items-center gap-1"><Clock className="h-4 w-4 text-yellow-500" />Pendiente</span>
-                      <Button variant="outline" size="sm">Recordatorio</Button>
-                    </div>
-                    <div className="grid grid-cols-5 gap-4 p-4 text-sm">
-                      <span>María López</span><span>Competición</span>
-                      <span>{formatCurrency(150, currency)}</span>
-                      <span className="flex items-center gap-1"><AlertCircle className="h-4 w-4 text-red-500" />Vencido</span>
-                      <Button variant="destructive" size="sm">Gestionar</Button>
+                    <div className="w-full sm:w-44">
+                      <Label>Período</Label>
+                      <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="week">Esta Semana</SelectItem>
+                          <SelectItem value="month">Este Mes</SelectItem>
+                          <SelectItem value="quarter">Este Trimestre</SelectItem>
+                          <SelectItem value="year">Este Año</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
+
+                  {/* Table */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="grid grid-cols-5 gap-4 p-3 font-medium border-b text-xs text-muted-foreground uppercase tracking-wide bg-muted/40">
+                      <span>Miembro / Concepto</span>
+                      <span>Fecha</span>
+                      <span>Categoría</span>
+                      <span>Monto</span>
+                      <span>Estado</span>
+                    </div>
+                    {txLoading ? (
+                      <div className="flex items-center justify-center py-12">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500" />
+                      </div>
+                    ) : filteredPayments.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-10 text-center space-y-2">
+                        <CreditCard className="h-10 w-10 text-muted-foreground/25" />
+                        <p className="text-sm text-muted-foreground">
+                          {searchPayment ? 'Sin resultados para esta búsqueda' : `Sin ingresos en ${periodLabel}`}
+                        </p>
+                      </div>
+                    ) : (
+                      filteredPayments.map((t) => (
+                        <div key={t.id} className="grid grid-cols-5 gap-4 p-3 border-b last:border-b-0 text-sm hover:bg-muted/30 transition-colors">
+                          <span className="truncate font-medium">
+                            {t.athletes
+                              ? `${t.athletes.first_name} ${t.athletes.last_name}`
+                              : (t.notes ?? 'Sin descripción')}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {new Date(t.transaction_date).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}
+                          </span>
+                          <span className="text-muted-foreground truncate">{t.category ?? '—'}</span>
+                          <span className="font-medium">{formatCurrency(Number(t.amount), currency)}</span>
+                          <span>{statusBadge(t.payment_status)}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  {filteredPayments.length > 0 && (
+                    <p className="text-xs text-muted-foreground text-right">
+                      Mostrando {filteredPayments.length} registros — {periodLabel}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
+          {/* ── Budgets (configuración futura) ── */}
           <TabsContent value="budgets" className="space-y-4">
             <Card>
               <CardHeader>
@@ -319,9 +403,9 @@ const FinanceDashboard = () => {
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {[
-                      { t: 'Presupuesto Anual', v: 120000, pct: 45 },
-                      { t: 'Gastos Operativos', v: 78500, pct: 62 },
-                      { t: 'Inversiones', v: 25000, pct: 30 },
+                      { t: 'Presupuesto Anual', v: 120_000, pct: 45 },
+                      { t: 'Gastos Operativos', v: 78_500, pct: 62 },
+                      { t: 'Inversiones', v: 25_000, pct: 30 },
                     ].map(({ t, v, pct }) => (
                       <Card key={t}>
                         <CardHeader className="pb-3"><CardTitle className="text-sm">{t}</CardTitle></CardHeader>
@@ -338,10 +422,10 @@ const FinanceDashboard = () => {
                     <h3 className="text-lg font-semibold mb-4">Desglose por Categorías</h3>
                     <div className="space-y-3">
                       {[
-                        { l: 'Personal y Entrenadores', used: 45000, total: 60000, pct: 75 },
-                        { l: 'Instalaciones y Mantenimiento', used: 18000, total: 25000, pct: 72 },
-                        { l: 'Equipamiento Deportivo', used: 8500, total: 15000, pct: 57 },
-                        { l: 'Competiciones y Viajes', used: 12000, total: 20000, pct: 60 },
+                        { l: 'Personal y Entrenadores', used: 45_000, total: 60_000, pct: 75 },
+                        { l: 'Instalaciones y Mantenimiento', used: 18_000, total: 25_000, pct: 72 },
+                        { l: 'Equipamiento Deportivo', used: 8_500, total: 15_000, pct: 57 },
+                        { l: 'Competiciones y Viajes', used: 12_000, total: 20_000, pct: 60 },
                       ].map(({ l, used, total, pct }) => (
                         <div key={l} className="flex justify-between items-center p-3 border rounded">
                           <span className="text-sm">{l}</span>
@@ -358,6 +442,7 @@ const FinanceDashboard = () => {
             </Card>
           </TabsContent>
 
+          {/* ── Reports ── */}
           <TabsContent value="reports" className="space-y-4">
             <Card>
               <CardHeader>
@@ -405,94 +490,78 @@ const FinanceDashboard = () => {
                     <FinanceReportDownloadButton
                       data={{
                         period: periodLabel,
-                        totalIncome: summary.totalIncome,
-                        totalExpenses: summary.totalExpenses,
-                        pendingAmount: summary.pendingAmount,
+                        totalIncome: summary?.totalIncome ?? 0,
+                        totalExpenses: summary?.totalExpenses ?? 0,
+                        pendingAmount: summary?.pendingAmount ?? 0,
                         transactions: [],
                         currency,
                       }}
                     />
                   </div>
-
-                  <Separator />
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">Informes Recientes</h3>
-                    <div className="space-y-2">
-                      {[
-                        { t: 'Informe Mensual - Junio 2026', d: 'Generado el 01/07/2026' },
-                        { t: 'Balance Trimestral Q2 2026', d: 'Generado el 30/06/2026' },
-                        { t: 'Estado de Cuotas - Junio', d: 'Generado el 30/06/2026' },
-                      ].map(({ t, d }) => (
-                        <div key={t} className="flex justify-between items-center p-3 border rounded">
-                          <div>
-                            <p className="font-medium text-sm">{t}</p>
-                            <p className="text-xs text-muted-foreground">{d}</p>
-                          </div>
-                          <Button variant="outline" size="sm">Descargar</Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
+          {/* ── Expenses ── */}
           <TabsContent value="expenses" className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><TrendingDown className="h-5 w-5" />Control de Gastos</CardTitle>
-                <CardDescription>Registra y categoriza todos los gastos del club</CardDescription>
+                <CardDescription>Gastos registrados del período seleccionado</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <h3 className="text-lg font-semibold">Registrar Nuevo Gasto</h3>
-                    <AddTransactionDialog><Button>+ Nuevo Gasto</Button></AddTransactionDialog>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div><Label htmlFor="expense-concept">Concepto</Label><Input id="expense-concept" placeholder="Descripción del gasto" /></div>
-                    <div><Label htmlFor="expense-amount">Cantidad</Label><Input id="expense-amount" type="number" placeholder="0.00" /></div>
-                    <div>
-                      <Label>Categoría</Label>
-                      <Select>
-                        <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="staff">Personal</SelectItem>
-                          <SelectItem value="facilities">Instalaciones</SelectItem>
-                          <SelectItem value="equipment">Equipamiento</SelectItem>
-                          <SelectItem value="travel">Viajes</SelectItem>
-                          <SelectItem value="admin">Administrativos</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div><Label htmlFor="expense-date">Fecha</Label><Input id="expense-date" type="date" /></div>
+                    <AddTransactionDialog><Button size="sm">+ Nuevo Gasto</Button></AddTransactionDialog>
                   </div>
                   <Separator />
+
+                  {/* Real expenses table */}
                   <div>
-                    <h3 className="text-lg font-semibold mb-3">Gastos Recientes</h3>
-                    <div className="border rounded-lg">
-                      <div className="grid grid-cols-5 gap-4 p-4 font-medium border-b text-sm">
-                        <span>Fecha</span><span>Concepto</span><span>Categoría</span><span>Cantidad</span><span>Acciones</span>
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">{periodLabel}</h3>
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="grid grid-cols-4 gap-4 p-3 font-medium border-b text-xs text-muted-foreground uppercase tracking-wide bg-muted/40">
+                        <span>Fecha</span>
+                        <span>Concepto</span>
+                        <span>Categoría</span>
+                        <span>Monto</span>
                       </div>
-                      {[
-                        { d: '15/07/2026', c: 'Mantenimiento pista', cat: 'Instalaciones', amt: 450 },
-                        { d: '12/07/2026', c: 'Uniformes nuevos', cat: 'Equipamiento', amt: 1250 },
-                        { d: '10/07/2026', c: 'Viaje competición', cat: 'Viajes', amt: 890 },
-                      ].map(({ d, c, cat, amt }) => (
-                        <div key={d + c} className="grid grid-cols-5 gap-4 p-4 border-b text-sm last:border-b-0">
-                          <span>{d}</span><span>{c}</span><span>{cat}</span>
-                          <span>{formatCurrency(amt, currency)}</span>
-                          <Button variant="outline" size="sm">Editar</Button>
+                      {txLoading ? (
+                        <div className="flex items-center justify-center py-10">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500" />
                         </div>
-                      ))}
+                      ) : expenses.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-10 text-center space-y-2">
+                          <TrendingDown className="h-10 w-10 text-muted-foreground/25" />
+                          <p className="text-sm text-muted-foreground">Sin gastos en {periodLabel}</p>
+                        </div>
+                      ) : (
+                        expenses.map((t) => (
+                          <div key={t.id} className="grid grid-cols-4 gap-4 p-3 border-b last:border-b-0 text-sm hover:bg-muted/30 transition-colors">
+                            <span className="text-muted-foreground">
+                              {new Date(t.transaction_date).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: '2-digit' })}
+                            </span>
+                            <span className="truncate">{t.notes ?? '—'}</span>
+                            <span className="text-muted-foreground truncate">{t.category ?? '—'}</span>
+                            <span className="font-medium text-red-600">{formatCurrency(Number(t.amount), currency)}</span>
+                          </div>
+                        ))
+                      )}
                     </div>
+                    {expenses.length > 0 && (
+                      <p className="text-xs text-muted-foreground text-right mt-2">
+                        {expenses.length} gasto{expenses.length !== 1 ? 's' : ''} — Total: {formatCurrency(expenses.reduce((s, t) => s + Number(t.amount), 0), currency)}
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
+          {/* ── Settings ── */}
           <TabsContent value="settings" className="space-y-4">
             <Card>
               <CardHeader>
