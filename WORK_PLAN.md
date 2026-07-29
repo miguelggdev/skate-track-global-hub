@@ -42,70 +42,30 @@ CIERRE DEL DÍA
 ## SPRINT 1 — Fundamentos y Base de Datos (Semanas 1-2)
 **Objetivo:** App conectada al schema limpio, git funcionando, seguridad base
 
-### Día 1 (Hoy — completado en parte)
-| Tarea | Agente | Spec | Status |
-|-------|--------|------|--------|
-| CLAUDE.md + WORK_PLAN.md + estructura specs | AG-CLAUDE-DB | SPEC-001 | ✅ |
-| Schema inicial en Supabase | AG-CLAUDE-DB | — | ✅ 11 tablas |
-| Crear ramas dev + master | Tú | SPEC-001 | ⏳ |
+### Estado actual del Sprint 1 (julio 2026)
 
-### Día 2
-| Tarea | Agente | Spec | Status |
-|-------|--------|------|--------|
-| Regenerar Supabase types en frontend | AG-CLAUDE-FRONTEND | SPEC-002 | ⬜ |
-| Auditar y sanear `profiles.role` del frontend | AG-CLAUDE-FRONTEND | SPEC-002 | ⬜ |
-| Verificar login/signup funcionando | AG-CLAUDE-FRONTEND | SPEC-002 | ⬜ |
+| Spec | Título | Agente | Status |
+|------|--------|--------|--------|
+| SPEC-001 | Git + GitHub setup | AG-CLAUDE-DB | ✅ done |
+| SPEC-002 | Conectar frontend al schema nuevo | AG-CLAUDE-FRONTEND | ⬜ draft |
+| SPEC-003 | Audit Log + pgvector | AG-CLAUDE-DB | ✅ done |
+| SPEC-004 | Storage buckets y policies | AG-CLAUDE-DB | ✅ done |
+| SPEC-005 | Perfil completo del deportista | AG-CLAUDE-FRONTEND | ✅ done |
+| SPEC-006 | Generación de documentos (PDF/Excel) | AG-CLAUDE-FRONTEND | ⬜ draft — **siguiente** |
+| SPEC-007 | Registro de tiempos y pruebas | AG-CLAUDE-FRONTEND | ✅ done |
+| SPEC-008 | Gestión de equipamiento del club | AG-CLAUDE-FRONTEND | ⬜ draft |
 
-### Día 3
-| Tarea | Agente | Spec | Status |
-|-------|--------|------|--------|
-| Crear buckets en Supabase Dashboard | Tú (manual) | SPEC-004 | ⬜ |
-| Migración storage policies | AG-CLAUDE-DB | SPEC-004 | ⬜ |
-| Activar pgvector en Supabase Dashboard | Tú (manual) | SPEC-003 | ⬜ |
+### Completados este sprint
+- Schema completo: 40+ tablas, RLS, triggers, migraciones en `supabase/migrations/`
+- Perfil atleta: 9 tabs (básico, personal, contacto, familia, médico, estudios, equipo, deportivo, historial)
+- Módulo tiempos: TimeRecordForm, TimeHistoryChart, ClubRanking, página `/tiempos`
+- Design system: dual-theme dark/light, dashboards animados para todos los roles
+- Seguridad: review de 4 agentes aplicado (MIME validation, UUID paths, CHECK constraints, RLS)
 
-### Día 4
-| Tarea | Agente | Spec | Status |
-|-------|--------|------|--------|
-| Migración audit_log + triggers | AG-CLAUDE-DB | SPEC-003 | ⬜ |
-| Migración knowledge_base + vector index | AG-CLAUDE-DB | SPEC-003 | ⬜ |
-
-### Día 5
-| Tarea | Agente | Spec | Status |
-|-------|--------|------|--------|
-| Aplicar migración expansión completa en Supabase | Tú (SQL Editor) | — | ⬜ |
-| RLS review completo — todas las tablas | AG-CLAUDE-SECURITY | — | ⬜ |
-| Seed de club_settings (fila inicial) | AG-CLAUDE-DB | — | ⬜ |
-| Commit semanal + push | Tú | — | ⬜ |
-
-### Día 6
-| Tarea | Agente | Spec | Status |
-|-------|--------|------|--------|
-| Perfil completo del atleta (tabs médico/familia/colegio/deportivo) | AG-CLAUDE-FRONTEND | SPEC-005 | ⬜ |
-
-### Día 7
-| Tarea | Agente | Spec | Status |
-|-------|--------|------|--------|
-| Generación de cartas de permiso (PDF) | AG-CLAUDE-FRONTEND | SPEC-006 | ⬜ |
-| Generación de carnets (PDF + QR) | AG-CLAUDE-FRONTEND | SPEC-006 | ⬜ |
-| Exportación Excel de competencias | AG-CLAUDE-FRONTEND | SPEC-006 | ⬜ |
-
-### Día 8
-| Tarea | Agente | Spec | Status |
-|-------|--------|------|--------|
-| Registro y evolución de tiempos cronometrados | AG-CLAUDE-FRONTEND | SPEC-007 | ⬜ |
-| Ranking interno del club por prueba | AG-CLAUDE-FRONTEND | SPEC-007 | ⬜ |
-
-### Día 9
-| Tarea | Agente | Spec | Status |
-|-------|--------|------|--------|
-| Gestión de equipamiento (patines, bicicletas) | AG-CLAUDE-FRONTEND | SPEC-008 | ⬜ |
-| Historial de mantenimiento | AG-CLAUDE-FRONTEND | SPEC-008 | ⬜ |
-
-### Día 10
-| Tarea | Agente | Spec | Status |
-|-------|--------|------|--------|
-| Módulo de evaluaciones de deportistas | AG-CLAUDE-FRONTEND | SPEC-009 | ⬜ |
-| Mensajería interna básica | AG-CLAUDE-FRONTEND | SPEC-009 | ⬜ |
+### Pendiente Sprint 1
+1. **SPEC-006** — Cartas de permiso PDF, carnets con QR, planilla Excel competencias
+2. **SPEC-008** — Inventario equipamiento club, asignaciones, mantenimiento
+3. **SPEC-002** — Auditar `profiles.role` vs `user_roles` en hooks del frontend
 
 ---
 
