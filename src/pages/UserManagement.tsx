@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import UserManagementHeader from '@/components/users/UserManagementHeader';
@@ -27,20 +28,20 @@ export interface User {
   id_number?: string;
 }
 
+const ROLE_PRIORITY = ['admin', 'leader', 'coach', 'delegate', 'finance', 'athlete'] as const;
+
 const UserManagement = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [managingRoleUserId, setManagingRoleUserId] = useState<string | null>(null);
   const [resettingPasswordUser, setResettingPasswordUser] = useState<User | null>(null);
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
   const { isAdmin } = useUserProfile();
+  const queryClient = useQueryClient();
 
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-
+  const { data: users = [], isLoading: loading } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
       const [{ data: profiles, error: profilesError }, { data: roles, error: rolesError }] =
         await Promise.all([
           supabase.from('profiles').select('*').order('created_at', { ascending: false }),
@@ -50,51 +51,31 @@ const UserManagement = () => {
       if (profilesError) throw profilesError;
       if (rolesError) throw rolesError;
 
-      const rolePriority = ['admin', 'leader', 'coach', 'delegate', 'finance', 'athlete'];
       const roleMap = new Map<string, User['role']>();
-      for (const r of roles || []) {
+      for (const r of roles ?? []) {
         const existing = roleMap.get(r.user_id);
-        if (!existing || rolePriority.indexOf(r.role) < rolePriority.indexOf(existing)) {
+        if (!existing || ROLE_PRIORITY.indexOf(r.role as User['role']) < ROLE_PRIORITY.indexOf(existing)) {
           roleMap.set(r.user_id, r.role as User['role']);
         }
       }
 
-      const merged: User[] = (profiles || []).map((p) => ({
+      return (profiles ?? []).map<User>((p) => ({
         ...p,
         role: roleMap.get(p.id) ?? 'athlete',
       }));
+    },
+  });
 
-      setUsers(merged);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los usuarios",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const refreshUsers = () => queryClient.invalidateQueries({ queryKey: ['users'] });
 
   const handleUserAdded = () => {
-    fetchUsers();
-    toast({
-      title: "Éxito",
-      description: "Usuario creado exitosamente",
-    });
+    refreshUsers();
+    toast({ title: "Éxito", description: "Usuario creado exitosamente" });
   };
 
   const handleUserUpdated = () => {
-    fetchUsers();
-    toast({
-      title: "Éxito",
-      description: "Usuario actualizado exitosamente",
-    });
+    refreshUsers();
+    toast({ title: "Éxito", description: "Usuario actualizado exitosamente" });
   };
 
   const handleUserDeleted = async (userId: string) => {
@@ -138,7 +119,7 @@ const UserManagement = () => {
         throw new Error(data.error);
       }
       
-      fetchUsers();
+      refreshUsers();
       toast({
         title: "Éxito",
         description: "Usuario eliminado exitosamente",
@@ -168,7 +149,7 @@ const UserManagement = () => {
         if (error) throw error;
       }
       
-      fetchUsers();
+      refreshUsers();
       toast({
         title: "Éxito",
         description: blocked ? "Usuario desbloqueado exitosamente" : "Usuario bloqueado exitosamente",
@@ -301,7 +282,7 @@ const UserManagement = () => {
             user={managingUser}
             open={managingRoleUserId !== null}
             onOpenChange={(open) => !open && setManagingRoleUserId(null)}
-            onRoleChanged={fetchUsers}
+            onRoleChanged={refreshUsers}
             currentUserId={currentUser?.id}
           />
 

@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import StatsCards from '@/components/athletes/StatsCards';
@@ -8,7 +9,6 @@ import AthletesTable from '@/components/athletes/AthletesTable';
 import RecentActivity from '@/components/athletes/RecentActivity';
 import UpcomingBirthdays from '@/components/athletes/UpcomingBirthdays';
 import AthletesHeader from '@/components/athletes/AthletesHeader';
-import { useToast } from '@/hooks/use-toast';
 import { Athlete } from '@/hooks/useAthletes';
 
 // Extended athlete interface with profile data
@@ -33,97 +33,59 @@ interface PaginationData {
   itemsPerPage: number;
 }
 
-const Athletes = () => {
-  
-  const [athletes, setAthletes] = useState<AthleteWithProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState<PaginationData>({
-    currentPage: 1,
-    totalPages: 0,
-    totalCount: 0,
-    itemsPerPage: 25,
-  });
-  const { toast } = useToast();
+const ITEMS_PER_PAGE = 25;
 
-  const fetchAthletes = async (page = 1) => {
-    try {
-      setLoading(true);
-      
-      // Calculate offset for pagination
-      const offset = (page - 1) * pagination.itemsPerPage;
-      
-      // Build the query with pagination and search, joining with profiles table
-      // Using left join to ensure athletes show even if profile data isn't ready yet
-      let query = supabase
+const Athletes = () => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const queryClient = useQueryClient();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['athletes', currentPage],
+    queryFn: async () => {
+      const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+      const { data, error, count } = await supabase
         .from('athletes')
         .select(`
           *,
-          profiles(
-            avatar_url,
-            id_type,
-            id_number,
-            date_of_birth,
-            phone
-          )
+          profiles(avatar_url, id_type, id_number, date_of_birth, phone)
         `, { count: 'exact' })
-        .range(offset, offset + pagination.itemsPerPage - 1)
+        .range(offset, offset + ITEMS_PER_PAGE - 1)
         .order('created_at', { ascending: false });
-      
-
-      const { data, error, count } = await query;
 
       if (error) throw error;
-      
-      const totalCount = count || 0;
-      const totalPages = Math.ceil(totalCount / pagination.itemsPerPage);
-      
-      // Flatten the profile data into the athlete object for easier access
-      const flattenedAthletes = (data || []).map(athlete => ({
-        ...athlete,
-        avatar_url: athlete.profiles?.avatar_url,
-        id_type: athlete.profiles?.id_type,
-        id_number: athlete.profiles?.id_number,
-        date_of_birth: athlete.profiles?.date_of_birth,
-        phone: athlete.profiles?.phone,
-      }));
-      
-      setAthletes(flattenedAthletes);
-      setPagination(prev => ({
-        ...prev,
-        currentPage: page,
-        totalPages,
-        totalCount,
-      }));
-    } catch (error) {
-      console.error('Error fetching athletes:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los atletas",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
+      const totalCount = count ?? 0;
+      const athletes: AthleteWithProfile[] = (data ?? []).map(a => ({
+        ...a,
+        avatar_url:    a.profiles?.avatar_url,
+        id_type:       a.profiles?.id_type,
+        id_number:     a.profiles?.id_number,
+        date_of_birth: a.profiles?.date_of_birth,
+        phone:         a.profiles?.phone,
+      }));
+
+      return {
+        athletes,
+        totalCount,
+        totalPages: Math.ceil(totalCount / ITEMS_PER_PAGE),
+      };
+    },
+  });
+
+  const athletes = data?.athletes ?? [];
+  const pagination: PaginationData = {
+    currentPage,
+    totalPages:  data?.totalPages  ?? 0,
+    totalCount:  data?.totalCount  ?? 0,
+    itemsPerPage: ITEMS_PER_PAGE,
+  };
 
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= pagination.totalPages) {
-      fetchAthletes(page);
-    }
+    if (page >= 1 && page <= pagination.totalPages) setCurrentPage(page);
   };
 
-  useEffect(() => {
-    fetchAthletes();
-  }, []);
-
   const handleAthleteAdded = () => {
-    // Refresh the athletes list immediately
-    fetchAthletes(pagination.currentPage);
-    toast({
-      title: "Éxito", 
-      description: "Atleta creado exitosamente",
-    });
+    queryClient.invalidateQueries({ queryKey: ['athletes'] });
   };
 
   return (
@@ -135,10 +97,10 @@ const Athletes = () => {
         
         {/* Main Content Grid */}
         <div className="space-y-6">
-          <AthletesTable 
-            athletes={athletes} 
-            loading={loading} 
-            onActionCompleted={() => fetchAthletes(pagination.currentPage)}
+          <AthletesTable
+            athletes={athletes}
+            loading={isLoading}
+            onActionCompleted={() => queryClient.invalidateQueries({ queryKey: ['athletes'] })}
             pagination={pagination}
             onPageChange={handlePageChange}
           />

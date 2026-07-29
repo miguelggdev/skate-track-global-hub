@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -13,68 +13,47 @@ export interface MedicalSession {
 }
 
 export const useAthleteMedicalSessions = (athleteId: string | null) => {
-  const [sessions, setSessions] = useState<MedicalSession[]>([]);
-  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const fetchSessions = async () => {
-    if (!athleteId) {
-      setLoading(false);
-      return;
-    }
-
-    try {
+  const { data: sessions = [], isLoading: loading, refetch } = useQuery({
+    queryKey: ['medical-sessions', athleteId],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('medical_sessions')
         .select('*')
-        .eq('athlete_id', athleteId)
+        .eq('athlete_id', athleteId!)
         .order('session_date', { ascending: false });
 
       if (error) throw error;
-      setSessions(data || []);
-    } catch (error) {
-      console.error('Error fetching medical sessions:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return (data ?? []) as MedicalSession[];
+    },
+    enabled: !!athleteId,
+  });
 
   const addSession = async (session: Omit<MedicalSession, 'id'>) => {
     try {
-      const { error } = await supabase
-        .from('medical_sessions')
-        .insert(session);
-
+      const { error } = await supabase.from('medical_sessions').insert(session);
       if (error) throw error;
       toast({ title: 'Sesión médica registrada' });
-      await fetchSessions();
-    } catch (error) {
-      console.error('Error adding session:', error);
+      queryClient.invalidateQueries({ queryKey: ['medical-sessions', athleteId] });
+    } catch {
       toast({ title: 'Error al registrar sesión', variant: 'destructive' });
     }
   };
 
   const getSessionCounts = (year?: number, month?: number) => {
     let filtered = sessions;
-    
-    if (year) {
-      filtered = filtered.filter(s => new Date(s.session_date).getFullYear() === year);
-    }
-    if (month !== undefined) {
-      filtered = filtered.filter(s => new Date(s.session_date).getMonth() === month);
-    }
+    if (year)            filtered = filtered.filter(s => new Date(s.session_date).getFullYear() === year);
+    if (month !== undefined) filtered = filtered.filter(s => new Date(s.session_date).getMonth() === month);
 
     return {
       physiotherapy: filtered.filter(s => s.session_type === 'physiotherapy').length,
-      psychology: filtered.filter(s => s.session_type === 'psychology').length,
-      medical: filtered.filter(s => s.session_type === 'medical_followup').length,
-      total: filtered.length
+      psychology:    filtered.filter(s => s.session_type === 'psychology').length,
+      medical:       filtered.filter(s => s.session_type === 'medical_followup').length,
+      total:         filtered.length,
     };
   };
 
-  useEffect(() => {
-    fetchSessions();
-  }, [athleteId]);
-
-  return { sessions, loading, addSession, getSessionCounts, refetch: fetchSessions };
+  return { sessions, loading, addSession, getSessionCounts, refetch };
 };
