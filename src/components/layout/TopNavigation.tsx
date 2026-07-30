@@ -178,7 +178,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
           searchPromises.push(
             supabase
               .from('coaches')
-              .select('id, user_id, profiles(id, first_name, last_name, email)')
+              .select('id, user_id, profiles(id, first_name, last_name)')
               .eq('is_active', true)
               .limit(4)
               .then(result => ({
@@ -188,8 +188,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
                   .filter((p: any) => {
                     const q = searchQuery.toLowerCase();
                     return (p.first_name || '').toLowerCase().includes(q)
-                      || (p.last_name || '').toLowerCase().includes(q)
-                      || (p.email || '').toLowerCase().includes(q);
+                      || (p.last_name || '').toLowerCase().includes(q);
                   }),
               }))
           );
@@ -312,7 +311,6 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
                   id: coach.id,
                   title: `${coach.first_name || ''} ${coach.last_name || ''}`.trim(),
                   type: 'coach',
-                  subtitle: coach.email,
                 });
               });
               break;

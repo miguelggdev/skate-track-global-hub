@@ -42,6 +42,7 @@ import { HistoryTab } from '@/components/athletes/dashboard/HistoryTab';
 import { HobbiesTab } from '@/components/athletes/dashboard/HobbiesTab';
 import { TrainingTab } from '@/components/athletes/dashboard/TrainingTab';
 import { DocumentsTab } from '@/components/athletes/dashboard/DocumentsTab';
+import { FilesTab } from '@/components/athletes/dashboard/FilesTab';
 import { PerformanceTab } from '@/components/athletes/dashboard/PerformanceTab';
 import { InternationalTab } from '@/components/athletes/dashboard/InternationalTab';
 import { AttendanceHeatmapTab } from '@/components/athletes/dashboard/AttendanceHeatmapTab';
@@ -334,6 +335,7 @@ const AthleteDashboard = () => {
           <TabsContent value="contact"><ContactTab athlete={athlete} /></TabsContent>
           <TabsContent value="studies"><StudiesTab /></TabsContent>
           <TabsContent value="documents"><DocumentsTab /></TabsContent>
+          <TabsContent value="files"><FilesTab /></TabsContent>
           <TabsContent value="family"><FamilyTab /></TabsContent>
           <TabsContent value="payments"><PaymentsTab /></TabsContent>
           <TabsContent value="skates"><SkatesTab /></TabsContent>

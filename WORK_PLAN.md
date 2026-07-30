@@ -47,13 +47,13 @@ CIERRE DEL DÍA
 | Spec | Título | Agente | Status |
 |------|--------|--------|--------|
 | SPEC-001 | Git + GitHub setup | AG-CLAUDE-DB | ✅ done |
-| SPEC-002 | Conectar frontend al schema nuevo | AG-CLAUDE-FRONTEND | ⬜ draft |
+| SPEC-002 | Conectar frontend al schema nuevo | AG-CLAUDE-FRONTEND | ✅ done |
 | SPEC-003 | Audit Log + pgvector | AG-CLAUDE-DB | ✅ done |
 | SPEC-004 | Storage buckets y policies | AG-CLAUDE-DB | ✅ done |
 | SPEC-005 | Perfil completo del deportista | AG-CLAUDE-FRONTEND | ✅ done |
-| SPEC-006 | Generación de documentos (PDF/Excel) | AG-CLAUDE-FRONTEND | ⬜ draft — **siguiente** |
+| SPEC-006 | Generación de documentos (PDF/Excel) | AG-CLAUDE-FRONTEND | ✅ done |
 | SPEC-007 | Registro de tiempos y pruebas | AG-CLAUDE-FRONTEND | ✅ done |
-| SPEC-008 | Gestión de equipamiento del club | AG-CLAUDE-FRONTEND | ⬜ draft |
+| SPEC-008 | Gestión de equipamiento del club | AG-CLAUDE-FRONTEND | ✅ done |
 
 ### Completados este sprint
 - Schema completo: 40+ tablas, RLS, triggers, migraciones en `supabase/migrations/`

@@ -18,7 +18,8 @@ import {
   Globe,
   CalendarCheck,
   BarChart2,
-  FileText
+  FileText,
+  Upload
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -108,6 +109,7 @@ const primaryTabs: PrimaryTab[] = [
     label: 'Documentos',
     icon: FileText,
     subTabs: [
+      { id: 'files', label: 'Mis Archivos', icon: Upload },
       { id: 'payments', label: 'Pagos', icon: CreditCard },
       { id: 'hobbies', label: 'Hobbys', icon: Gamepad2 }
     ]
