@@ -13,21 +13,28 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 
 type MedalType = 'gold' | 'silver' | 'bronze' | 'destacado';
 
+function formatTimeSeconds(seconds: number | null | undefined): string | undefined {
+  if (seconds == null) return undefined;
+  const mins = Math.floor(seconds / 60);
+  const secs = (seconds % 60).toFixed(2).padStart(5, '0');
+  return mins > 0 ? `${mins}:${secs}` : `${secs}s`;
+}
+
 interface MedalRecord {
   id: string;
   competition_id: string;
   athlete_id: string;
-  event_type: string;
+  event_name: string;
   medal_type: MedalType;
   position: number | null;
-  time_achieved: string | null;
+  time_seconds: number | null;
   notes: string | null;
   athletes?: {
     first_name: string;
     last_name: string;
     category: string;
     gender: string;
-    avatar_url?: string;
+    photo_url?: string;
   };
 }
 
@@ -84,8 +91,8 @@ export function VirtualPodiumByCategory({ competitionId, competitionName }: Virt
       const { data, error } = await supabase
         .from('competition_results')
         .select(`
-          id, competition_id, athlete_id, event_type, medal_type, position, time_achieved, notes,
-          athletes (first_name, last_name, category, gender, avatar_url)
+          id, competition_id, athlete_id, event_name, medal_type, position, time_seconds, notes,
+          athletes (first_name, last_name, category, gender, photo_url)
         `)
         .eq('competition_id', competitionId)
         .not('medal_type', 'is', null)
@@ -101,7 +108,7 @@ export function VirtualPodiumByCategory({ competitionId, competitionName }: Virt
   }, [medals]);
 
   const events = useMemo(() => {
-    const evts = [...new Set(medals.map(m => m.event_type).filter(Boolean))];
+    const evts = [...new Set(medals.map(m => m.event_name).filter(Boolean))];
     return evts.sort();
   }, [medals]);
 
@@ -114,7 +121,7 @@ export function VirtualPodiumByCategory({ competitionId, competitionName }: Virt
           : m.athletes?.gender === 'masculino';
         if (!genderMatch) return false;
       }
-      if (selectedEvent !== 'all' && m.event_type !== selectedEvent) return false;
+      if (selectedEvent !== 'all' && m.event_name !== selectedEvent) return false;
       return true;
     });
   }, [medals, selectedCategory, selectedRama, selectedEvent]);
@@ -129,9 +136,9 @@ export function VirtualPodiumByCategory({ competitionId, competitionName }: Virt
         medal,
         name: a ? `${a.first_name} ${a.last_name}` : '—',
         initials: a ? `${a.first_name[0]}${a.last_name[0]}` : '?',
-        avatarUrl: a?.avatar_url,
-        time: record.time_achieved ?? undefined,
-        event: record.event_type,
+        avatarUrl: a?.photo_url,
+        time: formatTimeSeconds(record.time_seconds),
+        event: record.event_name,
       };
     }).filter(Boolean) as PodiumAthleteSlot[];
   }, [filtered]);
@@ -273,10 +280,10 @@ export function VirtualPodiumByCategory({ competitionId, competitionName }: Virt
                         <p className="text-sm font-medium truncate">
                           {a ? `${a.first_name} ${a.last_name}` : '—'}
                         </p>
-                        <p className="text-xs text-muted-foreground">{m.event_type} — {a?.category}</p>
+                        <p className="text-xs text-muted-foreground">{m.event_name} — {a?.category}</p>
                       </div>
-                      {m.time_achieved && (
-                        <span className="text-xs font-mono text-muted-foreground flex-shrink-0">{m.time_achieved}</span>
+                      {m.time_seconds != null && (
+                        <span className="text-xs font-mono text-muted-foreground flex-shrink-0">{formatTimeSeconds(m.time_seconds)}</span>
                       )}
                       <Badge variant="outline" className={`text-xs flex-shrink-0 ${cfg.color}`}>
                         {cfg.label}

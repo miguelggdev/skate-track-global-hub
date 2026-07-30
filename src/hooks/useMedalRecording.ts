@@ -28,6 +28,16 @@ export interface CompetitionEvent {
   scheduled_time?: string;
 }
 
+function parseTimeToSeconds(timeStr?: string): number | null {
+  if (!timeStr) return null;
+  const m = timeStr.match(/^(?:(\d+):)?(\d+)(?:[.,](\d+))?$/);
+  if (!m) return null;
+  const mins = parseInt(m[1] || '0');
+  const secs = parseInt(m[2]);
+  const frac = m[3] ? parseFloat(`0.${m[3]}`) : 0;
+  return mins * 60 + secs + frac;
+}
+
 export const useMedalRecording = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -39,13 +49,10 @@ export const useMedalRecording = () => {
         .insert({
           competition_id: medalData.competition_id,
           athlete_id: medalData.athlete_id,
-          event_id: medalData.event_id,
-          event_type: medalData.event_type as any,
+          event_name: medalData.event_type || '',
           medal_type: medalData.medal_type,
-          time_achieved: medalData.time_achieved,
-          event_location: medalData.event_location,
+          time_seconds: parseTimeToSeconds(medalData.time_achieved),
           position: medalData.position,
-          score: medalData.score,
           notes: medalData.notes,
         })
         .select()
@@ -76,8 +83,11 @@ export const useMedalRecording = () => {
       const { data, error } = await supabase
         .from('competition_results')
         .update({
-          ...medalData,
-          event_type: medalData.event_type as any,
+          event_name: medalData.event_type || '',
+          medal_type: medalData.medal_type,
+          time_seconds: parseTimeToSeconds(medalData.time_achieved),
+          position: medalData.position,
+          notes: medalData.notes,
         })
         .eq('id', id)
         .select()
@@ -148,12 +158,6 @@ export const useCompetitionMedals = (competitionId?: string) => {
             last_name,
             category,
             gender
-          ),
-          competition_events (
-            id,
-            event_name,
-            event_type,
-            location
           )
         `)
         .not('medal_type', 'is', null)
@@ -180,7 +184,7 @@ export const useCompetitionEvents = (competitionId?: string) => {
         .from('competition_events')
         .select('*')
         .eq('competition_id', competitionId!)
-        .order('scheduled_time', { ascending: true });
+        .order('scheduled_at', { ascending: true });
 
       if (error) throw error;
       return data;
