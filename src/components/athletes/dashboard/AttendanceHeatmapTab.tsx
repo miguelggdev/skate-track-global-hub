@@ -24,7 +24,7 @@ const WEEKDAY_LABELS = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
 interface AttendanceRow {
   attended: boolean;
   training_sessions: {
-    date: string;
+    scheduled_at: string;
     training_type: string;
   } | null;
 }
@@ -36,7 +36,7 @@ const useAttendanceData = (athleteId: string | null) =>
       if (!athleteId) return [];
       const { data, error } = await supabase
         .from('training_attendance')
-        .select('attended, training_sessions(date, training_type)')
+        .select('attended, training_sessions(scheduled_at, training_type)')
         .eq('athlete_id', athleteId);
       if (error) throw error;
       return data as AttendanceRow[];
@@ -55,9 +55,10 @@ export const AttendanceHeatmapTab = () => {
   const attendanceMap = useMemo(() => {
     const map = new Map<string, boolean>();
     for (const r of rows) {
-      if (r.training_sessions?.date) {
-        const existing = map.get(r.training_sessions.date);
-        map.set(r.training_sessions.date, existing === true ? true : r.attended);
+      if (r.training_sessions?.scheduled_at) {
+        const dateKey = r.training_sessions.scheduled_at.split('T')[0];
+        const existing = map.get(dateKey);
+        map.set(dateKey, existing === true ? true : r.attended);
       }
     }
     return map;

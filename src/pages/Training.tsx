@@ -132,26 +132,13 @@ const Training = () => {
 
   const filteredSessions = trainingSessions
     .filter(session => {
-      const matchesSearch = session.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const matchesSearch = session.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            session.coach.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            session.location?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
       const matchesFilter = filterStatus === 'all' || session.status === filterStatus;
       return matchesSearch && matchesFilter;
     })
-    .sort((a, b) => {
-      // Sort by date (newest first), then by time
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
-      
-      if (dateA.getTime() !== dateB.getTime()) {
-        return dateB.getTime() - dateA.getTime(); // Newest first
-      }
-      
-      // If same date, sort by start time (earliest first for same day)
-      const timeA = a.start_time;
-      const timeB = b.start_time;
-      return timeA.localeCompare(timeB);
-    });
+    .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
 
   return (
     <DashboardLayout title="Training Management">
@@ -361,15 +348,16 @@ const Training = () => {
                                  {getTypeIcon(session.training_type)}
                                </div>
                                <div className="min-w-0 flex-1">
-                                 <h4 className="font-semibold text-gray-800 text-sm truncate">{session.name}</h4>
+                                 <h4 className="font-semibold text-gray-800 text-sm truncate">{session.title}</h4>
                                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600 mt-1">
                                    <span className="flex items-center flex-shrink-0">
                                      <Clock className="h-3 w-3 mr-1" />
-                                     {session.start_time} - {session.end_time}
+                                     {new Date(session.scheduled_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                                     {session.duration_minutes ? ` — ${session.duration_minutes} min` : ''}
                                    </span>
                                    <span className="flex items-center flex-shrink-0">
                                      <Calendar className="h-3 w-3 mr-1" />
-                                     {new Date(session.date).toLocaleDateString('es-ES')}
+                                     {new Date(session.scheduled_at).toLocaleDateString('es-ES')}
                                    </span>
                                    <span className="flex items-center flex-shrink-0">
                                      <MapPin className="h-3 w-3 mr-1" />

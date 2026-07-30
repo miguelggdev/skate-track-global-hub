@@ -53,15 +53,15 @@ const AthleteDistribution: React.FC = () => {
 
       const { data: sessions, error } = await supabase
         .from('training_sessions')
-        .select(`id, date, training_attendance(id, attended)`)
-        .gte('date', format(start, 'yyyy-MM-dd'))
-        .lte('date', format(end,   'yyyy-MM-dd'));
+        .select(`id, scheduled_at, training_attendance(id, attended)`)
+        .gte('scheduled_at', format(start, 'yyyy-MM-dd'))
+        .lte('scheduled_at', format(end, 'yyyy-MM-dd') + 'T23:59:59');
 
       if (error) throw error;
 
       const byDay: Record<string, { total: number; attended: number }> = {};
       for (const s of sessions ?? []) {
-        const dayName = DAY_NAMES[new Date(s.date).getDay()];
+        const dayName = DAY_NAMES[new Date(s.scheduled_at).getDay()];
         if (!byDay[dayName]) byDay[dayName] = { total: 0, attended: 0 };
         const att = (s as any).training_attendance as { attended: boolean }[];
         byDay[dayName].total    += att.length;

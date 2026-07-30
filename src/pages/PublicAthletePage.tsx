@@ -75,9 +75,9 @@ export default function PublicAthletePage() {
     queryFn: async () => {
       const { data } = await supabase
         .from('training_sessions')
-        .select('id, name, date, start_time, end_time, location, training_type')
-        .gte('date', today)
-        .order('date', { ascending: true })
+        .select('id, title, scheduled_at, duration_minutes, location, training_type')
+        .gte('scheduled_at', today)
+        .order('scheduled_at', { ascending: true })
         .limit(6);
       return data ?? [];
     },
@@ -281,15 +281,16 @@ export default function PublicAthletePage() {
                       TRAINING_TYPE_COLORS[s.training_type] ?? 'bg-muted',
                     )} />
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm">{s.name}</p>
+                      <p className="font-semibold text-sm">{s.title}</p>
                       <p className="text-xs text-muted-foreground capitalize mt-0.5">
-                        {formatDate(s.date)}
+                        {formatDate(s.scheduled_at)}
                       </p>
                       <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-muted-foreground">
-                        {s.start_time && (
+                        {s.scheduled_at && (
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
-                            {formatTime(s.start_time)} – {formatTime(s.end_time)}
+                            {new Date(s.scheduled_at).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
+                            {s.duration_minutes ? ` — ${s.duration_minutes} min` : ''}
                           </span>
                         )}
                         {s.location && (

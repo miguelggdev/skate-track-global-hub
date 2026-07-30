@@ -274,16 +274,19 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
         const trainingTypes = getTrainingTypes(item.category);
         const selectedType = trainingTypes.find(t => t.value === item.training_type);
 
+        const [startH, startM] = item.start_time.split(':').map(Number);
+        const [endH, endM] = item.end_time.split(':').map(Number);
+        const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
+        const scheduledAt = `${item.date}T${item.start_time}:00`;
+
         return supabase.from('training_sessions').insert({
           coach_id: (item.coach_id === 'unassigned' || !item.coach_id) ? coachId : item.coach_id,
-          name: `${selectedType?.label} - ${categories.find(c => c.value === item.category)?.label}`,
+          title: `${selectedType?.label} - ${categories.find(c => c.value === item.category)?.label}`,
           description: selectedType?.description || formData.description || '',
-          date: item.date,
-          week_start_date: formatDateLocal(getSundayOfWeek(normalizeDate(new Date(formData.date)))),
-          start_time: item.start_time,
-          end_time: item.end_time,
+          scheduled_at: scheduledAt,
+          duration_minutes: durationMinutes > 0 ? durationMinutes : 60,
           location: item.location || null,
-          max_participants: item.max_participants ? parseInt(item.max_participants) : null,
+          max_athletes: item.max_participants ? parseInt(item.max_participants) : null,
           training_type: item.training_type
         });
       });
