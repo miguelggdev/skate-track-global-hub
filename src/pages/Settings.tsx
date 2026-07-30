@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,8 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  Settings as SettingsIcon,
+import {
   User,
   Bell,
   Shield,
@@ -23,11 +23,10 @@ import {
   Save,
   Eye,
   EyeOff,
-  BarChart3,
   Users,
   Calendar,
   Trophy,
-  DollarSign
+  Activity,
 } from 'lucide-react';
 import UserManagementTab from '@/components/settings/UserManagementTab';
 import { LanguageSelector } from '@/components/settings/LanguageSelector';
@@ -46,6 +45,8 @@ const Settings = () => {
   const { profile, loading, isAdmin } = useUserProfile();
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [changingPwd, setChangingPwd] = useState(false);
+  const [passwords, setPasswords] = useState({ newPass: '', confirm: '' });
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -139,42 +140,86 @@ const Settings = () => {
     }
   };
 
+  const handleChangePassword = async () => {
+    if (!passwords.newPass || passwords.newPass !== passwords.confirm) {
+      toast({ title: 'Error', description: 'Las contraseñas no coinciden', variant: 'destructive' });
+      return;
+    }
+    if (passwords.newPass.length < 6) {
+      toast({ title: 'Error', description: 'Mínimo 6 caracteres', variant: 'destructive' });
+      return;
+    }
+    setChangingPwd(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: passwords.newPass });
+      if (error) throw error;
+      toast({ title: 'Éxito', description: 'Contraseña actualizada correctamente' });
+      setPasswords({ newPass: '', confirm: '' });
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'No se pudo actualizar la contraseña', variant: 'destructive' });
+    } finally {
+      setChangingPwd(false);
+    }
+  };
+
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+    .toISOString().split('T')[0];
+  const yearStart = `${new Date().getFullYear()}-01-01`;
+
+  const { data: appStats } = useQuery({
+    queryKey: ['settings-app-stats'],
+    queryFn: async () => {
+      const [athletesRes, usersRes, sessionsRes, competitionsRes] = await Promise.all([
+        supabase.from('athletes').select('id', { count: 'exact' }).eq('status', 'active'),
+        supabase.from('profiles').select('id', { count: 'exact' }),
+        supabase.from('training_sessions').select('id', { count: 'exact' }).gte('date', monthStart),
+        supabase.from('competitions').select('id', { count: 'exact' }).gte('start_date', yearStart),
+      ]);
+      return {
+        athletes: athletesRes.count ?? 0,
+        users: usersRes.count ?? 0,
+        sessions: sessionsRes.count ?? 0,
+        competitions: competitionsRes.count ?? 0,
+      };
+    },
+  });
+
   const quickStats = [
-    { 
-      title: "ACCOUNT STATUS", 
-      value: "Active", 
-      change: "Premium Plan", 
-      period: "expires in 30 days",
+    {
+      title: 'DEPORTISTAS ACTIVOS',
+      value: appStats?.athletes ?? '—',
+      change: 'En el club',
+      period: 'estado activo',
+      icon: Users,
+      bgColor: 'argon-gradient-blue',
+      isPositive: true,
+    },
+    {
+      title: 'USUARIOS TOTALES',
+      value: appStats?.users ?? '—',
+      change: 'Registrados',
+      period: 'en el sistema',
       icon: User,
-      bgColor: "argon-gradient-blue",
-      isPositive: true
+      bgColor: 'argon-gradient-green',
+      isPositive: true,
     },
-    { 
-      title: "STORAGE USED", 
-      value: "2.4 GB", 
-      change: "45%", 
-      period: "of 5 GB limit",
-      icon: Database,
-      bgColor: "argon-gradient-green",
-      isPositive: true
+    {
+      title: 'SESIONES DEL MES',
+      value: appStats?.sessions ?? '—',
+      change: 'Entrenamientos',
+      period: 'este mes',
+      icon: Activity,
+      bgColor: 'argon-gradient-orange',
+      isPositive: true,
     },
-    { 
-      title: "API CALLS", 
-      value: "1,247", 
-      change: "+12%", 
-      period: "this month",
-      icon: Globe,
-      bgColor: "argon-gradient-orange",
-      isPositive: true
-    },
-    { 
-      title: "SECURITY SCORE", 
-      value: "98%", 
-      change: "Excellent", 
-      period: "last updated today",
-      icon: Shield,
-      bgColor: "argon-gradient-purple",
-      isPositive: true
+    {
+      title: 'COMPETENCIAS',
+      value: appStats?.competitions ?? '—',
+      change: 'Este año',
+      period: 'programadas',
+      icon: Trophy,
+      bgColor: 'argon-gradient-purple',
+      isPositive: true,
     },
   ];
 
@@ -341,11 +386,13 @@ const Settings = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="currentPassword">Current Password</Label>
+                    <Label htmlFor="newPassword">Nueva Contraseña</Label>
                     <div className="relative">
-                      <Input 
-                        id="currentPassword" 
-                        type={showPassword ? "text" : "password"} 
+                      <Input
+                        id="newPassword"
+                        type={showPassword ? 'text' : 'password'}
+                        value={passwords.newPass}
+                        onChange={(e) => setPasswords(prev => ({ ...prev, newPass: e.target.value }))}
                       />
                       <Button
                         type="button"
@@ -359,14 +406,17 @@ const Settings = () => {
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="newPassword">New Password</Label>
-                    <Input id="newPassword" type="password" />
+                    <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={passwords.confirm}
+                      onChange={(e) => setPasswords(prev => ({ ...prev, confirm: e.target.value }))}
+                    />
                   </div>
-                  <div>
-                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                    <Input id="confirmPassword" type="password" />
-                  </div>
-                  <Button className="w-full">Update Password</Button>
+                  <Button className="w-full" onClick={handleChangePassword} disabled={changingPwd}>
+                    {changingPwd ? 'Actualizando…' : 'Actualizar Contraseña'}
+                  </Button>
                 </CardContent>
               </Card>
 
@@ -597,24 +647,28 @@ const Settings = () => {
                   <CardDescription>Export, import, and manage your data</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button variant="outline" className="w-full justify-start"
+                    onClick={() => toast({ title: 'Próximamente', description: 'Exportación de datos disponible pronto' })}>
                     <Download className="h-4 w-4 mr-2" />
-                    Export All Data
+                    Exportar Datos
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button variant="outline" className="w-full justify-start"
+                    onClick={() => toast({ title: 'Próximamente', description: 'Importación de datos disponible pronto' })}>
                     <Upload className="h-4 w-4 mr-2" />
-                    Import Data
+                    Importar Datos
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button variant="outline" className="w-full justify-start"
+                    onClick={() => toast({ title: 'Próximamente', description: 'Backup de configuración disponible pronto' })}>
                     <Database className="h-4 w-4 mr-2" />
-                    Backup Settings
+                    Backup Configuración
                   </Button>
                   <Separator />
                   <div className="space-y-2">
-                    <p className="text-sm font-medium text-red-600">Danger Zone</p>
-                    <Button variant="destructive" size="sm">
+                    <p className="text-sm font-medium text-red-600">Zona de Peligro</p>
+                    <Button variant="destructive" size="sm"
+                      onClick={() => toast({ title: 'Acción restringida', description: 'Contacta al administrador para eliminar tu cuenta', variant: 'destructive' })}>
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Delete Account
+                      Eliminar Cuenta
                     </Button>
                   </div>
                 </CardContent>
