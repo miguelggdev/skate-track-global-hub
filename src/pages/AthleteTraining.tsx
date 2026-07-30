@@ -166,7 +166,7 @@ const AthleteTraining = () => {
                       >
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-foreground">{session.name}</h4>
+                            <h4 className="font-medium text-foreground">{session.title}</h4>
                             <Badge className={getTrainingTypeColor(session.training_type)}>
                               {getTrainingTypeLabel(session.training_type)}
                             </Badge>
@@ -174,11 +174,12 @@ const AthleteTraining = () => {
                           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Calendar className="h-4 w-4" />
-                              {format(parseISO(session.date), "EEEE d 'de' MMMM", { locale: es })}
+                              {format(new Date(session.scheduled_at), "EEEE d 'de' MMMM", { locale: es })}
                             </span>
                             <span className="flex items-center gap-1">
                               <Clock className="h-4 w-4" />
-                              {session.start_time} - {session.end_time}
+                              {new Date(session.scheduled_at).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
+                              {session.duration_minutes ? ` — ${session.duration_minutes} min` : ''}
                             </span>
                             {session.location && (
                               <span className="flex items-center gap-1">
@@ -277,7 +278,7 @@ const AthleteTraining = () => {
                       >
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-foreground">{session.name}</h4>
+                            <h4 className="font-medium text-foreground">{session.title}</h4>
                             <Badge className={getTrainingTypeColor(session.training_type)}>
                               {getTrainingTypeLabel(session.training_type)}
                             </Badge>
@@ -285,11 +286,12 @@ const AthleteTraining = () => {
                           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Calendar className="h-4 w-4" />
-                              {format(parseISO(session.date), "d MMM yyyy", { locale: es })}
+                              {format(new Date(session.scheduled_at), "d MMM yyyy", { locale: es })}
                             </span>
                             <span className="flex items-center gap-1">
                               <Clock className="h-4 w-4" />
-                              {session.start_time} - {session.end_time}
+                              {new Date(session.scheduled_at).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
+                              {session.duration_minutes ? ` — ${session.duration_minutes} min` : ''}
                             </span>
                             {session.performance_rating && (
                               <span className="flex items-center gap-1">
