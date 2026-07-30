@@ -11,6 +11,15 @@ import UpcomingBirthdays from '@/components/athletes/UpcomingBirthdays';
 import AthletesHeader from '@/components/athletes/AthletesHeader';
 import { Athlete } from '@/hooks/useAthletes';
 
+// Raw row from athletes table including columns added via ALTER TABLE migrations
+interface AthleteRow extends Athlete {
+  identification_type?: string;
+  identification_number?: string;
+  photo_url?: string;
+  personal_phone?: string;
+  profiles?: { avatar_url?: string; date_of_birth?: string; phone?: string } | null;
+}
+
 // Extended athlete interface with profile data
 interface AthleteWithProfile extends Athlete {
   athlete_number?: string;
@@ -18,7 +27,6 @@ interface AthleteWithProfile extends Athlete {
   emergency_contact_phone?: string;
   medical_notes?: string;
   achievements?: string;
-  // Profile data
   avatar_url?: string;
   id_type?: string;
   id_number?: string;
@@ -55,14 +63,17 @@ const Athletes = () => {
       if (error) throw error;
 
       const totalCount = count ?? 0;
-      const athletes: AthleteWithProfile[] = (data ?? []).map(a => ({
-        ...a,
-        avatar_url:    a.profiles?.avatar_url ?? a.photo_url,
-        id_type:       (a as any).identification_type,
-        id_number:     (a as any).identification_number,
-        date_of_birth: a.profiles?.date_of_birth ?? a.date_of_birth,
-        phone:         a.profiles?.phone ?? a.personal_phone,
-      }));
+      const athletes: AthleteWithProfile[] = (data ?? []).map(raw => {
+        const a = raw as AthleteRow;
+        return {
+          ...a,
+          avatar_url:    a.profiles?.avatar_url ?? a.photo_url,
+          id_type:       a.identification_type,
+          id_number:     a.identification_number,
+          date_of_birth: a.profiles?.date_of_birth ?? a.date_of_birth,
+          phone:         a.profiles?.phone ?? a.personal_phone,
+        };
+      });
 
       return {
         athletes,

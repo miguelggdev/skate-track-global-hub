@@ -64,6 +64,13 @@ SELECT
 FROM public.transactions
 ON CONFLICT (id) DO NOTHING;
 
+-- DEPRECATION NOTICE: public.transactions is kept for backward compatibility
+-- (FinanceCharts.tsx reads legacy data from it). All new writes go to
+-- financial_transactions. Do NOT drop transactions until legacy data is
+-- fully migrated and FinanceCharts.tsx is updated.
+COMMENT ON TABLE public.transactions IS 'DEPRECATED — usar financial_transactions para nuevos registros';
+
+
 -- Indexes for common query patterns
 CREATE INDEX IF NOT EXISTS idx_ft_athlete_id        ON public.financial_transactions(athlete_id);
 CREATE INDEX IF NOT EXISTS idx_ft_payment_status    ON public.financial_transactions(payment_status);

@@ -16,7 +16,6 @@ import {
   Database,
   Palette,
   Lock,
-  Globe,
   Download,
   Upload,
   Trash2,
@@ -24,9 +23,8 @@ import {
   Eye,
   EyeOff,
   Users,
-  Calendar,
-  Trophy,
   Activity,
+  Trophy,
 } from 'lucide-react';
 import UserManagementTab from '@/components/settings/UserManagementTab';
 import { LanguageSelector } from '@/components/settings/LanguageSelector';
@@ -54,16 +52,26 @@ const Settings = () => {
     phone: '',
   });
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
+
   const [notifications, setNotifications] = useState({
     email: true,
     push: false,
     sms: true,
     training: true,
     competitions: false,
-    finance: true
+    finance: true,
+    scheduleChanges: false,
+    paymentReminders: true,
+    eventReminders: false,
+    paymentConfirmations: true,
   });
 
-  // Update form data when profile loads
+  const [securityPrefs, setSecurityPrefs] = useState({
+    two_factor: false,
+    login_notifications: true,
+    session_timeout: false,
+  });
+
   useEffect(() => {
     if (profile) {
       setFormData({
@@ -73,8 +81,7 @@ const Settings = () => {
         phone: '',
       });
       setProfilePhotoUrl(null);
-      
-      // Fetch additional profile data that might not be in UserProfile
+
       const fetchFullProfile = async () => {
         try {
           const { data: fullProfile } = await supabase
@@ -82,32 +89,45 @@ const Settings = () => {
             .select('phone, avatar_url')
             .eq('id', profile.id)
             .single();
-            
+
           if (fullProfile) {
-            setFormData(prev => ({
-              ...prev,
-              phone: fullProfile.phone || '',
-            }));
+            setFormData(prev => ({ ...prev, phone: fullProfile.phone || '' }));
             setProfilePhotoUrl(fullProfile.avatar_url);
           }
-        } catch (error) {
+        } catch {
+          // no-op
         }
       };
-      
+
       fetchFullProfile();
     }
   }, [profile]);
 
+  // Load security preferences from system_settings on mount
+  useEffect(() => {
+    const loadSecurityPrefs = async () => {
+      const { data } = await supabase
+        .from('system_settings')
+        .select('setting_key, setting_value')
+        .in('setting_key', ['two_factor', 'login_notifications', 'session_timeout']);
+
+      if (data && data.length > 0) {
+        const mapped = data.reduce<Record<string, boolean>>((acc, s) => {
+          acc[s.setting_key] = s.setting_value === 'true';
+          return acc;
+        }, {});
+        setSecurityPrefs(prev => ({ ...prev, ...mapped }));
+      }
+    };
+    loadSecurityPrefs();
+  }, []);
+
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSaveSettings = async () => {
     if (!profile?.id) return;
-    
     setSaving(true);
     try {
       const { error } = await supabase
@@ -129,7 +149,7 @@ const Settings = () => {
       toast({
         title: t('common.error'),
         description: error.message || t('message.error_occurred'),
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setSaving(false);
@@ -155,6 +175,22 @@ const Settings = () => {
       toast({ title: 'Error', description: error.message || 'No se pudo actualizar la contraseña', variant: 'destructive' });
     } finally {
       setChangingPwd(false);
+    }
+  };
+
+  const handleSecurityPref = async (key: keyof typeof securityPrefs, value: boolean) => {
+    setSecurityPrefs(prev => ({ ...prev, [key]: value }));
+    try {
+      await supabase.from('system_settings').upsert({
+        setting_key: key,
+        setting_value: String(value),
+        setting_type: 'boolean',
+        category: 'security',
+      }, { onConflict: 'setting_key' });
+      toast({ title: 'Preferencia guardada' });
+    } catch {
+      toast({ title: 'Error', description: 'No se pudo guardar la preferencia', variant: 'destructive' });
+      setSecurityPrefs(prev => ({ ...prev, [key]: !value }));
     }
   };
 
@@ -225,8 +261,8 @@ const Settings = () => {
         {/* Sticky Header Actions */}
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-4 mb-6">
           <div className="flex justify-end">
-            <Button 
-              onClick={handleSaveSettings} 
+            <Button
+              onClick={handleSaveSettings}
               disabled={saving || loading}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
@@ -281,23 +317,23 @@ const Settings = () => {
             )}
           </TabsList>
 
-          {/* Profile Settings */}
+          {/* Perfil */}
           <TabsContent value="profile" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="argon-card">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <User className="h-5 w-5" />
-                    <span>Personal Information</span>
+                    <span>Información Personal</span>
                   </CardTitle>
-                  <CardDescription>Update your personal details and contact information</CardDescription>
+                  <CardDescription>Actualiza tus datos personales y de contacto</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="firstName">Nombre</Label>
-                      <Input 
-                        id="firstName" 
+                      <Input
+                        id="firstName"
                         value={formData.first_name}
                         onChange={(e) => handleInputChange('first_name', e.target.value)}
                         placeholder="Ingresa tu nombre"
@@ -305,8 +341,8 @@ const Settings = () => {
                     </div>
                     <div>
                       <Label htmlFor="lastName">Apellido</Label>
-                      <Input 
-                        id="lastName" 
+                      <Input
+                        id="lastName"
                         value={formData.last_name}
                         onChange={(e) => handleInputChange('last_name', e.target.value)}
                         placeholder="Ingresa tu apellido"
@@ -315,22 +351,20 @@ const Settings = () => {
                   </div>
                   <div>
                     <Label htmlFor="email">Email</Label>
-                    <Input 
-                      id="email" 
-                      type="email" 
+                    <Input
+                      id="email"
+                      type="email"
                       value={formData.email}
                       disabled
                       className="bg-muted"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      El email no se puede cambiar
-                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">El email no se puede cambiar</p>
                   </div>
                   <div>
                     <Label htmlFor="phone">Teléfono</Label>
-                    <Input 
-                      id="phone" 
-                      type="tel" 
+                    <Input
+                      id="phone"
+                      type="tel"
                       value={formData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
                       placeholder="Ingresa tu teléfono"
@@ -349,7 +383,6 @@ const Settings = () => {
                     currentPhotoUrl={profilePhotoUrl}
                     onPhotoChange={(url) => {
                       setProfilePhotoUrl(url);
-                      // Force a refresh of the user profile to update the avatar in the session
                       window.location.reload();
                     }}
                     userId={profile?.id}
@@ -360,16 +393,16 @@ const Settings = () => {
             </div>
           </TabsContent>
 
-          {/* Security Settings */}
+          {/* Seguridad */}
           <TabsContent value="security" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="argon-card">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Lock className="h-5 w-5" />
-                    <span>Password & Authentication</span>
+                    <span>Contraseña y Autenticación</span>
                   </CardTitle>
-                  <CardDescription>Manage your password and two-factor authentication</CardDescription>
+                  <CardDescription>Gestiona tu contraseña y autenticación de dos factores</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
@@ -411,126 +444,137 @@ const Settings = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Shield className="h-5 w-5" />
-                    <span>Security Options</span>
+                    <span>Opciones de Seguridad</span>
                   </CardTitle>
-                  <CardDescription>Configure additional security measures</CardDescription>
+                  <CardDescription>Configura medidas de seguridad adicionales</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Two-Factor Authentication</p>
-                      <p className="text-sm text-gray-500">Add an extra layer of security</p>
+                      <p className="font-medium">Autenticación de Dos Factores</p>
+                      <p className="text-sm text-gray-500">Agrega una capa extra de seguridad</p>
                     </div>
-                    <Switch defaultChecked />
+                    <Switch
+                      checked={securityPrefs.two_factor}
+                      onCheckedChange={(v) => handleSecurityPref('two_factor', v)}
+                    />
                   </div>
                   <Separator />
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Login Notifications</p>
-                      <p className="text-sm text-gray-500">Get notified of new logins</p>
+                      <p className="font-medium">Notificaciones de Inicio de Sesión</p>
+                      <p className="text-sm text-gray-500">Recibe avisos de nuevos inicios de sesión</p>
                     </div>
-                    <Switch defaultChecked />
+                    <Switch
+                      checked={securityPrefs.login_notifications}
+                      onCheckedChange={(v) => handleSecurityPref('login_notifications', v)}
+                    />
                   </div>
                   <Separator />
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Session Timeout</p>
-                      <p className="text-sm text-gray-500">Auto-logout after inactivity</p>
+                      <p className="font-medium">Cierre de Sesión Automático</p>
+                      <p className="text-sm text-gray-500">Cierre automático tras período de inactividad</p>
                     </div>
-                    <Switch />
+                    <Switch
+                      checked={securityPrefs.session_timeout}
+                      onCheckedChange={(v) => handleSecurityPref('session_timeout', v)}
+                    />
                   </div>
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
 
-          {/* Notification Settings */}
+          {/* Notificaciones */}
           <TabsContent value="notifications" className="space-y-6">
             <Card className="argon-card">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Bell className="h-5 w-5" />
-                  <span>Notification Preferences</span>
+                  <span>Preferencias de Notificaciones</span>
                 </CardTitle>
-                <CardDescription>Choose how you want to be notified about important events</CardDescription>
+                <CardDescription>Elige cómo quieres recibir notificaciones sobre eventos importantes</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="space-y-4">
-                    <h4 className="font-medium">Email Notifications</h4>
+                    <h4 className="font-medium">Notificaciones por Email</h4>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Training Updates</span>
-                        <Switch 
+                        <span className="text-sm">Actualizaciones de Entrenamientos</span>
+                        <Switch
                           checked={notifications.training}
-                          onCheckedChange={(checked) => 
-                            setNotifications(prev => ({ ...prev, training: checked }))
-                          }
+                          onCheckedChange={(v) => setNotifications(prev => ({ ...prev, training: v }))}
                         />
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Competition Results</span>
-                        <Switch 
+                        <span className="text-sm">Resultados de Competencias</span>
+                        <Switch
                           checked={notifications.competitions}
-                          onCheckedChange={(checked) => 
-                            setNotifications(prev => ({ ...prev, competitions: checked }))
-                          }
+                          onCheckedChange={(v) => setNotifications(prev => ({ ...prev, competitions: v }))}
                         />
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Financial Reports</span>
-                        <Switch 
+                        <span className="text-sm">Reportes Financieros</span>
+                        <Switch
                           checked={notifications.finance}
-                          onCheckedChange={(checked) => 
-                            setNotifications(prev => ({ ...prev, finance: checked }))
-                          }
+                          onCheckedChange={(v) => setNotifications(prev => ({ ...prev, finance: v }))}
                         />
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-4">
-                    <h4 className="font-medium">Push Notifications</h4>
+                    <h4 className="font-medium">Notificaciones Push</h4>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Urgent Messages</span>
-                        <Switch 
+                        <span className="text-sm">Mensajes Urgentes</span>
+                        <Switch
                           checked={notifications.push}
-                          onCheckedChange={(checked) => 
-                            setNotifications(prev => ({ ...prev, push: checked }))
-                          }
+                          onCheckedChange={(v) => setNotifications(prev => ({ ...prev, push: v }))}
                         />
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Schedule Changes</span>
-                        <Switch />
+                        <span className="text-sm">Cambios de Horario</span>
+                        <Switch
+                          checked={notifications.scheduleChanges}
+                          onCheckedChange={(v) => setNotifications(prev => ({ ...prev, scheduleChanges: v }))}
+                        />
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Payment Reminders</span>
-                        <Switch />
+                        <span className="text-sm">Recordatorios de Pago</span>
+                        <Switch
+                          checked={notifications.paymentReminders}
+                          onCheckedChange={(v) => setNotifications(prev => ({ ...prev, paymentReminders: v }))}
+                        />
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-4">
-                    <h4 className="font-medium">SMS Notifications</h4>
+                    <h4 className="font-medium">Notificaciones SMS</h4>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Emergency Alerts</span>
-                        <Switch 
+                        <span className="text-sm">Alertas de Emergencia</span>
+                        <Switch
                           checked={notifications.sms}
-                          onCheckedChange={(checked) => 
-                            setNotifications(prev => ({ ...prev, sms: checked }))
-                          }
+                          onCheckedChange={(v) => setNotifications(prev => ({ ...prev, sms: v }))}
                         />
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Event Reminders</span>
-                        <Switch />
+                        <span className="text-sm">Recordatorios de Eventos</span>
+                        <Switch
+                          checked={notifications.eventReminders}
+                          onCheckedChange={(v) => setNotifications(prev => ({ ...prev, eventReminders: v }))}
+                        />
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Payment Confirmations</span>
-                        <Switch />
+                        <span className="text-sm">Confirmaciones de Pago</span>
+                        <Switch
+                          checked={notifications.paymentConfirmations}
+                          onCheckedChange={(v) => setNotifications(prev => ({ ...prev, paymentConfirmations: v }))}
+                        />
                       </div>
                     </div>
                   </div>
@@ -539,10 +583,9 @@ const Settings = () => {
             </Card>
           </TabsContent>
 
-          {/* Preferences */}
+          {/* Preferencias */}
           <TabsContent value="preferences" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Language Selector - Full i18n system */}
               <LanguageSelector />
 
               <Card className="argon-card">
@@ -551,19 +594,19 @@ const Settings = () => {
                     <Palette className="h-5 w-5" />
                     <span>{t('settings.preferences')}</span>
                   </CardTitle>
-                  <CardDescription>{t('common.description')}</CardDescription>
+                  <CardDescription>Personaliza la apariencia y el formato de la aplicación</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label>Theme</Label>
+                    <Label>Tema</Label>
                     <div className="grid grid-cols-3 gap-2 mt-2">
-                      <Button variant="outline" size="sm">Light</Button>
-                      <Button variant="outline" size="sm">Dark</Button>
+                      <Button variant="outline" size="sm">Claro</Button>
+                      <Button variant="outline" size="sm">Oscuro</Button>
                       <Button variant="outline" size="sm">Auto</Button>
                     </div>
                   </div>
                   <div>
-                    <Label>Currency</Label>
+                    <Label>Moneda</Label>
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <Select defaultValue="COP">
                         <SelectTrigger className="col-span-2">
@@ -571,18 +614,18 @@ const Settings = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="COP">Peso Colombiano (COP$)</SelectItem>
-                          <SelectItem value="USD">US Dollar ($)</SelectItem>
+                          <SelectItem value="USD">Dólar Americano ($)</SelectItem>
                           <SelectItem value="EUR">Euro (€)</SelectItem>
-                          <SelectItem value="GBP">British Pound (£)</SelectItem>
+                          <SelectItem value="GBP">Libra Esterlina (£)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
                   <div>
-                    <Label>Time Format</Label>
+                    <Label>Formato de Hora</Label>
                     <div className="grid grid-cols-2 gap-2 mt-2">
-                      <Button variant="outline" size="sm">12 Hour</Button>
-                      <Button variant="outline" size="sm">24 Hour</Button>
+                      <Button variant="outline" size="sm">12 Horas</Button>
+                      <Button variant="outline" size="sm">24 Horas</Button>
                     </div>
                   </div>
                 </CardContent>
@@ -591,30 +634,30 @@ const Settings = () => {
 
             <Card className="argon-card">
               <CardHeader>
-                <CardTitle>Dashboard Layout</CardTitle>
-                <CardDescription>Configure your dashboard widgets and layout</CardDescription>
+                <CardTitle>Diseño del Dashboard</CardTitle>
+                <CardDescription>Configura los widgets y la distribución de tu dashboard</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Compact View</p>
-                    <p className="text-sm text-gray-500">Show more information in less space</p>
+                    <p className="font-medium">Vista Compacta</p>
+                    <p className="text-sm text-gray-500">Muestra más información en menos espacio</p>
                   </div>
                   <Switch />
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Auto-refresh Data</p>
-                    <p className="text-sm text-gray-500">Automatically update dashboard data</p>
+                    <p className="font-medium">Actualización Automática</p>
+                    <p className="text-sm text-gray-500">Actualiza automáticamente los datos del dashboard</p>
                   </div>
                   <Switch defaultChecked />
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Show Tooltips</p>
-                    <p className="text-sm text-gray-500">Display helpful hints and tips</p>
+                    <p className="font-medium">Mostrar Tooltips</p>
+                    <p className="text-sm text-gray-500">Muestra sugerencias y consejos de ayuda</p>
                   </div>
                   <Switch defaultChecked />
                 </div>
@@ -622,16 +665,16 @@ const Settings = () => {
             </Card>
           </TabsContent>
 
-          {/* System Settings */}
+          {/* Sistema */}
           <TabsContent value="system" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="argon-card">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Database className="h-5 w-5" />
-                    <span>Data Management</span>
+                    <span>Gestión de Datos</span>
                   </CardTitle>
-                  <CardDescription>Export, import, and manage your data</CardDescription>
+                  <CardDescription>Exporta, importa y gestiona tus datos</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Button variant="outline" className="w-full justify-start"
@@ -647,7 +690,7 @@ const Settings = () => {
                   <Button variant="outline" className="w-full justify-start"
                     onClick={() => toast({ title: 'Próximamente', description: 'Backup de configuración disponible pronto' })}>
                     <Database className="h-4 w-4 mr-2" />
-                    Backup Configuración
+                    Backup de Configuración
                   </Button>
                   <Separator />
                   <div className="space-y-2">
@@ -663,38 +706,39 @@ const Settings = () => {
 
               <Card className="argon-card">
                 <CardHeader>
-                  <CardTitle>System Information</CardTitle>
-                  <CardDescription>View system status and performance metrics</CardDescription>
+                  <CardTitle>Información del Sistema</CardTitle>
+                  <CardDescription>Consulta el estado del sistema y métricas de rendimiento</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-sm">App Version</span>
+                      <span className="text-sm">Versión de la App</span>
                       <span className="text-sm font-medium">v2.1.3</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm">Last Updated</span>
-                      <span className="text-sm font-medium">2 days ago</span>
+                      <span className="text-sm">Última Actualización</span>
+                      <span className="text-sm font-medium">Julio 2026</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm">Server Status</span>
-                      <span className="text-sm font-medium text-green-600">Online</span>
+                      <span className="text-sm">Estado del Servidor</span>
+                      <span className="text-sm font-medium text-green-600">En línea</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm">API Status</span>
-                      <span className="text-sm font-medium text-green-600">Operational</span>
+                      <span className="text-sm">Estado de la API</span>
+                      <span className="text-sm font-medium text-green-600">Operacional</span>
                     </div>
                   </div>
                   <Separator />
-                  <Button variant="outline" size="sm" className="w-full">
-                    Check for Updates
+                  <Button variant="outline" size="sm" className="w-full"
+                    onClick={() => toast({ title: 'Sistema actualizado', description: 'Estás usando la versión más reciente' })}>
+                    Buscar Actualizaciones
                   </Button>
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
 
-          {/* User Management Tab - Admin Only */}
+          {/* Gestión de Usuarios - Solo Admin */}
           {isAdmin && (
             <TabsContent value="users" className="space-y-6">
               <UserManagementTab />

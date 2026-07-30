@@ -45,11 +45,10 @@ export const useAthletesByCategory = (category?: string, levels?: string[]) => {
         .select('*')
         .eq('status', 'active');
 
-      // Use string literal for category comparison to avoid type issues
-      query = query.eq('category', category as any);
+      query = query.eq('category', category);
 
       if (levels && levels.length > 0) {
-        query = query.in('level', levels as any);
+        query = query.in('level', levels);
       }
 
       const { data, error } = await query.order('first_name', { ascending: true });

@@ -207,7 +207,8 @@ const Finance = () => {
         id: transactionId,
         updates: { receipt_url: receiptUrl }
       });
-    } catch (error) {
+    } catch (error: any) {
+      toast({ title: 'Error', description: error?.message || 'No se pudo guardar el recibo', variant: 'destructive' });
     }
   };
 

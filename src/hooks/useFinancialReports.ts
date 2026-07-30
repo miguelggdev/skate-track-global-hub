@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useTransactions } from './useTransactions';
 
 export type ReportType = 'income' | 'expenses' | 'balance' | 'complete';
 export type ReportPeriod = 'week' | 'month' | 'quarter' | 'year' | 'custom';
@@ -76,18 +75,22 @@ const getTransactionTypeLabels = () => ({
 });
 
 export const useFinancialReports = (reportType: ReportType, period: ReportPeriod, customDateRange?: DateRange) => {
-  const { data: allTransactions = [] } = useTransactions();
-
   return useQuery({
     queryKey: ['financial-reports', reportType, period, customDateRange],
     queryFn: async (): Promise<FinancialReport> => {
       const dateRange = customDateRange || getDateRangeFromPeriod(period);
-      
-      // Filter transactions by date range
-      const filteredTransactions = allTransactions.filter(transaction => {
-        const transactionDate = new Date(transaction.transaction_date);
-        return transactionDate >= dateRange.startDate && transactionDate <= dateRange.endDate;
-      });
+
+      const startIso = dateRange.startDate.toISOString().split('T')[0];
+      const endIso   = dateRange.endDate.toISOString().split('T')[0];
+
+      const { data: filteredTransactions = [], error } = await supabase
+        .from('financial_transactions')
+        .select('*')
+        .gte('transaction_date', startIso)
+        .lte('transaction_date', endIso)
+        .order('transaction_date', { ascending: false });
+
+      if (error) throw error;
 
       const INCOME_TYPES = ['mensualidad', 'anualidad', 'registration_fee', 'league_registration_renewal', 'federation_registration_renewal', 'inscripcion_competencia'];
       const EXPENSE_TYPES = ['poliza_deportiva', 'psicologia', 'prendas_deportivas', 'equipment', 'travel', 'accident_insurance', 'otro', 'other'];
@@ -131,10 +134,12 @@ export const useFinancialReports = (reportType: ReportType, period: ReportPeriod
         const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
         const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
 
-        const monthTransactions = allTransactions.filter(t => {
-          const tDate = new Date(t.transaction_date);
-          return tDate >= monthStart && tDate <= monthEnd;
-        });
+        const { data: monthRaw = [] } = await supabase
+          .from('financial_transactions')
+          .select('amount, transaction_type')
+          .gte('transaction_date', monthStart.toISOString().split('T')[0])
+          .lte('transaction_date', monthEnd.toISOString().split('T')[0]);
+        const monthTransactions = monthRaw;
 
         const monthIncome = monthTransactions
           .filter(t => INCOME_TYPES.includes(t.transaction_type))
@@ -179,6 +184,5 @@ export const useFinancialReports = (reportType: ReportType, period: ReportPeriod
         monthlyTrends
       };
     },
-    enabled: !!allTransactions.length
   });
 };
