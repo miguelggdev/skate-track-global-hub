@@ -37,7 +37,7 @@ const LeaderDashboard = () => {
       ] = await Promise.all([
         supabase.from('athletes').select('id', { count: 'exact' }).eq('status', 'active'),
         supabase.from('athletes').select('id', { count: 'exact' }),
-        supabase.from('profiles').select('id', { count: 'exact' }).eq('role', 'coach'),
+        supabase.from('user_roles').select('user_id', { count: 'exact' }).eq('role', 'coach'),
         supabase.from('financial_transactions').select('amount')
           .eq('payment_status', 'paid').gte('transaction_date', yearStart),
         (supabase

@@ -45,7 +45,7 @@ const CoachDashboard = () => {
           .eq('attended', true) as unknown as Promise<{ data: { athlete_id: string }[] | null }>),
         supabase.from('competition_results').select('id', { count: 'exact' })
           .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
-        supabase.from('profiles').select('id', { count: 'exact' }).eq('role', 'coach'),
+        supabase.from('user_roles').select('user_id', { count: 'exact' }).eq('role', 'coach'),
         supabase.from('competition_results').select('athlete_id').gte('created_at',
           new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
       ]);

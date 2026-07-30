@@ -13,21 +13,9 @@ import UserStatsCards from '@/components/users/UserStatsCards';
 import AddUserDialog from '@/components/users/AddUserDialog';
 import { ManageUserRolesDialog } from '@/components/users/ManageUserRolesDialog';
 import ResetPasswordDialog from '@/components/users/ResetPasswordDialog';
+import { User } from '@/pages/UserManagement';
 
-interface User {
-  id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  phone?: string;
-  date_of_birth?: string;
-  avatar_url?: string;
-  bio?: string;
-  role: 'admin' | 'coach' | 'athlete' | 'delegate' | 'leader' | 'finance';
-  created_at: string;
-  updated_at: string;
-  blocked?: boolean;
-}
+const ROLE_PRIORITY = ['admin', 'leader', 'coach', 'delegate', 'finance', 'athlete'] as const;
 
 const UserManagementTab = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -44,14 +32,25 @@ const UserManagementTab = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const [{ data: profiles, error: profilesError }, { data: roles, error: rolesError }] =
+        await Promise.all([
+          supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+          supabase.from('user_roles').select('user_id, role'),
+        ]);
 
-      if (error) throw error;
-      setUsers(data || []);
-    } catch (error) {
+      if (profilesError) throw profilesError;
+      if (rolesError) throw rolesError;
+
+      const roleMap = new Map<string, User['role']>();
+      for (const r of roles ?? []) {
+        const existing = roleMap.get(r.user_id);
+        if (!existing || ROLE_PRIORITY.indexOf(r.role as User['role']) < ROLE_PRIORITY.indexOf(existing)) {
+          roleMap.set(r.user_id, r.role as User['role']);
+        }
+      }
+
+      setUsers((profiles ?? []).map(p => ({ ...p, role: roleMap.get(p.id) ?? 'athlete' } as User)));
+    } catch {
       toast({
         title: "Error",
         description: "No se pudieron cargar los usuarios",
