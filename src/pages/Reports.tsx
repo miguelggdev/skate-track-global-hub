@@ -232,7 +232,7 @@ const Reports = () => {
       } else if (reportCategory === 'competitions') {
         const { data, error } = await supabase
           .from('competitions')
-          .select('name, start_date, end_date, location, category, status, registration_deadline, entry_fee, description')
+          .select('name, start_date, end_date, location, category, status, registration_deadline, description')
           .order('start_date', { ascending: false });
         if (error) throw error;
 
@@ -244,7 +244,6 @@ const Reports = () => {
           'Categoría': CATEGORY_LABELS[c.category ?? ''] ?? c.category ?? '',
           'Estado': STATUS_LABELS[c.status] ?? c.status,
           'Inscripción hasta': c.registration_deadline ?? '',
-          'Cuota': c.entry_fee != null ? Number(c.entry_fee) : '',
           'Descripción': c.description ?? '',
         }));
 

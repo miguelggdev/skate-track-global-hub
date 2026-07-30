@@ -145,6 +145,7 @@ export const DocumentsTab = () => {
         await supabase.from('documents').insert({
           athlete_id: athlete.id,
           document_type: 'firma_digital',
+          title: 'Firma Digital',
           file_url: publicUrl,
           file_name: 'firma_digital.png',
           file_size_kb: Math.round(file.size / 1024),
@@ -203,6 +204,7 @@ export const DocumentsTab = () => {
       const { error: dbError } = await supabase.from('documents').insert({
         athlete_id: athlete.id,
         document_type: docType,
+        title: selectedFile.name,
         file_url: publicUrl,
         file_name: selectedFile.name,
         file_size_kb: Math.round(selectedFile.size / 1024),
