@@ -39,9 +39,9 @@ export default function QuickAttendanceRegistration() {
   // Auto-select first upcoming session
   useEffect(() => {
     if (!sessionsLoading && trainingSessions.length > 0 && !selectedSessionId) {
-      const upcomingSessions = trainingSessions.filter(session => 
-        new Date(session.date) >= new Date()
-      ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      const upcomingSessions = trainingSessions.filter(session =>
+        new Date(session.scheduled_at) >= new Date()
+      ).sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
       
       if (upcomingSessions.length > 0) {
         setSelectedSessionId(upcomingSessions[0].id);
@@ -196,7 +196,7 @@ export default function QuickAttendanceRegistration() {
                   ) : (
                     trainingSessions.map(session => (
                       <SelectItem key={session.id} value={session.id}>
-                        {format(new Date(session.date), 'MMM dd, yyyy')} - {session.name} ({session.start_time})
+                        {format(new Date(session.scheduled_at), 'MMM dd, yyyy HH:mm')} - {session.title}
                       </SelectItem>
                     ))
                   )}
