@@ -164,7 +164,7 @@ const DelegateAthletes = () => {
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <Avatar className="h-10 w-10">
-                              <AvatarImage src={athlete.profile_image_url || undefined} />
+                              <AvatarImage src={athlete.photo_url || undefined} />
                               <AvatarFallback>
                                 {getInitials(athlete.first_name, athlete.last_name)}
                               </AvatarFallback>
@@ -191,14 +191,7 @@ const DelegateAthletes = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge 
-                            variant={athlete.payment_status === 'active' ? 'default' : 
-                                   athlete.payment_status === 'overdue' ? 'destructive' : 'secondary'}
-                          >
-                            {athlete.payment_status === 'active' ? 'Al día' :
-                             athlete.payment_status === 'overdue' ? 'Pendiente' : 
-                             athlete.payment_status || 'N/A'}
-                          </Badge>
+                          <Badge variant="outline">Ver pagos</Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <Button
@@ -283,7 +276,7 @@ const AthleteDetailsDialog = ({ athlete, open, onOpenChange, currency }: Athlete
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <Avatar className="h-12 w-12">
-              <AvatarImage src={athlete.profile_image_url || undefined} />
+              <AvatarImage src={athlete.photo_url || undefined} />
               <AvatarFallback>
                 {`${athlete.first_name?.charAt(0) || ''}${athlete.last_name?.charAt(0) || ''}`.toUpperCase()}
               </AvatarFallback>
@@ -332,7 +325,7 @@ const AthleteDetailsDialog = ({ athlete, open, onOpenChange, currency }: Athlete
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Ingreso:</span>
                     <span>
-                      {athlete.join_date ? format(parseISO(athlete.join_date), 'd MMM yyyy', { locale: es }) : '-'}
+                      {athlete.created_at ? format(parseISO(athlete.created_at), 'd MMM yyyy', { locale: es }) : '-'}
                     </span>
                   </div>
                 </CardContent>
@@ -352,12 +345,10 @@ const AthleteDetailsDialog = ({ athlete, open, onOpenChange, currency }: Athlete
                     <span>{athlete.level || '-'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Disciplina:</span>
-                    <span>{athlete.main_discipline || '-'}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Número:</span>
-                    <span>{athlete.athlete_number || '-'}</span>
+                    <span className="text-muted-foreground">Estado:</span>
+                    <Badge variant={statusColors[athlete.status] || 'secondary'}>
+                      {statusLabels[athlete.status] || athlete.status}
+                    </Badge>
                   </div>
                 </CardContent>
               </Card>
