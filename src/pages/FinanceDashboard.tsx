@@ -1,7 +1,9 @@
 
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import PaymentSettings from '@/components/club-config/PaymentSettings';
+import { SystemSetting } from '@/pages/ClubConfig';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -17,7 +19,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import AddTransactionDialog from '@/components/finance/AddTransactionDialog';
@@ -66,6 +67,22 @@ const FinanceDashboard = () => {
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('all');
   const [searchPayment, setSearchPayment] = useState('');
   const { currency } = useCurrency();
+  const queryClient = useQueryClient();
+
+  const { data: paymentSettings = [] } = useQuery({
+    queryKey: ['system-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('system_settings').select('*').order('category');
+      if (error) throw error;
+      return (data ?? []) as SystemSetting[];
+    },
+  });
+
+  const handlePaymentSettingsUpdate = () => {
+    queryClient.invalidateQueries({ queryKey: ['system-settings'] });
+  };
+
+  const paymentCategorySettings = paymentSettings.filter(s => s.category === 'payment');
 
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
 
@@ -392,50 +409,26 @@ const FinanceDashboard = () => {
             </Card>
           </TabsContent>
 
-          {/* ── Budgets (configuración futura) ── */}
+          {/* ── Budgets ── */}
           <TabsContent value="budgets" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Calculator className="h-5 w-5" />Gestión de Presupuestos</CardTitle>
-                <CardDescription>Planifica y controla los presupuestos anuales</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <Calculator className="h-5 w-5" />
+                  Gestión de Presupuestos
+                </CardTitle>
+                <CardDescription>Planifica y controla los presupuestos anuales del club</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {[
-                      { t: 'Presupuesto Anual', v: 120_000, pct: 45 },
-                      { t: 'Gastos Operativos', v: 78_500, pct: 62 },
-                      { t: 'Inversiones', v: 25_000, pct: 30 },
-                    ].map(({ t, v, pct }) => (
-                      <Card key={t}>
-                        <CardHeader className="pb-3"><CardTitle className="text-sm">{t}</CardTitle></CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">{formatCurrency(v, currency)}</div>
-                          <Progress value={pct} className="mt-2" />
-                          <p className="text-xs text-muted-foreground mt-1">{pct}% ejecutado</p>
-                        </CardContent>
-                      </Card>
-                    ))}
+                <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
+                  <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
+                    <Calculator className="h-8 w-8 text-muted-foreground/50" />
                   </div>
-                  <Separator />
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">Desglose por Categorías</h3>
-                    <div className="space-y-3">
-                      {[
-                        { l: 'Personal y Entrenadores', used: 45_000, total: 60_000, pct: 75 },
-                        { l: 'Instalaciones y Mantenimiento', used: 18_000, total: 25_000, pct: 72 },
-                        { l: 'Equipamiento Deportivo', used: 8_500, total: 15_000, pct: 57 },
-                        { l: 'Competiciones y Viajes', used: 12_000, total: 20_000, pct: 60 },
-                      ].map(({ l, used, total, pct }) => (
-                        <div key={l} className="flex justify-between items-center p-3 border rounded">
-                          <span className="text-sm">{l}</span>
-                          <div className="text-right">
-                            <div className="text-sm font-medium">{formatCurrency(used, currency)} / {formatCurrency(total, currency)}</div>
-                            <Progress value={pct} className="w-32 mt-1" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                  <div className="space-y-1">
+                    <p className="font-semibold text-muted-foreground">Módulo de presupuestos en desarrollo</p>
+                    <p className="text-sm text-muted-foreground/70 max-w-sm">
+                      Aquí podrás definir presupuestos anuales por categoría, hacer seguimiento de la ejecución y comparar con los gastos reales. Disponible en una próxima versión.
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -563,56 +556,10 @@ const FinanceDashboard = () => {
 
           {/* ── Settings ── */}
           <TabsContent value="settings" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Configuración Financiera</CardTitle>
-                <CardDescription>Ajusta la configuración del sistema financiero</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">Cuotas y Tarifas</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div><Label htmlFor="monthly-fee">Cuota Mensual</Label><Input id="monthly-fee" type="number" defaultValue="85" /></div>
-                      <div><Label htmlFor="registration-fee">Cuota de Inscripción</Label><Input id="registration-fee" type="number" defaultValue="50" /></div>
-                      <div><Label htmlFor="competition-fee">Tarifa Competición</Label><Input id="competition-fee" type="number" defaultValue="150" /></div>
-                      <div><Label htmlFor="late-fee">Recargo por Retraso</Label><Input id="late-fee" type="number" defaultValue="10" /></div>
-                    </div>
-                  </div>
-                  <Separator />
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">Métodos de Pago</h3>
-                    <div className="space-y-3">
-                      {['Transferencia Bancaria', 'Domiciliación Bancaria', 'Tarjeta de Crédito', 'Nequi / Daviplata'].map(m => (
-                        <div key={m} className="flex items-center justify-between p-3 border rounded">
-                          <span className="text-sm">{m}</span>
-                          <Button variant="outline" size="sm">Configurar</Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <Separator />
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">Notificaciones</h3>
-                    <div className="space-y-3">
-                      {[
-                        { l: 'Recordatorios de pago automáticos', active: true },
-                        { l: 'Alertas de pagos vencidos', active: true },
-                        { l: 'Informes mensuales automáticos', active: false },
-                      ].map(({ l, active }) => (
-                        <div key={l} className="flex items-center justify-between">
-                          <span className="text-sm">{l}</span>
-                          <Button variant="outline" size="sm">{active ? 'Activado' : 'Desactivado'}</Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex justify-end">
-                    <Button>Guardar Configuración</Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <PaymentSettings
+              settings={paymentCategorySettings}
+              onUpdate={handlePaymentSettingsUpdate}
+            />
           </TabsContent>
         </Tabs>
       </div>
