@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +10,7 @@ import { Calendar, Download, FileText, TrendingUp, Users, DollarSign, Trophy, Cl
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfYear, endOfYear, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrency } from '@/hooks/useCurrency';
 import { formatCurrency } from '@/utils/currency';
@@ -76,7 +78,6 @@ const reportTypes = [
 ];
 
 const Reports = () => {
-  const { toast } = useToast();
   const { currency } = useCurrency();
   const [selectedPeriod, setSelectedPeriod] = useState('month');
 
@@ -158,11 +159,151 @@ const Reports = () => {
     },
   });
 
-  const handleDownloadReport = (reportType: string) => {
-    toast({
-      title: 'Descargando reporte',
-      description: `El reporte de ${reportType} se está generando...`,
-    });
+  const handleDownloadReport = async (reportCategory: string) => {
+    const { start, end } = getPeriodRange(selectedPeriod);
+    const now = format(new Date(), 'yyyy-MM-dd');
+    const periodLabel = { week: 'semana', month: 'mes', quarter: 'trimestre', year: 'año' }[selectedPeriod] ?? selectedPeriod;
+
+    try {
+      if (reportCategory === 'financial') {
+        const { data, error } = await supabase
+          .from('financial_transactions')
+          .select('id, amount, transaction_type, payment_status, transaction_date, description, athletes(first_name, last_name)')
+          .gte('transaction_date', start)
+          .lte('transaction_date', end)
+          .order('transaction_date', { ascending: false });
+        if (error) throw error;
+
+        const rows = (data ?? []).map(tx => {
+          const ath = tx.athletes as unknown as { first_name: string; last_name: string } | null;
+          return {
+            'Fecha': tx.transaction_date,
+            'Tipo': TYPE_LABELS[tx.transaction_type] ?? tx.transaction_type,
+            'Atleta': ath ? `${ath.first_name} ${ath.last_name}` : '—',
+            'Descripción': tx.description ?? '',
+            'Estado': STATUS_LABELS[tx.payment_status] ?? tx.payment_status,
+            'Monto': Number(tx.amount),
+          };
+        });
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(rows);
+        XLSX.utils.book_append_sheet(wb, ws, 'Financiero');
+        XLSX.writeFile(wb, `reporte-financiero-${now}.xlsx`);
+        toast.success(`Reporte financiero del ${periodLabel} generado`);
+
+      } else if (reportCategory === 'athletes') {
+        const { data, error } = await supabase
+          .from('athletes')
+          .select('first_name, last_name, category, level, gender, date_of_birth, status, email, athlete_number, join_date')
+          .order('last_name');
+        if (error) throw error;
+
+        const rows = (data ?? []).map(a => ({
+          'Nombre': a.first_name,
+          'Apellido': a.last_name,
+          'Número': a.athlete_number ?? '',
+          'Categoría': CATEGORY_LABELS[a.category] ?? a.category,
+          'Nivel': a.level ?? '',
+          'Género': a.gender ?? '',
+          'F. Nacimiento': a.date_of_birth ?? '',
+          'Estado': STATUS_LABELS[a.status] ?? a.status,
+          'Email': a.email ?? '',
+          'F. Ingreso': a.join_date ?? '',
+        }));
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(rows);
+        XLSX.utils.book_append_sheet(wb, ws, 'Deportistas');
+        XLSX.writeFile(wb, `reporte-deportistas-${now}.xlsx`);
+        toast.success('Reporte de deportistas generado');
+
+      } else if (reportCategory === 'competitions') {
+        const { data, error } = await supabase
+          .from('competitions')
+          .select('name, start_date, end_date, location, category, status, registration_deadline, entry_fee, description')
+          .order('start_date', { ascending: false });
+        if (error) throw error;
+
+        const rows = (data ?? []).map(c => ({
+          'Nombre': c.name,
+          'Inicio': c.start_date,
+          'Fin': c.end_date ?? '',
+          'Sede': c.location,
+          'Categoría': CATEGORY_LABELS[c.category ?? ''] ?? c.category ?? '',
+          'Estado': STATUS_LABELS[c.status] ?? c.status,
+          'Inscripción hasta': c.registration_deadline ?? '',
+          'Cuota': c.entry_fee != null ? Number(c.entry_fee) : '',
+          'Descripción': c.description ?? '',
+        }));
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(rows);
+        XLSX.utils.book_append_sheet(wb, ws, 'Competencias');
+        XLSX.writeFile(wb, `reporte-competencias-${now}.xlsx`);
+        toast.success('Reporte de competencias generado');
+
+      } else if (reportCategory === 'training') {
+        const doc = new jsPDF('landscape', 'mm', 'a4');
+        const margin = 12;
+        const pageW = doc.internal.pageSize.getWidth();
+
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Reporte de Entrenamientos', margin, 15);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Período: ${start} → ${end}  ·  Generado: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}`, margin, 22);
+        doc.setTextColor(0, 0, 0);
+
+        const { data: sessions } = await supabase
+          .from('training_sessions')
+          .select('id, name, date, start_time, end_time, training_type, location')
+          .gte('date', start)
+          .lte('date', end)
+          .order('date', { ascending: false });
+
+        const headers = ['Nombre', 'Fecha', 'Hora inicio', 'Hora fin', 'Tipo', 'Sede'];
+        const rows = (sessions ?? []).map(s => [
+          s.name,
+          s.date,
+          s.start_time ?? '',
+          s.end_time ?? '',
+          s.training_type ?? '',
+          s.location ?? '',
+        ]);
+
+        const colW = (pageW - margin * 2) / headers.length;
+        const rowH = 7;
+        let y = 34;
+
+        doc.setFillColor(30, 64, 175);
+        doc.rect(margin, y - 4, pageW - margin * 2, rowH, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        headers.forEach((h, i) => doc.text(h, margin + i * colW + 1, y));
+        y += rowH;
+
+        doc.setTextColor(30, 30, 30);
+        doc.setFont('helvetica', 'normal');
+        rows.forEach((row, ri) => {
+          if (y > doc.internal.pageSize.getHeight() - margin) { doc.addPage(); y = 20; }
+          if (ri % 2 === 1) {
+            doc.setFillColor(245, 247, 250);
+            doc.rect(margin, y - 4, pageW - margin * 2, rowH, 'F');
+          }
+          row.forEach((cell, ci) => doc.text(String(cell).slice(0, 32), margin + ci * colW + 1, y));
+          y += rowH;
+        });
+
+        doc.save(`reporte-entrenamientos-${now}.pdf`);
+        toast.success(`Reporte de entrenamientos del ${periodLabel} generado`);
+      }
+    } catch {
+      toast.error('Error generando el reporte');
+    }
   };
 
   const financialStats = [
@@ -237,7 +378,7 @@ const Reports = () => {
                         </div>
                       </div>
                       <Button
-                        onClick={() => handleDownloadReport(report.title)}
+                        onClick={() => handleDownloadReport(report.category)}
                         className="w-full"
                         variant="outline"
                         size="sm"
@@ -297,10 +438,46 @@ const Reports = () => {
                 <CardHeader>
                   <CardTitle>Distribución de Transacciones</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="h-64 flex items-center justify-center text-muted-foreground">
-                    Gráfico de distribución de gastos
-                  </div>
+                <CardContent className="space-y-3">
+                  {txLoading ? (
+                    <div className="space-y-2 animate-pulse">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="flex justify-between">
+                          <div className="h-4 bg-muted rounded w-32" />
+                          <div className="h-4 bg-muted rounded w-20" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : recentTransactions.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4">Sin transacciones en este período.</p>
+                  ) : (
+                    (() => {
+                      const grouped: Record<string, number> = {};
+                      recentTransactions.forEach(tx => {
+                        const label = TYPE_LABELS[tx.transaction_type] ?? tx.transaction_type;
+                        grouped[label] = (grouped[label] ?? 0) + Number(tx.amount);
+                      });
+                      const total = Object.values(grouped).reduce((a, b) => a + b, 0);
+                      return (
+                        <div className="space-y-3">
+                          {Object.entries(grouped).map(([label, amount]) => (
+                            <div key={label}>
+                              <div className="flex justify-between text-sm mb-1">
+                                <span>{label}</span>
+                                <span className="font-medium">{formatCurrency(amount, currency)}</span>
+                              </div>
+                              <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-primary rounded-full"
+                                  style={{ width: `${total > 0 ? (amount / total) * 100 : 0}%` }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -403,12 +580,47 @@ const Reports = () => {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Rendimiento por Nivel</CardTitle>
+                  <CardTitle>Atletas por Categoría</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="h-64 flex items-center justify-center text-muted-foreground">
-                    Gráfico de rendimiento por nivel
-                  </div>
+                <CardContent className="space-y-3">
+                  {athletesLoading ? (
+                    <div className="space-y-2 animate-pulse">
+                      {[1, 2, 3, 4].map(i => (
+                        <div key={i} className="flex justify-between">
+                          <div className="h-4 bg-muted rounded w-28" />
+                          <div className="h-4 bg-muted rounded w-8" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    (() => {
+                      const counts = athleteStats?.categoryCounts ?? {};
+                      const total = Object.values(counts).reduce((a, b) => a + b, 0);
+                      if (total === 0) return <p className="text-sm text-muted-foreground py-4">Sin atletas activos.</p>;
+                      return (
+                        <div className="space-y-3">
+                          {Object.entries(CATEGORY_LABELS).map(([key, label]) => {
+                            const count = counts[key] ?? 0;
+                            if (count === 0) return null;
+                            return (
+                              <div key={key}>
+                                <div className="flex justify-between text-sm mb-1">
+                                  <span>{label}</span>
+                                  <span className="font-medium">{count}</span>
+                                </div>
+                                <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-primary rounded-full"
+                                    style={{ width: `${(count / total) * 100}%` }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -418,23 +630,47 @@ const Reports = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Asistencia a Entrenamientos</CardTitle>
+                  <CardTitle>Resumen de Rendimiento</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="h-64 flex items-center justify-center text-muted-foreground">
-                    Gráfico de asistencia mensual
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between items-center p-3 rounded-lg bg-muted/40">
+                    <span className="text-sm text-muted-foreground">Atletas activos</span>
+                    <span className="font-bold">{athleteStats?.total ?? '—'}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 rounded-lg bg-muted/40">
+                    <span className="text-sm text-muted-foreground">Incorporaciones este mes</span>
+                    <span className="font-bold text-green-600">+{athleteStats?.newThisMonth ?? 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 rounded-lg bg-muted/40">
+                    <span className="text-sm text-muted-foreground">Ingresos del período</span>
+                    <span className="font-bold text-green-600">{formatCurrency(kpis?.income ?? 0, currency)}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 rounded-lg bg-muted/40">
+                    <span className="text-sm text-muted-foreground">Balance neto</span>
+                    <span className={`font-bold ${(kpis?.net ?? 0) >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                      {formatCurrency(kpis?.net ?? 0, currency)}
+                    </span>
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Resultados de Competencias</CardTitle>
+                  <CardTitle>Descargar Reportes Completos</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="h-64 flex items-center justify-center text-muted-foreground">
-                    Gráfico de resultados por competencia
-                  </div>
+                <CardContent className="space-y-3">
+                  {reportTypes.map((r) => (
+                    <div key={r.category} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border">
+                      <div className="flex items-center gap-2">
+                        <r.icon className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">{r.title}</span>
+                      </div>
+                      <Button size="sm" variant="outline" onClick={() => handleDownloadReport(r.category)}>
+                        <Download className="h-3.5 w-3.5 mr-1" />
+                        Descargar
+                      </Button>
+                    </div>
+                  ))}
                 </CardContent>
               </Card>
             </div>
