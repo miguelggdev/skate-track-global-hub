@@ -66,7 +66,6 @@ const CalendarViewDialog: React.FC<CalendarViewDialogProps> = ({ open, onOpenCha
       if (error) throw error;
       setSessions(data || []);
     } catch (error) {
-      console.error('Error loading sessions:', error);
       toast({
         title: "Error",
         description: "No se pudieron cargar las sesiones de entrenamiento",

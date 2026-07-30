@@ -104,7 +104,6 @@ export const EditBodyRecordDialog: React.FC<EditBodyRecordDialogProps> = ({
       onSave();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error updating record:', error);
       toast({
         title: "Error",
         description: "No se pudo actualizar el registro. Inténtalo de nuevo.",

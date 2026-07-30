@@ -239,7 +239,6 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
       onOpenChange(false);
       onUserUpdated();
     } catch (error: any) {
-      console.error('Error updating user:', error);
       toast({
         title: "Error",
         description: error.message || "No se pudo actualizar el usuario",

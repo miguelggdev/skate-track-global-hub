@@ -40,7 +40,6 @@ const SettingRow = ({ setting, onUpdate, onLocalChange, bulkMode = false, hasCha
       setIsEditing(false);
       onUpdate();
     } catch (error) {
-      console.error('Error updating setting:', error);
     } finally {
       setLoading(false);
     }

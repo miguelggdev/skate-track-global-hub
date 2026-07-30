@@ -80,7 +80,6 @@ export function ManageUserRolesDialog({ user, open, onOpenChange, onRoleChanged,
       onRoleChanged();
       onOpenChange(false);
     } catch (error: any) {
-      console.error('Error updating role:', error);
       toast({
         title: 'Error',
         description: error.message || 'No se pudo actualizar el rol',

@@ -141,7 +141,6 @@ const AthleteProfileEditDialog: React.FC<AthleteProfileEditDialogProps> = ({
       onSave();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error saving profile:', error);
       toast({ title: 'Error al guardar', variant: 'destructive' });
     } finally {
       setLoading(false);

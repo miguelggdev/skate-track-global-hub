@@ -200,7 +200,6 @@ const AthletePDFExport: React.FC<AthletePDFExportProps> = ({ data }) => {
       const fileName = `CV_Deportivo_${fullName.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd')}.pdf`;
       doc.save(fileName);
     } catch (error) {
-      console.error('Error generating PDF:', error);
     } finally {
       setLoading(false);
     }

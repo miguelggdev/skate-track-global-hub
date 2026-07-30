@@ -82,7 +82,6 @@ export const BodyTab = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching body data:', error);
     }
   };
 
@@ -101,7 +100,6 @@ export const BodyTab = () => {
 
       setRecords(data || []);
     } catch (error) {
-      console.error('Error fetching all records:', error);
       toast({
         title: "Error",
         description: "No se pudieron cargar los registros históricos.",
@@ -156,7 +154,6 @@ export const BodyTab = () => {
         description: "Tu información médica ha sido guardada correctamente.",
       });
     } catch (error) {
-      console.error('Error saving body data:', error);
       toast({
         title: "Error",
         description: "No se pudo guardar la información médica. Inténtalo de nuevo.",

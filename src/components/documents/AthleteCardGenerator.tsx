@@ -61,7 +61,6 @@ export function AthleteCardGenerator() {
 
       toast({ title: 'Carnet generado', description: 'El PDF se descargó automáticamente.' });
     } catch (e) {
-      console.error('Error generando carnet:', e);
       toast({ title: 'Error', description: 'No se pudo generar el carnet.', variant: 'destructive' });
     } finally {
       setGenerating(false);

@@ -74,7 +74,6 @@ export const generateAthleteCardPDF = async (
     try {
       pdf.addImage(athlete.avatar_url, 'JPEG', photoX, photoY, photoSize, photoSize);
     } catch (error) {
-      console.error('Error adding athlete photo:', error);
       // Fallback: draw a placeholder
       pdf.setFillColor(0, 71, 187);
       pdf.rect(photoX, photoY, photoSize, photoSize, 'F');
@@ -208,7 +207,6 @@ export const generateAthleteCardPDF = async (
     try {
       pdf.addImage(clubSettings.club_logo_url, 'PNG', logoX, logoY, logoSize, logoSize);
     } catch (error) {
-      console.error('Error adding logo to back:', error);
     }
   }
 

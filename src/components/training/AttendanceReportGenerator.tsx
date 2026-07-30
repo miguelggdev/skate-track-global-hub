@@ -96,7 +96,6 @@ const AttendanceReportGenerator: React.FC = () => {
       const { data, error } = await query;
 
       if (error) {
-        console.error('Error fetching attendance report:', error);
         throw error;
       }
 
@@ -233,7 +232,6 @@ const AttendanceReportGenerator: React.FC = () => {
       
       toast.success('PDF generado exitosamente');
     } catch (error) {
-      console.error('Error generating PDF:', error);
       toast.error('Error al generar el PDF. Inténtalo de nuevo.');
     }
   };

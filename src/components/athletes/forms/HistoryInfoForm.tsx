@@ -55,7 +55,6 @@ export const HistoryInfoForm: React.FC<HistoryInfoFormProps> = ({ athleteId, onS
         });
       }
     } catch (error) {
-      console.error('Error fetching history data:', error);
     }
   };
 
@@ -101,7 +100,6 @@ export const HistoryInfoForm: React.FC<HistoryInfoFormProps> = ({ athleteId, onS
 
       if (onSave) onSave();
     } catch (error) {
-      console.error('Error saving history data:', error);
       toast({
         title: "Error",
         description: "No se pudo guardar el registro histórico. Inténtalo de nuevo.",

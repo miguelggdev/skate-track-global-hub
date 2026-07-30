@@ -49,7 +49,6 @@ export const formatCurrency = (amount: number, currencyCode: CurrencyCode = 'COP
   const currency = CURRENCIES[currencyCode];
   
   if (!currency) {
-    console.warn(`Unknown currency code: ${currencyCode}. Defaulting to COP.`);
     return formatCurrency(amount, 'COP');
   }
 

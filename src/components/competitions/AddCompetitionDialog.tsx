@@ -159,7 +159,6 @@ export function AddCompetitionDialog({ onCompetitionAdded }: AddCompetitionDialo
       onCompetitionAdded?.();
     } catch (error) {
       // Error handling is done in the mutation hook
-      console.error('Error creating competition:', error);
     }
   };
 

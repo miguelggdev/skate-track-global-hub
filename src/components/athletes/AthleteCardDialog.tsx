@@ -41,7 +41,6 @@ export const AthleteCardDialog = ({ athleteId, open, onOpenChange }: AthleteCard
       await generateAthleteCardPDF(athlete, clubSettings);
       toast.success('Carnet descargado exitosamente');
     } catch (error) {
-      console.error('Error generating PDF:', error);
       toast.error('Error al generar el carnet');
     } finally {
       setIsDownloading(false);

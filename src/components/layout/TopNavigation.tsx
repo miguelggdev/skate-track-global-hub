@@ -65,7 +65,6 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
             setUserAvatarUrl(data.avatar_url);
           }
         } catch (error) {
-          console.error('Error fetching user avatar:', error);
         }
       };
       
@@ -86,7 +85,6 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
           setClubLogo(data.club_logo_url);
         }
       } catch (error) {
-        console.error('Error fetching club logo:', error);
       }
     };
     
@@ -363,7 +361,6 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
         setSearchResults(results);
         setIsSearchOpen(results.length > 0);
       } catch (error) {
-        console.error('Search error:', error);
       }
     };
 
@@ -442,7 +439,6 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
       });
       navigate('/login');
     } catch (error) {
-      console.error('Error during logout:', error);
       toast({
         title: "Error",
         description: "Error al cerrar sesión",

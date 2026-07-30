@@ -15,7 +15,6 @@ export const generateAthleteQRCode = async (athleteId: string): Promise<string> 
     });
     return qrDataUrl;
   } catch (error) {
-    console.error('Error generating QR code:', error);
     throw error;
   }
 };

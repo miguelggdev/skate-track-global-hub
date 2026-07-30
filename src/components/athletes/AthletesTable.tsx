@@ -166,7 +166,6 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
       setDeleteOpen(false);
       onActionCompleted?.();
     } catch (error: any) {
-      console.error('Error deleting athlete:', error);
       toast({
         title: "Error",
         description: error.message || 'No se pudo eliminar el atleta.',

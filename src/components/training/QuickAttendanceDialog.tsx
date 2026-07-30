@@ -125,7 +125,6 @@ export default function QuickAttendanceDialog({ children }: QuickAttendanceDialo
       setOpen(false);
       setSelected({});
     } catch (e: any) {
-      console.error('Error creating training session:', e);
       toast({ title: 'Error', description: 'Could not create training session: ' + (e.message || 'Unknown error'), variant: 'destructive' });
     }
   };

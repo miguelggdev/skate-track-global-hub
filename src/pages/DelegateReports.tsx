@@ -42,7 +42,6 @@ const DelegateReports = () => {
 
   const handleGenerateReport = (format: 'pdf' | 'excel') => {
     // TODO: Implement actual PDF/Excel generation
-    console.log(`Generating ${format} report for ${reportType}`);
     alert(`Generando reporte ${format.toUpperCase()} de ${reportType}...`);
   };
 

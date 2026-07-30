@@ -24,7 +24,6 @@ const CompetitionsTable = () => {
       await deleteCompetition.mutateAsync(competitionId);
       setDeletingCompetition(null);
     } catch (error) {
-      console.error('Error deleting competition:', error);
     }
   };
 

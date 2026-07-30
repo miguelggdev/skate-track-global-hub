@@ -208,7 +208,6 @@ const Finance = () => {
         updates: { receipt_url: receiptUrl }
       });
     } catch (error) {
-      console.error('Error updating transaction with receipt URL:', error);
     }
   };
 

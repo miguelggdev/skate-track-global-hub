@@ -85,7 +85,6 @@ export function CompetitionExcelExport() {
       exportCompetitionRegistrations(selectedComp.name, registrations);
       toast({ title: 'Excel generado', description: `${registrations.length} atletas exportados.` });
     } catch (e) {
-      console.error('Error exportando planilla:', e);
       toast({ title: 'Error', description: 'No se pudo generar el Excel.', variant: 'destructive' });
     } finally {
       setExporting(false);

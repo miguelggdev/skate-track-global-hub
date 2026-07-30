@@ -183,7 +183,6 @@ export const FinancialReportGenerator: React.FC<FinancialReportGeneratorProps> =
       const fileName = `informe-financiero-${report.type}-${formatDate(report.dateRange.startDate).replace(/\//g, '-')}.pdf`;
       pdf.save(fileName);
     } catch (error) {
-      console.error('Error generating PDF:', error);
     } finally {
       document.body.removeChild(container);
     }

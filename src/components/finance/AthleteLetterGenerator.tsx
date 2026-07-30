@@ -125,7 +125,6 @@ export const AthleteLetterGenerator: React.FC = () => {
           : 'Carta de Paz y Salvo generada exitosamente'
       );
     } catch (error) {
-      console.error('Error generating letter:', error);
       toast.error('Error al generar la carta');
     } finally {
       setGenerating(false);

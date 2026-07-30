@@ -53,7 +53,6 @@ export const SkatesTab = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching equipment data:', error);
     }
   };
 
@@ -113,7 +112,6 @@ export const SkatesTab = () => {
         description: "Tu información de equipo ha sido guardada correctamente.",
       });
     } catch (error) {
-      console.error('Error saving equipment data:', error);
       toast({
         title: "Error",
         description: "No se pudo guardar la información de equipo. Inténtalo de nuevo.",

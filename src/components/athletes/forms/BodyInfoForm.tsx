@@ -58,7 +58,6 @@ export const BodyInfoForm: React.FC<BodyInfoFormProps> = ({ athleteId, onSave })
         });
       }
     } catch (error) {
-      console.error('Error fetching body data:', error);
     }
   };
 
@@ -109,7 +108,6 @@ export const BodyInfoForm: React.FC<BodyInfoFormProps> = ({ athleteId, onSave })
 
       if (onSave) onSave();
     } catch (error) {
-      console.error('Error saving body data:', error);
       toast({
         title: "Error",
         description: "No se pudo guardar la información médica. Inténtalo de nuevo.",

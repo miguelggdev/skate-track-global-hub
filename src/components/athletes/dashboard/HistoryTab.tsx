@@ -78,7 +78,6 @@ export const HistoryTab = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching history data:', error);
     }
   };
 
@@ -97,7 +96,6 @@ export const HistoryTab = () => {
 
       setRecords(data || []);
     } catch (error) {
-      console.error('Error fetching all records:', error);
       toast({
         title: "Error",
         description: "No se pudieron cargar los registros históricos.",
@@ -149,7 +147,6 @@ export const HistoryTab = () => {
         description: "Tu información de historial ha sido guardada correctamente.",
       });
     } catch (error) {
-      console.error('Error saving history data:', error);
       toast({
         title: "Error",
         description: "No se pudo guardar el historial. Inténtalo de nuevo.",

@@ -172,7 +172,6 @@ export function PermissionLetterGenerator() {
 
       toast({ title: 'PDF generado', description: 'La carta se descargó automáticamente.' });
     } catch (e) {
-      console.error('Error generando carta:', e);
       toast({ title: 'Error', description: 'No se pudo generar el PDF.', variant: 'destructive' });
     } finally {
       setGenerating(false);

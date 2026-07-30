@@ -148,7 +148,6 @@ const ClubInfoSettings = ({ clubSettings, onUpdate }: ClubInfoSettingsProps) => 
       
       onUpdate();
     } catch (error: any) {
-      console.error('Error updating club settings:', error);
       toast({
         title: "Error",
         description: error.message?.includes('insufficient_privilege') || error.message?.includes('policy') 

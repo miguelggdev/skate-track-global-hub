@@ -93,7 +93,6 @@ const Settings = () => {
             setProfilePhotoUrl(fullProfile.avatar_url);
           }
         } catch (error) {
-          console.error('Error fetching full profile:', error);
         }
       };
       
@@ -130,7 +129,6 @@ const Settings = () => {
         description: t('message.updated_successfully'),
       });
     } catch (error: any) {
-      console.error('Error saving settings:', error);
       toast({
         title: t('common.error'),
         description: error.message || t('message.error_occurred'),

@@ -53,7 +53,6 @@ export const EquipmentInfoForm: React.FC<EquipmentInfoFormProps> = ({ athleteId,
         });
       }
     } catch (error) {
-      console.error('Error fetching equipment data:', error);
     }
   };
 
@@ -103,7 +102,6 @@ export const EquipmentInfoForm: React.FC<EquipmentInfoFormProps> = ({ athleteId,
 
       if (onSave) onSave();
     } catch (error) {
-      console.error('Error saving equipment data:', error);
       toast({
         title: "Error",
         description: "No se pudo guardar la información de equipo. Inténtalo de nuevo.",

@@ -53,7 +53,6 @@ export const FamilyTab = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching family data:', error);
     }
   };
 
@@ -107,7 +106,6 @@ export const FamilyTab = () => {
         description: "Tu información familiar ha sido guardada correctamente.",
       });
     } catch (error) {
-      console.error('Error saving family data:', error);
       toast({
         title: "Error",
         description: "No se pudo guardar la información familiar. Inténtalo de nuevo.",

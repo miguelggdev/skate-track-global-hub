@@ -51,7 +51,6 @@ export const StudiesInfoForm: React.FC<StudiesInfoFormProps> = ({ athleteId, onS
         });
       }
     } catch (error) {
-      console.error('Error fetching studies data:', error);
     }
   };
 
@@ -95,7 +94,6 @@ export const StudiesInfoForm: React.FC<StudiesInfoFormProps> = ({ athleteId, onS
 
       if (onSave) onSave();
     } catch (error) {
-      console.error('Error saving studies data:', error);
       toast({
         title: "Error",
         description: "No se pudo guardar la información académica. Inténtalo de nuevo.",

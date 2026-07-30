@@ -73,7 +73,6 @@ export const DocumentsTab = ({ userId, documents = [], onDocumentsUpdate }: Docu
       onDocumentsUpdate();
       event.target.value = ''; // Reset input
     } catch (error: any) {
-      console.error('Error uploading document:', error);
       toast({
         title: "Error al subir documento",
         description: error.message || "No se pudo subir el archivo",
@@ -112,7 +111,6 @@ export const DocumentsTab = ({ userId, documents = [], onDocumentsUpdate }: Docu
 
       onDocumentsUpdate();
     } catch (error: any) {
-      console.error('Error deleting document:', error);
       toast({
         title: "Error al eliminar",
         description: error.message || "No se pudo eliminar el documento",

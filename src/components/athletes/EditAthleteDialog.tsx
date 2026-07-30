@@ -318,7 +318,6 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
           .eq('id', athlete.user_id);
           
         if (avatarError) {
-          console.error('Error updating avatar:', avatarError);
           toast({
             title: "Advertencia",
             description: "No se pudo actualizar la foto de perfil, pero los demás cambios se guardaron",
@@ -548,7 +547,6 @@ export const EditAthleteDialog = ({ athlete, open, onOpenChange, onAthleteUpdate
       onAthleteUpdated();
       onOpenChange(false);
     } catch (error: any) {
-      console.error('Error updating athlete:', error);
       toast({
         title: "Error",
         description: error.message || 'No se pudo actualizar el atleta.',

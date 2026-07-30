@@ -60,7 +60,6 @@ export const ContactTab = ({ athlete }: ContactTabProps) => {
       
       setIsEditing(false);
     } catch (error) {
-      console.error('Error updating contact:', error);
       toast({
         title: "Error",
         description: "No se pudo actualizar el contacto. Inténtalo de nuevo.",

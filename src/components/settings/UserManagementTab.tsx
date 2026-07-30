@@ -52,7 +52,6 @@ const UserManagementTab = () => {
       if (error) throw error;
       setUsers(data || []);
     } catch (error) {
-      console.error('Error fetching users:', error);
       toast({
         title: "Error",
         description: "No se pudieron cargar los usuarios",
@@ -115,12 +114,10 @@ const UserManagementTab = () => {
       });
 
       if (error) {
-        console.error('Edge function error:', error);
         throw new Error(error.message || 'Error al conectar con el servidor');
       }
 
       if (data?.error) {
-        console.error('Delete user error:', data.error);
         throw new Error(data.error);
       }
       
@@ -130,7 +127,6 @@ const UserManagementTab = () => {
         description: "Usuario eliminado exitosamente",
       });
     } catch (error: any) {
-      console.error('Error deleting user:', error);
       toast({
         title: "Error",
         description: error.message || "No se pudo eliminar el usuario",
@@ -160,7 +156,6 @@ const UserManagementTab = () => {
         description: blocked ? "Usuario desbloqueado exitosamente" : "Usuario bloqueado exitosamente",
       });
     } catch (error) {
-      console.error('Error blocking/unblocking user:', error);
       toast({
         title: "Error",
         description: "No se pudo cambiar el estado del usuario",
@@ -212,12 +207,10 @@ const UserManagementTab = () => {
       });
 
       if (error) {
-        console.error('Edge function error:', error);
         throw new Error(error.message || 'Error al conectar con el servidor');
       }
 
       if (data?.error) {
-        console.error('Password reset error:', data.error);
         throw new Error(data.error);
       }
 
@@ -228,7 +221,6 @@ const UserManagementTab = () => {
 
       setResettingPasswordUser(null);
     } catch (error: any) {
-      console.error('Error resetting password:', error);
       toast({
         title: "Error",
         description: error.message || "No se pudo actualizar la contraseña",

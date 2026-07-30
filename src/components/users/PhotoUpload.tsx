@@ -89,7 +89,6 @@ export const PhotoUpload = ({ currentPhotoUrl, onPhotoChange, userId, className 
         onPhotoChange(objectUrl);
       }
     } catch (error: any) {
-      console.error('Error uploading photo:', error);
       toast({
         title: "Error al subir la foto",
         description: error.message || "No se pudo subir la imagen",
@@ -126,7 +125,6 @@ export const PhotoUpload = ({ currentPhotoUrl, onPhotoChange, userId, className 
         description: "La foto se ha eliminado. Recuerda guardar el formulario para aplicar los cambios",
       });
     } catch (error: any) {
-      console.error('Error removing photo:', error);
       toast({
         title: "Error al eliminar la foto",
         description: error.message || "No se pudo eliminar la imagen",

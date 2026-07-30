@@ -63,7 +63,6 @@ export const DeleteHistoryRecordDialog: React.FC<DeleteHistoryRecordDialogProps>
       onDelete();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error deleting record:', error);
       toast({
         title: "Error",
         description: "No se pudo eliminar el registro. Inténtalo de nuevo.",

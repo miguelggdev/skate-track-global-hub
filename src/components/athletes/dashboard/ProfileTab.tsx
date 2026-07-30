@@ -69,7 +69,6 @@ export const ProfileTab = ({ athlete }: ProfileTabProps) => {
       
       setIsEditing(false);
     } catch (error) {
-      console.error('Error updating profile:', error);
       toast({
         title: "Error",
         description: "No se pudo actualizar el perfil. Inténtalo de nuevo.",

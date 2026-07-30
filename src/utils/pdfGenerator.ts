@@ -215,7 +215,6 @@ export const generateFinancialReportPDF = async (report: FinancialReport, curren
     pdf.save(filename);
     
   } catch (error) {
-    console.error('Error generating PDF:', error);
     throw new Error('Error al generar el PDF del informe');
   }
 };
@@ -396,7 +395,6 @@ export const generateAttendanceReportPDF = async (report: AttendanceReport): Pro
     pdf.save(filename);
     
   } catch (error) {
-    console.error('Error generating attendance PDF:', error);
     throw new Error('Error al generar el PDF del informe de asistencia');
   }
 };

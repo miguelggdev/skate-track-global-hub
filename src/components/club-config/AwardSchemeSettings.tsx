@@ -114,7 +114,6 @@ export function AwardSchemeSettings() {
 
       toast.success('Configuración de premiación guardada');
     } catch (e) {
-      console.error('Error guardando config de premiación:', e);
       toast.error('Error al guardar la configuración');
     } finally {
       setSaving(false);

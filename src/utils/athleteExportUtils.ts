@@ -100,7 +100,6 @@ export const generateAthleteExcel = async (athletes: AthleteReportData[], clubIn
     XLSX.writeFile(workbook, filename);
 
   } catch (error) {
-    console.error('Error generating Excel file:', error);
     throw error;
   }
 };
@@ -254,7 +253,6 @@ export const generateAthletePDF = async (
     doc.save(filename);
 
   } catch (error) {
-    console.error('Error generating PDF file:', error);
     throw error;
   }
 };

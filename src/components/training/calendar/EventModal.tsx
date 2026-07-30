@@ -99,7 +99,6 @@ export const EventModal: React.FC<EventModalProps> = ({
       onSessionUpdate();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error deleting session:', error);
       toast({
         title: "Error",
         description: "No se pudo eliminar la sesión de entrenamiento",
