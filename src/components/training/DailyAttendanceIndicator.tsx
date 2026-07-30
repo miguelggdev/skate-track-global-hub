@@ -14,7 +14,7 @@ export default function DailyAttendanceIndicator() {
     queryKey: ['daily-attendance', today],
     queryFn: async () => {
       const [sessionsRes, athletesRes] = await Promise.all([
-        supabase.from('training_sessions').select('id').eq('date', today),
+        supabase.from('training_sessions').select('id').gte('scheduled_at', today).lt('scheduled_at', today + 'T23:59:59'),
         supabase.from('athletes').select('id').eq('status', 'active'),
       ]);
 
