@@ -22,7 +22,7 @@ export function useSaveDocument() {
         .insert({
           ...input,
           generated_pdf: true,
-          doc_status: 'activo',
+          doc_status: 'vigente',
           issued_by: session?.user.id ?? null,
           issued_at: new Date().toISOString(),
         })
