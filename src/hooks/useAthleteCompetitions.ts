@@ -104,31 +104,30 @@ export const useAthleteCompetitions = () => {
           competition_id,
           position,
           medal_type,
-          event_type,
-          event_location,
+          event_name,
           points,
-          personal_best,
           notes,
           competitions (
             name,
-            start_date
+            start_date,
+            location
           )
         `)
         .eq('athlete_id', athlete.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
+
       return data?.map(result => ({
         id: result.id,
         competition_id: result.competition_id,
         competition_name: result.competitions?.name || '',
         position: result.position,
         medal_type: result.medal_type,
-        event_type: result.event_type,
-        event_location: result.event_location,
+        event_type: result.event_name,
+        event_location: result.competitions?.location ?? null,
         points: result.points,
-        personal_best: result.personal_best,
+        personal_best: null,
         notes: result.notes,
         competition_date: result.competitions?.start_date || ''
       })) as AthleteCompetitionResult[] || [];

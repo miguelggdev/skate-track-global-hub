@@ -756,6 +756,51 @@ export type Database = {
           },
         ]
       }
+      training_attendance: {
+        Row: {
+          id: string
+          training_session_id: string
+          athlete_id: string
+          attended: boolean
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          training_session_id: string
+          athlete_id: string
+          attended?: boolean
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          training_session_id?: string
+          athlete_id?: string
+          attended?: boolean
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_attendance_training_session_id_fkey"
+            columns: ["training_session_id"]
+            isOneToOne: false
+            referencedRelation: "training_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_attendance_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           id: string
@@ -1143,6 +1188,7 @@ export type Database = {
           event_name: string
           external_athlete_id: string | null
           id: string
+          medal_type: string | null
           notes: string | null
           points: number | null
           position: number | null
@@ -1161,6 +1207,7 @@ export type Database = {
           event_name: string
           external_athlete_id?: string | null
           id?: string
+          medal_type?: string | null
           notes?: string | null
           points?: number | null
           position?: number | null
@@ -1179,6 +1226,7 @@ export type Database = {
           event_name?: string
           external_athlete_id?: string | null
           id?: string
+          medal_type?: string | null
           notes?: string | null
           points?: number | null
           position?: number | null
@@ -1252,6 +1300,7 @@ export type Database = {
           registration_deadline: string | null
           responsible_coach_id: string | null
           start_date: string
+          status: string
           updated_at: string
         }
         Insert: {
@@ -1271,6 +1320,7 @@ export type Database = {
           registration_deadline?: string | null
           responsible_coach_id?: string | null
           start_date: string
+          status?: string
           updated_at?: string
         }
         Update: {
@@ -1290,6 +1340,7 @@ export type Database = {
           registration_deadline?: string | null
           responsible_coach_id?: string | null
           start_date?: string
+          status?: string
           updated_at?: string
         }
         Relationships: []
