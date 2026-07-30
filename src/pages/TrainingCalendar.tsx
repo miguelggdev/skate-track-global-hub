@@ -25,13 +25,12 @@ import { downloadICS } from '@/lib/generateICS';
 
 interface TrainingSession {
   id: string;
-  name: string;
+  title: string;
   description?: string;
-  date: string;
-  start_time: string;
-  end_time: string;
+  scheduled_at: string;
+  duration_minutes?: number;
   location?: string;
-  max_participants?: number;
+  max_athletes?: number;
   training_type: 'technical' | 'physical' | 'mental' | 'recovery' | 'gym' | 'road_skating' | 'track_skating' | 'bicycle' | 'static_bicycle' | 'simulator';
   coach_id: string;
   created_at: string;
@@ -71,10 +70,9 @@ const TrainingCalendar = () => {
       const { data, error } = await supabase
         .from('training_sessions')
         .select('*')
-        .gte('date', format(startDate, 'yyyy-MM-dd'))
-        .lte('date', format(endDate, 'yyyy-MM-dd'))
-        .order('date', { ascending: true })
-        .order('start_time', { ascending: true });
+        .gte('scheduled_at', format(startDate, 'yyyy-MM-dd'))
+        .lte('scheduled_at', format(endDate, 'yyyy-MM-dd') + 'T23:59:59')
+        .order('scheduled_at', { ascending: true });
 
       if (error) throw error;
       return (data ?? []) as TrainingSession[];
@@ -134,8 +132,8 @@ const TrainingCalendar = () => {
     // Always anchor the calendar to the clicked date
     setCurrentDate(date);
 
-    const daySessionsExist = filteredSessions.some(session => 
-      format(new Date(session.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+    const daySessionsExist = filteredSessions.some(session =>
+      format(new Date(session.scheduled_at), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
     );
     
     // Preserve existing UX: if coming from month view and the day has sessions, go to day view
@@ -159,15 +157,15 @@ const TrainingCalendar = () => {
       return;
     }
     const events = filteredSessions.map(s => {
-      const startISO = `${s.date}T${s.start_time || '08:00:00'}`;
-      const endISO   = `${s.date}T${s.end_time   || '10:00:00'}`;
+      const startDt = new Date(s.scheduled_at);
+      const endDt   = new Date(startDt.getTime() + (s.duration_minutes || 120) * 60_000);
       return {
         uid: s.id,
-        summary: `${getTrainingTypeLabel(s.training_type)} — ${s.name}`,
+        summary: `${getTrainingTypeLabel(s.training_type)} — ${s.title}`,
         description: s.description ?? '',
         location: s.location ?? '',
-        dtstart: startISO,
-        dtend: endISO,
+        dtstart: startDt.toISOString(),
+        dtend: endDt.toISOString(),
       };
     });
     const monthLabel = format(currentDate, 'MMMM-yyyy', { locale: es });

@@ -18,13 +18,12 @@ import { useToast } from '@/hooks/use-toast';
 
 interface TrainingSession {
   id: string;
-  name: string;
+  title: string;
   description?: string;
-  date: string;
-  start_time: string;
-  end_time: string;
+  scheduled_at: string;
+  duration_minutes?: number;
   location?: string;
-  max_participants?: number;
+  max_athletes?: number;
   training_type: 'technical' | 'physical' | 'mental' | 'recovery' | 'gym' | 'road_skating' | 'track_skating' | 'bicycle' | 'static_bicycle' | 'simulator';
   coach_id: string;
   created_at: string;
@@ -139,7 +138,7 @@ const CalendarViewDialog: React.FC<CalendarViewDialogProps> = ({ open, onOpenCha
 
   const getSessionsForDate = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    return sessions.filter(session => session.date === dateStr);
+    return sessions.filter(session => session.scheduled_at.startsWith(dateStr));
   };
 
   const isCurrentMonth = (date: Date) => {
@@ -243,9 +242,9 @@ const CalendarViewDialog: React.FC<CalendarViewDialogProps> = ({ open, onOpenCha
                                   px-1 py-0.5 rounded text-xs text-white truncate
                                   ${getTrainingTypeColor(session.training_type)}
                                 `}
-                                title={`${session.name} - ${session.start_time}`}
+                                title={`${session.title} - ${new Date(session.scheduled_at).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}`}
                               >
-                                {session.start_time} {session.name}
+                                {new Date(session.scheduled_at).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })} {session.title}
                               </div>
                             ))}
                             {daySessions.length > 2 && (

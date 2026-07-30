@@ -33,7 +33,7 @@ const CoachDashboard = () => {
         improvingRes,
       ] = await Promise.all([
         supabase.from('athletes').select('id', { count: 'exact' }).eq('status', 'active'),
-        supabase.from('training_sessions').select('id', { count: 'exact' }).gte('date', monthStart),
+        supabase.from('training_sessions').select('id', { count: 'exact' }).gte('scheduled_at', monthStart),
         (supabase
           .from('training_attendance' as never)
           .select('attended, athlete_id')

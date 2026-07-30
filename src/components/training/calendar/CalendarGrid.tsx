@@ -7,13 +7,12 @@ import { cn } from '@/lib/utils';
 
 interface TrainingSession {
   id: string;
-  name: string;
+  title: string;
   description?: string;
-  date: string;
-  start_time: string;
-  end_time: string;
+  scheduled_at: string;
+  duration_minutes?: number;
   location?: string;
-  max_participants?: number;
+  max_athletes?: number;
   training_type: 'technical' | 'physical' | 'mental' | 'recovery' | 'gym' | 'road_skating' | 'track_skating' | 'bicycle' | 'static_bicycle' | 'simulator';
   coach_id: string;
 }
@@ -29,6 +28,17 @@ interface CalendarGridProps {
   isLoading: boolean;
   weekStartsOn?: 0 | 1;
 }
+
+const sessionStartHour = (s: TrainingSession) => new Date(s.scheduled_at).getHours();
+const sessionEndHour = (s: TrainingSession) => {
+  const start = new Date(s.scheduled_at);
+  return new Date(start.getTime() + (s.duration_minutes || 60) * 60_000).getHours();
+};
+const sessionTimeLabel = (s: TrainingSession) => {
+  const start = new Date(s.scheduled_at);
+  const end = new Date(start.getTime() + (s.duration_minutes || 60) * 60_000);
+  return `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`;
+};
 
 export const CalendarGrid: React.FC<CalendarGridProps> = ({
   currentDate,
@@ -46,16 +56,15 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     const monthEnd = endOfMonth(currentDate);
     const calendarStart = startOfWeek(monthStart, { weekStartsOn });
     const calendarEnd = endOfWeek(monthEnd, { weekStartsOn });
-    
+
     const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
-    const weekDays = weekStartsOn === 1 
-      ? ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'] 
+    const weekDays = weekStartsOn === 1
+      ? ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
       : ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
     return (
       <Card>
         <CardContent className="p-0">
-          {/* Week headers */}
           <div className="grid grid-cols-7 border-b">
             {weekDays.map((day) => (
               <div key={day} className="p-4 text-center font-medium text-muted-foreground border-r last:border-r-0">
@@ -64,13 +73,12 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
             ))}
           </div>
 
-          {/* Calendar grid */}
           <div className="grid grid-cols-7">
             {days.map((day) => {
-              const daySessions = sessions.filter(session => 
-                isSameDay(new Date(session.date), day)
+              const daySessions = sessions.filter(session =>
+                isSameDay(new Date(session.scheduled_at), day)
               );
-              
+
               return (
                 <div
                   key={day.toString()}
@@ -81,13 +89,10 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                   )}
                   onClick={() => onDateClick(day)}
                 >
-                  <div className={cn(
-                    "text-sm font-medium mb-2",
-                    isToday(day) && "text-primary font-bold"
-                  )}>
+                  <div className={cn("text-sm font-medium mb-2", isToday(day) && "text-primary font-bold")}>
                     {format(day, 'd')}
                   </div>
-                  
+
                   <div className="space-y-1">
                     {daySessions.slice(0, 3).map((session) => (
                       <div
@@ -96,20 +101,15 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                           "text-xs p-1 rounded text-white cursor-pointer hover:opacity-80 transition-opacity",
                           getTrainingTypeColor(session.training_type)
                         )}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSessionClick(session);
-                        }}
+                        onClick={(e) => { e.stopPropagation(); onSessionClick(session); }}
                       >
-                        <div className="truncate font-medium">{session.start_time}</div>
-                        <div className="truncate">{session.name}</div>
+                        <div className="truncate font-medium">{format(new Date(session.scheduled_at), 'HH:mm')}</div>
+                        <div className="truncate">{session.title}</div>
                       </div>
                     ))}
-                    
+
                     {daySessions.length > 3 && (
-                      <div className="text-xs text-muted-foreground">
-                        +{daySessions.length - 3} más
-                      </div>
+                      <div className="text-xs text-muted-foreground">+{daySessions.length - 3} más</div>
                     )}
                   </div>
                 </div>
@@ -125,16 +125,12 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     const weekStart = startOfWeek(currentDate, { weekStartsOn });
     const weekEnd = endOfWeek(currentDate, { weekStartsOn });
     const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
-    
-    const timeSlots = [];
-    for (let hour = 6; hour <= 22; hour++) {
-      timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
-    }
+
+    const timeSlots = Array.from({ length: 17 }, (_, i) => i + 6); // 6–22
 
     return (
       <Card>
         <CardContent className="p-0">
-          {/* Week header */}
           <div className="grid grid-cols-8 border-b">
             <div className="p-4 border-r"></div>
             {days.map((day) => (
@@ -144,35 +140,28 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                 onClick={() => onDateClick(day)}
               >
                 <div className="font-medium">{format(day, 'EEE', { locale: es })}</div>
-                <div
-                  className={cn(
-                    "text-2xl",
-                    isToday(day) && "text-primary font-bold",
-                    isSameDay(day, currentDate) && "text-primary font-bold"
-                  )}
-                >
+                <div className={cn("text-2xl", isToday(day) && "text-primary font-bold", isSameDay(day, currentDate) && "text-primary font-bold")}>
                   {format(day, 'd')}
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Time slots */}
           <div className="max-h-[600px] overflow-y-auto">
-            {timeSlots.map((time) => (
-              <div key={time} className="grid grid-cols-8 border-b last:border-b-0 min-h-[60px]">
+            {timeSlots.map((hour) => (
+              <div key={hour} className="grid grid-cols-8 border-b last:border-b-0 min-h-[60px]">
                 <div className="p-2 border-r text-sm text-muted-foreground">
-                  {time}
+                  {`${hour.toString().padStart(2, '0')}:00`}
                 </div>
                 {days.map((day) => {
-                  const daySessions = sessions.filter(session => 
-                    isSameDay(new Date(session.date), day) && 
-                    session.start_time <= time && 
-                    session.end_time > time
+                  const daySessions = sessions.filter(session =>
+                    isSameDay(new Date(session.scheduled_at), day) &&
+                    sessionStartHour(session) <= hour &&
+                    sessionEndHour(session) > hour
                   );
-                  
+
                   return (
-                    <div key={`${day}-${time}`} className="p-1 border-r last:border-r-0 relative">
+                    <div key={`${day}-${hour}`} className="p-1 border-r last:border-r-0 relative">
                       {daySessions.map((session) => (
                         <div
                           key={session.id}
@@ -182,8 +171,8 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                           )}
                           onClick={() => onSessionClick(session)}
                         >
-                          <div className="font-medium truncate">{session.name}</div>
-                          <div className="truncate">{session.start_time} - {session.end_time}</div>
+                          <div className="font-medium truncate">{session.title}</div>
+                          <div className="truncate">{sessionTimeLabel(session)}</div>
                         </div>
                       ))}
                     </div>
@@ -198,14 +187,11 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   };
 
   const renderDayView = () => {
-    const daySessions = sessions.filter(session => 
-      isSameDay(new Date(session.date), currentDate)
+    const daySessions = sessions.filter(session =>
+      isSameDay(new Date(session.scheduled_at), currentDate)
     );
-    
-    const timeSlots = [];
-    for (let hour = 6; hour <= 22; hour++) {
-      timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
-    }
+
+    const timeSlots = Array.from({ length: 17 }, (_, i) => i + 6);
 
     return (
       <Card>
@@ -216,17 +202,17 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
             </h3>
             <p className="text-muted-foreground">{daySessions.length} entrenamientos programados</p>
           </div>
-          
+
           <div className="max-h-[600px] overflow-y-auto">
-            {timeSlots.map((time) => {
-              const timeSessions = daySessions.filter(session => 
-                session.start_time <= time && session.end_time > time
+            {timeSlots.map((hour) => {
+              const timeSessions = daySessions.filter(session =>
+                sessionStartHour(session) <= hour && sessionEndHour(session) > hour
               );
-              
+
               return (
-                <div key={time} className="grid grid-cols-12 border-b last:border-b-0 min-h-[60px]">
+                <div key={hour} className="grid grid-cols-12 border-b last:border-b-0 min-h-[60px]">
                   <div className="col-span-2 p-4 border-r text-muted-foreground">
-                    {time}
+                    {`${hour.toString().padStart(2, '0')}:00`}
                   </div>
                   <div className="col-span-10 p-2">
                     {timeSessions.map((session) => (
@@ -240,10 +226,8 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                       >
                         <div className="flex justify-between items-start">
                           <div>
-                            <h4 className="font-medium">{session.name}</h4>
-                            <p className="text-sm opacity-90">
-                              {session.start_time} - {session.end_time}
-                            </p>
+                            <h4 className="font-medium">{session.title}</h4>
+                            <p className="text-sm opacity-90">{sessionTimeLabel(session)}</p>
                             {session.location && (
                               <p className="text-sm opacity-75">{session.location}</p>
                             )}
@@ -275,13 +259,9 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   }
 
   switch (viewMode) {
-    case 'month':
-      return renderMonthView();
-    case 'week':
-      return renderWeekView();
-    case 'day':
-      return renderDayView();
-    default:
-      return renderMonthView();
+    case 'month': return renderMonthView();
+    case 'week':  return renderWeekView();
+    case 'day':   return renderDayView();
+    default:      return renderMonthView();
   }
 };

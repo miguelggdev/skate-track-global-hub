@@ -270,20 +270,23 @@ const Reports = () => {
 
         const { data: sessions } = await supabase
           .from('training_sessions')
-          .select('id, name, date, start_time, end_time, training_type, location')
-          .gte('date', start)
-          .lte('date', end)
-          .order('date', { ascending: false });
+          .select('id, title, scheduled_at, duration_minutes, training_type, location')
+          .gte('scheduled_at', start)
+          .lte('scheduled_at', end + 'T23:59:59')
+          .order('scheduled_at', { ascending: false });
 
-        const headers = ['Nombre', 'Fecha', 'Hora inicio', 'Hora fin', 'Tipo', 'Sede'];
-        const rows = (sessions ?? []).map(s => [
-          s.name,
-          s.date,
-          s.start_time ?? '',
-          s.end_time ?? '',
-          s.training_type ?? '',
-          s.location ?? '',
-        ]);
+        const headers = ['Título', 'Fecha', 'Hora inicio', 'Duración (min)', 'Tipo', 'Sede'];
+        const rows = (sessions ?? []).map(s => {
+          const dt = new Date(s.scheduled_at);
+          return [
+            s.title ?? '',
+            format(dt, 'dd/MM/yyyy', { locale: es }),
+            format(dt, 'HH:mm'),
+            String(s.duration_minutes ?? ''),
+            s.training_type ?? '',
+            s.location ?? '',
+          ];
+        });
 
         const colW = (pageW - margin * 2) / headers.length;
         const rowH = 7;

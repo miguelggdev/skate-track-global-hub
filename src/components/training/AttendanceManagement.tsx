@@ -30,10 +30,9 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface TrainingSession {
   id: string;
-  name: string;
-  date: string;
-  start_time: string;
-  end_time: string;
+  title: string;
+  scheduled_at: string;
+  duration_minutes?: number;
   training_type: string;
   location?: string;
   description?: string;
@@ -63,9 +62,8 @@ export const AttendanceManagement: React.FC = () => {
       const { data, error } = await supabase
         .from('training_sessions')
         .select('*')
-        .gte('date', new Date().toISOString().split('T')[0])
-        .order('date', { ascending: true })
-        .order('start_time', { ascending: true });
+        .gte('scheduled_at', new Date().toISOString().split('T')[0])
+        .order('scheduled_at', { ascending: true });
 
       if (error) throw error;
       return data as TrainingSession[];
@@ -159,10 +157,10 @@ export const AttendanceManagement: React.FC = () => {
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
                             <div>
-                              <h4 className="font-semibold">{session.name}</h4>
+                              <h4 className="font-semibold">{session.title}</h4>
                               <p className="text-sm text-muted-foreground">
-                                {format(new Date(session.date), 'dd/MM/yyyy', { locale: es })} - 
-                                {session.start_time} a {session.end_time}
+                                {format(new Date(session.scheduled_at), 'dd/MM/yyyy HH:mm', { locale: es })}
+                                {session.duration_minutes ? ` — ${session.duration_minutes} min` : ''}
                               </p>
                               {session.location && (
                                 <p className="text-sm text-muted-foreground">📍 {session.location}</p>

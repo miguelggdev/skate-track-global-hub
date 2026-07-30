@@ -4,10 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface TrainingSession {
   id: string;
-  date: string;
+  scheduled_at: string;
   training_type: string;
-  start_time: string;
-  end_time: string;
+  duration_minutes: number | null;
 }
 
 interface CompetitionResult {
@@ -35,7 +34,7 @@ export const useAthleteKPIs = (athleteId: string | null) => {
       const [attendanceRes, resultsRes] = await Promise.all([
         supabase
           .from('training_attendance')
-          .select(`*, training_sessions(id, date, training_type, start_time, end_time)`)
+          .select(`*, training_sessions(id, scheduled_at, training_type, duration_minutes)`)
           .eq('athlete_id', athleteId!)
           .eq('attended', true),
         supabase
@@ -68,15 +67,13 @@ export const useAthleteKPIs = (athleteId: string | null) => {
       return d.getFullYear() === year && (month === undefined || d.getMonth() === month);
     };
 
-    const filteredSessions     = trainingSessions.filter(s => filterByDate(s.date));
+    const filteredSessions     = trainingSessions.filter(s => filterByDate(s.scheduled_at));
     const filteredCompetitions = competitionResults.filter(
       r => r.competitions && filterByDate(r.competitions.start_date)
     );
 
     const totalHours = filteredSessions.reduce((acc, s) => {
-      const [sh, sm] = s.start_time.split(':').map(Number);
-      const [eh, em] = s.end_time.split(':').map(Number);
-      return acc + ((eh * 60 + em) - (sh * 60 + sm)) / 60;
+      return acc + (s.duration_minutes || 0) / 60;
     }, 0);
 
     const byType = {

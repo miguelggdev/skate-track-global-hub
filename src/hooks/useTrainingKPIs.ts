@@ -157,14 +157,13 @@ export const useTrainingKPIs = (month?: string) => {
         .from('training_sessions')
         .select(`
           training_type,
-          start_time,
-          end_time,
+          duration_minutes,
           training_attendance (
             attended
           )
         `)
-        .gte('date', startDate)
-        .lte('date', endDate);
+        .gte('scheduled_at', startDate)
+        .lte('scheduled_at', endDate);
 
       if (error) throw error;
 
@@ -181,10 +180,7 @@ export const useTrainingKPIs = (month?: string) => {
           };
         }
 
-        // Calculate session duration in hours
-        const start = new Date(`1970-01-01T${session.start_time}`);
-        const end = new Date(`1970-01-01T${session.end_time}`);
-        const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+        const duration = (session.duration_minutes || 0) / 60;
 
         acc[type].total_hours += duration;
         acc[type].session_count += 1;
