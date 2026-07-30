@@ -145,8 +145,8 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
           searchPromises.push(
             supabase
               .from('training_sessions')
-              .select('id, name, date, location')
-              .ilike('name', `%${searchQuery}%`)
+              .select('id, title, scheduled_at, location')
+              .ilike('title', `%${searchQuery}%`)
               .limit(5)
               .then(result => ({ type: 'training', data: result.data }))
           );
@@ -177,12 +177,21 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
         if (canSearchCoaches) {
           searchPromises.push(
             supabase
-              .from('profiles')
-              .select('id, first_name, last_name, email')
-              .eq('role', 'coach')
-              .or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+              .from('coaches')
+              .select('id, user_id, profiles(id, first_name, last_name, email)')
+              .eq('is_active', true)
               .limit(4)
-              .then(result => ({ type: 'coaches', data: result.data }))
+              .then(result => ({
+                type: 'coaches',
+                data: (result.data ?? [])
+                  .map((c: any) => ({ ...c.profiles, id: c.user_id }))
+                  .filter((p: any) => {
+                    const q = searchQuery.toLowerCase();
+                    return (p.first_name || '').toLowerCase().includes(q)
+                      || (p.last_name || '').toLowerCase().includes(q)
+                      || (p.email || '').toLowerCase().includes(q);
+                  }),
+              }))
           );
         }
 
@@ -200,9 +209,9 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
         if (canSearchTeams) {
           searchPromises.push(
             supabase
-              .from('teams')
-              .select('id, name, description, location')
-              .or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`)
+              .from('relay_teams')
+              .select('id, team_name, club_name')
+              .or(`team_name.ilike.%${searchQuery}%,club_name.ilike.%${searchQuery}%`)
               .limit(4)
               .then(result => ({ type: 'teams', data: result.data }))
           );
@@ -224,7 +233,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
           searchPromises.push(
             supabase
               .from('profiles')
-              .select('id, first_name, last_name, email, role')
+              .select('id, first_name, last_name, email')
               .or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
               .limit(5)
               .then(result => ({ type: 'users', data: result.data }))
@@ -265,10 +274,10 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
               result.data.forEach((session: any) => {
                 results.push({
                   id: session.id,
-                  title: session.name,
+                  title: session.title,
                   type: 'training',
                   subtitle: session.location,
-                  metadata: new Date(session.date).toLocaleDateString(),
+                  metadata: session.scheduled_at ? new Date(session.scheduled_at).toLocaleDateString() : undefined,
                 });
               });
               break;
@@ -324,10 +333,9 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
               result.data.forEach((team: any) => {
                 results.push({
                   id: team.id,
-                  title: team.name,
+                  title: team.team_name || team.club_name || '—',
                   type: 'team',
-                  subtitle: team.location,
-                  metadata: team.description,
+                  subtitle: team.club_name,
                 });
               });
               break;

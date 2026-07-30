@@ -52,7 +52,6 @@ const Settings = () => {
     last_name: '',
     email: '',
     phone: '',
-    bio: ''
   });
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   const [notifications, setNotifications] = useState({
@@ -72,7 +71,6 @@ const Settings = () => {
         last_name: profile.last_name || '',
         email: profile.email || '',
         phone: '',
-        bio: ''
       });
       setProfilePhotoUrl(null);
       
@@ -81,7 +79,7 @@ const Settings = () => {
         try {
           const { data: fullProfile } = await supabase
             .from('profiles')
-            .select('phone, bio, avatar_url')
+            .select('phone, avatar_url')
             .eq('id', profile.id)
             .single();
             
@@ -89,7 +87,6 @@ const Settings = () => {
             setFormData(prev => ({
               ...prev,
               phone: fullProfile.phone || '',
-              bio: fullProfile.bio || ''
             }));
             setProfilePhotoUrl(fullProfile.avatar_url);
           }
@@ -119,7 +116,6 @@ const Settings = () => {
           first_name: formData.first_name,
           last_name: formData.last_name,
           phone: formData.phone,
-          bio: formData.bio
         })
         .eq('id', profile.id);
 
@@ -338,15 +334,6 @@ const Settings = () => {
                       value={formData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
                       placeholder="Ingresa tu teléfono"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="bio">Biografía</Label>
-                    <Input 
-                      id="bio" 
-                      value={formData.bio}
-                      onChange={(e) => handleInputChange('bio', e.target.value)}
-                      placeholder="Cuéntanos sobre ti..."
                     />
                   </div>
                 </CardContent>
