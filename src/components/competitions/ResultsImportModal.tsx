@@ -166,11 +166,12 @@ export function ResultsImportModal({ competitionId, competitionName, onImported 
       const inserts = toSave.map(r => ({
         competition_id: competitionId,
         result_import_id: importId,
+        event_name: [r.categoria, r.rama].filter(Boolean).join(' ') || 'General',
         position: r.posc ? parseInt(r.posc) : null,
         bib_number: r.bib_number || null,
         time_seconds: parseTime(r.final_time),
         notes: [r.obs, r.semifinal_time ? `SF:${r.semifinal_time}` : ''].filter(Boolean).join(' | ') || null,
-        status: r.obs ? r.obs.toLowerCase() : 'normal',
+        status: (r.obs ? r.obs.toLowerCase() : 'normal') as 'normal' | 'dsq' | 'dns' | 'dnf',
         athlete_id: r.matched_athlete_id ?? null,
       }));
 
