@@ -112,15 +112,15 @@ export const PaymentsTab = () => {
                 <CheckCircle className="h-4 w-4" />
                 Estado de Pago
               </Label>
-              <Badge 
+              <Badge
                 variant={
-                  paymentStatus?.paymentStatus === 'active' ? 'default' :
+                  paymentStatus?.hasPaid ? 'default' :
                   paymentStatus?.paymentStatus === 'overdue' ? 'destructive' :
                   'secondary'
                 }
                 className="text-sm mt-2"
               >
-                {paymentStatus?.paymentStatus === 'active' ? '✓ Al día' :
+                {paymentStatus?.hasPaid ? '✓ Al día' :
                  paymentStatus?.paymentStatus === 'overdue' ? '⚠ Atrasado' :
                  '○ Pendiente'}
               </Badge>

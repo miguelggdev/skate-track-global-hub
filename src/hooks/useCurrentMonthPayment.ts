@@ -55,12 +55,13 @@ export const useCurrentMonthPayment = (athleteId?: string) => {
 
       // Athlete has paid if at least one paid mensualidad exists in current month
       const hasPaid = (currentMonthPayments?.length ?? 0) > 0;
+      const lastTx = currentMonthPayments?.[0] ?? null;
 
       return {
         hasPaid,
-        paymentStatus: athlete.payment_status || 'pending',
-        lastPaymentMonth: athlete.last_payment_month,
-        lastPaymentDate: athlete.last_payment_date,
+        paymentStatus: hasPaid ? 'paid' : 'pending',
+        lastPaymentMonth: lastTx?.transaction_date ?? null,
+        lastPaymentDate: lastTx?.transaction_date ?? null,
         transactions: currentMonthPayments || [],
         athlete: athlete,
       };

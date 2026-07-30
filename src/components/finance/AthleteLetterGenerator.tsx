@@ -185,7 +185,7 @@ export const AthleteLetterGenerator: React.FC = () => {
                         )}
                       </span>
                       <Badge variant="default" className="ml-2">
-                        {paymentData.paymentStatus === 'active' ? 'Al día' : paymentData.paymentStatus}
+                        {paymentData.paymentStatus === 'paid' ? 'Al día' : paymentData.paymentStatus}
                       </Badge>
                     </>
                   ) : (
