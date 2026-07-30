@@ -65,28 +65,29 @@ export const useAthleteStats = () => {
       const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
       const thisYearStart = new Date(now.getFullYear(), 0, 1);
       
+      const effectiveDate = (athlete: { join_date: string | null; created_at: string }) =>
+        new Date(athlete.join_date ?? athlete.created_at);
+
       const newRecruitsThisMonth = activeAthletes.filter(athlete => {
-        const joinDate = new Date(athlete.join_date);
-        return joinDate >= thisMonthStart;
+        return effectiveDate(athlete) >= thisMonthStart;
       }).length;
-      
+
       const newRecruitsThisYear = activeAthletes.filter(athlete => {
-        const joinDate = new Date(athlete.join_date);
-        return joinDate >= thisYearStart;
+        return effectiveDate(athlete) >= thisYearStart;
       }).length;
 
       // Calculate retention rate (athletes who joined last year and are still active)
       const lastYearStart = new Date(now.getFullYear() - 1, 0, 1);
       const lastYearEnd = new Date(now.getFullYear() - 1, 11, 31);
-      
+
       const athletesJoinedLastYear = athleteData.filter(athlete => {
-        const joinDate = new Date(athlete.join_date);
-        return joinDate >= lastYearStart && joinDate <= lastYearEnd;
+        const jd = effectiveDate(athlete);
+        return jd >= lastYearStart && jd <= lastYearEnd;
       }).length;
-      
+
       const activeFromLastYear = athleteData.filter(athlete => {
-        const joinDate = new Date(athlete.join_date);
-        return (joinDate >= lastYearStart && joinDate <= lastYearEnd) && athlete.status === 'active';
+        const jd = effectiveDate(athlete);
+        return (jd >= lastYearStart && jd <= lastYearEnd) && athlete.status === 'active';
       }).length;
       
       const retentionRate = athletesJoinedLastYear > 0 ? (activeFromLastYear / athletesJoinedLastYear) * 100 : 0;

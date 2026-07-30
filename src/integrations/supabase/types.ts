@@ -520,6 +520,7 @@ export type Database = {
           accident_insurance: string | null
           address: string | null
           allergies: string | null
+          athlete_number: string | null
           bio: string | null
           blood_type: string | null
           category: Database["public"]["Enums"]["athlete_category"]
@@ -552,10 +553,12 @@ export type Database = {
           identification_type: string | null
           imc: number | null
           is_elite_athlete: boolean
+          join_date: string | null
           last_name: string
           level: Database["public"]["Enums"]["athlete_level"]
           long_term_goals: string | null
           lycra_size: string | null
+          main_discipline: string | null
           nationality: string | null
           neighborhood: string | null
           notes: string | null
@@ -580,6 +583,7 @@ export type Database = {
           accident_insurance?: string | null
           address?: string | null
           allergies?: string | null
+          athlete_number?: string | null
           bio?: string | null
           blood_type?: string | null
           category?: Database["public"]["Enums"]["athlete_category"]
@@ -612,10 +616,12 @@ export type Database = {
           identification_type?: string | null
           imc?: number | null
           is_elite_athlete?: boolean
+          join_date?: string | null
           last_name: string
           level?: Database["public"]["Enums"]["athlete_level"]
           long_term_goals?: string | null
           lycra_size?: string | null
+          main_discipline?: string | null
           nationality?: string | null
           neighborhood?: string | null
           notes?: string | null
@@ -640,6 +646,7 @@ export type Database = {
           accident_insurance?: string | null
           address?: string | null
           allergies?: string | null
+          athlete_number?: string | null
           bio?: string | null
           blood_type?: string | null
           category?: Database["public"]["Enums"]["athlete_category"]
@@ -672,10 +679,12 @@ export type Database = {
           identification_type?: string | null
           imc?: number | null
           is_elite_athlete?: boolean
+          join_date?: string | null
           last_name?: string
           level?: Database["public"]["Enums"]["athlete_level"]
           long_term_goals?: string | null
           lycra_size?: string | null
+          main_discipline?: string | null
           nationality?: string | null
           neighborhood?: string | null
           notes?: string | null
