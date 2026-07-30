@@ -13,15 +13,18 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { generateAthleteCardPDF } from '@/lib/pdf-generator';
 import { useSaveDocument } from '@/hooks/useDocumentGeneration';
+import { useClubSettings } from '@/hooks/useClubSettings';
 
 export function AthleteCardGenerator() {
   const { toast } = useToast();
   const saveDoc = useSaveDocument();
+  const { data: clubSettings } = useClubSettings();
 
   const [athleteId, setAthleteId] = useState('');
-  const [clubName, setClubName] = useState('Club de Patinaje');
   const [year, setYear] = useState(new Date().getFullYear());
   const [generating, setGenerating] = useState(false);
+
+  const clubName = clubSettings?.club_name ?? 'Club de Patinaje';
 
   const { data: athletes = [] } = useQuery({
     queryKey: ['athletes-active-list'],
@@ -93,11 +96,6 @@ export function AthleteCardGenerator() {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Nombre del Club</Label>
-            <Input value={clubName} onChange={e => setClubName(e.target.value)} />
           </div>
 
           <div className="space-y-2">

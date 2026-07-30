@@ -11,6 +11,7 @@ import { AthleteCard } from './AthleteCard';
 import { useAthleteDetails } from '@/hooks/useAthleteDetails';
 import { useClubSettings } from '@/hooks/useClubSettings';
 import { generateAthleteCardPDF } from '@/utils/athleteCardPDF';
+import { useSaveDocument } from '@/hooks/useDocumentGeneration';
 import { toast } from 'sonner';
 
 interface AthleteCardDialogProps {
@@ -22,9 +23,10 @@ interface AthleteCardDialogProps {
 export const AthleteCardDialog = ({ athleteId, open, onOpenChange }: AthleteCardDialogProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  
+
   const { data: athlete, isLoading: athleteLoading } = useAthleteDetails(athleteId);
   const { data: clubSettings, isLoading: clubLoading } = useClubSettings();
+  const saveDoc = useSaveDocument();
 
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
@@ -39,6 +41,12 @@ export const AthleteCardDialog = ({ athleteId, open, onOpenChange }: AthleteCard
     setIsDownloading(true);
     try {
       await generateAthleteCardPDF(athlete, clubSettings);
+      await saveDoc.mutateAsync({
+        title: `Carnet — ${athlete.first_name} ${athlete.last_name} ${new Date().getFullYear()}`,
+        document_type: 'carnet_deportista',
+        athlete_id: athlete.id,
+        notes: `Año ${new Date().getFullYear()}`,
+      });
       toast.success('Carnet descargado exitosamente');
     } catch (error) {
       toast.error('Error al generar el carnet');
