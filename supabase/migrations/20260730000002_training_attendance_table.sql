@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS public.training_attendance (
   training_session_id uuid NOT NULL REFERENCES public.training_sessions(id) ON DELETE CASCADE,
   athlete_id          uuid NOT NULL REFERENCES public.athletes(id) ON DELETE CASCADE,
   attended            boolean NOT NULL DEFAULT true,
+  performance_rating  numeric(3,1) CHECK (performance_rating BETWEEN 1 AND 10),
   notes               text,
   created_at          timestamptz NOT NULL DEFAULT now(),
   updated_at          timestamptz NOT NULL DEFAULT now(),

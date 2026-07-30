@@ -53,18 +53,15 @@ export const useTrainingKPIs = (month?: string) => {
       let query = supabase
         .from('training_kpis')
         .select('*')
-        .eq('month', targetMonth);
+        .eq('period_month', targetMonth);
 
       if (profile.role === 'athlete' && athlete) {
         query = query.eq('athlete_id', athlete.id);
-      } else if (profile.role === 'coach') {
-        // Get coach's own KPIs (if they exist) or athletes under their coaching
-        query = query.or(`coach_id.eq.${profile.id},athlete_id.in.(select id from athletes where user_id = ${profile.id})`);
       }
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as TrainingKPIs[];
+      return (data ?? []).map(kpi => ({ ...kpi, month: (kpi as any).period_month ?? '' })) as TrainingKPIs[];
     },
     enabled: !!profile,
   });

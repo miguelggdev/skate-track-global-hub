@@ -762,6 +762,7 @@ export type Database = {
           training_session_id: string
           athlete_id: string
           attended: boolean
+          performance_rating: number | null
           notes: string | null
           created_at: string
           updated_at: string
@@ -771,6 +772,7 @@ export type Database = {
           training_session_id: string
           athlete_id: string
           attended?: boolean
+          performance_rating?: number | null
           notes?: string | null
           created_at?: string
           updated_at?: string
@@ -780,6 +782,7 @@ export type Database = {
           training_session_id?: string
           athlete_id?: string
           attended?: boolean
+          performance_rating?: number | null
           notes?: string | null
           created_at?: string
           updated_at?: string

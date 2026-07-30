@@ -40,16 +40,20 @@ export const useAttendanceManagement = () => {
     },
   });
 
-  // Register attendance using RPC function
+  // Register attendance via upsert (handles both insert and update)
   const registerAttendanceMutation = useMutation({
     mutationFn: async (attendanceData: AttendanceFormData) => {
-      const { data, error } = await supabase.rpc('register_attendance', {
-        p_training_session_id: attendanceData.training_session_id,
-        p_athlete_id: attendanceData.athlete_id,
-        p_attended: attendanceData.attended,
-        p_performance_rating: attendanceData.performance_rating || null,
-        p_notes: attendanceData.notes || null
-      });
+      const { data, error } = await supabase
+        .from('training_attendance')
+        .upsert({
+          training_session_id: attendanceData.training_session_id,
+          athlete_id: attendanceData.athlete_id,
+          attended: attendanceData.attended,
+          performance_rating: attendanceData.performance_rating ?? null,
+          notes: attendanceData.notes ?? null,
+        }, { onConflict: 'training_session_id,athlete_id' })
+        .select()
+        .single();
 
       if (error) throw error;
       return data;
@@ -64,20 +68,20 @@ export const useAttendanceManagement = () => {
     },
   });
 
-  // Bulk register attendance using RPC function
+  // Bulk register attendance via upsert
   const registerBulkAttendanceMutation = useMutation({
     mutationFn: async (attendanceRows: AttendanceFormData[]) => {
-      const formattedRows = attendanceRows.map(row => ({
+      const rows = attendanceRows.map(row => ({
         training_session_id: row.training_session_id,
         athlete_id: row.athlete_id,
         attended: row.attended,
-        performance_rating: row.performance_rating?.toString() || '',
-        notes: row.notes || ''
+        performance_rating: row.performance_rating ?? null,
+        notes: row.notes ?? null,
       }));
 
-      const { data, error } = await supabase.rpc('register_bulk_attendance', {
-        rows: formattedRows
-      });
+      const { data, error } = await supabase
+        .from('training_attendance')
+        .upsert(rows, { onConflict: 'training_session_id,athlete_id' });
 
       if (error) throw error;
       return data;
