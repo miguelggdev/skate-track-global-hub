@@ -60,8 +60,8 @@ export function TimeRecordForm({ defaultAthleteId }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('training_sessions')
-        .select('id, name, date')
-        .order('date', { ascending: false })
+        .select('id, title, scheduled_at')
+        .order('scheduled_at', { ascending: false })
         .limit(30);
       if (error) throw error;
       return data ?? [];

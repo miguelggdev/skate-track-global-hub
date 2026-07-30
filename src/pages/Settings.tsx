@@ -168,7 +168,7 @@ const Settings = () => {
       const [athletesRes, usersRes, sessionsRes, competitionsRes] = await Promise.all([
         supabase.from('athletes').select('id', { count: 'exact' }).eq('status', 'active'),
         supabase.from('profiles').select('id', { count: 'exact' }),
-        supabase.from('training_sessions').select('id', { count: 'exact' }).gte('date', monthStart),
+        supabase.from('training_sessions').select('id', { count: 'exact' }).gte('scheduled_at', monthStart),
         supabase.from('competitions').select('id', { count: 'exact' }).gte('start_date', yearStart),
       ]);
       return {

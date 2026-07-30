@@ -57,10 +57,9 @@ const CalendarViewDialog: React.FC<CalendarViewDialogProps> = ({ open, onOpenCha
       const { data, error } = await supabase
         .from('training_sessions')
         .select('*')
-        .gte('date', format(startDate, 'yyyy-MM-dd'))
-        .lte('date', format(endDate, 'yyyy-MM-dd'))
-        .order('date', { ascending: true })
-        .order('start_time', { ascending: true });
+        .gte('scheduled_at', format(startDate, 'yyyy-MM-dd'))
+        .lte('scheduled_at', format(endDate, 'yyyy-MM-dd') + 'T23:59:59')
+        .order('scheduled_at', { ascending: true });
 
       if (error) throw error;
       setSessions(data || []);
