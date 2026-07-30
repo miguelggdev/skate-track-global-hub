@@ -85,26 +85,25 @@ const AthleteDashboard = () => {
   const { data: trainingLoad = { weeklyKm: 0, consistencyPct: 0, tssLoad: 0, timeDeltaPct: null } } = useQuery<TrainingLoad>({
     queryKey: ['athlete-training-load', athlete?.id],
     queryFn: async () => {
-      const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
       const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
       const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
       const prevMonthStart = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString().split('T')[0];
       const prevMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString().split('T')[0];
 
       const [attRes, currTimeRes, prevTimeRes] = await Promise.all([
-        (supabase.from('training_attendance' as never).select('attended').eq('athlete_id', athlete!.id).gte('created_at', thirtyDaysAgo) as unknown as Promise<{ data: { attended: boolean }[] | null }>),
-        supabase.from('competition_results').select('time_seconds').eq('athlete_id', athlete!.id).gte('created_at', monthStart).order('time_seconds').limit(1),
-        supabase.from('competition_results').select('time_seconds').eq('athlete_id', athlete!.id).gte('created_at', prevMonthStart).lte('created_at', prevMonthEnd).order('time_seconds').limit(1),
+        supabase.from('training_attendance').select('attended').eq('athlete_id', athlete!.id).gte('created_at', thirtyDaysAgo),
+        supabase.from('time_records').select('time_ms').eq('athlete_id', athlete!.id).gte('recorded_at', monthStart).order('time_ms').limit(1),
+        supabase.from('time_records').select('time_ms').eq('athlete_id', athlete!.id).gte('recorded_at', prevMonthStart).lte('recorded_at', prevMonthEnd).order('time_ms').limit(1),
       ]);
 
-      const attendance = attRes.data ?? [];
+      const attendance = (attRes.data ?? []) as { attended: boolean }[];
       const consistencyPct = attendance.length > 0
         ? Math.round((attendance.filter(a => a.attended).length / attendance.length) * 100) : 0;
 
       const weeklyKm = 0;
 
-      const currTime = currTimeRes.data?.[0]?.time_seconds ?? null;
-      const prevTime = prevTimeRes.data?.[0]?.time_seconds ?? null;
+      const currTime = (currTimeRes.data?.[0] as { time_ms: number } | undefined)?.time_ms ?? null;
+      const prevTime = (prevTimeRes.data?.[0] as { time_ms: number } | undefined)?.time_ms ?? null;
       const timeDeltaPct = (currTime !== null && prevTime !== null && prevTime > 0)
         ? Math.round(((prevTime - currTime) / prevTime) * 1000) / 10
         : null;

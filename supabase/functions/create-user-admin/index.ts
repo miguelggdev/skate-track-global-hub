@@ -59,14 +59,16 @@ serve(async (req) => {
       );
     }
 
-    // Check if user has admin/coach/leader role
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from('profiles')
+    // Check if user has admin/coach/leader role (roles live in user_roles, not profiles)
+    const { data: roleData, error: roleError } = await supabaseAdmin
+      .from('user_roles')
       .select('role')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .single();
 
-    if (profileError || !profile || !['admin', 'coach', 'leader'].includes(profile.role)) {
+    if (roleError || !roleData || !['admin', 'coach', 'leader'].includes(roleData.role)) {
       return new Response(
         JSON.stringify({ error: 'Insufficient permissions' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

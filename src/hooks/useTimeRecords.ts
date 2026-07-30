@@ -112,16 +112,26 @@ export function useClubRanking(raceEventId: string) {
 
       if (error) throw error;
 
-      return ((data ?? []) as any[]).map(r => ({
-        athlete_id: r.athlete_id,
-        first_name: r.athletes.first_name,
-        last_name: r.athletes.last_name,
-        category: r.athletes.category,
-        gender: r.athletes.gender,
-        best_time_ms: r.time_ms,
-        recorded_at: r.recorded_at,
-        is_club_record: r.is_club_record,
-      })) as ClubRankingRow[];
+      interface RankingRaw {
+        athlete_id: string;
+        time_ms: number;
+        recorded_at: string;
+        is_club_record: boolean;
+        athletes: { first_name: string; last_name: string; category: string; gender: string };
+      }
+      return (data ?? [] as RankingRaw[]).map(r => {
+        const row = r as RankingRaw;
+        return {
+          athlete_id: row.athlete_id,
+          first_name: row.athletes.first_name,
+          last_name: row.athletes.last_name,
+          category: row.athletes.category,
+          gender: row.athletes.gender,
+          best_time_ms: row.time_ms,
+          recorded_at: row.recorded_at,
+          is_club_record: row.is_club_record,
+        };
+      }) as ClubRankingRow[];
     },
     enabled: !!raceEventId,
   });

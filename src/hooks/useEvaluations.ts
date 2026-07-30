@@ -67,6 +67,9 @@ export function useAddEvaluation() {
       qc.invalidateQueries({ queryKey: ['evaluation-latest', vars.athlete_id] });
       toast({ title: 'Evaluación registrada' });
     },
+    onError: (error: unknown) => {
+      toast({ title: 'Error', description: error instanceof Error ? error.message : 'No se pudo registrar la evaluación', variant: 'destructive' });
+    },
   });
 }
 
@@ -89,6 +92,9 @@ export function useUpdateEvaluation() {
       qc.invalidateQueries({ queryKey: ['evaluations'] });
       qc.invalidateQueries({ queryKey: ['evaluation-latest'] });
       toast({ title: 'Evaluación actualizada' });
+    },
+    onError: (error: unknown) => {
+      toast({ title: 'Error', description: error instanceof Error ? error.message : 'No se pudo actualizar la evaluación', variant: 'destructive' });
     },
   });
 }

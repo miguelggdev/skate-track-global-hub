@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 
 type MessageRow = Database['public']['Tables']['messages']['Row'];
@@ -107,6 +108,7 @@ export function useUnreadMessageCount() {
 export function useSendMessage() {
   const qc = useQueryClient();
   const { user } = useAuth();
+  const { toast } = useToast();
   return useMutation({
     mutationFn: async (payload: SendMessagePayload) => {
       if (!user) throw new Error('Not authenticated');
@@ -126,6 +128,9 @@ export function useSendMessage() {
       qc.invalidateQueries({ queryKey: ['messages-sent'] });
       qc.invalidateQueries({ queryKey: ['messages-thread'] });
       qc.invalidateQueries({ queryKey: ['messages-unread-count'] });
+    },
+    onError: (error: unknown) => {
+      toast({ title: 'Error', description: error instanceof Error ? error.message : 'No se pudo enviar el mensaje', variant: 'destructive' });
     },
   });
 }

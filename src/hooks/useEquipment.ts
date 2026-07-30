@@ -107,6 +107,9 @@ export function useAddEquipment() {
       qc.invalidateQueries({ queryKey: ['equipment-stats'] });
       toast({ title: 'Equipo registrado' });
     },
+    onError: (error: unknown) => {
+      toast({ title: 'Error', description: error instanceof Error ? error.message : 'No se pudo registrar el equipo', variant: 'destructive' });
+    },
   });
 }
 
@@ -129,6 +132,9 @@ export function useUpdateEquipment() {
       qc.invalidateQueries({ queryKey: ['equipment'] });
       qc.invalidateQueries({ queryKey: ['equipment-stats'] });
       toast({ title: 'Equipo actualizado' });
+    },
+    onError: (error: unknown) => {
+      toast({ title: 'Error', description: error instanceof Error ? error.message : 'No se pudo actualizar el equipo', variant: 'destructive' });
     },
   });
 }
@@ -159,6 +165,9 @@ export function useAddMaintenance() {
       qc.invalidateQueries({ queryKey: ['equipment-maintenance', vars.equipment_id] });
       toast({ title: 'Mantenimiento registrado' });
     },
+    onError: (error: unknown) => {
+      toast({ title: 'Error', description: error instanceof Error ? error.message : 'No se pudo registrar el mantenimiento', variant: 'destructive' });
+    },
   });
 }
 
@@ -182,6 +191,9 @@ export function useAssignEquipment() {
       qc.invalidateQueries({ queryKey: ['equipment'] });
       qc.invalidateQueries({ queryKey: ['equipment-stats'] });
       toast({ title: vars.athleteId ? 'Equipo asignado' : 'Asignación removida' });
+    },
+    onError: (error: unknown) => {
+      toast({ title: 'Error', description: error instanceof Error ? error.message : 'No se pudo actualizar la asignación', variant: 'destructive' });
     },
   });
 }

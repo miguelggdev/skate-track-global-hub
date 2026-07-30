@@ -106,48 +106,20 @@ export const useAthleteDetails = (athleteId: string | null) => {
 
       if (athleteError) throw athleteError;
 
-      // Fetch family data - get latest record
-      const { data: familyData } = await supabase
-        .from('athlete_family')
-        .select('*')
-        .eq('athlete_id', athleteId)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      // Fetch body info - has unique constraint, use maybeSingle
-      const { data: bodyData } = await supabase
-        .from('athlete_body_info')
-        .select('*')
-        .eq('athlete_id', athleteId)
-        .maybeSingle();
-
-      // Fetch studies data - get latest record
-      const { data: studiesData } = await supabase
-        .from('athlete_studies')
-        .select('*')
-        .eq('athlete_id', athleteId)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      // Fetch equipment data - get latest record
-      const { data: equipmentData } = await supabase
-        .from('athlete_equipment')
-        .select('*')
-        .eq('athlete_id', athleteId)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      // Fetch history data - get latest record
-      const { data: historyData } = await supabase
-        .from('athlete_history')
-        .select('*')
-        .eq('athlete_id', athleteId)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // Fetch all sub-tables in parallel — 1 round-trip instead of 5
+      const [
+        { data: familyData },
+        { data: bodyData },
+        { data: studiesData },
+        { data: equipmentData },
+        { data: historyData },
+      ] = await Promise.all([
+        supabase.from('athlete_family').select('*').eq('athlete_id', athleteId).order('updated_at', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('athlete_body_info').select('*').eq('athlete_id', athleteId).maybeSingle(),
+        supabase.from('athlete_studies').select('*').eq('athlete_id', athleteId).order('updated_at', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('athlete_equipment').select('*').eq('athlete_id', athleteId).order('updated_at', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('athlete_history').select('*').eq('athlete_id', athleteId).order('updated_at', { ascending: false }).limit(1).maybeSingle(),
+      ]);
 
       // Combine all data
       const details: AthleteDetails = {

@@ -73,7 +73,9 @@ export const useTrainingKPIs = (month?: string) => {
       if (!profile || !['admin', 'coach', 'leader'].includes(profile.role)) return null;
 
       const startDate = month ? `${month}-01` : new Date().toISOString().slice(0, 7) + '-01';
-      const endDate = month ? `${month}-31` : new Date().toISOString().slice(0, 7) + '-31';
+      const endDate = month
+        ? new Date(Number(month.split('-')[0]), Number(month.split('-')[1]), 0).toISOString().split('T')[0]
+        : new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0];
 
       const { data, error } = await supabase
         .from('training_attendance')
@@ -150,7 +152,9 @@ export const useTrainingKPIs = (month?: string) => {
       if (!profile) return [];
 
       const startDate = month ? `${month}-01` : new Date().toISOString().slice(0, 7) + '-01';
-      const endDate = month ? `${month}-31` : new Date().toISOString().slice(0, 7) + '-31';
+      const endDate = month
+        ? new Date(Number(month.split('-')[0]), Number(month.split('-')[1]), 0).toISOString().split('T')[0]
+        : new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0];
 
       const { data, error } = await supabase
         .from('training_sessions')
