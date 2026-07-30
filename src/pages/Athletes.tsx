@@ -47,7 +47,7 @@ const Athletes = () => {
         .from('athletes')
         .select(`
           *,
-          profiles(avatar_url, id_type, id_number, date_of_birth, phone)
+          profiles(avatar_url, date_of_birth, phone)
         `, { count: 'exact' })
         .range(offset, offset + ITEMS_PER_PAGE - 1)
         .order('created_at', { ascending: false });
@@ -57,11 +57,11 @@ const Athletes = () => {
       const totalCount = count ?? 0;
       const athletes: AthleteWithProfile[] = (data ?? []).map(a => ({
         ...a,
-        avatar_url:    a.profiles?.avatar_url,
-        id_type:       a.profiles?.id_type,
-        id_number:     a.profiles?.id_number,
-        date_of_birth: a.profiles?.date_of_birth,
-        phone:         a.profiles?.phone,
+        avatar_url:    a.profiles?.avatar_url ?? a.photo_url,
+        id_type:       (a as any).identification_type,
+        id_number:     (a as any).identification_number,
+        date_of_birth: a.profiles?.date_of_birth ?? a.date_of_birth,
+        phone:         a.profiles?.phone ?? a.personal_phone,
       }));
 
       return {

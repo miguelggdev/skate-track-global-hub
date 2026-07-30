@@ -96,12 +96,9 @@ export const useAthleteDetails = (athleteId: string | null) => {
         .from('athletes')
         .select(`
           *,
-          profiles!inner(
+          profiles(
             phone,
-            avatar_url,
-            bio,
-            id_number,
-            id_type
+            avatar_url
           )
         `)
         .eq('id', athleteId)
@@ -155,11 +152,11 @@ export const useAthleteDetails = (athleteId: string | null) => {
       // Combine all data
       const details: AthleteDetails = {
         ...athleteData,
-        phone: athleteData.profiles?.phone,
-        avatar_url: athleteData.profiles?.avatar_url,
-        bio: athleteData.profiles?.bio,
-        id_number: athleteData.profiles?.id_number,
-        id_type: athleteData.profiles?.id_type,
+        phone: athleteData.profiles?.phone ?? athleteData.personal_phone,
+        avatar_url: athleteData.profiles?.avatar_url ?? athleteData.photo_url,
+        bio: athleteData.bio,
+        id_number: athleteData.identification_number,
+        id_type: athleteData.identification_type,
         family: familyData || undefined,
         body_info: bodyData || undefined,
         studies: studiesData || undefined,

@@ -89,12 +89,15 @@ const FinanceDashboard = () => {
   const { data: summary, isLoading } = useQuery({
     queryKey: ['finance-summary', monthStart],
     queryFn: async () => {
+      const INCOME_TYPES = ['mensualidad', 'anualidad', 'registration_fee', 'league_registration_renewal', 'federation_registration_renewal', 'inscripcion_competencia'] as const;
+      const EXPENSE_TYPES = ['poliza_deportiva', 'psicologia', 'prendas_deportivas', 'equipment', 'travel', 'accident_insurance', 'otro', 'other'] as const;
+
       const [incomeRes, expensesRes, pendingRes, athletesRes, paidCountRes, pendingCountRes] =
         await Promise.all([
           supabase.from('financial_transactions').select('amount')
-            .eq('transaction_type', 'income').gte('transaction_date', monthStart),
+            .in('transaction_type', INCOME_TYPES as unknown as string[]).gte('transaction_date', monthStart),
           supabase.from('financial_transactions').select('amount')
-            .eq('transaction_type', 'expense').gte('transaction_date', monthStart),
+            .in('transaction_type', EXPENSE_TYPES as unknown as string[]).gte('transaction_date', monthStart),
           supabase.from('financial_transactions').select('amount')
             .eq('payment_status', 'pending'),
           supabase.from('athletes').select('id', { count: 'exact' }).eq('status', 'active'),

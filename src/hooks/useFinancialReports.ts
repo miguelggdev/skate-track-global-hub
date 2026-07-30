@@ -89,12 +89,15 @@ export const useFinancialReports = (reportType: ReportType, period: ReportPeriod
         return transactionDate >= dateRange.startDate && transactionDate <= dateRange.endDate;
       });
 
+      const INCOME_TYPES = ['mensualidad', 'anualidad', 'registration_fee', 'league_registration_renewal', 'federation_registration_renewal', 'inscripcion_competencia'];
+      const EXPENSE_TYPES = ['poliza_deportiva', 'psicologia', 'prendas_deportivas', 'equipment', 'travel', 'accident_insurance', 'otro', 'other'];
+
       // Separate income and expense transactions
-      const incomeTransactions = filteredTransactions.filter(t => 
-        ['mensualidad', 'anualidad', 'registration_fee'].includes(t.transaction_type)
+      const incomeTransactions = filteredTransactions.filter(t =>
+        INCOME_TYPES.includes(t.transaction_type)
       );
-      const expenseTransactions = filteredTransactions.filter(t => 
-        ['equipment', 'travel', 'coaching', 'poliza_deportiva', 'psicologia', 'other'].includes(t.transaction_type)
+      const expenseTransactions = filteredTransactions.filter(t =>
+        EXPENSE_TYPES.includes(t.transaction_type)
       );
 
       // Calculate summary
@@ -134,11 +137,11 @@ export const useFinancialReports = (reportType: ReportType, period: ReportPeriod
         });
 
         const monthIncome = monthTransactions
-          .filter(t => ['mensualidad', 'anualidad', 'registration_fee'].includes(t.transaction_type))
+          .filter(t => INCOME_TYPES.includes(t.transaction_type))
           .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-        
+
         const monthExpenses = monthTransactions
-          .filter(t => ['equipment', 'travel', 'coaching', 'poliza_deportiva', 'psicologia', 'other'].includes(t.transaction_type))
+          .filter(t => EXPENSE_TYPES.includes(t.transaction_type))
           .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
         monthlyTrends.push({

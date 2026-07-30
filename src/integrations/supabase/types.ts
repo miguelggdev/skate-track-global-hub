@@ -1472,6 +1472,77 @@ export type Database = {
           },
         ]
       }
+      financial_transactions: {
+        Row: {
+          id: string
+          athlete_id: string | null
+          team_id: string | null
+          amount: number
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          payment_status: Database["public"]["Enums"]["transaction_status"]
+          transaction_date: string
+          due_date: string | null
+          description: string | null
+          payer_name: string | null
+          payer_phone: string | null
+          payer_email: string | null
+          notes: string | null
+          category: string | null
+          receipt_url: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          athlete_id?: string | null
+          team_id?: string | null
+          amount: number
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          payment_status?: Database["public"]["Enums"]["transaction_status"]
+          transaction_date?: string
+          due_date?: string | null
+          description?: string | null
+          payer_name?: string | null
+          payer_phone?: string | null
+          payer_email?: string | null
+          notes?: string | null
+          category?: string | null
+          receipt_url?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          athlete_id?: string | null
+          team_id?: string | null
+          amount?: number
+          transaction_type?: Database["public"]["Enums"]["transaction_type"]
+          payment_status?: Database["public"]["Enums"]["transaction_status"]
+          transaction_date?: string
+          due_date?: string | null
+          description?: string | null
+          payer_name?: string | null
+          payer_phone?: string | null
+          payer_email?: string | null
+          notes?: string | null
+          category?: string | null
+          receipt_url?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_transactions_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipment: {
         Row: {
           assigned_at: string | null
@@ -3016,8 +3087,20 @@ export type Database = {
         | "anualidad"
         | "psicologia"
         | "otro"
+        | "other"
         | "prendas_deportivas"
         | "inscripcion_competencia"
+        | "competition_district"
+        | "competition_departmental"
+        | "competition_marathon"
+        | "competition_panamerican"
+        | "competition_interleague"
+        | "accident_insurance"
+        | "league_registration_renewal"
+        | "federation_registration_renewal"
+        | "registration_fee"
+        | "equipment"
+        | "travel"
       user_role:
         | "admin"
         | "leader"
@@ -3250,8 +3333,20 @@ export const Constants = {
         "anualidad",
         "psicologia",
         "otro",
+        "other",
         "prendas_deportivas",
         "inscripcion_competencia",
+        "competition_district",
+        "competition_departmental",
+        "competition_marathon",
+        "competition_panamerican",
+        "competition_interleague",
+        "accident_insurance",
+        "league_registration_renewal",
+        "federation_registration_renewal",
+        "registration_fee",
+        "equipment",
+        "travel",
       ],
       user_role: ["admin", "leader", "coach", "delegate", "finance", "athlete"],
     },

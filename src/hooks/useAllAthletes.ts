@@ -36,8 +36,6 @@ export const useAllAthletes = () => {
           *,
           profiles(
             avatar_url,
-            id_type,
-            id_number,
             date_of_birth,
             phone
           )
@@ -49,11 +47,11 @@ export const useAllAthletes = () => {
       // Flatten the profile data into the athlete object for easier access
       const flattenedAthletes = (data || []).map(athlete => ({
         ...athlete,
-        avatar_url: athlete.profiles?.avatar_url,
-        id_type: athlete.profiles?.id_type,
-        id_number: athlete.profiles?.id_number,
-        date_of_birth: athlete.profiles?.date_of_birth,
-        phone: athlete.profiles?.phone,
+        avatar_url: athlete.profiles?.avatar_url ?? (athlete as any).photo_url,
+        id_type: (athlete as any).identification_type,
+        id_number: (athlete as any).identification_number,
+        date_of_birth: athlete.profiles?.date_of_birth ?? (athlete as any).date_of_birth,
+        phone: athlete.profiles?.phone ?? (athlete as any).personal_phone,
       })) as AthleteReportData[];
 
       return flattenedAthletes;
