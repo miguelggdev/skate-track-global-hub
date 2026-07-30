@@ -22,7 +22,7 @@ type AttendanceRow = {
 };
 
 type CompRegistrationRow = {
-  created_at: string;
+  registration_date: string;
   athletes: { first_name: string; last_name: string };
   competitions: { name: string };
 };
@@ -44,8 +44,8 @@ const RecentActivity = () => {
           .limit(3),
         (supabase
           .from('competition_registrations')
-          .select('created_at, athletes!inner(first_name, last_name), competitions!inner(name)')
-          .order('created_at', { ascending: false })
+          .select('registration_date, athletes!inner(first_name, last_name), competitions!inner(name)')
+          .order('registration_date', { ascending: false })
           .limit(3)) as unknown as Promise<{ data: CompRegistrationRow[] | null; error: { message: string } | null }>,
       ]);
 
@@ -78,7 +78,7 @@ const RecentActivity = () => {
       });
 
       competitionRes.data?.forEach(item => {
-        const rawDate = new Date(item.created_at);
+        const rawDate = new Date(item.registration_date);
         activities.push({
           athlete_name: `${item.athletes.first_name} ${item.athletes.last_name}`,
           action: `Inscrito en ${item.competitions.name}`,

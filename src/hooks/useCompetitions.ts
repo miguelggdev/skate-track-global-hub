@@ -7,16 +7,15 @@ export interface Competition {
   name: string;
   description?: string;
   start_date: string;
-  end_date: string;
-  location: string;
+  end_date?: string;
+  location?: string;
   category?: string;
   level?: string;
   status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
-  max_participants?: number;
-  entry_fee?: number;
-  prize_pool?: number;
+  max_athletes_per_event?: number;
   registration_deadline?: string;
-  organizer_id?: string;
+  organized_by?: string;
+  competition_type?: string;
   created_at: string;
   updated_at: string;
 }

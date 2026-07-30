@@ -141,10 +141,8 @@ export function AddCompetitionDialog({ onCompetitionAdded }: AddCompetitionDialo
         end_date: values.end_date.toISOString().split('T')[0],
         category: values.category || null,
         level: values.level && values.level.length > 0 ? values.level[0] as any : null,
-        entry_fee: values.entry_fee ? parseFloat(values.entry_fee) : null,
-        prize_pool: values.prize_pool ? parseFloat(values.prize_pool) : null,
-        max_participants: values.max_participants ? parseInt(values.max_participants) : null,
-        registration_deadline: values.registration_deadline ? 
+        max_athletes_per_event: values.max_participants ? parseInt(values.max_participants) : null,
+        registration_deadline: values.registration_deadline ?
           values.registration_deadline.toISOString().split('T')[0] : null,
         status: 'upcoming' as const,
       };

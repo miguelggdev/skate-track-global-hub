@@ -57,8 +57,14 @@ export const EditCompetitionDialog: React.FC<EditCompetitionDialogProps> = ({ co
   });
 
   const onSubmit = (data: CompetitionFormData) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { max_participants, entry_fee, prize_pool, ...validData } = data as any;
     updateCompetition.mutate(
-      { id: competition.id, ...data },
+      {
+        id: competition.id,
+        ...validData,
+        max_athletes_per_event: max_participants ?? null,
+      },
       {
         onSuccess: () => {
           setOpen(false);
