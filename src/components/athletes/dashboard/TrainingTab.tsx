@@ -178,10 +178,10 @@ export const TrainingTab = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <CardTitle className="text-lg">
-                          {record.training_sessions.name}
+                          {(record.training_sessions as any).title}
                         </CardTitle>
                         <CardDescription>
-                          {format(new Date(record.training_sessions.date), 'PPP', { locale: es })}
+                          {format(new Date((record.training_sessions as any).scheduled_at), 'PPP', { locale: es })}
                         </CardDescription>
                       </div>
                       <div className="flex items-center gap-2">

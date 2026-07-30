@@ -18,7 +18,7 @@ type AttendanceRow = {
   created_at: string;
   attended: boolean;
   athletes: { first_name: string; last_name: string };
-  training_sessions: { name: string; date: string };
+  training_sessions: { title: string; scheduled_at: string };
 };
 
 type CompRegistrationRow = {
@@ -34,7 +34,7 @@ const RecentActivity = () => {
       const [attendanceRes, athletesRes, competitionRes] = await Promise.all([
         (supabase
           .from('training_attendance' as never)
-          .select('created_at, attended, athletes!inner(first_name, last_name), training_sessions!inner(name, date)')
+          .select('created_at, attended, athletes!inner(first_name, last_name), training_sessions!inner(title, scheduled_at)')
           .order('created_at', { ascending: false })
           .limit(5)) as unknown as Promise<{ data: AttendanceRow[] | null; error: { message: string } | null }>,
         supabase
