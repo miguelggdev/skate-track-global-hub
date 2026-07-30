@@ -20,7 +20,7 @@ import { formatCurrency } from '@/utils/currency';
 import { useCurrency } from '@/hooks/useCurrency';
 import { Database } from '@/integrations/supabase/types';
 
-type PaymentStatus = Database['public']['Enums']['payment_status'];
+type PaymentStatus = Database['public']['Enums']['transaction_status'];
 type TransactionType = Database['public']['Enums']['transaction_type'];
 
 const statusLabels: Record<PaymentStatus, string> = {

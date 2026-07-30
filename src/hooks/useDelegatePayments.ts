@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Database } from '@/integrations/supabase/types';
 
 type TransactionType = Database['public']['Enums']['transaction_type'];
-type PaymentStatus = Database['public']['Enums']['payment_status'];
+type PaymentStatus = Database['public']['Enums']['transaction_status'];
 
 export interface DelegatePayment {
   id: string;

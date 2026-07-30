@@ -19,10 +19,6 @@ export const useTransactions = () => {
             first_name,
             last_name,
             email
-          ),
-          teams:team_id (
-            id,
-            name
           )
         `)
         .order('transaction_date', { ascending: false });
@@ -207,10 +203,6 @@ export const usePaginatedTransactions = (
             first_name,
             last_name,
             email
-          ),
-          teams:team_id (
-            id,
-            name
           )
         `, { count: 'exact' });
 

@@ -91,9 +91,8 @@ const AthleteDashboard = () => {
       const prevMonthStart = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString().split('T')[0];
       const prevMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString().split('T')[0];
 
-      const [attRes, sessRes, currTimeRes, prevTimeRes] = await Promise.all([
+      const [attRes, currTimeRes, prevTimeRes] = await Promise.all([
         (supabase.from('training_attendance' as never).select('attended').eq('athlete_id', athlete!.id).gte('created_at', thirtyDaysAgo) as unknown as Promise<{ data: { attended: boolean }[] | null }>),
-        supabase.from('training_sessions').select('distance_km').gte('date', sevenDaysAgo.split('T')[0]),
         supabase.from('competition_results').select('time_seconds').eq('athlete_id', athlete!.id).gte('created_at', monthStart).order('time_seconds').limit(1),
         supabase.from('competition_results').select('time_seconds').eq('athlete_id', athlete!.id).gte('created_at', prevMonthStart).lte('created_at', prevMonthEnd).order('time_seconds').limit(1),
       ]);
@@ -102,7 +101,7 @@ const AthleteDashboard = () => {
       const consistencyPct = attendance.length > 0
         ? Math.round((attendance.filter(a => a.attended).length / attendance.length) * 100) : 0;
 
-      const weeklyKm = (sessRes.data ?? []).reduce((s, r) => s + (Number(r.distance_km) || 0), 0);
+      const weeklyKm = 0;
 
       const currTime = currTimeRes.data?.[0]?.time_seconds ?? null;
       const prevTime = prevTimeRes.data?.[0]?.time_seconds ?? null;
