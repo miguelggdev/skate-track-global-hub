@@ -167,11 +167,22 @@ $$;
 
 -- ────────────────────────────────────────────────────────────────
 -- 7. ÍNDICES adicionales en competition_results para medal queries
+-- Solo si medal_type ya existe; si no, 20260730000001 los crea.
 -- ────────────────────────────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_comp_results_medal_type
-  ON public.competition_results(competition_id, medal_type)
-  WHERE medal_type IS NOT NULL;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name   = 'competition_results'
+      AND column_name  = 'medal_type'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_comp_results_medal_type
+      ON public.competition_results(competition_id, medal_type)
+      WHERE medal_type IS NOT NULL;
 
-CREATE INDEX IF NOT EXISTS idx_comp_results_medal_athlete
-  ON public.competition_results(athlete_id, competition_id)
-  WHERE medal_type IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS idx_comp_results_medal_athlete
+      ON public.competition_results(athlete_id, competition_id)
+      WHERE medal_type IS NOT NULL;
+  END IF;
+END $$;
