@@ -9,8 +9,8 @@ import { formatCurrency, getCurrencySymbol } from '@/utils/currency';
 import { useCurrency } from '@/hooks/useCurrency';
 
 const MONTHS = 6;
-const INCOME_TYPES = ['mensualidad', 'registration_fee', 'poliza_deportiva', 'anualidad'];
-const EXPENSE_TYPES = ['equipment', 'travel', 'coaching', 'other'];
+const INCOME_TYPES = ['mensualidad', 'anualidad', 'registration_fee', 'league_registration_renewal', 'federation_registration_renewal', 'inscripcion_competencia'];
+const EXPENSE_TYPES = ['poliza_deportiva', 'psicologia', 'prendas_deportivas', 'equipment', 'travel', 'accident_insurance', 'otro', 'other'];
 
 const RevenueChart: React.FC = () => {
   const { currency } = useCurrency();

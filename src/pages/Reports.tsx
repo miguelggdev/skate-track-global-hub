@@ -15,8 +15,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCurrency } from '@/hooks/useCurrency';
 import { formatCurrency } from '@/utils/currency';
 
-const INCOME_TYPES = ['mensualidad', 'registration_fee', 'poliza_deportiva', 'anualidad'];
-const EXPENSE_TYPES = ['equipment', 'travel', 'coaching', 'other'];
+const INCOME_TYPES = ['mensualidad', 'anualidad', 'registration_fee', 'league_registration_renewal', 'federation_registration_renewal', 'inscripcion_competencia'];
+const EXPENSE_TYPES = ['poliza_deportiva', 'psicologia', 'prendas_deportivas', 'equipment', 'travel', 'accident_insurance', 'otro', 'other'];
 
 const CATEGORY_LABELS: Record<string, string> = {
   escuela: 'Escuela',
@@ -28,13 +28,24 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 const TYPE_LABELS: Record<string, string> = {
   mensualidad: 'Mensualidad',
+  anualidad: 'Anualidad',
   registration_fee: 'Inscripción',
   poliza_deportiva: 'Póliza deportiva',
-  anualidad: 'Anualidad',
+  psicologia: 'Psicología',
+  prendas_deportivas: 'Prendas deportivas',
+  inscripcion_competencia: 'Inscripción competencia',
   equipment: 'Equipamiento',
   travel: 'Viáticos',
-  coaching: 'Coaching',
-  other: 'Otro',
+  accident_insurance: 'Seguro de accidentes',
+  league_registration_renewal: 'Renovación Liga',
+  federation_registration_renewal: 'Renovación Federación',
+  competition_district: 'Competencia Distrital',
+  competition_departmental: 'Competencia Departamental',
+  competition_marathon: 'Competencia Maratón',
+  competition_panamerican: 'Competencia Panamericana',
+  competition_interleague: 'Competencia Interligas',
+  otro: 'Otros',
+  other: 'Otros',
 };
 
 const STATUS_LABELS: Record<string, string> = {

@@ -144,8 +144,10 @@ const FinanceDashboard = () => {
     },
   });
 
-  const payments  = recentTransactions.filter(t => t.transaction_type === 'income');
-  const expenses  = recentTransactions.filter(t => t.transaction_type === 'expense');
+  const INCOME_TYPES_CLIENT = ['mensualidad', 'anualidad', 'registration_fee', 'league_registration_renewal', 'federation_registration_renewal', 'inscripcion_competencia'];
+  const EXPENSE_TYPES_CLIENT = ['poliza_deportiva', 'psicologia', 'prendas_deportivas', 'equipment', 'travel', 'accident_insurance', 'otro', 'other'];
+  const payments  = recentTransactions.filter(t => INCOME_TYPES_CLIENT.includes(t.transaction_type));
+  const expenses  = recentTransactions.filter(t => EXPENSE_TYPES_CLIENT.includes(t.transaction_type));
 
   const filteredPayments = payments.filter(t => {
     if (!searchPayment.trim()) return true;

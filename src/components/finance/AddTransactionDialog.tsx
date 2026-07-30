@@ -46,7 +46,7 @@ const transactionSchema = z.object({
   amount: z.string().refine((val) => !isNaN(Number(val)) && Number(val) !== 0, {
     message: "La cantidad debe ser un número válido y no puede ser cero",
   }),
-  transaction_type: z.enum(['registration_fee', 'equipment', 'travel', 'coaching', 'other', 'mensualidad', 'poliza_deportiva', 'anualidad', 'psicologia'], {
+  transaction_type: z.enum(['mensualidad', 'anualidad', 'poliza_deportiva', 'psicologia', 'otro', 'other', 'prendas_deportivas', 'inscripcion_competencia', 'registration_fee', 'equipment', 'travel', 'accident_insurance', 'competition_district', 'competition_departmental', 'competition_marathon', 'competition_panamerican', 'competition_interleague', 'league_registration_renewal', 'federation_registration_renewal'], {
     required_error: "Selecciona un tipo de transacción",
   }),
   description: z.string().min(1, "La descripción es requerida"),
@@ -72,15 +72,25 @@ interface AddTransactionDialogProps {
 }
 
 const transactionTypeLabels: Record<string, string> = {
+  mensualidad: 'Mensualidad',
+  anualidad: 'Anualidad',
+  poliza_deportiva: 'Póliza deportiva',
+  psicologia: 'Psicología',
+  prendas_deportivas: 'Prendas deportivas',
+  inscripcion_competencia: 'Inscripción competencia',
   registration_fee: 'Cuota de Inscripción',
   equipment: 'Equipamiento',
   travel: 'Viajes',
-  coaching: 'Entrenamiento',
+  accident_insurance: 'Seguro de accidentes',
+  competition_district: 'Competencia Distrital',
+  competition_departmental: 'Competencia Departamental',
+  competition_marathon: 'Competencia Maratón',
+  competition_panamerican: 'Competencia Panamericana',
+  competition_interleague: 'Competencia Interligas',
+  league_registration_renewal: 'Renovación Liga',
+  federation_registration_renewal: 'Renovación Federación',
+  otro: 'Otros',
   other: 'Otros',
-  mensualidad: 'Mensualidad',
-  poliza_deportiva: 'Póliza deportiva',
-  anualidad: 'Anualidad',
-  psicologia: 'Psicología',
 };
 
 const paymentStatusLabels: Record<string, string> = {
