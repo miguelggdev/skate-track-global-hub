@@ -48,8 +48,8 @@ export const useTrainingStats = () => {
 
       const { data: activeAthletesData, error: activeAthletesError } = await supabase
         .from('training_attendance')
-        .select('athlete_id, training_sessions!inner(date)')
-        .gte('training_sessions.date', thirtyDaysAgo.toISOString().split('T')[0])
+        .select('athlete_id, training_sessions!inner(scheduled_at)')
+        .gte('training_sessions.scheduled_at', thirtyDaysAgo.toISOString().split('T')[0])
         .eq('attended', true);
 
       if (activeAthletesError) throw activeAthletesError;
@@ -59,8 +59,8 @@ export const useTrainingStats = () => {
       // Get completion rate
       const { data: attendanceData, error: attendanceError } = await supabase
         .from('training_attendance')
-        .select('attended, training_sessions!inner(date)')
-        .gte('training_sessions.date', thirtyDaysAgo.toISOString().split('T')[0]);
+        .select('attended, training_sessions!inner(scheduled_at)')
+        .gte('training_sessions.scheduled_at', thirtyDaysAgo.toISOString().split('T')[0]);
 
       if (attendanceError) throw attendanceError;
 
@@ -71,7 +71,7 @@ export const useTrainingStats = () => {
       // Get average session time
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('training_sessions')
-        .select('start_time, end_time');
+        .select('duration_minutes');
 
       if (sessionsError) throw sessionsError;
 
@@ -79,10 +79,7 @@ export const useTrainingStats = () => {
       let sessionCount = 0;
 
       sessionsData?.forEach(session => {
-        const start = new Date(`1970-01-01T${session.start_time}`);
-        const end = new Date(`1970-01-01T${session.end_time}`);
-        const duration = (end.getTime() - start.getTime()) / (1000 * 60);
-        totalMinutes += duration;
+        totalMinutes += session.duration_minutes || 0;
         sessionCount++;
       });
 
@@ -93,7 +90,7 @@ export const useTrainingStats = () => {
       const { data: activeSessionsData, error: activeSessionsError } = await supabase
         .from('training_sessions')
         .select('id')
-        .gte('date', today);
+        .gte('scheduled_at', today);
 
       if (activeSessionsError) throw activeSessionsError;
 
@@ -104,36 +101,32 @@ export const useTrainingStats = () => {
       const { data: upcomingSessionsData, error: upcomingSessionsError } = await supabase
         .from('training_sessions')
         .select('id')
-        .gte('date', today)
-        .lte('date', nextWeek.toISOString().split('T')[0]);
+        .gte('scheduled_at', today)
+        .lte('scheduled_at', nextWeek.toISOString().split('T')[0]);
 
       if (upcomingSessionsError) throw upcomingSessionsError;
 
       // Get monthly training hours
       const currentMonth = new Date();
       const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-      
+
       const { data: monthlySessionsData, error: monthlySessionsError } = await supabase
         .from('training_sessions')
-        .select('start_time, end_time')
-        .gte('date', firstDayOfMonth.toISOString().split('T')[0])
-        .lte('date', today);
+        .select('duration_minutes')
+        .gte('scheduled_at', firstDayOfMonth.toISOString().split('T')[0])
+        .lte('scheduled_at', today);
 
       if (monthlySessionsError) throw monthlySessionsError;
 
-      let monthlyHours = 0;
-      monthlySessionsData?.forEach(session => {
-        const start = new Date(`1970-01-01T${session.start_time}`);
-        const end = new Date(`1970-01-01T${session.end_time}`);
-        const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-        monthlyHours += duration;
-      });
+      const monthlyHours = (monthlySessionsData || []).reduce((sum, session) => {
+        return sum + (session.duration_minutes || 0) / 60;
+      }, 0);
 
       // Get training type distribution
       const { data: trainingTypesData, error: trainingTypesError } = await supabase
         .from('training_sessions')
         .select('training_type')
-        .gte('date', thirtyDaysAgo.toISOString().split('T')[0]);
+        .gte('scheduled_at', thirtyDaysAgo.toISOString().split('T')[0]);
 
       if (trainingTypesError) throw trainingTypesError;
 
@@ -153,13 +146,13 @@ export const useTrainingStats = () => {
       // Get weekly intensity (sessions per week trend)
       const { data: weeklySessionsData, error: weeklySessionsError } = await supabase
         .from('training_sessions')
-        .select('date')
-        .gte('date', thirtyDaysAgo.toISOString().split('T')[0]);
+        .select('scheduled_at')
+        .gte('scheduled_at', thirtyDaysAgo.toISOString().split('T')[0]);
 
       if (weeklySessionsError) throw weeklySessionsError;
 
       const weeksData = weeklySessionsData?.reduce((acc, session) => {
-        const date = new Date(session.date);
+        const date = new Date(session.scheduled_at);
         const weekStart = new Date(date);
         weekStart.setDate(date.getDate() - date.getDay());
         const weekKey = weekStart.toISOString().split('T')[0];
@@ -173,7 +166,7 @@ export const useTrainingStats = () => {
       const { data: coachSessionsData, error: coachSessionsError } = await supabase
         .from('training_sessions')
         .select('coach_id')
-        .gte('date', thirtyDaysAgo.toISOString().split('T')[0]);
+        .gte('scheduled_at', thirtyDaysAgo.toISOString().split('T')[0]);
 
       if (coachSessionsError) throw coachSessionsError;
 
@@ -189,8 +182,8 @@ export const useTrainingStats = () => {
 
         const { data: dayAttendance } = await supabase
           .from('training_attendance')
-          .select('attended, training_sessions!inner(date)')
-          .eq('training_sessions.date', dateStr);
+          .select('attended, training_sessions!inner(scheduled_at)')
+          .eq('training_sessions.scheduled_at', dateStr);
 
         const totalForDay = dayAttendance?.length || 0;
         const attendedForDay = dayAttendance?.filter(a => a.attended).length || 0;
@@ -205,17 +198,17 @@ export const useTrainingStats = () => {
       // Get peak training times
       const { data: peakTimesData, error: peakTimesError } = await supabase
         .from('training_sessions')
-        .select('start_time, date')
-        .gte('date', thirtyDaysAgo.toISOString().split('T')[0]);
+        .select('scheduled_at')
+        .gte('scheduled_at', thirtyDaysAgo.toISOString().split('T')[0]);
 
       if (peakTimesError) throw peakTimesError;
 
       const peakTimes = peakTimesData?.reduce((acc, session) => {
-        const hour = parseInt(session.start_time.split(':')[0]);
-        const date = new Date(session.date);
-        const day = date.toLocaleDateString('en-US', { weekday: 'long' });
+        const dt = new Date(session.scheduled_at);
+        const hour = dt.getHours();
+        const day = dt.toLocaleDateString('en-US', { weekday: 'long' });
         const key = `${hour}-${day}`;
-        
+
         if (!acc[key]) {
           acc[key] = { hour, day, sessionCount: 0 };
         }

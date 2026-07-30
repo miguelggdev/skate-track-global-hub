@@ -5,14 +5,13 @@ import { useToast } from '@/hooks/use-toast';
 
 interface TrainingSession {
   id: string;
-  name: string;
-  date: string;
-  start_time: string;
-  end_time: string;
+  title: string;
+  scheduled_at: string;
+  duration_minutes?: number;
   training_type: string;
   location?: string;
   description?: string;
-  max_participants?: number;
+  max_athletes?: number;
 }
 
 interface AttendanceRecord {
@@ -49,9 +48,8 @@ export const useAthleteTraining = () => {
       const { data, error } = await supabase
         .from('training_sessions')
         .select('*')
-        .gte('date', new Date().toISOString().split('T')[0])
-        .order('date', { ascending: true })
-        .order('start_time', { ascending: true });
+        .gte('scheduled_at', new Date().toISOString().split('T')[0])
+        .order('scheduled_at', { ascending: true });
 
       if (error) throw error;
       

@@ -54,7 +54,7 @@ const AdminDashboard = () => {
           .select('attended')
           .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()) as unknown as Promise<{ data: { attended: boolean }[] | null }>),
         supabase.from('financial_transactions').select('id', { count: 'exact' }).eq('payment_status', 'pending'),
-        supabase.from('training_sessions').select('id', { count: 'exact' }).eq('date', today),
+        supabase.from('training_sessions').select('id', { count: 'exact' }).gte('scheduled_at', today).lt('scheduled_at', today + 'T23:59:59'),
         supabase.from('competitions').select('name, start_date').gt('start_date', today).order('start_date').limit(1),
       ]);
 

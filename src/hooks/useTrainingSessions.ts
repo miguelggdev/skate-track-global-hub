@@ -7,14 +7,13 @@ type TrainingType = 'technical' | 'physical' | 'mental' | 'recovery' | 'gym' | '
 
 interface TrainingSession {
   id: string;
-  name: string;
-  date: string;
-  start_time: string;
-  end_time: string;
+  title: string;
+  scheduled_at: string;
+  duration_minutes: number;
   training_type: TrainingType;
   location?: string;
   description?: string;
-  max_participants?: number;
+  max_athletes?: number;
   coach_id?: string;
   created_at: string;
   updated_at: string;
@@ -65,23 +64,23 @@ export const useTrainingSessions = (options?: {
 
       // Apply date filters
       if (dateFilter === 'upcoming') {
-        query = query.gte('date', today);
+        query = query.gte('scheduled_at', today);
       } else if (dateFilter === 'today') {
-        query = query.eq('date', today);
+        query = query.gte('scheduled_at', today).lt('scheduled_at', today + 'T23:59:59');
       }
 
-      return query.order('date', { ascending: true }).order('start_time', { ascending: true });
+      return query.order('scheduled_at', { ascending: true });
     } else {
       let query = supabase.from('training_sessions').select('*');
-      
+
       // Apply date filters
       if (dateFilter === 'upcoming') {
-        query = query.gte('date', today);
+        query = query.gte('scheduled_at', today);
       } else if (dateFilter === 'today') {
-        query = query.eq('date', today);
+        query = query.gte('scheduled_at', today).lt('scheduled_at', today + 'T23:59:59');
       }
 
-      return query.order('date', { ascending: true }).order('start_time', { ascending: true });
+      return query.order('scheduled_at', { ascending: true });
     }
   };
 
@@ -160,35 +159,21 @@ export const useTrainingSessions = (options?: {
 
   // Get sessions with computed status
   const sessionsWithStatus = trainingSessions.map(session => {
-    const sessionDate = new Date(session.date);
+    const sessionStart = new Date(session.scheduled_at);
+    const sessionEnd = new Date(sessionStart.getTime() + (session.duration_minutes || 60) * 60_000);
     const now = new Date();
-    const today = new Date().toDateString();
-    
+
     let status: 'scheduled' | 'in-progress' | 'completed' | 'cancelled' = 'scheduled';
-    
-    if (sessionDate.toDateString() === today) {
-      const [startHour, startMinute] = session.start_time.split(':').map(Number);
-      const [endHour, endMinute] = session.end_time.split(':').map(Number);
-      
-      const sessionStart = new Date();
-      sessionStart.setHours(startHour, startMinute, 0, 0);
-      
-      const sessionEnd = new Date();
-      sessionEnd.setHours(endHour, endMinute, 0, 0);
-      
-      if (now >= sessionStart && now <= sessionEnd) {
-        status = 'in-progress';
-      } else if (now > sessionEnd) {
-        status = 'completed';
-      }
-    } else if (sessionDate < now) {
+    if (now >= sessionStart && now <= sessionEnd) {
+      status = 'in-progress';
+    } else if (now > sessionEnd) {
       status = 'completed';
     }
 
     return {
       ...session,
       status,
-      coach: session.coaches?.profiles 
+      coach: session.coaches?.profiles
         ? `${session.coaches.profiles.first_name} ${session.coaches.profiles.last_name}`.trim()
         : 'Sin asignar'
     };

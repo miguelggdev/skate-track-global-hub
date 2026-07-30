@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentAthlete } from './useCurrentAthlete';
-import { startOfMonth, endOfMonth, format, differenceInMinutes, parseISO } from 'date-fns';
+import { startOfMonth, endOfMonth, format } from 'date-fns';
 
 export interface AthleteTrainingStats {
   totalSessions: number;
@@ -15,10 +15,9 @@ export interface AthleteTrainingStats {
 
 export interface AthleteTrainingSession {
   id: string;
-  name: string;
-  date: string;
-  start_time: string;
-  end_time: string;
+  title: string;
+  scheduled_at: string;
+  duration_minutes: number | null;
   location: string | null;
   training_type: string;
   description: string | null;
@@ -49,10 +48,9 @@ export const useAthleteTrainingStats = () => {
           notes,
           training_sessions (
             id,
-            name,
-            date,
-            start_time,
-            end_time,
+            title,
+            scheduled_at,
+            duration_minutes,
             location,
             training_type,
             description
@@ -65,10 +63,9 @@ export const useAthleteTrainingStats = () => {
       
       return data?.map(record => ({
         id: record.training_sessions?.id || '',
-        name: record.training_sessions?.name || '',
-        date: record.training_sessions?.date || '',
-        start_time: record.training_sessions?.start_time || '',
-        end_time: record.training_sessions?.end_time || '',
+        title: record.training_sessions?.title || '',
+        scheduled_at: record.training_sessions?.scheduled_at || '',
+        duration_minutes: record.training_sessions?.duration_minutes ?? null,
         location: record.training_sessions?.location,
         training_type: record.training_sessions?.training_type || '',
         description: record.training_sessions?.description,
@@ -92,9 +89,8 @@ export const useAthleteTrainingStats = () => {
       const { data, error } = await supabase
         .from('training_sessions')
         .select('*')
-        .gte('date', todayStr)
-        .order('date', { ascending: true })
-        .order('start_time', { ascending: true });
+        .gte('scheduled_at', todayStr)
+        .order('scheduled_at', { ascending: true });
 
       if (error) throw error;
       return data || [];
@@ -118,27 +114,22 @@ export const useAthleteTrainingStats = () => {
 
     const todayStr = format(today, 'yyyy-MM-dd');
     
+    const sessionDate = (s: AthleteTrainingSession) => s.scheduled_at.split('T')[0];
+
     // Past sessions only for stats
-    const pastSessions = attendanceRecords.filter(s => s.date < todayStr);
+    const pastSessions = attendanceRecords.filter(s => sessionDate(s) < todayStr);
     const attendedSessions = pastSessions.filter(s => s.attended === true);
-    
+
     // Upcoming sessions
-    const upcomingSessions = attendanceRecords.filter(s => s.date >= todayStr);
-    
+    const upcomingSessions = attendanceRecords.filter(s => sessionDate(s) >= todayStr);
+
     // Hours this month (only attended sessions)
     const thisMonthAttended = attendedSessions.filter(
-      s => s.date >= monthStart && s.date <= monthEnd
+      s => sessionDate(s) >= monthStart && sessionDate(s) <= monthEnd
     );
-    
+
     const hoursThisMonth = thisMonthAttended.reduce((total, session) => {
-      try {
-        const start = parseISO(`2000-01-01T${session.start_time}`);
-        const end = parseISO(`2000-01-01T${session.end_time}`);
-        const minutes = differenceInMinutes(end, start);
-        return total + (minutes / 60);
-      } catch {
-        return total;
-      }
+      return total + ((session.duration_minutes || 0) / 60);
     }, 0);
     
     // Average performance rating
@@ -172,8 +163,8 @@ export const useAthleteTrainingStats = () => {
   
   // Split sessions into upcoming and history
   const mySessions = attendanceRecords || [];
-  const upcomingSessions = mySessions.filter(s => s.date >= todayStr);
-  const historySessions = mySessions.filter(s => s.date < todayStr);
+  const upcomingSessions = mySessions.filter(s => s.scheduled_at.split('T')[0] >= todayStr);
+  const historySessions = mySessions.filter(s => s.scheduled_at.split('T')[0] < todayStr);
 
   // Check which available sessions the athlete is already registered for
   const registeredSessionIds = new Set(mySessions.map(s => s.id));
