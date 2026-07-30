@@ -82,13 +82,12 @@ export const useTrainingKPIs = (month?: string) => {
           attended,
           performance_rating,
           training_sessions!inner (
-            date,
-            start_time,
-            end_time
+            scheduled_at,
+            duration_minutes
           )
         `)
-        .gte('training_sessions.date', startDate)
-        .lte('training_sessions.date', endDate);
+        .gte('training_sessions.scheduled_at', startDate)
+        .lte('training_sessions.scheduled_at', endDate);
 
       if (error) throw error;
 
@@ -129,7 +128,7 @@ export const useTrainingKPIs = (month?: string) => {
             last_name
           )
         `)
-        .eq('month', targetMonth);
+        .eq('period_month', targetMonth);
 
       if (error) throw error;
 
