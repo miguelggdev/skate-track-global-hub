@@ -107,10 +107,7 @@ export const useAthleteDetails = (athleteId: string | null) => {
         .eq('id', athleteId)
         .single();
 
-      if (athleteError) {
-        console.error('Error fetching athlete:', athleteError);
-        throw athleteError;
-      }
+      if (athleteError) throw athleteError;
 
       // Fetch family data - get latest record
       const { data: familyData } = await supabase

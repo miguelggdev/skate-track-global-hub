@@ -35,7 +35,6 @@ export const useBulkSettingsSave = () => {
 
       return { success: true };
     } catch (error) {
-      console.error('Error saving bulk settings:', error);
       toast({
         title: "Error al guardar",
         description: "No se pudieron guardar las configuraciones. Inténtalo de nuevo.",

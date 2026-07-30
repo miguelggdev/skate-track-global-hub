@@ -147,7 +147,6 @@ export const useCreateDelegatePayment = () => {
         description: 'No se pudo registrar el pago.',
         variant: 'destructive',
       });
-      console.error('Error creating payment:', error);
     },
   });
 };
@@ -182,7 +181,6 @@ export const useUpdateDelegatePayment = () => {
         description: 'No se pudo actualizar el pago.',
         variant: 'destructive',
       });
-      console.error('Error updating payment:', error);
     },
   });
 };

@@ -110,13 +110,11 @@ const UserManagement = () => {
       });
 
       if (error) {
-        console.error('Edge function error:', error);
-        throw new Error(error.message || 'Error al conectar con el servidor');
+                throw new Error(error.message || 'Error al conectar con el servidor');
       }
 
       if (data?.error) {
-        console.error('Delete user error:', data.error);
-        throw new Error(data.error);
+                throw new Error(data.error);
       }
       
       refreshUsers();
@@ -125,7 +123,6 @@ const UserManagement = () => {
         description: "Usuario eliminado exitosamente",
       });
     } catch (error: any) {
-      console.error('Error deleting user:', error);
       toast({
         title: "Error",
         description: error.message || "No se pudo eliminar el usuario",
@@ -155,7 +152,6 @@ const UserManagement = () => {
         description: blocked ? "Usuario desbloqueado exitosamente" : "Usuario bloqueado exitosamente",
       });
     } catch (error) {
-      console.error('Error blocking/unblocking user:', error);
       toast({
         title: "Error",
         description: "No se pudo cambiar el estado del usuario",
@@ -207,12 +203,10 @@ const UserManagement = () => {
       });
 
       if (error) {
-        console.error('Edge function error:', error);
-        throw new Error(error.message || 'Error al conectar con el servidor');
+                throw new Error(error.message || 'Error al conectar con el servidor');
       }
 
       if (data?.error) {
-        console.error('Password reset error:', data.error);
         throw new Error(data.error);
       }
 
@@ -223,7 +217,6 @@ const UserManagement = () => {
 
       setResettingPasswordUser(null);
     } catch (error: any) {
-      console.error('Error resetting password:', error);
       toast({
         title: "Error",
         description: error.message || "No se pudo actualizar la contraseña",

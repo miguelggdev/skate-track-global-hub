@@ -36,18 +36,6 @@ export default function QuickAttendanceRegistration() {
   const { data: athletes = [], isLoading: athletesLoading } = useAthletes();
   const { registerAttendance, isRegistering, canRegisterAttendance } = useAttendanceManagement();
 
-  // Debug logging
-  useEffect(() => {
-    console.log('QuickAttendanceRegistration Debug:', {
-      profile,
-      profileLoading,
-      isAdmin,
-      isCoach,
-      isDelegate,
-      canRegisterAttendance: canRegisterAttendance()
-    });
-  }, [profile, profileLoading, isAdmin, isCoach, isDelegate]);
-
   // Auto-select first upcoming session
   useEffect(() => {
     if (!sessionsLoading && trainingSessions.length > 0 && !selectedSessionId) {
@@ -57,7 +45,6 @@ export default function QuickAttendanceRegistration() {
       
       if (upcomingSessions.length > 0) {
         setSelectedSessionId(upcomingSessions[0].id);
-        console.log('Auto-selected first upcoming session:', upcomingSessions[0].name);
       }
     }
   }, [sessionsLoading, trainingSessions, selectedSessionId]);

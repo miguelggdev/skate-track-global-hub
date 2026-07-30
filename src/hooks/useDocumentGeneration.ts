@@ -35,9 +35,6 @@ export function useSaveDocument() {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       toast({ title: 'Registro guardado', description: 'El documento quedó en el historial.' });
     },
-    onError: (e) => {
-      console.error('Error guardando documento:', e);
-    },
   });
 }
 

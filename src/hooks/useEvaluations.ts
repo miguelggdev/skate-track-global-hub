@@ -67,7 +67,6 @@ export function useAddEvaluation() {
       qc.invalidateQueries({ queryKey: ['evaluation-latest', vars.athlete_id] });
       toast({ title: 'Evaluación registrada' });
     },
-    onError: (e) => console.error('Error guardando evaluación:', e),
   });
 }
 
@@ -91,6 +90,5 @@ export function useUpdateEvaluation() {
       qc.invalidateQueries({ queryKey: ['evaluation-latest'] });
       toast({ title: 'Evaluación actualizada' });
     },
-    onError: (e) => console.error('Error actualizando evaluación:', e),
   });
 }

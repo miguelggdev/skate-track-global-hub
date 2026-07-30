@@ -318,7 +318,6 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
       setOpen(false);
 
     } catch (error) {
-      console.error('Error creating training:', error);
       toast({
         title: "Error",
         description: "No se pudo crear el entrenamiento",
@@ -332,14 +331,6 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
   const trainingTypes = formData.category 
     ? getTrainingTypes(formData.category)
     : [];
-
-  console.log('CreateTrainingDialog: Rendering dialog', {
-    open,
-    profileLoading,
-    canCreateTraining,
-    profile: !!profile,
-    error
-  });
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {

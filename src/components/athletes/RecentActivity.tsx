@@ -1,131 +1,99 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface Activity {
   athlete_name: string;
   action: string;
+  rawDate: Date;
   time: string;
   type: string;
 }
 
+type AttendanceRow = {
+  created_at: string;
+  attended: boolean;
+  athletes: { first_name: string; last_name: string };
+  training_sessions: { name: string; date: string };
+};
+
+type CompRegistrationRow = {
+  created_at: string;
+  athletes: { first_name: string; last_name: string };
+  competitions: { name: string };
+};
+
 const RecentActivity = () => {
-  const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchRecentActivity = async () => {
-      try {
-        // Get recent training attendance
-        const { data: attendanceData, error: attendanceError } = await supabase
-          .from('training_attendance')
-          .select(`
-            created_at,
-            attended,
-            athletes!inner(first_name, last_name),
-            training_sessions!inner(name, date)
-          `)
+  const { data: recentActivity = [], isLoading: loading } = useQuery({
+    queryKey: ['recent-activity'],
+    queryFn: async (): Promise<Activity[]> => {
+      const [attendanceRes, athletesRes, competitionRes] = await Promise.all([
+        (supabase
+          .from('training_attendance' as never)
+          .select('created_at, attended, athletes!inner(first_name, last_name), training_sessions!inner(name, date)')
           .order('created_at', { ascending: false })
-          .limit(5);
-
-        if (attendanceError) throw attendanceError;
-
-        // Get recently created athletes
-        const { data: newAthletes, error: athletesError } = await supabase
+          .limit(5)) as unknown as Promise<{ data: AttendanceRow[] | null; error: { message: string } | null }>,
+        supabase
           .from('athletes')
           .select('first_name, last_name, created_at')
           .order('created_at', { ascending: false })
-          .limit(3);
-
-        if (athletesError) throw athletesError;
-
-        // Get recent competition registrations
-        const { data: competitionData, error: competitionError } = await supabase
+          .limit(3),
+        (supabase
           .from('competition_registrations')
-          .select(`
-            created_at,
-            athletes!inner(first_name, last_name),
-            competitions!inner(name)
-          `)
+          .select('created_at, athletes!inner(first_name, last_name), competitions!inner(name)')
           .order('created_at', { ascending: false })
-          .limit(3);
+          .limit(3)) as unknown as Promise<{ data: CompRegistrationRow[] | null; error: { message: string } | null }>,
+      ]);
 
-        if (competitionError) throw competitionError;
+      if (attendanceRes.error) throw new Error(attendanceRes.error.message);
+      if (athletesRes.error) throw athletesRes.error;
+      if (competitionRes.error) throw new Error(competitionRes.error.message);
 
-        // Combine and format activities
-        const activities: Activity[] = [];
+      const activities: Activity[] = [];
 
-        // Add training activities
-        attendanceData?.forEach(item => {
-          activities.push({
-            athlete_name: `${item.athletes.first_name} ${item.athletes.last_name}`,
-            action: item.attended ? 'Entrenamiento completado' : 'Falta registrada',
-            time: formatDistanceToNow(new Date(item.created_at), { 
-              addSuffix: true, 
-              locale: es 
-            }),
-            type: item.attended ? 'training' : 'absence'
-          });
+      attendanceRes.data?.forEach(item => {
+        const rawDate = new Date(item.created_at);
+        activities.push({
+          athlete_name: `${item.athletes.first_name} ${item.athletes.last_name}`,
+          action: item.attended ? 'Entrenamiento completado' : 'Falta registrada',
+          rawDate,
+          time: formatDistanceToNow(rawDate, { addSuffix: true, locale: es }),
+          type: item.attended ? 'training' : 'absence',
         });
+      });
 
-        // Add new athlete registrations
-        newAthletes?.forEach(athlete => {
-          activities.push({
-            athlete_name: `${athlete.first_name} ${athlete.last_name}`,
-            action: 'Nuevo atleta registrado',
-            time: formatDistanceToNow(new Date(athlete.created_at), { 
-              addSuffix: true, 
-              locale: es 
-            }),
-            type: 'registration'
-          });
+      athletesRes.data?.forEach(athlete => {
+        const rawDate = new Date(athlete.created_at);
+        activities.push({
+          athlete_name: `${athlete.first_name} ${athlete.last_name}`,
+          action: 'Nuevo atleta registrado',
+          rawDate,
+          time: formatDistanceToNow(rawDate, { addSuffix: true, locale: es }),
+          type: 'registration',
         });
+      });
 
-        // Add competition registrations
-        competitionData?.forEach(item => {
-          activities.push({
-            athlete_name: `${item.athletes.first_name} ${item.athletes.last_name}`,
-            action: `Inscrito en ${item.competitions.name}`,
-            time: formatDistanceToNow(new Date(item.created_at), { 
-              addSuffix: true, 
-              locale: es 
-            }),
-            type: 'competition'
-          });
+      competitionRes.data?.forEach(item => {
+        const rawDate = new Date(item.created_at);
+        activities.push({
+          athlete_name: `${item.athletes.first_name} ${item.athletes.last_name}`,
+          action: `Inscrito en ${item.competitions.name}`,
+          rawDate,
+          time: formatDistanceToNow(rawDate, { addSuffix: true, locale: es }),
+          type: 'competition',
         });
+      });
 
-        // Sort by most recent and take top 6
-        const sortedActivities = activities
-          .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-          .slice(0, 6);
-
-        setRecentActivity(sortedActivities);
-      } catch (error) {
-        console.error('Error fetching recent activity:', error);
-        // Fallback to empty array
-        setRecentActivity([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRecentActivity();
-
-    // Set up real-time subscription
-    const channel = supabase
-      .channel('recent-activity-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'training_attendance' }, fetchRecentActivity)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'athletes' }, fetchRecentActivity)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'competition_registrations' }, fetchRecentActivity)
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+      return activities
+        .sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime())
+        .slice(0, 6);
+    },
+    staleTime: 2 * 60 * 1000,
+  });
 
   if (loading) {
     return (
@@ -169,7 +137,7 @@ const RecentActivity = () => {
                   activity.type === 'registration' ? 'bg-green-500' :
                   activity.type === 'competition' ? 'bg-orange-500' :
                   'bg-gray-500'
-                }`}></div>
+                }`} />
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-gray-800 text-sm truncate">{activity.athlete_name}</p>
                   <p className="text-sm text-gray-600 truncate">{activity.action}</p>

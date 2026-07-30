@@ -27,10 +27,7 @@ export const useAthleteStats = () => {
         .select('*', { count: 'exact', head: true })
         .eq('status', 'active');
 
-      if (totalError) {
-        console.error('Error fetching total athletes:', totalError);
-        throw totalError;
-      }
+      if (totalError) throw totalError;
 
       // Get school athletes count (athletes with studies records)
       const { count: schoolAthletes, error: schoolError } = await supabase
@@ -38,20 +35,14 @@ export const useAthleteStats = () => {
         .select('athlete_id', { count: 'exact', head: true })
         .not('school_name', 'is', null);
 
-      if (schoolError) {
-        console.error('Error fetching school athletes:', schoolError);
-        throw schoolError;
-      }
+      if (schoolError) throw schoolError;
 
       // Get detailed athlete data for additional statistics
       const { data: athleteData, error: athleteError } = await supabase
         .from('athletes')
         .select('category, gender, created_at, join_date, status');
 
-      if (athleteError) {
-        console.error('Error fetching athlete data:', athleteError);
-        throw athleteError;
-      }
+      if (athleteError) throw athleteError;
 
       const activeAthletes = athleteData.filter(athlete => athlete.status === 'active');
       

@@ -108,7 +108,6 @@ export const useUpdateDelegateAthlete = () => {
         description: 'No se pudo actualizar la información del atleta.',
         variant: 'destructive',
       });
-      console.error('Error updating athlete:', error);
     },
   });
 };

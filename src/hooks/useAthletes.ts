@@ -26,10 +26,7 @@ export const useAthletes = () => {
         .eq('status', 'active')
         .order('first_name', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching athletes:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       return data as Athlete[];
     },
@@ -57,10 +54,7 @@ export const useAthletesByCategory = (category?: string, levels?: string[]) => {
 
       const { data, error } = await query.order('first_name', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching filtered athletes:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       return data as Athlete[];
     },

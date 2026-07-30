@@ -54,10 +54,7 @@ export const useTranslationState = () => {
           .from('ui_translations')
           .select('key, es, en, fr, de, it, pt');
 
-        if (error) {
-          console.error('Error loading translations:', error);
-          return;
-        }
+        if (error) return;
 
         const translationMap: TranslationRecord = {};
         data?.forEach((row) => {
@@ -71,8 +68,8 @@ export const useTranslationState = () => {
           };
         });
         setTranslations(translationMap);
-      } catch (error) {
-        console.error('Error loading translations:', error);
+      } catch {
+        // silently ignore
       }
     };
 
@@ -95,7 +92,6 @@ export const useTranslationState = () => {
           .single();
 
         if (error) {
-          console.error('Error loading user language:', error);
           setIsLoading(false);
           return;
         }
@@ -103,8 +99,8 @@ export const useTranslationState = () => {
         if (data?.language_code) {
           setCurrentLanguage(data.language_code as LanguageCode);
         }
-      } catch (error) {
-        console.error('Error loading user language:', error);
+      } catch {
+        // silently ignore
       } finally {
         setIsLoading(false);
       }
@@ -136,14 +132,10 @@ export const useTranslationState = () => {
         .update({ language_code: code })
         .eq('id', user.id);
 
-      if (error) {
-        console.error('Error updating language:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       setCurrentLanguage(code);
     } catch (error) {
-      console.error('Error updating language:', error);
       throw error;
     }
   }, [user?.id]);

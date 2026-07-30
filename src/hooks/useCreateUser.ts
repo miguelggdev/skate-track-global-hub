@@ -23,11 +23,7 @@ export const useCreateUser = () => {
   const createUser = async (data: CreateUserData) => {
     try {
       setLoading(true);
-      console.log('🚀 Starting user creation process via admin function...');
-      console.log('📝 Form data:', data);
 
-      // Call the edge function to create user without affecting current session
-      console.log('🔐 Calling create-user-admin function...');
       const { data: result, error } = await supabase.functions.invoke('create-user-admin', {
         body: {
           email: data.email,
@@ -43,48 +39,36 @@ export const useCreateUser = () => {
         }
       });
 
-      console.log('🔐 Admin function result:', { result, error });
-
-      if (error) {
-        console.error('❌ Error calling create-user-admin function:', error);
-        throw new Error(error.message || 'Failed to create user');
-      }
-
-      if (!result?.success) {
-        const errorMessage = result?.error || 'Failed to create user';
-        console.error('❌ Error from create-user-admin function:', errorMessage);
-        throw new Error(errorMessage);
-      }
-
-      console.log('✅ User created successfully via admin function:', result.user?.id);
+      if (error) throw new Error(error.message || 'Failed to create user');
+      if (!result?.success) throw new Error(result?.error || 'Failed to create user');
 
       toast({
-        title: "Éxito",
-        description: "Usuario creado exitosamente",
+        title: 'Éxito',
+        description: 'Usuario creado exitosamente',
       });
 
       return { success: true };
 
-    } catch (error: any) {
-      console.error('❌ User creation failed:', error);
-      
-      let errorMessage = "No se pudo crear el usuario";
-      if (error.message?.includes('User with this email already exists') || error.message?.includes('already registered')) {
-        errorMessage = "Este email ya está registrado";
-      } else if (error.message?.includes('invalid email')) {
-        errorMessage = "Email inválido";
-      } else if (error.message?.includes('weak password') || error.message?.includes('Password should be')) {
-        errorMessage = "La contraseña es muy débil (mínimo 6 caracteres)";
-      } else if (error.message?.includes('Insufficient permissions')) {
-        errorMessage = "No tienes permisos para crear usuarios";
-      } else if (error.message) {
-        errorMessage = error.message;
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : '';
+
+      let errorMessage = 'No se pudo crear el usuario';
+      if (msg.includes('User with this email already exists') || msg.includes('already registered')) {
+        errorMessage = 'Este email ya está registrado';
+      } else if (msg.includes('invalid email')) {
+        errorMessage = 'Email inválido';
+      } else if (msg.includes('weak password') || msg.includes('Password should be')) {
+        errorMessage = 'La contraseña es muy débil (mínimo 6 caracteres)';
+      } else if (msg.includes('Insufficient permissions')) {
+        errorMessage = 'No tienes permisos para crear usuarios';
+      } else if (msg) {
+        errorMessage = msg;
       }
 
       toast({
-        title: "Error",
+        title: 'Error',
         description: errorMessage,
-        variant: "destructive",
+        variant: 'destructive',
       });
 
       return { success: false, error: errorMessage };

@@ -20,10 +20,7 @@ export const useFeeSettings = () => {
           'increment_percentage'
         ]);
 
-      if (error) {
-        console.error('Error fetching fee settings:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       // Convert array to object with proper types
       const settings = (data || []).reduce((acc, setting) => {

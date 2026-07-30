@@ -107,7 +107,6 @@ export function useAddEquipment() {
       qc.invalidateQueries({ queryKey: ['equipment-stats'] });
       toast({ title: 'Equipo registrado' });
     },
-    onError: (e) => console.error('Error añadiendo equipo:', e),
   });
 }
 
@@ -131,7 +130,6 @@ export function useUpdateEquipment() {
       qc.invalidateQueries({ queryKey: ['equipment-stats'] });
       toast({ title: 'Equipo actualizado' });
     },
-    onError: (e) => console.error('Error actualizando equipo:', e),
   });
 }
 
@@ -161,7 +159,6 @@ export function useAddMaintenance() {
       qc.invalidateQueries({ queryKey: ['equipment-maintenance', vars.equipment_id] });
       toast({ title: 'Mantenimiento registrado' });
     },
-    onError: (e) => console.error('Error registrando mantenimiento:', e),
   });
 }
 
@@ -186,6 +183,5 @@ export function useAssignEquipment() {
       qc.invalidateQueries({ queryKey: ['equipment-stats'] });
       toast({ title: vars.athleteId ? 'Equipo asignado' : 'Asignación removida' });
     },
-    onError: (e) => console.error('Error asignando equipo:', e),
   });
 }

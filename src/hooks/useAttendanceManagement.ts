@@ -60,7 +60,6 @@ export const useAttendanceManagement = () => {
       toast.success('Asistencia registrada correctamente');
     },
     onError: (error: any) => {
-      console.error('Error registering attendance:', error);
       toast.error('Error al registrar la asistencia: ' + (error.message || 'Error desconocido'));
     },
   });
@@ -89,7 +88,6 @@ export const useAttendanceManagement = () => {
       toast.success('Asistencia registrada correctamente');
     },
     onError: (error: any) => {
-      console.error('Error registering bulk attendance:', error);
       toast.error('Error al registrar la asistencia: ' + (error.message || 'Error desconocido'));
     },
   });
@@ -113,7 +111,6 @@ export const useAttendanceManagement = () => {
       toast.success('Asistencia actualizada correctamente');
     },
     onError: (error: any) => {
-      console.error('Error updating attendance:', error);
       if (error.message.includes('48 hours')) {
         toast.error('No se puede editar la asistencia después de 48 horas');
       } else {
@@ -137,8 +134,7 @@ export const useAttendanceManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['training-kpis'] });
       toast.success('Asistencia eliminada correctamente');
     },
-    onError: (error: any) => {
-      console.error('Error deleting attendance:', error);
+    onError: () => {
       toast.error('Error al eliminar la asistencia');
     },
   });

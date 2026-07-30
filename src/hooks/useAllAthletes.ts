@@ -44,10 +44,7 @@ export const useAllAthletes = () => {
         `)
         .order('first_name', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching all athletes:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       // Flatten the profile data into the athlete object for easier access
       const flattenedAthletes = (data || []).map(athlete => ({
