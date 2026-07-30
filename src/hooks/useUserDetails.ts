@@ -1,6 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface UserDocument {
+  id: string;
+  user_id: string;
+  document_type: string;
+  document_name: string;
+  document_url: string;
+  uploaded_by?: string;
+  created_at: string;
+}
+
 export interface CoachDetails {
   id?: string;
   license_number?: string;
