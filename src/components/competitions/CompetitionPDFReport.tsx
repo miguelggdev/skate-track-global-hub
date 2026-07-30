@@ -49,7 +49,6 @@ export const CompetitionPDFReport: React.FC<CompetitionPDFReportProps> = ({
                 damas: pdfData.damas,
                 varones: pdfData.varones,
                 medalResults: pdfData.medalResults,
-                events: pdfData.events,
                 allResults: pdfData.allResults,
                 medalStats: pdfData.medalStats,
                 clubInfo: {

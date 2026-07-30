@@ -22,42 +22,29 @@ interface Athlete {
 interface MedalResult {
   id: string;
   medal_type: 'gold' | 'silver' | 'bronze';
-  time_achieved?: unknown;
+  time_seconds?: number | null;
   position?: number;
-  score?: number;
+  event_name?: string;
   notes?: string;
-  event_location?: string;
   athletes: {
     id: string;
     first_name: string;
     last_name: string;
-  };
-  competition_events: {
-    id: string;
-    event_name: string;
-    event_type: string;
   };
 }
 
 interface EventResult {
   id: string;
   medal_type?: 'gold' | 'silver' | 'bronze';
-  time_achieved?: unknown;
+  time_seconds?: number | null;
   position?: number;
-  score?: number;
+  event_name?: string;
   notes?: string;
-  event_id: string;
   athletes: {
     id: string;
     first_name: string;
     last_name: string;
   };
-}
-
-interface CompetitionEvent {
-  id: string;
-  event_name: string;
-  event_type: string;
 }
 
 interface CompetitionReportData {
@@ -76,7 +63,6 @@ interface CompetitionReportData {
   damas: Athlete[];
   varones: Athlete[];
   medalResults?: MedalResult[];
-  events?: CompetitionEvent[];
   allResults?: EventResult[];
   medalStats?: {
     gold: number;
@@ -91,7 +77,7 @@ interface CompetitionReportViewProps {
 }
 
 export const CompetitionReportView: React.FC<CompetitionReportViewProps> = ({ data }) => {
-  const { competition, clubInfo, damas, varones, medalResults = [], events = [], allResults = [], medalStats } = data;
+  const { competition, clubInfo, damas, varones, medalResults = [], allResults = [], medalStats } = data;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -101,22 +87,11 @@ export const CompetitionReportView: React.FC<CompetitionReportViewProps> = ({ da
     });
   };
 
-  const formatTime = (interval?: unknown) => {
-    if (!interval || typeof interval !== 'string') return '-';
-    // Parse ISO 8601 duration format (PT1M23.45S)
-    const match = interval.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:([\d.]+)S)?/);
-    if (!match) return interval;
-    
-    const hours = parseInt(match[1] || '0');
-    const minutes = parseInt(match[2] || '0');
-    const seconds = parseFloat(match[3] || '0');
-    
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toFixed(2).padStart(5, '0')}`;
-    } else if (minutes > 0) {
-      return `${minutes}:${seconds.toFixed(2).padStart(5, '0')}`;
-    }
-    return `${seconds.toFixed(2)}s`;
+  const formatTime = (seconds?: number | null) => {
+    if (seconds == null) return '-';
+    const mins = Math.floor(seconds / 60);
+    const secs = (seconds % 60).toFixed(2).padStart(5, '0');
+    return mins > 0 ? `${mins}:${secs}` : `${secs}s`;
   };
 
   const getMedalColor = (type: string) => {
@@ -140,10 +115,9 @@ export const CompetitionReportView: React.FC<CompetitionReportViewProps> = ({ da
   const groupResultsByEvent = () => {
     const grouped: Record<string, EventResult[]> = {};
     allResults.forEach(result => {
-      if (!grouped[result.event_id]) {
-        grouped[result.event_id] = [];
-      }
-      grouped[result.event_id].push(result);
+      const key = result.event_name || 'Sin evento';
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(result);
     });
     return grouped;
   };
@@ -411,19 +385,14 @@ export const CompetitionReportView: React.FC<CompetitionReportViewProps> = ({ da
                           {result.athletes.first_name} {result.athletes.last_name}
                         </TableCell>
                         <TableCell>
-                          <div>
-                            <div className="font-medium">{result.competition_events.event_name}</div>
-                            <div className="text-xs text-muted-foreground">{result.competition_events.event_type}</div>
-                          </div>
+                          <div className="font-medium">{result.event_name || '-'}</div>
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className={getMedalColor(result.medal_type)}>
                             {getMedalLabel(result.medal_type)}
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          {result.time_achieved ? formatTime(result.time_achieved) : result.score ? `${result.score} pts` : '-'}
-                        </TableCell>
+                        <TableCell>{formatTime(result.time_seconds)}</TableCell>
                         <TableCell className="text-center font-semibold">
                           {result.position || '-'}
                         </TableCell>
@@ -438,64 +407,56 @@ export const CompetitionReportView: React.FC<CompetitionReportViewProps> = ({ da
       )}
 
       {/* Performance by Event Section */}
-      {events.length > 0 && allResults.length > 0 && (
+      {allResults.length > 0 && (
         <Card className="shadow-sm">
           <CardHeader>
             <CardTitle className="text-xl">Rendimiento por Evento</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {events.map((event) => {
-              const eventResults = resultsByEvent[event.id] || [];
-              if (eventResults.length === 0) return null;
-
-              return (
-                <div key={event.id} className="space-y-3">
-                  <div className="flex items-center gap-2 pb-2 border-b border-border">
-                    <h3 className="font-semibold text-foreground">{event.event_name}</h3>
-                    <Badge variant="secondary" className="text-xs">
-                      {event.event_type}
-                    </Badge>
-                  </div>
-                  
-                  <div className="rounded-lg border border-border overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-muted/30">
-                          <TableHead className="w-16 font-semibold">Pos.</TableHead>
-                          <TableHead className="font-semibold">Atleta</TableHead>
-                          <TableHead className="font-semibold">Tiempo/Puntaje</TableHead>
-                          <TableHead className="font-semibold">Medalla</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {eventResults.map((result, index) => (
-                          <TableRow key={result.id} className="hover:bg-muted/20 transition-colors">
-                            <TableCell className="font-bold text-muted-foreground">
-                              {result.position || index + 1}
-                            </TableCell>
-                            <TableCell className="font-medium">
-                              {result.athletes.first_name} {result.athletes.last_name}
-                            </TableCell>
-                            <TableCell className="font-mono">
-                              {result.time_achieved ? formatTime(result.time_achieved) : result.score ? `${result.score} pts` : '-'}
-                            </TableCell>
-                            <TableCell>
-                              {result.medal_type ? (
-                                <Badge variant="outline" className={getMedalColor(result.medal_type)}>
-                                  {getMedalLabel(result.medal_type)}
-                                </Badge>
-                              ) : (
-                                <span className="text-muted-foreground text-sm">-</span>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+            {Object.entries(resultsByEvent).map(([eventName, eventResults]) => (
+              <div key={eventName} className="space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-border">
+                  <h3 className="font-semibold text-foreground">{eventName}</h3>
                 </div>
-              );
-            })}
+
+                <div className="rounded-lg border border-border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/30">
+                        <TableHead className="w-16 font-semibold">Pos.</TableHead>
+                        <TableHead className="font-semibold">Atleta</TableHead>
+                        <TableHead className="font-semibold">Tiempo</TableHead>
+                        <TableHead className="font-semibold">Medalla</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {eventResults.map((result, index) => (
+                        <TableRow key={result.id} className="hover:bg-muted/20 transition-colors">
+                          <TableCell className="font-bold text-muted-foreground">
+                            {result.position || index + 1}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {result.athletes.first_name} {result.athletes.last_name}
+                          </TableCell>
+                          <TableCell className="font-mono">
+                            {formatTime(result.time_seconds)}
+                          </TableCell>
+                          <TableCell>
+                            {result.medal_type ? (
+                              <Badge variant="outline" className={getMedalColor(result.medal_type)}>
+                                {getMedalLabel(result.medal_type)}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">-</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
       )}

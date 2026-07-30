@@ -244,23 +244,16 @@ export const useCompetitionPDFData = (competitionId: string) => {
       const { data: medalResults } = await supabase
         .from('competition_results')
         .select(`
-          id, medal_type, time_achieved, position, score, notes, event_location,
-          athletes!inner(id, first_name, last_name),
-          competition_events!inner(id, event_name, event_type)
+          id, medal_type, time_seconds, position, event_name, notes,
+          athletes!inner(id, first_name, last_name)
         `)
         .eq('competition_id', competitionId)
         .not('medal_type', 'is', null);
 
-      const { data: events } = await supabase
-        .from('competition_events')
-        .select('*')
-        .eq('competition_id', competitionId)
-        .order('event_name');
-
       const { data: allResults } = await supabase
         .from('competition_results')
         .select(`
-          id, medal_type, time_achieved, position, score, notes, event_id,
+          id, medal_type, time_seconds, position, event_name, notes,
           athletes!inner(id, first_name, last_name)
         `)
         .eq('competition_id', competitionId)
@@ -279,7 +272,6 @@ export const useCompetitionPDFData = (competitionId: string) => {
         damas,
         varones,
         medalResults: medalResults ?? [],
-        events: events ?? [],
         allResults: allResults ?? [],
         medalStats,
       };
