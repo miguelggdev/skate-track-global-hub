@@ -208,7 +208,10 @@ export default function QuickAttendanceRegistration() {
               <div className="p-4 bg-muted rounded-lg space-y-2">
                 <div className="flex items-center gap-2 text-sm">
                   <Clock className="h-4 w-4" />
-                  <span>{selectedSession.start_time} - {selectedSession.end_time}</span>
+                  <span>
+                    {format(new Date(selectedSession.scheduled_at), 'HH:mm')}
+                    {' '}({selectedSession.duration_minutes ?? 60} min)
+                  </span>
                   <Badge variant="secondary">{selectedSession.training_type}</Badge>
                 </div>
                 {selectedSession.location && (

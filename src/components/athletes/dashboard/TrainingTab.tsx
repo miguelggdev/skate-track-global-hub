@@ -21,8 +21,8 @@ export const TrainingTab = () => {
     isRegisteredForSession,
   } = useAthleteTraining();
 
-  const upcomingSessions = availableSessions?.filter(session => 
-    new Date(session.date) >= new Date()
+  const upcomingSessions = availableSessions?.filter(session =>
+    new Date(session.scheduled_at) >= new Date()
   ) || [];
 
   const recentAttendance = attendanceRecords?.slice(0, 5) || [];
@@ -101,15 +101,15 @@ export const TrainingTab = () => {
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div>
-                        <CardTitle className="text-lg">{session.name}</CardTitle>
+                        <CardTitle className="text-lg">{session.title}</CardTitle>
                         <CardDescription className="flex items-center gap-4 mt-1">
                           <span className="flex items-center gap-1">
                             <Calendar className="h-4 w-4" />
-                            {format(new Date(session.date), 'PPP', { locale: es })}
+                            {format(new Date(session.scheduled_at), 'PPP', { locale: es })}
                           </span>
                           <span className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
-                            {session.start_time} - {session.end_time}
+                            {format(new Date(session.scheduled_at), 'HH:mm')} ({session.duration_minutes ?? 60} min)
                           </span>
                           {session.location && (
                             <span className="flex items-center gap-1">
@@ -123,10 +123,10 @@ export const TrainingTab = () => {
                         <Badge className={getTrainingTypeColor(session.training_type)}>
                           {session.training_type}
                         </Badge>
-                        {session.max_participants && (
+                        {session.max_athletes && (
                           <Badge variant="outline" className="flex items-center gap-1">
                             <Users className="h-3 w-3" />
-                            Max {session.max_participants}
+                            Max {session.max_athletes}
                           </Badge>
                         )}
                       </div>

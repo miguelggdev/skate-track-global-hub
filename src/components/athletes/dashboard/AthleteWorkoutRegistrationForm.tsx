@@ -71,9 +71,9 @@ export const AthleteWorkoutRegistrationForm: React.FC<AthleteWorkoutRegistration
     return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
-  const availableUnregisteredSessions = availableSessions?.filter(session => 
-    !isRegisteredForSession(session.id) && 
-    new Date(session.date) >= new Date()
+  const availableUnregisteredSessions = availableSessions?.filter(session =>
+    !isRegisteredForSession(session.id) &&
+    new Date(session.scheduled_at) >= new Date()
   ) || [];
 
   return (
@@ -127,9 +127,9 @@ export const AthleteWorkoutRegistrationForm: React.FC<AthleteWorkoutRegistration
                           <SelectItem key={session.id} value={session.id}>
                             <div className="flex items-center justify-between w-full">
                               <div>
-                                <div className="font-medium">{session.name}</div>
+                                <div className="font-medium">{session.title}</div>
                                 <div className="text-sm text-muted-foreground">
-                                  {format(new Date(session.date), 'PPP', { locale: es })} • {session.start_time}
+                                  {format(new Date(session.scheduled_at), 'PPP HH:mm', { locale: es })}
                                 </div>
                               </div>
                               <Badge className={getTrainingTypeColor(session.training_type)}>
@@ -155,15 +155,15 @@ export const AthleteWorkoutRegistrationForm: React.FC<AthleteWorkoutRegistration
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div>
-                        <CardTitle className="text-lg">{selectedSession.name}</CardTitle>
+                        <CardTitle className="text-lg">{selectedSession.title}</CardTitle>
                         <CardDescription className="flex items-center gap-4 mt-1">
                           <span className="flex items-center gap-1">
                             <Calendar className="h-4 w-4" />
-                            {format(new Date(selectedSession.date), 'PPP', { locale: es })}
+                            {format(new Date(selectedSession.scheduled_at), 'PPP', { locale: es })}
                           </span>
                           <span className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
-                            {selectedSession.start_time} - {selectedSession.end_time}
+                            {format(new Date(selectedSession.scheduled_at), 'HH:mm')} ({selectedSession.duration_minutes ?? 60} min)
                           </span>
                           {selectedSession.location && (
                             <span className="flex items-center gap-1">
