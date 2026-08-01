@@ -22,14 +22,26 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile } from '@/hooks/useUserProfile';
 
-const TARGET_ATHLETES = 175;
-const TARGET_REVENUE  = 52_000;
 const TARGET_ATTENDANCE = 90;
 const TARGET_RETENTION  = 95;
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { isAdmin, loading: profileLoading } = useUserProfile();
+
+  const { data: clubSettings } = useQuery({
+    queryKey: ['club-settings-targets'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('club_settings')
+        .select('target_athletes, target_revenue')
+        .maybeSingle();
+      return { targetAthletes: data?.target_athletes ?? 50, targetRevenue: data?.target_revenue ?? 10_000 };
+    },
+  });
+
+  const TARGET_ATHLETES = clubSettings?.targetAthletes ?? 50;
+  const TARGET_REVENUE  = clubSettings?.targetRevenue  ?? 10_000;
 
   const { data: kpis, isLoading } = useQuery({
     queryKey: ['admin-dashboard-kpis'],
@@ -49,10 +61,10 @@ const AdminDashboard = () => {
         supabase.from('athletes').select('id', { count: 'exact' }),
         supabase.from('financial_transactions').select('amount').gte('transaction_date', monthStart),
         supabase.from('financial_transactions').select('amount').gte('transaction_date', prevMonthStart).lte('transaction_date', prevMonthEnd),
-        (supabase
-          .from('training_attendance' as never)
+        supabase
+          .from('training_attendance')
           .select('attended')
-          .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()) as unknown as Promise<{ data: { attended: boolean }[] | null }>),
+          .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
         supabase.from('financial_transactions').select('id', { count: 'exact' }).eq('payment_status', 'pending'),
         supabase.from('training_sessions').select('id', { count: 'exact' }).gte('scheduled_at', today).lt('scheduled_at', today + 'T23:59:59'),
         supabase.from('competitions').select('name, start_date').gt('start_date', today).order('start_date').limit(1),
@@ -139,10 +151,10 @@ const AdminDashboard = () => {
 
   return (
     <DashboardLayout title="Dashboard Administrador" userRole="Administrador">
-      <div className="space-y-8">
+      <div className="space-y-4 md:space-y-8">
 
         {/* KPIs principales */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
           <PerformanceCard
             title="Total Deportistas"
             value={kpis?.activeAthletes ?? 0}
@@ -265,12 +277,12 @@ const AdminDashboard = () => {
             <CardDescription>Gestión rápida de las principales funciones del club</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
               {quickActions.map((action) => (
                 <Button
                   key={action.title}
                   variant="outline"
-                  className="h-auto p-4 flex flex-col items-center gap-2 hover:scale-105 transition-all duration-200"
+                  className="h-auto p-3 md:p-4 flex flex-col items-center gap-2 md:hover:scale-105 transition-all duration-200"
                   onClick={() => navigate(action.path)}
                 >
                   <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">

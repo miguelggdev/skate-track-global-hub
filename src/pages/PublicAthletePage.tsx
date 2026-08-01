@@ -104,10 +104,10 @@ export default function PublicAthletePage() {
     queryFn: async () => {
       if (!athleteId) return [];
       const { data } = await supabase
-        .from('training_attendance' as never)
+        .from('training_attendance')
         .select('attended, created_at')
-        .eq('athlete_id', athleteId as never)
-        .gte('created_at' as never, thirtyDaysAgo as never);
+        .eq('athlete_id', athleteId)
+        .gte('created_at', thirtyDaysAgo);
       return (data ?? []) as { attended: boolean; created_at: string }[];
     },
     enabled: !!athleteId,

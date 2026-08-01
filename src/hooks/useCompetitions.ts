@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -185,7 +185,7 @@ export const useCompetitionRegistrations = () => {
       if (error) throw error;
 
       const registrationCounts = data.reduce((acc: Record<string, number>, reg) => {
-        acc[reg.competition_id] = (acc[reg.competition_id] || 0) + 1;
+        acc[reg.competition_id] = (acc[reg.competition_id] ?? 0) + 1;
         return acc;
       }, {});
 
@@ -209,7 +209,7 @@ export const useCompetitionPDFData = (competitionId: string) => {
         .from('club_settings')
         .select('*')
         .limit(1)
-        .single();
+        .maybeSingle();
       if (clubError) throw clubError;
 
       const { data: registrations, error: registrationError } = await supabase

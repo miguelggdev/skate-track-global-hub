@@ -51,19 +51,21 @@ const AthleteDistribution: React.FC = () => {
       const start = startOfWeek(now, { weekStartsOn: 1 });
       const end   = endOfWeek(now,   { weekStartsOn: 1 });
 
-      const { data: sessions, error } = await supabase
+      type SessionRow = { id: string; scheduled_at: string; training_attendance: { id: string; attended: boolean }[] | null };
+      const sessionsResult = await supabase
         .from('training_sessions')
         .select(`id, scheduled_at, training_attendance(id, attended)`)
         .gte('scheduled_at', format(start, 'yyyy-MM-dd'))
         .lte('scheduled_at', format(end, 'yyyy-MM-dd') + 'T23:59:59');
 
-      if (error) throw error;
+      if (sessionsResult.error) throw sessionsResult.error;
+      const sessions = sessionsResult.data as SessionRow[] | null;
 
       const byDay: Record<string, { total: number; attended: number }> = {};
       for (const s of sessions ?? []) {
         const dayName = DAY_NAMES[new Date(s.scheduled_at).getDay()];
         if (!byDay[dayName]) byDay[dayName] = { total: 0, attended: 0 };
-        const att = (s as any).training_attendance as { attended: boolean }[];
+        const att = s.training_attendance ?? [];
         byDay[dayName].total    += att.length;
         byDay[dayName].attended += att.filter(a => a.attended).length;
       }

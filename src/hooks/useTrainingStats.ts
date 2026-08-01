@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile } from './useUserProfile';
 
@@ -54,7 +54,7 @@ export const useTrainingStats = () => {
 
       if (activeAthletesError) throw activeAthletesError;
 
-      const uniqueActiveAthletes = new Set(activeAthletesData?.map(a => a.athlete_id) || []);
+      const uniqueActiveAthletes = new Set(activeAthletesData?.map(a => a.athlete_id) ?? []);
 
       // Get completion rate
       const { data: attendanceData, error: attendanceError } = await supabase
@@ -64,8 +64,8 @@ export const useTrainingStats = () => {
 
       if (attendanceError) throw attendanceError;
 
-      const totalAttendanceRecords = attendanceData?.length || 0;
-      const attendedRecords = attendanceData?.filter(a => a.attended).length || 0;
+      const totalAttendanceRecords = attendanceData?.length ?? 0;
+      const attendedRecords = attendanceData?.filter(a => a.attended).length ?? 0;
       const completionRate = totalAttendanceRecords > 0 ? (attendedRecords / totalAttendanceRecords) * 100 : 0;
 
       // Get average session time
@@ -79,7 +79,7 @@ export const useTrainingStats = () => {
       let sessionCount = 0;
 
       sessionsData?.forEach(session => {
-        totalMinutes += session.duration_minutes || 0;
+        totalMinutes += session.duration_minutes ?? 0;
         sessionCount++;
       });
 
@@ -118,8 +118,8 @@ export const useTrainingStats = () => {
 
       if (monthlySessionsError) throw monthlySessionsError;
 
-      const monthlyHours = (monthlySessionsData || []).reduce((sum, session) => {
-        return sum + (session.duration_minutes || 0) / 60;
+      const monthlyHours = (monthlySessionsData ?? []).reduce((sum, session) => {
+        return sum + (session.duration_minutes ?? 0) / 60;
       }, 0);
 
       // Get training type distribution
@@ -132,7 +132,7 @@ export const useTrainingStats = () => {
 
       const typeDistribution = trainingTypesData?.reduce((acc, session) => {
         const type = session.training_type;
-        acc[type] = (acc[type] || 0) + 1;
+        acc[type] = (acc[type] ?? 0) + 1;
         return acc;
       }, {} as Record<string, number>) || {};
 
@@ -156,7 +156,7 @@ export const useTrainingStats = () => {
         const weekStart = new Date(date);
         weekStart.setDate(date.getDate() - date.getDay());
         const weekKey = weekStart.toISOString().split('T')[0];
-        acc[weekKey] = (acc[weekKey] || 0) + 1;
+        acc[weekKey] = (acc[weekKey] ?? 0) + 1;
         return acc;
       }, {} as Record<string, number>) || {};
 
@@ -185,8 +185,8 @@ export const useTrainingStats = () => {
           .select('attended, training_sessions!inner(scheduled_at)')
           .eq('training_sessions.scheduled_at', dateStr);
 
-        const totalForDay = dayAttendance?.length || 0;
-        const attendedForDay = dayAttendance?.filter(a => a.attended).length || 0;
+        const totalForDay = dayAttendance?.length ?? 0;
+        const attendedForDay = dayAttendance?.filter(a => a.attended).length ?? 0;
         const rate = totalForDay > 0 ? (attendedForDay / totalForDay) * 100 : 0;
 
         attendanceTrends.push({
@@ -221,12 +221,12 @@ export const useTrainingStats = () => {
         .slice(0, 10);
 
       return {
-        totalAthletes: athletesData?.length || 0,
+        totalAthletes: athletesData?.length ?? 0,
         activeAthletes: uniqueActiveAthletes.size,
         completionRate: Math.round(completionRate * 10) / 10,
         avgSessionTime: Math.round(avgSessionTime * 10) / 10,
-        activeSessions: activeSessionsData?.length || 0,
-        upcomingSessions: upcomingSessionsData?.length || 0,
+        activeSessions: activeSessionsData?.length ?? 0,
+        upcomingSessions: upcomingSessionsData?.length ?? 0,
         monthlyTrainingHours: Math.round(monthlyHours * 10) / 10,
         weeklyIntensity: Math.round(weeklyIntensity * 10) / 10,
         coachUtilization,

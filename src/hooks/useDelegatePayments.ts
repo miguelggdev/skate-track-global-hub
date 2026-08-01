@@ -107,7 +107,7 @@ export const useDelegatePayments = (filters?: {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data as unknown as DelegatePayment[];
+      return (data ?? []) as DelegatePayment[];
     },
   });
 };

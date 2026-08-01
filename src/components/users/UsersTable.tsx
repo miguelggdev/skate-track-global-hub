@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreVertical, Edit, Trash2, Eye, Shield, Lock, Unlock, KeyRound, User as UserIcon } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, Eye, Shield, Lock, Unlock, KeyRound, User as UserIcon, Link2 } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import EditUserDialog from './EditUserDialog';
 import UserDetailsDialog from './UserDetailsDialog';
+import { LinkParentAthletesDialog } from './LinkParentAthletesDialog';
 import { User } from '@/pages/UserManagement';
 
 interface UsersTableProps {
@@ -46,6 +47,7 @@ const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted, onUserBlocke
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [viewingUser, setViewingUser] = useState<User | null>(null);
+  const [linkingParent, setLinkingParent] = useState<User | null>(null);
 
   const getRoleBadge = (role: string) => {
     const roleConfig = {
@@ -55,6 +57,7 @@ const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted, onUserBlocke
       delegate: { label: 'Delegado', color: 'bg-purple-100 text-purple-800' },
       leader: { label: 'Líder', color: 'bg-orange-100 text-orange-800' },
       finance: { label: 'Finanzas', color: 'bg-yellow-100 text-yellow-800' },
+      parent: { label: 'Padre/Tutor', color: 'bg-teal-100 text-teal-800' },
     };
 
     const config = roleConfig[role as keyof typeof roleConfig] || { label: role, color: 'bg-gray-100 text-gray-800' };
@@ -94,7 +97,7 @@ const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted, onUserBlocke
     <>
       <Card className="argon-card">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-800">
+          <CardTitle className="text-lg font-semibold text-foreground">
             Lista de Usuarios ({users.length})
           </CardTitle>
           <CardDescription>
@@ -131,10 +134,10 @@ const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted, onUserBlocke
                            )}
                          </div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium text-gray-800 truncate">
+                          <p className="font-medium text-foreground truncate">
                             {user.first_name} {user.last_name}
                           </p>
-                          <p className="text-sm text-gray-600 truncate">{user.email}</p>
+                          <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                         </div>
                       </div>
                     </TableCell>
@@ -172,7 +175,13 @@ const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted, onUserBlocke
                             <Shield className="mr-2 h-4 w-4" />
                             Gestionar Roles
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onUserBlocked(user.id, user.blocked || false)}>
+                          {user.role === 'parent' && (
+                            <DropdownMenuItem onClick={() => setLinkingParent(user)}>
+                              <Link2 className="mr-2 h-4 w-4" />
+                              Vincular atletas
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem onClick={() => onUserBlocked(user.id, user.blocked ?? false)}>
                             {user.blocked ? (
                               <>
                                 <Unlock className="mr-2 h-4 w-4" />
@@ -222,6 +231,13 @@ const UsersTable = ({ users, loading, onUserUpdated, onUserDeleted, onUserBlocke
         open={!!editingUser}
         onOpenChange={(open) => !open && setEditingUser(null)}
         onUserUpdated={onUserUpdated}
+      />
+
+      {/* Link Parent → Athletes Dialog */}
+      <LinkParentAthletesDialog
+        parent={linkingParent}
+        open={!!linkingParent}
+        onOpenChange={(open) => !open && setLinkingParent(null)}
       />
 
       {/* Delete Confirmation Dialog */}

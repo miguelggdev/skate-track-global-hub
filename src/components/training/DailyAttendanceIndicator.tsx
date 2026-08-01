@@ -5,7 +5,6 @@ import { AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 
-type AttendanceRow = { athlete_id: string };
 
 export default function DailyAttendanceIndicator() {
   const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
@@ -23,13 +22,13 @@ export default function DailyAttendanceIndicator() {
 
       let presentCount = 0;
       if (sessionIds.length > 0) {
-        const attendanceRes = await (supabase
-          .from('training_attendance' as never)
+        const attendanceRes = await supabase
+          .from('training_attendance')
           .select('athlete_id')
           .in('training_session_id', sessionIds)
-          .eq('attended', true)) as unknown as { data: AttendanceRow[] | null };
+          .eq('attended', true);
 
-        const uniq = new Set((attendanceRes.data ?? []).map(a => a.athlete_id));
+        const uniq = new Set((attendanceRes.data ?? []).map((a: { athlete_id: string }) => a.athlete_id));
         presentCount = uniq.size;
       }
 

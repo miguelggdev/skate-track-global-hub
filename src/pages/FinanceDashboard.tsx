@@ -95,9 +95,9 @@ const FinanceDashboard = () => {
       const [incomeRes, expensesRes, pendingRes, athletesRes, paidCountRes, pendingCountRes] =
         await Promise.all([
           supabase.from('financial_transactions').select('amount')
-            .in('transaction_type', INCOME_TYPES as unknown as string[]).gte('transaction_date', monthStart),
+            .in('transaction_type', [...INCOME_TYPES]).gte('transaction_date', monthStart),
           supabase.from('financial_transactions').select('amount')
-            .in('transaction_type', EXPENSE_TYPES as unknown as string[]).gte('transaction_date', monthStart),
+            .in('transaction_type', [...EXPENSE_TYPES]).gte('transaction_date', monthStart),
           supabase.from('financial_transactions').select('amount')
             .eq('payment_status', 'pending'),
           supabase.from('athletes').select('id', { count: 'exact' }).eq('status', 'active'),
@@ -140,7 +140,7 @@ const FinanceDashboard = () => {
         query = query.eq('payment_status', paymentStatusFilter);
       }
       const { data } = await query;
-      return (data ?? []) as unknown as Transaction[];
+      return (data ?? []) as Transaction[];
     },
   });
 

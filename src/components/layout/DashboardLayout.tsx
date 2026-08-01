@@ -13,6 +13,8 @@ import { BottomNav } from './BottomNav';
 import { CommandPalette } from '@/components/ui/CommandPalette';
 import { cn } from '@/lib/utils';
 import { useUnreadMessageCount } from '@/hooks/useMessages';
+import { RagChatWidget } from '@/components/agents/RagChatWidget';
+import { AgentChatWidget } from '@/components/agents/AgentChatWidget';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -62,7 +64,15 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
         { title: t('menu.dashboard'), icon: Home, path: '/athlete-dashboard' },
         { title: t('menu.training'), icon: Calendar, path: '/athlete/training' },
         { title: t('menu.competitions'), icon: Trophy, path: '/athlete/competitions' },
-        { title: 'Mensajes', icon: MessageSquare, path: '/mensajes' },
+        { title: t('menu.messages'), icon: MessageSquare, path: '/mensajes' },
+        { title: t('menu.settings'), icon: Settings, path: '/settings' },
+      ];
+    }
+    if (role === 'parent') {
+      return [
+        { title: t('menu.dashboard'), icon: Home, path: '/parent-dashboard' },
+        { title: t('menu.competitions'), icon: Trophy, path: '/parent-dashboard' },
+        { title: t('menu.messages'), icon: MessageSquare, path: '/mensajes' },
         { title: t('menu.settings'), icon: Settings, path: '/settings' },
       ];
     }
@@ -70,12 +80,12 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
       { title: t('menu.dashboard'), icon: Home, path: '/' },
       { title: t('menu.athletes'), icon: Users, path: '/athletes' },
       { title: t('menu.training'), icon: Calendar, path: '/training' },
-      { title: 'Tiempos', icon: Timer, path: '/tiempos' },
-      { title: 'Documentos', icon: FileText, path: '/documentos' },
-      { title: 'Equipamiento', icon: Package, path: '/equipamiento' },
-      { title: 'Evaluaciones', icon: ClipboardList, path: '/evaluaciones' },
-      { title: 'Mensajes', icon: MessageSquare, path: '/mensajes' },
-      { title: 'Médico', icon: HeartPulse, path: '/medico' },
+      { title: t('menu.times'), icon: Timer, path: '/tiempos' },
+      { title: t('menu.documents'), icon: FileText, path: '/documentos' },
+      { title: t('menu.equipment'), icon: Package, path: '/equipamiento' },
+      { title: t('menu.evaluations'), icon: ClipboardList, path: '/evaluaciones' },
+      { title: t('menu.messages'), icon: MessageSquare, path: '/mensajes' },
+      { title: t('menu.medical'), icon: HeartPulse, path: '/medico' },
       { title: t('menu.competitions'), icon: Trophy, path: '/competitions' },
       { title: t('menu.finance'), icon: DollarSign, path: '/finance' },
       { title: t('menu.club_config'), icon: Cog, path: '/club-config' },
@@ -91,18 +101,20 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
       delegate: '/delegate-dashboard',
       leader: '/leader-dashboard',
       finance: '/finance-dashboard',
+      parent: '/parent-dashboard',
     };
     return paths[role ?? ''] ?? '/';
   };
 
   const getRoleLabel = (role?: string) => {
     const labels: Record<string, string> = {
-      admin: t('role.admin'),
-      coach: t('role.coach'),
-      athlete: t('role.athlete'),
+      admin:    t('role.admin'),
+      coach:    t('role.coach'),
+      athlete:  t('role.athlete'),
       delegate: t('role.delegate'),
-      leader: t('role.leader'),
-      finance: t('role.finance'),
+      leader:   t('role.leader'),
+      finance:  t('role.finance'),
+      parent:   t('role.parent'),
     };
     return labels[role ?? ''] ?? t('role.user');
   };
@@ -110,20 +122,20 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
   const getVisibleNavigationItems = () => {
     const role = profile?.role;
     const roleItems = getNavigationItems(role);
-    if (role === 'athlete') return roleItems;
+    if (role === 'athlete' || role === 'parent') return roleItems;
 
-    const dashboardTitle = t('menu.dashboard');
-    const allowedByRole: Record<string, string[]> = {
-      admin:    [dashboardTitle, t('menu.athletes'), t('menu.training'), 'Tiempos', 'Documentos', 'Equipamiento', 'Evaluaciones', 'Mensajes', 'Médico', t('menu.competitions'), t('menu.finance'), t('menu.club_config'), t('menu.settings')],
-      coach:    [dashboardTitle, t('menu.athletes'), t('menu.training'), 'Tiempos', 'Documentos', 'Equipamiento', 'Evaluaciones', 'Mensajes', 'Médico', t('menu.competitions'), t('menu.settings')],
-      delegate: [dashboardTitle, 'Mensajes', t('menu.competitions'), t('menu.settings')],
-      leader:   [dashboardTitle, t('menu.athletes'), t('menu.training'), 'Tiempos', 'Documentos', 'Equipamiento', 'Evaluaciones', 'Mensajes', t('menu.competitions'), t('menu.finance'), t('menu.club_config'), t('menu.settings')],
-      finance:  [dashboardTitle, 'Mensajes', t('menu.finance'), t('menu.settings')],
+    // Filter by path — language-independent
+    const allowedPaths: Record<string, string[]> = {
+      admin:    ['/', '/athletes', '/training', '/tiempos', '/documentos', '/equipamiento', '/evaluaciones', '/mensajes', '/medico', '/competitions', '/finance', '/club-config', '/settings'],
+      coach:    ['/', '/athletes', '/training', '/tiempos', '/documentos', '/equipamiento', '/evaluaciones', '/mensajes', '/medico', '/competitions', '/settings'],
+      delegate: ['/', '/mensajes', '/competitions', '/settings'],
+      leader:   ['/', '/athletes', '/training', '/tiempos', '/documentos', '/equipamiento', '/evaluaciones', '/mensajes', '/competitions', '/finance', '/club-config', '/settings'],
+      finance:  ['/', '/mensajes', '/finance', '/settings'],
     };
-    const titles = role ? allowedByRole[role] : roleItems.map(i => i.title);
+    const paths = role ? allowedPaths[role] : roleItems.map(i => i.path);
     return roleItems
-      .map(item => item.title === dashboardTitle ? { ...item, path: getDashboardPath(role) } : item)
-      .filter(item => titles?.includes(item.title));
+      .map(item => item.path === '/' ? { ...item, path: getDashboardPath(role) } : item)
+      .filter(item => paths?.includes(item.path === getDashboardPath(role) ? '/' : item.path));
   };
 
   if (profileLoading) {
@@ -193,7 +205,7 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
               >
                 <item.icon className={cn('h-4.5 w-4.5 flex-shrink-0', isActive ? 'text-orange-400' : '')} />
                 <span className="flex-1 text-left">{item.title}</span>
-                {item.title === 'Mensajes' && unreadCount > 0 && (
+                {item.path === '/mensajes' && unreadCount > 0 && (
                   <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-blue-500 text-white text-[10px] font-bold flex items-center justify-center">
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </span>
@@ -239,6 +251,11 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
       </div>
       <BottomNav role={profile?.role} />
     </div>
+    {profile?.role && !['athlete', 'parent'].includes(profile.role) && (
+      <RagChatWidget />
+    )}
+    {/* AgentChatWidget (Experto en Patinaje) disponible para todos los roles */}
+    {profile?.role && <AgentChatWidget />}
     </>
   );
 };

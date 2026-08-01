@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import {
   Dialog,
   DialogContent,
@@ -63,7 +63,7 @@ const AthleteDetailsDialog: React.FC<AthleteDetailsDialogProps> = ({
   };
 
   const getInitials = (firstName?: string, lastName?: string) => {
-    return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
+    return `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase();
   };
 
   const getStatusColor = (status: string) => {

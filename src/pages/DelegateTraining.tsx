@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,9 +31,9 @@ const DelegateTraining = () => {
   const { data: athletes } = useDelegateAthletes();
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
 
-  const todaySessions = sessions?.filter(s => isToday(new Date(s.scheduled_at))) || [];
-  const upcomingSessions = sessions?.filter(s => isFuture(new Date(s.scheduled_at))) || [];
-  const pastSessions = sessions?.filter(s => isPast(new Date(s.scheduled_at)) && !isToday(new Date(s.scheduled_at))).slice(0, 10) || [];
+  const todaySessions = sessions?.filter(s => isToday(new Date(s.scheduled_at))) ?? [];
+  const upcomingSessions = sessions?.filter(s => isFuture(new Date(s.scheduled_at))) ?? [];
+  const pastSessions = sessions?.filter(s => isPast(new Date(s.scheduled_at)) && !isToday(new Date(s.scheduled_at))).slice(0, 10) ?? [];
 
   const SessionCard = ({ session }: { session: any }) => (
     <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedSession(session.id)}>
@@ -102,7 +102,7 @@ const DelegateTraining = () => {
               <CardTitle className="text-sm font-medium">Total Atletas</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{athletes?.length || 0}</div>
+              <div className="text-2xl font-bold">{athletes?.length ?? 0}</div>
               <p className="text-sm text-muted-foreground">atletas activos</p>
             </CardContent>
           </Card>
@@ -111,7 +111,7 @@ const DelegateTraining = () => {
               <CardTitle className="text-sm font-medium">Total Sesiones</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{sessions?.length || 0}</div>
+              <div className="text-2xl font-bold">{sessions?.length ?? 0}</div>
               <p className="text-sm text-muted-foreground">sesiones registradas</p>
             </CardContent>
           </Card>

@@ -159,7 +159,7 @@ export function CoachAttendanceArea() {
       const sixMonthsAgo = new Date(Date.now() - 6 * 30 * 86400000).toISOString();
       // training_attendance may not exist — graceful empty on error
       const { data } = await supabase
-        .from('training_attendance' as never)
+        .from('training_attendance')
         .select('attended, created_at')
         .gte('created_at', sixMonthsAgo);
       return (data ?? []) as { attended: boolean; created_at: string }[];
@@ -284,7 +284,7 @@ export function CoachAthleteStatusTable() {
       const midPoint      = new Date(Date.now() - 15 * 86400000).toISOString();
       const [athletesRes, attendanceRes, resultsRes] = await Promise.all([
         supabase.from('athletes').select('id, first_name, last_name').eq('status', 'active').limit(10),
-        supabase.from('training_attendance' as never).select('athlete_id, attended').gte('created_at', thirtyDaysAgo),
+        supabase.from('training_attendance').select('athlete_id, attended').gte('created_at', thirtyDaysAgo),
         supabase.from('competition_results')
           .select('athlete_id, time_seconds, created_at')
           .gte('created_at', thirtyDaysAgo)

@@ -164,10 +164,10 @@ const AthleteDashboard = () => {
       <div className="space-y-6">
         {/* 1. Identity Card with Social Links and Actions - FIRST */}
         <div className="space-y-3">
-          <AthleteIdentityCard 
-            athlete={athlete as any} 
+          <AthleteIdentityCard
+            athlete={athlete}
             profile={profile}
-            yearsExperience={(athlete as any).years_experience || 0}
+            yearsExperience={athlete.years_experience ?? 0}
           />
           <div className="flex flex-wrap justify-between items-center gap-3">
             <AthleteSocialLinks 
@@ -182,7 +182,7 @@ const AthleteDashboard = () => {
               </Button>
               <AthletePDFExport
                 data={{
-                  athlete: athlete as any,
+                  athlete: athlete,
                   profile,
                   kpis: kpiData,
                   competitions: kpiData.competitions,
@@ -192,7 +192,7 @@ const AthleteDashboard = () => {
               />
               <AthleteCVDownloadButton
                 data={{
-                  athlete: athlete as any,
+                  athlete: athlete,
                   profile,
                   kpis: kpiData,
                   competitions: kpiData.competitions,
@@ -208,10 +208,10 @@ const AthleteDashboard = () => {
         {/* 3. Sports Profile (Bio, Values, Goals) - THIRD */}
         <AthleteSportsProfile
           athleteId={athlete.id}
-          bio={(athlete as any).bio}
-          personalValues={(athlete as any).personal_values}
-          shortTermGoals={(athlete as any).short_term_goals}
-          longTermGoals={(athlete as any).long_term_goals}
+          bio={athlete.bio}
+          personalValues={athlete.personal_values}
+          shortTermGoals={athlete.short_term_goals}
+          longTermGoals={athlete.long_term_goals}
         />
 
         {/* CV Section */}

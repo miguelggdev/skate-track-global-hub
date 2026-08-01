@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 // Hook to validate if an athlete has paid for the last month
@@ -38,8 +38,8 @@ export const useLastMonthPayment = (athleteId?: string) => {
 
       // Return true if there's at least one paid monthly payment
       return {
-        hasPaid: (transactions?.length || 0) > 0,
-        transactions: transactions || [],
+        hasPaid: (transactions?.length ?? 0) > 0,
+        transactions: transactions ?? [],
         athlete: transactions?.[0]?.athletes || null,
       };
     },

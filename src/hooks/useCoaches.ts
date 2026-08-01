@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Coach {
@@ -24,7 +24,7 @@ export const useCoaches = () => {
         throw error;
       }
 
-      return (data || []).map(profile => ({
+      return (data ?? []).map(profile => ({
         id: profile.id,
         name: `${profile.first_name} ${profile.last_name}`.trim()
       })) as Coach[];

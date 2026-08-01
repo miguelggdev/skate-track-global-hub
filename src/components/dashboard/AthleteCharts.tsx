@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
@@ -149,7 +149,7 @@ export function AthleteNextCompetition({ athleteId }: { athleteId?: string }) {
 }
 
 export function AthleteAchievements({ awards }: { awards?: Array<{ award_name: string; award_type: string; award_date?: string }> }) {
-  const recent = (awards || []).slice(0, 4);
+  const recent = (awards ?? []).slice(0, 4);
 
   if (!recent.length) return null;
 

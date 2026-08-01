@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -39,7 +39,7 @@ export const AthleteWorkoutRegistrationForm: React.FC<AthleteWorkoutRegistration
   const form = useForm<RegistrationFormData>({
     resolver: zodResolver(registrationSchema),
     defaultValues: {
-      sessionId: sessionId || '',
+      sessionId: sessionId ?? '',
       notes: '',
     },
   });
@@ -74,7 +74,7 @@ export const AthleteWorkoutRegistrationForm: React.FC<AthleteWorkoutRegistration
   const availableUnregisteredSessions = availableSessions?.filter(session =>
     !isRegisteredForSession(session.id) &&
     new Date(session.scheduled_at) >= new Date()
-  ) || [];
+  ) ?? [];
 
   return (
     <div className="space-y-6">

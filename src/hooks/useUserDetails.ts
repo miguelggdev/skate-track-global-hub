@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface UserDocument {
@@ -47,7 +47,7 @@ export const useUserDetails = (userId: string | null) => {
         { data: profile, error: profileError },
         { data: rolesData, error: rolesError },
       ] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', userId).single(),
+        supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
         supabase.from('user_roles').select('role').eq('user_id', userId),
       ]);
 
@@ -55,7 +55,7 @@ export const useUserDetails = (userId: string | null) => {
       if (!profile) return null;
       if (rolesError) throw rolesError;
 
-      const roles = (rolesData || []).map((r) => r.role);
+      const roles = (rolesData ?? []).map((r) => r.role);
       const role = ROLE_PRIORITY.find((r) => roles.includes(r)) ?? 'athlete';
 
       let coachDetails: CoachDetails | undefined;

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+﻿import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -264,7 +264,7 @@ export const DocumentsTab = () => {
                 className="h-24 max-w-xs rounded border border-border bg-white object-contain p-2"
               />
               <p className="text-xs text-muted-foreground">
-                Última actualización: {format(new Date(storedSignature.updated_at || ''), 'dd/MM/yyyy HH:mm', { locale: es })}
+                Última actualización: {format(new Date(storedSignature.updated_at ?? ''), 'dd/MM/yyyy HH:mm', { locale: es })}
               </p>
               <p className="text-xs text-muted-foreground/60">
                 Esta firma se incluirá automáticamente en las cartas de permiso generadas.

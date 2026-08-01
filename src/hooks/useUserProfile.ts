@@ -1,10 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
 export interface UserProfile {
   id: string;
-  role: 'admin' | 'coach' | 'athlete' | 'delegate' | 'leader' | 'finance';
+  role: 'admin' | 'coach' | 'athlete' | 'delegate' | 'leader' | 'finance' | 'parent';
   first_name: string;
   last_name: string;
   email: string;
@@ -12,7 +12,7 @@ export interface UserProfile {
   avatar_url?: string | null;
 }
 
-const ROLE_PRIORITY: UserProfile['role'][] = ['admin', 'leader', 'coach', 'delegate', 'finance', 'athlete'];
+const ROLE_PRIORITY: UserProfile['role'][] = ['admin', 'leader', 'coach', 'delegate', 'finance', 'athlete', 'parent'];
 
 export const useUserProfile = () => {
   const { user } = useAuth();
@@ -43,9 +43,9 @@ export const useUserProfile = () => {
 
       return {
         id:         user.id,
-        email:      profileData?.email      || user.email || '',
-        first_name: profileData?.first_name || '',
-        last_name:  profileData?.last_name  || '',
+        email:      profileData?.email      || (user.email ?? ''),
+        first_name: profileData?.first_name ?? '',
+        last_name:  profileData?.last_name  ?? '',
         role:       userRole,
         phone:      profileData?.phone,
         avatar_url: profileData?.avatar_url,
@@ -63,5 +63,6 @@ export const useUserProfile = () => {
     isDelegate: profile?.role === 'delegate',
     isLeader:   profile?.role === 'leader',
     isFinance:  profile?.role === 'finance',
+    isParent:   profile?.role === 'parent',
   };
 };

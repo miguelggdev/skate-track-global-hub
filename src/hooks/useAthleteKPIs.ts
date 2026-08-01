@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -73,7 +73,7 @@ export const useAthleteKPIs = (athleteId: string | null) => {
     );
 
     const totalHours = filteredSessions.reduce((acc, s) => {
-      return acc + (s.duration_minutes || 0) / 60;
+      return acc + (s.duration_minutes ?? 0) / 60;
     }, 0);
 
     const byType = {

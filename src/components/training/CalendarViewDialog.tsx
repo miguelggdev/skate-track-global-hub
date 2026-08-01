@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -62,7 +62,7 @@ const CalendarViewDialog: React.FC<CalendarViewDialogProps> = ({ open, onOpenCha
         .order('scheduled_at', { ascending: true });
 
       if (error) throw error;
-      setSessions(data || []);
+      setSessions(data ?? []);
     } catch (error) {
       toast({
         title: "Error",

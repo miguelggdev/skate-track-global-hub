@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,12 +42,12 @@ export const StudiesTab = () => {
 
       if (data) {
         setFormData({
-          education_level: data.education_level || '',
-          current_grade: data.current_grade || '',
-          school_name: data.school_name || '',
-          school_address: data.school_address || '',
-          school_phone: data.school_phone || '',
-          school_email: data.school_email || '',
+          education_level: data.education_level ?? '',
+          current_grade: data.current_grade ?? '',
+          school_name: data.school_name ?? '',
+          school_address: data.school_address ?? '',
+          school_phone: data.school_phone ?? '',
+          school_email: data.school_email ?? '',
         });
       }
     } catch (error) {

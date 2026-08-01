@@ -43,8 +43,8 @@ const CompetitionResults = () => {
           <CardDescription className="text-sm text-gray-600">This season's achievements</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {medalDistribution.map((medal, index) => (
-            <div key={index} className="space-y-2">
+          {medalDistribution.map((medal) => (
+            <div key={medal.type} className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className={`w-8 h-8 rounded-lg ${medal.color} flex items-center justify-center`}>

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import {
   DelegateResultsBar, DelegateMedalsPie, DelegateInscriptionsBar
@@ -48,7 +48,7 @@ const DelegateDashboard = () => {
                 <Skeleton className="h-8 w-16" />
               ) : (
                 <>
-                  <div className="text-2xl font-bold">{stats?.totalAthletes || 0}</div>
+                  <div className="text-2xl font-bold">{stats?.totalAthletes ?? 0}</div>
                   <p className="text-xs text-muted-foreground">Deportistas activos</p>
                 </>
               )}
@@ -65,7 +65,7 @@ const DelegateDashboard = () => {
                 <Skeleton className="h-8 w-16" />
               ) : (
                 <>
-                  <div className="text-2xl font-bold">{stats?.upcomingCompetitions || 0}</div>
+                  <div className="text-2xl font-bold">{stats?.upcomingCompetitions ?? 0}</div>
                   <p className="text-xs text-muted-foreground">Eventos programados</p>
                 </>
               )}
@@ -82,9 +82,9 @@ const DelegateDashboard = () => {
                 <Skeleton className="h-8 w-16" />
               ) : (
                 <>
-                  <div className="text-2xl font-bold">{stats?.pendingPayments || 0}</div>
+                  <div className="text-2xl font-bold">{stats?.pendingPayments ?? 0}</div>
                   <p className="text-xs text-muted-foreground">
-                    {formatCurrency(stats?.pendingPaymentsAmount || 0, currency)}
+                    {formatCurrency(stats?.pendingPaymentsAmount ?? 0, currency)}
                   </p>
                 </>
               )}
@@ -102,7 +102,7 @@ const DelegateDashboard = () => {
               ) : (
                 <>
                   <div className="text-2xl font-bold text-green-600">
-                    {formatCurrency(stats?.completedPaymentsAmount || 0, currency)}
+                    {formatCurrency(stats?.completedPaymentsAmount ?? 0, currency)}
                   </div>
                   <p className="text-xs text-muted-foreground">Total recaudado</p>
                 </>

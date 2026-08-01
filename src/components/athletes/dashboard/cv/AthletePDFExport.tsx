@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { FileDown, Loader2 } from 'lucide-react';
 import jsPDF from 'jspdf';
@@ -113,7 +113,7 @@ const AthletePDFExport: React.FC<AthletePDFExportProps> = ({ data }) => {
       // Athlete Name
       doc.setFontSize(18);
       doc.setTextColor(33, 33, 33);
-      const fullName = `${data.athlete.first_name || ''} ${data.athlete.last_name || ''}`.trim();
+      const fullName = `${data.athlete.first_name ?? ''} ${data.athlete.last_name ?? ''}`.trim();
       doc.text(fullName || 'Deportista', pageWidth / 2, y, { align: 'center' });
       y += 8;
 

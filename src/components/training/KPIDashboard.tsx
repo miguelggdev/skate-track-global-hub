@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -66,7 +66,7 @@ export const KPIDashboard: React.FC = () => {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Asistencia del Equipo</p>
                 <div className="flex items-center space-x-2">
-                  <p className="text-2xl font-bold">{teamStats?.attendance_rate.toFixed(1) || 0}%</p>
+                  <p className="text-2xl font-bold">{teamStats?.attendance_rate.toFixed(1) ?? 0}%</p>
                   <TrendingUp className="h-4 w-4 text-green-500" />
                 </div>
               </div>
@@ -81,7 +81,7 @@ export const KPIDashboard: React.FC = () => {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Horas Totales</p>
                 <p className="text-2xl font-bold">
-                  {myKPIs?.reduce((sum, kpi) => sum + kpi.total_hours, 0).toFixed(1) || 0}h
+                  {myKPIs?.reduce((sum, kpi) => sum + kpi.total_hours, 0).toFixed(1) ?? 0}h
                 </p>
               </div>
             </div>
@@ -109,7 +109,7 @@ export const KPIDashboard: React.FC = () => {
               <Activity className="h-8 w-8 text-orange-500" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Sesiones Totales</p>
-                <p className="text-2xl font-bold">{teamStats?.total_sessions || 0}</p>
+                <p className="text-2xl font-bold">{teamStats?.total_sessions ?? 0}</p>
               </div>
             </div>
           </CardContent>
@@ -199,7 +199,7 @@ export const KPIDashboard: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Mi Asistencia</p>
                   <div className="flex items-center space-x-2">
-                    <p className="text-2xl font-bold">{myStats?.attendance_percentage.toFixed(1) || 0}%</p>
+                    <p className="text-2xl font-bold">{myStats?.attendance_percentage.toFixed(1) ?? 0}%</p>
                     <TrendingUp className="h-4 w-4 text-green-500" />
                   </div>
                 </div>
@@ -213,7 +213,7 @@ export const KPIDashboard: React.FC = () => {
                 <Clock className="h-8 w-8 text-green-500" />
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Horas Entrenadas</p>
-                  <p className="text-2xl font-bold">{myStats?.total_hours.toFixed(1) || 0}h</p>
+                  <p className="text-2xl font-bold">{myStats?.total_hours.toFixed(1) ?? 0}h</p>
                 </div>
               </div>
             </CardContent>
@@ -273,7 +273,7 @@ export const KPIDashboard: React.FC = () => {
               <Calendar className="h-8 w-8 text-blue-500" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Sesiones Registradas</p>
-                <p className="text-2xl font-bold">{teamStats?.total_sessions || 0}</p>
+                <p className="text-2xl font-bold">{teamStats?.total_sessions ?? 0}</p>
               </div>
             </div>
           </CardContent>
@@ -286,7 +286,7 @@ export const KPIDashboard: React.FC = () => {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Cumplimiento Asistencia</p>
                 <div className="flex items-center space-x-2">
-                  <p className="text-2xl font-bold">{teamStats?.attendance_rate.toFixed(1) || 0}%</p>
+                  <p className="text-2xl font-bold">{teamStats?.attendance_rate.toFixed(1) ?? 0}%</p>
                   <TrendingUp className="h-4 w-4 text-green-500" />
                 </div>
               </div>
@@ -300,7 +300,7 @@ export const KPIDashboard: React.FC = () => {
               <Activity className="h-8 w-8 text-purple-500" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Uso Tipos Entrenamiento</p>
-                <p className="text-2xl font-bold">{trainingTypeDistribution?.length || 0}</p>
+                <p className="text-2xl font-bold">{trainingTypeDistribution?.length ?? 0}</p>
               </div>
             </div>
           </CardContent>
@@ -313,7 +313,7 @@ export const KPIDashboard: React.FC = () => {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Horas Globales</p>
                 <p className="text-2xl font-bold">
-                  {trainingTypeDistribution?.reduce((sum, dist) => sum + dist.total_hours, 0).toFixed(1) || 0}h
+                  {trainingTypeDistribution?.reduce((sum, dist) => sum + dist.total_hours, 0).toFixed(1) ?? 0}h
                 </p>
               </div>
             </div>
@@ -368,7 +368,7 @@ export const KPIDashboard: React.FC = () => {
       {/* Role-based dashboard */}
       {profile?.role === 'athlete' && renderAthleteDashboard()}
       {profile?.role === 'coach' && renderCoachDashboard()}
-      {['admin', 'leader'].includes(profile?.role || '') && renderAdminDashboard()}
+      {['admin', 'leader'].includes(profile?.role ?? '') && renderAdminDashboard()}
       {profile?.role === 'delegate' && renderCoachDashboard()}
     </div>
   );

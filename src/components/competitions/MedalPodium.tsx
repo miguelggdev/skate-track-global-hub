@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -43,7 +43,7 @@ export const MedalPodium = () => {
       if (!acc[athleteName]) {
         acc[athleteName] = {
           name: athleteName,
-          initials: `${medal.athletes?.first_name?.[0] || ''}${medal.athletes?.last_name?.[0] || ''}`,
+          initials: `${medal.athletes?.first_name?.[0] ?? ''}${medal.athletes?.last_name?.[0] ?? ''}`,
           goldCount: 0,
           silverCount: 0,
           bronzeCount: 0,

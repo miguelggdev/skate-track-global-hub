@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, format } from 'date-fns';
@@ -86,7 +86,7 @@ export const useTrainingHeatmap = (viewMode: 'week' | 'month' = 'week') => {
       const durationHours = Math.ceil((session.duration_minutes || 60) / 60);
       const endHour = startHour + durationHours - 1;
 
-      const attendanceCount = session.training_attendance?.filter(a => a.attended).length || 0;
+      const attendanceCount = session.training_attendance?.filter(a => a.attended).length ?? 0;
 
       for (let hour = startHour; hour <= Math.min(endHour, 21); hour++) {
         const idx = heatmap.findIndex(h => h.day === day && h.hour === hour);
@@ -116,7 +116,7 @@ export const useTrainingHeatmap = (viewMode: 'week' | 'month' = 'week') => {
 
     const totalSessions = data.length;
     const totalAttendance = data.reduce((sum, session) =>
-      sum + (session.training_attendance?.filter(a => a.attended).length || 0), 0
+      sum + (session.training_attendance?.filter(a => a.attended).length ?? 0), 0
     );
     const averageAttendance = totalSessions > 0 ? Math.round(totalAttendance / totalSessions) : 0;
 
@@ -126,8 +126,8 @@ export const useTrainingHeatmap = (viewMode: 'week' | 'month' = 'week') => {
 
     heatmapData.forEach(cell => {
       if (cell.sessionCount > 0) {
-        hourCounts[cell.hour] = (hourCounts[cell.hour] || 0) + cell.sessionCount;
-        dayCounts[cell.day] = (dayCounts[cell.day] || 0) + cell.sessionCount;
+        hourCounts[cell.hour] = (hourCounts[cell.hour] ?? 0) + cell.sessionCount;
+        dayCounts[cell.day] = (dayCounts[cell.day] ?? 0) + cell.sessionCount;
         cellCounts[`${cell.day}-${cell.hour}`] = cell.sessionCount;
       }
     });
@@ -148,5 +148,5 @@ export const useTrainingHeatmap = (viewMode: 'week' | 'month' = 'week') => {
     return { totalSessions, totalAttendance, averageAttendance, peakHour: peakHour.hour > 0 ? `${peakHour.hour}:00` : 'N/A', peakDay: peakDay.day, busiest };
   }, [data, heatmapData]);
 
-  return { heatmapData, statistics, isLoading, error, rawData: data || [] };
+  return { heatmapData, statistics, isLoading, error, rawData: data ?? [] };
 };

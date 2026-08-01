@@ -18,6 +18,14 @@ interface AthleteData {
   emergency_contact_phone: string | null;
   medical_notes: string | null;
   achievements: string | null;
+  bio?: string | null;
+  personal_values?: string | null;
+  short_term_goals?: string | null;
+  long_term_goals?: string | null;
+  years_experience?: number | null;
+  photo_url?: string | null;
+  gender?: string | null;
+  coach_id?: string | null;
 }
 
 export const useCurrentAthlete = () => {

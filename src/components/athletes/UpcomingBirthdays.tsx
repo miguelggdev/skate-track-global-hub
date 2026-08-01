@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,9 +32,9 @@ const UpcomingBirthdays = () => {
 
       if (error) throw error;
 
-      return (data || []).map(athlete => ({
+      return (data ?? []).map(athlete => ({
         ...athlete,
-        date_of_birth: (athlete.profiles as any)?.date_of_birth
+        date_of_birth: (athlete.profiles as { date_of_birth?: string } | null)?.date_of_birth
       })) as AthleteWithBirthday[];
     },
   });
@@ -77,27 +77,27 @@ const UpcomingBirthdays = () => {
     const diffTime = birthday.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Tomorrow';
-    return `${diffDays} days`;
+    if (diffDays === 0) return 'Hoy';
+    if (diffDays === 1) return 'Mañana';
+    return `${diffDays} días`;
   };
 
   if (isLoading) {
     return (
       <Card className="xl:col-span-1 argon-card">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-800">Upcoming Birthdays</CardTitle>
+          <CardTitle className="text-lg font-semibold text-foreground">Próximos Cumpleaños</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 px-6">
           <div className="animate-pulse space-y-3">
             {[1, 2, 3].map(i => (
               <div key={i} className="flex items-center space-x-3">
-                <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
+                <div className="w-3 h-3 bg-muted rounded-full"></div>
                 <div className="flex-1">
-                  <div className="h-4 bg-gray-300 rounded mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded"></div>
+                  <div className="h-4 bg-muted rounded mb-1"></div>
+                  <div className="h-3 bg-muted rounded"></div>
                 </div>
-                <div className="w-16 h-3 bg-gray-200 rounded"></div>
+                <div className="w-16 h-3 bg-muted rounded"></div>
               </div>
             ))}
           </div>
@@ -109,28 +109,28 @@ const UpcomingBirthdays = () => {
   return (
     <Card className="xl:col-span-1 argon-card">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-gray-800">Upcoming Birthdays</CardTitle>
+        <CardTitle className="text-lg font-semibold text-foreground">Próximos Cumpleaños</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 px-6">
         {upcomingBirthdays.length === 0 ? (
           <div className="text-center py-4">
-            <p className="text-sm text-gray-500">No upcoming birthdays in the next 30 days</p>
+            <p className="text-sm text-muted-foreground">Sin próximos cumpleaños en los próximos 30 días</p>
           </div>
         ) : (
-          upcomingBirthdays.map((athlete, index) => (
-            <div key={index} className="flex items-center justify-between">
+          upcomingBirthdays.map((athlete) => (
+            <div key={athlete.id} className="flex items-center justify-between">
               <div className="flex items-center space-x-3 min-w-0 flex-1">
                 <div className="w-3 h-3 rounded-full flex-shrink-0 bg-pink-500"></div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-gray-800 text-sm truncate">
+                  <p className="font-medium text-foreground text-sm truncate">
                     {athlete.first_name} {athlete.last_name}
                   </p>
-                  <p className="text-sm text-gray-600 truncate">
+                  <p className="text-sm text-muted-foreground truncate">
                     {getCategoryDisplayName(athlete.category)} • {format(new Date(athlete.date_of_birth!), 'MMM d')}
                   </p>
                 </div>
               </div>
-              <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
+              <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
                 {getDaysUntilBirthday(athlete.upcomingBirthday)}
               </span>
             </div>

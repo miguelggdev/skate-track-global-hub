@@ -69,7 +69,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
             key={mode}
             variant={viewMode === mode ? 'default' : 'ghost'}
             size="sm"
-            onClick={() => onViewModeChange(mode as any)}
+            onClick={() => onViewModeChange(mode as 'month' | 'week' | 'day')}
             className="px-3"
           >
             {mode === 'month' ? 'Mes' : mode === 'week' ? 'Semana' : 'Día'}

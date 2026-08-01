@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentAthlete } from './useCurrentAthlete';
 
@@ -75,18 +75,18 @@ export const useAthleteCompetitions = () => {
       if (error) throw error;
       
       return data?.map(reg => ({
-        id: reg.competitions?.id || '',
-        name: reg.competitions?.name || '',
+        id: reg.competitions?.id ?? '',
+        name: reg.competitions?.name ?? '',
         description: reg.competitions?.description,
-        location: reg.competitions?.location || '',
-        start_date: reg.competitions?.start_date || '',
-        end_date: reg.competitions?.end_date || '',
-        status: reg.competitions?.status || '',
+        location: reg.competitions?.location ?? '',
+        start_date: reg.competitions?.start_date ?? '',
+        end_date: reg.competitions?.end_date ?? '',
+        status: reg.competitions?.status ?? '',
         category: reg.competitions?.category,
         level: reg.competitions?.level,
         registration_status: reg.payment_status,
         registration_date: reg.registration_date
-      })) as AthleteCompetition[] || [];
+      })) as AthleteCompetition[] ?? [];
     },
     enabled: !!athlete?.id
   });
@@ -121,7 +121,7 @@ export const useAthleteCompetitions = () => {
       return data?.map(result => ({
         id: result.id,
         competition_id: result.competition_id,
-        competition_name: result.competitions?.name || '',
+        competition_name: result.competitions?.name ?? '',
         position: result.position,
         medal_type: result.medal_type,
         event_type: result.event_name,
@@ -129,39 +129,39 @@ export const useAthleteCompetitions = () => {
         points: result.points,
         personal_best: null,
         notes: result.notes,
-        competition_date: result.competitions?.start_date || ''
-      })) as AthleteCompetitionResult[] || [];
+        competition_date: result.competitions?.start_date ?? ''
+      })) as AthleteCompetitionResult[] ?? [];
     },
     enabled: !!athlete?.id
   });
 
   // Calculate stats from athlete's data
   const stats: AthleteCompetitionStats = {
-    totalCompetitions: registrations?.length || 0,
-    upcomingCompetitions: registrations?.filter(c => c.status === 'upcoming').length || 0,
-    completedCompetitions: registrations?.filter(c => c.status === 'completed').length || 0,
-    goldMedals: results?.filter(r => r.medal_type === 'gold').length || 0,
-    silverMedals: results?.filter(r => r.medal_type === 'silver').length || 0,
-    bronzeMedals: results?.filter(r => r.medal_type === 'bronze').length || 0,
-    totalMedals: results?.filter(r => r.medal_type).length || 0,
+    totalCompetitions: registrations?.length ?? 0,
+    upcomingCompetitions: registrations?.filter(c => c.status === 'upcoming').length ?? 0,
+    completedCompetitions: registrations?.filter(c => c.status === 'completed').length ?? 0,
+    goldMedals: results?.filter(r => r.medal_type === 'gold').length ?? 0,
+    silverMedals: results?.filter(r => r.medal_type === 'silver').length ?? 0,
+    bronzeMedals: results?.filter(r => r.medal_type === 'bronze').length ?? 0,
+    totalMedals: results?.filter(r => r.medal_type).length ?? 0,
     bestPosition: results?.reduce((best, r) => {
       if (r.position === null) return best;
       if (best === null) return r.position;
       return r.position < best ? r.position : best;
     }, null as number | null) || null,
-    totalPoints: results?.reduce((sum, r) => sum + (r.points || 0), 0) || 0
+    totalPoints: results?.reduce((sum, r) => sum + (r.points ?? 0), 0) ?? 0
   };
 
   // Split registrations into upcoming and past
   const today = new Date().toISOString().split('T')[0];
-  const upcomingCompetitions = registrations?.filter(c => c.start_date >= today) || [];
-  const pastCompetitions = registrations?.filter(c => c.start_date < today) || [];
+  const upcomingCompetitions = registrations?.filter(c => c.start_date >= today) ?? [];
+  const pastCompetitions = registrations?.filter(c => c.start_date < today) ?? [];
 
   return {
-    registrations: registrations || [],
+    registrations: registrations ?? [],
     upcomingCompetitions,
     pastCompetitions,
-    results: results || [],
+    results: results ?? [],
     stats,
     isLoading: isLoadingRegistrations || isLoadingResults
   };

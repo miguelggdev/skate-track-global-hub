@@ -1,4 +1,4 @@
-import jsPDF from 'jspdf';
+﻿import jsPDF from 'jspdf';
 import { AthleteDetails } from '@/hooks/useAthleteDetails';
 import { ClubSettings } from '@/hooks/useClubSettings';
 
@@ -80,7 +80,7 @@ export const generateAthleteCardPDF = async (
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(10);
       pdf.text(
-        `${athlete.first_name?.[0] || ''}${athlete.last_name?.[0] || ''}`,
+        `${athlete.first_name?.[0] ?? ''}${athlete.last_name?.[0] ?? ''}`,
         photoX + photoSize / 2,
         photoY + photoSize / 2 + 1,
         { align: 'center' }
@@ -94,7 +94,7 @@ export const generateAthleteCardPDF = async (
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'bold');
     pdf.text(
-      `${athlete.first_name?.[0] || ''}${athlete.last_name?.[0] || ''}`,
+      `${athlete.first_name?.[0] ?? ''}${athlete.last_name?.[0] ?? ''}`,
       photoX + photoSize / 2,
       photoY + photoSize / 2 + 1,
       { align: 'center' }
@@ -106,7 +106,7 @@ export const generateAthleteCardPDF = async (
   pdf.setTextColor(0, 31, 84); // #001F54
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
-  const fullName = `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim().toUpperCase();
+  const fullName = `${athlete.first_name ?? ''} ${athlete.last_name ?? ''}`.trim().toUpperCase();
   pdf.text(fullName, cardWidth / 2, nameY, { align: 'center' });
 
   // Information fields with underlines

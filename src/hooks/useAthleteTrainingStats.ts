@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentAthlete } from './useCurrentAthlete';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
@@ -62,18 +62,18 @@ export const useAthleteTrainingStats = () => {
       if (error) throw error;
       
       return data?.map(record => ({
-        id: record.training_sessions?.id || '',
-        title: record.training_sessions?.title || '',
-        scheduled_at: record.training_sessions?.scheduled_at || '',
+        id: record.training_sessions?.id ?? '',
+        title: record.training_sessions?.title ?? '',
+        scheduled_at: record.training_sessions?.scheduled_at ?? '',
         duration_minutes: record.training_sessions?.duration_minutes ?? null,
         location: record.training_sessions?.location,
-        training_type: record.training_sessions?.training_type || '',
+        training_type: record.training_sessions?.training_type ?? '',
         description: record.training_sessions?.description,
         attended: record.attended,
         performance_rating: record.performance_rating,
         notes: record.notes,
         attendance_id: record.id
-      })) as AthleteTrainingSession[] || [];
+      })) as AthleteTrainingSession[] ?? [];
     },
     enabled: !!athlete?.id
   });
@@ -93,7 +93,7 @@ export const useAthleteTrainingStats = () => {
         .order('scheduled_at', { ascending: true });
 
       if (error) throw error;
-      return data || [];
+      return data ?? [];
     },
     enabled: !!athlete?.id
   });
@@ -129,20 +129,20 @@ export const useAthleteTrainingStats = () => {
     );
 
     const hoursThisMonth = thisMonthAttended.reduce((total, session) => {
-      return total + ((session.duration_minutes || 0) / 60);
+      return total + ((session.duration_minutes ?? 0) / 60);
     }, 0);
     
     // Average performance rating
     const sessionsWithRating = attendedSessions.filter(s => s.performance_rating !== null);
     const averagePerformance = sessionsWithRating.length > 0
-      ? sessionsWithRating.reduce((sum, s) => sum + (s.performance_rating || 0), 0) / sessionsWithRating.length
+      ? sessionsWithRating.reduce((sum, s) => sum + (s.performance_rating ?? 0), 0) / sessionsWithRating.length
       : 0;
     
     // Training type distribution (attended sessions only)
     const trainingTypeDistribution: Record<string, number> = {};
     attendedSessions.forEach(session => {
       const type = session.training_type || 'other';
-      trainingTypeDistribution[type] = (trainingTypeDistribution[type] || 0) + 1;
+      trainingTypeDistribution[type] = (trainingTypeDistribution[type] ?? 0) + 1;
     });
     
     return {
@@ -162,13 +162,13 @@ export const useAthleteTrainingStats = () => {
   const todayStr = format(today, 'yyyy-MM-dd');
   
   // Split sessions into upcoming and history
-  const mySessions = attendanceRecords || [];
+  const mySessions = attendanceRecords ?? [];
   const upcomingSessions = mySessions.filter(s => s.scheduled_at.split('T')[0] >= todayStr);
   const historySessions = mySessions.filter(s => s.scheduled_at.split('T')[0] < todayStr);
 
   // Check which available sessions the athlete is already registered for
   const registeredSessionIds = new Set(mySessions.map(s => s.id));
-  const sessionsToRegister = availableSessions?.filter(s => !registeredSessionIds.has(s.id)) || [];
+  const sessionsToRegister = availableSessions?.filter(s => !registeredSessionIds.has(s.id)) ?? [];
 
   return {
     mySessions,

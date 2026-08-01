@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -140,7 +140,7 @@ export function AddCompetitionDialog({ onCompetitionAdded }: AddCompetitionDialo
         start_date: values.start_date.toISOString().split('T')[0],
         end_date: values.end_date.toISOString().split('T')[0],
         category: values.category || null,
-        level: values.level && values.level.length > 0 ? values.level[0] as any : null,
+        level: values.level && values.level.length > 0 ? values.level[0] : null,
         max_athletes_per_event: values.max_participants ? parseInt(values.max_participants) : null,
         registration_deadline: values.registration_deadline ?
           values.registration_deadline.toISOString().split('T')[0] : null,
@@ -149,7 +149,7 @@ export function AddCompetitionDialog({ onCompetitionAdded }: AddCompetitionDialo
 
       await createCompetitionMutation.mutateAsync({
         competition: competitionData,
-        participants: values.participants || []
+        participants: values.participants ?? []
       });
 
       form.reset();
@@ -360,11 +360,11 @@ export function AddCompetitionDialog({ onCompetitionAdded }: AddCompetitionDialo
                             <div key={option.value} className="flex items-center space-x-2">
                               <Checkbox
                                 id={option.value}
-                                checked={field.value?.includes(option.value) || false}
+                                checked={field.value?.includes(option.value) ?? false}
                                 onCheckedChange={(checked) => {
                                   const updatedLevels = checked
-                                    ? [...(field.value || []), option.value]
-                                    : (field.value || []).filter((value) => value !== option.value);
+                                    ? [...(field.value ?? []), option.value]
+                                    : (field.value ?? []).filter((value) => value !== option.value);
                                   field.onChange(updatedLevels);
                                 }}
                               />
@@ -515,11 +515,11 @@ export function AddCompetitionDialog({ onCompetitionAdded }: AddCompetitionDialo
                                 <div key={athlete.id} className="flex items-center space-x-2">
                                   <Checkbox
                                     id={athlete.id}
-                                    checked={field.value?.includes(athlete.id) || false}
+                                    checked={field.value?.includes(athlete.id) ?? false}
                                     onCheckedChange={(checked) => {
                                       const updatedParticipants = checked
-                                        ? [...(field.value || []), athlete.id]
-                                        : (field.value || []).filter((id) => id !== athlete.id);
+                                        ? [...(field.value ?? []), athlete.id]
+                                        : (field.value ?? []).filter((id) => id !== athlete.id);
                                       field.onChange(updatedParticipants);
                                     }}
                                   />

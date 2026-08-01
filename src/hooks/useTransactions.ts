@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
@@ -244,9 +244,9 @@ export const usePaginatedTransactions = (
       }
 
       return {
-        data: data || [],
-        count: count || 0,
-        totalPages: Math.ceil((count || 0) / pageSize),
+        data: data ?? [],
+        count: count ?? 0,
+        totalPages: Math.ceil((count ?? 0) / pageSize),
       };
     },
   });

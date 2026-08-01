@@ -14,38 +14,38 @@ interface StatCard {
 
 const CompetitionStatsCards = () => {
   const stats: StatCard[] = [
-    { 
-      title: "ACTIVE COMPETITIONS", 
-      value: "12", 
-      change: "+2", 
-      period: "from last month",
+    {
+      title: "COMPETENCIAS ACTIVAS",
+      value: "12",
+      change: "+2",
+      period: "respecto al mes anterior",
       icon: Trophy,
       bgColor: "argon-gradient-blue",
       isPositive: true
     },
-    { 
-      title: "PARTICIPANTS", 
-      value: "348", 
-      change: "+15%", 
-      period: "since last event",
+    {
+      title: "PARTICIPANTES",
+      value: "348",
+      change: "+15%",
+      period: "desde el último evento",
       icon: Users,
       bgColor: "argon-gradient-green",
       isPositive: true
     },
-    { 
-      title: "MEDALS WON", 
-      value: "87", 
-      change: "+23", 
-      period: "this season",
+    {
+      title: "MEDALLAS GANADAS",
+      value: "87",
+      change: "+23",
+      period: "esta temporada",
       icon: Medal,
       bgColor: "argon-gradient-orange",
       isPositive: true
     },
-    { 
-      title: "UPCOMING EVENTS", 
-      value: "8", 
-      change: "+3", 
-      period: "next 30 days",
+    {
+      title: "PRÓXIMOS EVENTOS",
+      value: "8",
+      change: "+3",
+      period: "próximos 30 días",
       icon: Calendar,
       bgColor: "argon-gradient-red",
       isPositive: true
@@ -54,14 +54,14 @@ const CompetitionStatsCards = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      {stats.map((stat, index) => (
-        <Card key={index} className="argon-card relative overflow-hidden">
+      {stats.map((stat) => (
+        <Card key={stat.title} className="argon-card relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
             <div>
-              <CardDescription className="text-xs font-medium text-gray-600 uppercase tracking-wider">
+              <CardDescription className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 {stat.title}
               </CardDescription>
-              <CardTitle className="text-2xl font-bold text-gray-800">
+              <CardTitle className="text-2xl font-bold text-foreground">
                 {stat.value}
               </CardTitle>
             </div>
@@ -70,8 +70,8 @@ const CompetitionStatsCards = () => {
             </div>
           </CardHeader>
           <CardContent className="relative z-10">
-            <p className="text-sm text-gray-600">
-              <span className={`font-semibold ${stat.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+            <p className="text-sm text-muted-foreground">
+              <span className={`font-semibold ${stat.isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                 {stat.change}
               </span>{' '}
               {stat.period}

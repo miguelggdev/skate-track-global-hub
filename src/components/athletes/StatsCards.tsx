@@ -1,4 +1,4 @@
-
+﻿
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, ArrowUpRight, UserPlus, Shield, UserX, User, UserCircle2, Star, Award, Activity } from 'lucide-react';
@@ -16,15 +16,15 @@ const StatsCards = () => {
           <Card key={index} className="argon-card relative overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div className="min-w-0 flex-1 pr-2">
-                <div className="h-3 bg-gray-200 rounded animate-pulse mb-2"></div>
-                <div className="h-6 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-3 bg-muted rounded animate-pulse mb-2"></div>
+                <div className="h-6 bg-muted rounded animate-pulse"></div>
               </div>
-              <div className="p-2 rounded-lg bg-gray-200 animate-pulse flex-shrink-0">
+              <div className="p-2 rounded-lg bg-muted animate-pulse flex-shrink-0">
                 <div className="h-5 w-5"></div>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="h-3 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-3 bg-muted rounded animate-pulse"></div>
             </CardContent>
           </Card>
         ))}
@@ -35,10 +35,10 @@ const StatsCards = () => {
   const stats = [
     // CRITICAL METRICS - Large, prominent cards
     {
-      title: "TOTAL ATHLETES",
-      value: athleteStats?.totalAthletes?.toString() || "0",
+      title: "TOTAL ATLETAS",
+      value: athleteStats?.totalAthletes?.toString() ?? "0",
       change: "+12%",
-      period: "total registered",
+      period: "total registrados",
       icon: Users,
       bgColor: "argon-gradient-indigo",
       isPositive: true,
@@ -46,10 +46,10 @@ const StatsCards = () => {
       size: "large"
     },
     {
-      title: "NEW RECRUITS",
-      value: athleteStats?.newRecruitsThisMonth?.toString() || "0",
-      change: `${athleteStats?.newRecruitsThisYear || 0} this year`,
-      period: "joined this month",
+      title: "NUEVAS INCORPORACIONES",
+      value: athleteStats?.newRecruitsThisMonth?.toString() ?? "0",
+      change: `${athleteStats?.newRecruitsThisYear ?? 0} este año`,
+      period: "se unieron este mes",
       icon: Star,
       bgColor: "argon-gradient-green",
       isPositive: true,
@@ -57,23 +57,23 @@ const StatsCards = () => {
       size: "large"
     },
     {
-      title: "RETENTION RATE",
-      value: `${athleteStats?.retentionRate || 0}%`,
-      change: "Year over year",
-      period: "active retention",
+      title: "TASA DE RETENCIÓN",
+      value: `${athleteStats?.retentionRate ?? 0}%`,
+      change: "Año tras año",
+      period: "retención activa",
       icon: Award,
       bgColor: "argon-gradient-purple",
-      isPositive: (athleteStats?.retentionRate || 0) >= 80,
+      isPositive: (athleteStats?.retentionRate ?? 0) >= 80,
       priority: "critical",
       size: "large"
     },
-    
-    // PERFORMANCE METRICS - Medium prominence
+
+    // MÉTRICAS DE DESEMPEÑO - Prominencia media
     {
-      title: "INACTIVE ATHLETES",
-      value: athleteStats?.inactiveAthletes?.toString() || "0",
+      title: "ATLETAS INACTIVOS",
+      value: athleteStats?.inactiveAthletes?.toString() ?? "0",
       change: `${athleteStats?.totalAthletes ? Math.round((athleteStats.inactiveAthletes / (athleteStats.totalAthletes + athleteStats.inactiveAthletes)) * 100) : 0}%`,
-      period: "need attention",
+      period: "requieren atención",
       icon: Activity,
       bgColor: "argon-gradient-red",
       isPositive: false,
@@ -138,17 +138,17 @@ const StatsCards = () => {
     <div className="space-y-6 mb-8">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {sortedStats.map((stat, index) => (
-          <Card key={index} className={getCardClasses(stat)}>
+        {sortedStats.map((stat) => (
+          <Card key={stat.title} className={getCardClasses(stat)}>
             {/* Background gradient overlay for depth */}
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
               <div className="min-w-0 flex-1 pr-3">
-                <CardDescription className={`${getTitleSize(stat)} text-gray-600 dark:text-gray-300 uppercase tracking-wider truncate mb-1`}>
+                <CardDescription className={`${getTitleSize(stat)} text-muted-foreground uppercase tracking-wider truncate mb-1`}>
                   {stat.title}
                 </CardDescription>
-                <CardTitle className={`${getValueSize(stat)} text-gray-800 dark:text-white truncate group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors duration-300`}>
+                <CardTitle className={`${getValueSize(stat)} text-foreground truncate transition-colors duration-300`}>
                   {stat.value}
                 </CardTitle>
               </div>
@@ -157,11 +157,11 @@ const StatsCards = () => {
               </div>
             </CardHeader>
             <CardContent className="pt-0 relative z-10">
-              <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+              <p className="text-sm text-muted-foreground truncate">
                 <span className={`font-bold ${stat.isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                   {stat.change}
                 </span>{' '}
-                <span className="text-gray-500 dark:text-gray-500">
+                <span className="text-muted-foreground">
                   {stat.period}
                 </span>
               </p>
@@ -178,18 +178,18 @@ const StatsCards = () => {
       {/* Distribution Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <GenderDistributionChart
-          maleAthletes={athleteStats?.maleAthletes || 0}
-          femaleAthletes={athleteStats?.femaleAthletes || 0}
-          totalAthletes={athleteStats?.totalAthletes || 0}
+          maleAthletes={athleteStats?.maleAthletes ?? 0}
+          femaleAthletes={athleteStats?.femaleAthletes ?? 0}
+          totalAthletes={athleteStats?.totalAthletes ?? 0}
         />
         
         <CategoryDistributionChart
-          escuelaAthletes={athleteStats?.escuelaAthletes || 0}
-          menoresAthletes={athleteStats?.menoresAthletes || 0}
-          transicionAthletes={athleteStats?.transicionAthletes || 0}
-          mayoresAthletes={athleteStats?.mayoresAthletes || 0}
-          juvenilAthletes={athleteStats?.juvenilAthletes || 0}
-          totalAthletes={athleteStats?.totalAthletes || 0}
+          escuelaAthletes={athleteStats?.escuelaAthletes ?? 0}
+          menoresAthletes={athleteStats?.menoresAthletes ?? 0}
+          transicionAthletes={athleteStats?.transicionAthletes ?? 0}
+          mayoresAthletes={athleteStats?.mayoresAthletes ?? 0}
+          juvenilAthletes={athleteStats?.juvenilAthletes ?? 0}
+          totalAthletes={athleteStats?.totalAthletes ?? 0}
         />
       </div>
     </div>

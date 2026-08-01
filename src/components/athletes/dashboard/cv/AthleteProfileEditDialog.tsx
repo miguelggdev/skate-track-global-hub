@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,22 +57,22 @@ const AthleteProfileEditDialog: React.FC<AthleteProfileEditDialogProps> = ({
   useEffect(() => {
     if (open && athlete) {
       setFormData({
-        first_name: athlete.first_name || '',
-        last_name: athlete.last_name || '',
-        city: profile?.city || '',
-        country: profile?.country || '',
-        club_name: athlete.club_name || '',
-        main_discipline: athlete.main_discipline || '',
-        bio: athlete.bio || '',
-        personal_values: athlete.personal_values || '',
-        short_term_goals: athlete.short_term_goals || '',
-        long_term_goals: athlete.long_term_goals || '',
-        instagram: socials?.instagram || '',
-        facebook: socials?.facebook || '',
-        tiktok: socials?.tiktok || '',
-        whatsapp: socials?.whatsapp || '',
-        youtube: socials?.youtube || '',
-        twitter: socials?.twitter || ''
+        first_name: athlete.first_name ?? '',
+        last_name: athlete.last_name ?? '',
+        city: profile?.city ?? '',
+        country: profile?.country ?? '',
+        club_name: athlete.club_name ?? '',
+        main_discipline: athlete.main_discipline ?? '',
+        bio: athlete.bio ?? '',
+        personal_values: athlete.personal_values ?? '',
+        short_term_goals: athlete.short_term_goals ?? '',
+        long_term_goals: athlete.long_term_goals ?? '',
+        instagram: socials?.instagram ?? '',
+        facebook: socials?.facebook ?? '',
+        tiktok: socials?.tiktok ?? '',
+        whatsapp: socials?.whatsapp ?? '',
+        youtube: socials?.youtube ?? '',
+        twitter: socials?.twitter ?? ''
       });
     }
   }, [open, athlete, profile, socials]);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -99,33 +99,33 @@ const TrainingHeatmap: React.FC = () => {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
-          <div className="bg-blue-50 p-3 rounded-lg">
-            <div className="flex items-center gap-2 text-blue-700">
+          <div className="bg-blue-500/10 p-3 rounded-lg">
+            <div className="flex items-center gap-2 text-blue-500">
               <Activity className="h-4 w-4" />
-              <span className="text-sm font-medium">Total Sesiones</span>
+              <span className="text-xs font-medium">Total Sesiones</span>
             </div>
-            <p className="text-xl font-bold text-blue-900">{statistics.totalSessions}</p>
+            <p className="text-xl font-bold text-foreground mt-1">{statistics.totalSessions}</p>
           </div>
-          <div className="bg-green-50 p-3 rounded-lg">
-            <div className="flex items-center gap-2 text-green-700">
+          <div className="bg-green-500/10 p-3 rounded-lg">
+            <div className="flex items-center gap-2 text-green-500">
               <Users className="h-4 w-4" />
-              <span className="text-sm font-medium">Total Asistencias</span>
+              <span className="text-xs font-medium">Asistencias</span>
             </div>
-            <p className="text-xl font-bold text-green-900">{statistics.totalAttendance}</p>
+            <p className="text-xl font-bold text-foreground mt-1">{statistics.totalAttendance}</p>
           </div>
-          <div className="bg-purple-50 p-3 rounded-lg">
-            <div className="flex items-center gap-2 text-purple-700">
+          <div className="bg-purple-500/10 p-3 rounded-lg">
+            <div className="flex items-center gap-2 text-purple-500">
               <Clock className="h-4 w-4" />
-              <span className="text-sm font-medium">Hora Pico</span>
+              <span className="text-xs font-medium">Hora Pico</span>
             </div>
-            <p className="text-lg font-bold text-purple-900">{statistics.peakHour}</p>
+            <p className="text-lg font-bold text-foreground mt-1">{statistics.peakHour}</p>
           </div>
-          <div className="bg-orange-50 p-3 rounded-lg">
-            <div className="flex items-center gap-2 text-orange-700">
+          <div className="bg-orange-500/10 p-3 rounded-lg">
+            <div className="flex items-center gap-2 text-orange-500">
               <TrendingUp className="h-4 w-4" />
-              <span className="text-sm font-medium">Promedio/Sesión</span>
+              <span className="text-xs font-medium">Prom/Sesión</span>
             </div>
-            <p className="text-lg font-bold text-orange-900">{statistics.averageAttendance}</p>
+            <p className="text-lg font-bold text-foreground mt-1">{statistics.averageAttendance}</p>
           </div>
         </div>
       </CardHeader>
@@ -166,7 +166,7 @@ const TrainingHeatmap: React.FC = () => {
                           return (
                             <div
                               key={`${day}-${hour}`}
-                              className={`w-8 h-6 rounded-sm cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg border ${getIntensityColor(dataPoint?.intensity || 0)}`}
+                              className={`w-8 h-6 rounded-sm cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg border ${getIntensityColor(dataPoint?.intensity ?? 0)}`}
                               title={getIntensityTooltip(dataPoint || { day, hour, sessionCount: 0, totalAttendance: 0, averageAttendance: 0 })}
                             >
                               {dataPoint && dataPoint.sessionCount > 0 && (

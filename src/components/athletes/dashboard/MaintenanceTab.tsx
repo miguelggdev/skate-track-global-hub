@@ -27,8 +27,8 @@ export const MaintenanceTab = () => {
         </div>
         
         <div className="space-y-4">
-          {maintenanceHistory.map((maintenance, index) => (
-            <div key={index} className="border rounded-lg p-4">
+          {maintenanceHistory.map((maintenance) => (
+            <div key={`${maintenance.type}-${maintenance.date}`} className="border rounded-lg p-4">
               <div className="flex justify-between items-start">
                 <div>
                   <h4 className="font-medium">{maintenance.type}</h4>

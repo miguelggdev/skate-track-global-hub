@@ -1,5 +1,5 @@
 # SPEC-025 — RAG Backend LangGraph para Documentos de Patinaje
-**Status:** `draft`
+**Status:** `done`
 **Agente:** AG-CLAUDE-BACKEND
 **Sprint:** 02
 **Prioridad:** ALTA

@@ -15,13 +15,25 @@ import {
 } from '@/components/dashboard/LeaderCharts';
 import { supabase } from '@/integrations/supabase/client';
 
-const TARGET_ATHLETES = 70;
-const TARGET_REVENUE  = 140_000;
 const TARGET_ATTENDANCE = 92;
 const TARGET_RETENTION  = 96;
 
 const LeaderDashboard = () => {
   const navigate = useNavigate();
+
+  const { data: clubSettings } = useQuery({
+    queryKey: ['club-settings-targets'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('club_settings')
+        .select('target_athletes, target_revenue')
+        .maybeSingle();
+      return { targetAthletes: data?.target_athletes ?? 50, targetRevenue: data?.target_revenue ?? 10_000 };
+    },
+  });
+
+  const TARGET_ATHLETES = clubSettings?.targetAthletes ?? 50;
+  const TARGET_REVENUE  = clubSettings?.targetRevenue  ?? 10_000;
 
   const { data: stats } = useQuery({
     queryKey: ['leader-dashboard-stats'],
@@ -40,10 +52,10 @@ const LeaderDashboard = () => {
         supabase.from('user_roles').select('user_id', { count: 'exact' }).eq('role', 'coach'),
         supabase.from('financial_transactions').select('amount')
           .eq('payment_status', 'paid').gte('transaction_date', yearStart),
-        (supabase
-          .from('training_attendance' as never)
+        supabase
+          .from('training_attendance')
           .select('attended')
-          .gte('created_at', thirtyDaysAgo) as unknown as Promise<{ data: { attended: boolean }[] | null }>),
+          .gte('created_at', thirtyDaysAgo),
         supabase.from('awards').select('id', { count: 'exact' }).gte('award_date', yearStart),
         supabase.from('competitions').select('name, start_date')
           .gt('start_date', today).order('start_date').limit(1),

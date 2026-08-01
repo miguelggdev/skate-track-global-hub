@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 // Hook to validate if an athlete has paid for the current month
@@ -62,7 +62,7 @@ export const useCurrentMonthPayment = (athleteId?: string) => {
         paymentStatus: hasPaid ? 'paid' : 'pending',
         lastPaymentMonth: lastTx?.transaction_date ?? null,
         lastPaymentDate: lastTx?.transaction_date ?? null,
-        transactions: currentMonthPayments || [],
+        transactions: currentMonthPayments ?? [],
         athlete: athlete,
       };
     },

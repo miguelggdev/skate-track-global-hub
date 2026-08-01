@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+﻿import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -61,7 +61,7 @@ export const CompetitionMedalsTable = ({ competitionId }: CompetitionMedalsTable
 
   const medalCounts = medals.reduce(
     (acc, medal) => {
-      acc[medal.medal_type as string] = (acc[medal.medal_type as string] || 0) + 1;
+      acc[medal.medal_type as string] = (acc[medal.medal_type as string] ?? 0) + 1;
       return acc;
     },
     {} as Record<string, number>

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -32,7 +32,7 @@ const AthleteIdentityCard: React.FC<AthleteIdentityCardProps> = ({
   yearsExperience = 0
 }) => {
   const age = athlete.date_of_birth ? calculateAge(new Date(athlete.date_of_birth)) : null;
-  const initials = `${athlete.first_name?.[0] || ''}${athlete.last_name?.[0] || ''}`.toUpperCase();
+  const initials = `${athlete.first_name?.[0] ?? ''}${athlete.last_name?.[0] ?? ''}`.toUpperCase();
   const avatarUrl = athlete.profile_image_url || profile?.avatar_url;
 
   const getDisciplineLabel = (discipline?: string | null) => {
@@ -42,7 +42,7 @@ const AthleteIdentityCard: React.FC<AthleteIdentityCardProps> = ({
       'gym': 'Gimnasio',
       'running': 'Atletismo'
     };
-    return labels[discipline || ''] || discipline || 'No especificada';
+    return labels[discipline ?? ''] || discipline || 'No especificada';
   };
 
   const getCategoryLabel = (category: string) => {

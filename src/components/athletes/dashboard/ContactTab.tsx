@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,8 +35,8 @@ export const ContactTab = ({ athlete }: ContactTabProps) => {
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
-    emergency_contact_name: athlete.emergency_contact_name || '',
-    emergency_contact_phone: athlete.emergency_contact_phone || '',
+    emergency_contact_name: athlete.emergency_contact_name ?? '',
+    emergency_contact_phone: athlete.emergency_contact_phone ?? '',
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -72,8 +72,8 @@ export const ContactTab = ({ athlete }: ContactTabProps) => {
 
   const handleCancel = () => {
     setFormData({
-      emergency_contact_name: athlete.emergency_contact_name || '',
-      emergency_contact_phone: athlete.emergency_contact_phone || '',
+      emergency_contact_name: athlete.emergency_contact_name ?? '',
+      emergency_contact_phone: athlete.emergency_contact_phone ?? '',
     });
     setIsEditing(false);
   };
@@ -119,7 +119,7 @@ export const ContactTab = ({ athlete }: ContactTabProps) => {
             <Input
               id="birth_date"
               type="date"
-              value={athlete.date_of_birth || ''}
+              value={athlete.date_of_birth ?? ''}
               disabled
             />
           </div>

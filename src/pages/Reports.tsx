@@ -186,7 +186,7 @@ const Reports = () => {
         if (error) throw error;
 
         const rows = (data ?? []).map(tx => {
-          const ath = tx.athletes as unknown as { first_name: string; last_name: string } | null;
+          const ath = tx.athletes as { first_name: string; last_name: string } | null;
           return {
             'Fecha': tx.transaction_date,
             'Tipo': TYPE_LABELS[tx.transaction_type] ?? tx.transaction_type,
@@ -359,8 +359,8 @@ const Reports = () => {
 
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {financialStats.map((stat, index) => (
-                <Card key={index}>
+              {financialStats.map((stat) => (
+                <Card key={stat.title}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
                     <stat.icon className="h-4 w-4 text-muted-foreground" />
@@ -381,8 +381,8 @@ const Reports = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {reportTypes.map((report, index) => (
-                    <div key={index} className="p-4 border rounded-lg hover:shadow-md transition-shadow">
+                  {reportTypes.map((report) => (
+                    <div key={report.category} className="p-4 border rounded-lg hover:shadow-md transition-shadow">
                       <div className="flex items-center space-x-3 mb-3">
                         <report.icon className="h-8 w-8 text-primary" />
                         <div>
@@ -517,7 +517,7 @@ const Reports = () => {
                 ) : (
                   <div className="space-y-4">
                     {recentTransactions.map((tx) => {
-                      const ath = tx.athletes as unknown as { first_name: string; last_name: string } | null;
+                      const ath = tx.athletes as { first_name: string; last_name: string } | null;
                       const athleteName = ath ? `${ath.first_name} ${ath.last_name}` : '';
                       const label = TYPE_LABELS[tx.transaction_type] ?? tx.transaction_type;
                       const isExpense = EXPENSE_TYPES.includes(tx.transaction_type);

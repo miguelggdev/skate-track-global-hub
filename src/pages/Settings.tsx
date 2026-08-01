@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -75,9 +75,9 @@ const Settings = () => {
   useEffect(() => {
     if (profile) {
       setFormData({
-        first_name: profile.first_name || '',
-        last_name: profile.last_name || '',
-        email: profile.email || '',
+        first_name: profile.first_name ?? '',
+        last_name: profile.last_name ?? '',
+        email: profile.email ?? '',
         phone: '',
       });
       setProfilePhotoUrl(null);
@@ -91,7 +91,7 @@ const Settings = () => {
             .single();
 
           if (fullProfile) {
-            setFormData(prev => ({ ...prev, phone: fullProfile.phone || '' }));
+            setFormData(prev => ({ ...prev, phone: fullProfile.phone ?? '' }));
             setProfilePhotoUrl(fullProfile.avatar_url);
           }
         } catch {
@@ -145,10 +145,10 @@ const Settings = () => {
         title: t('message.saved_successfully'),
         description: t('message.updated_successfully'),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: t('common.error'),
-        description: error.message || t('message.error_occurred'),
+        description: error instanceof Error ? error.message : t('message.error_occurred'),
         variant: 'destructive',
       });
     } finally {
@@ -171,8 +171,8 @@ const Settings = () => {
       if (error) throw error;
       toast({ title: 'Éxito', description: 'Contraseña actualizada correctamente' });
       setPasswords({ newPass: '', confirm: '' });
-    } catch (error: any) {
-      toast({ title: 'Error', description: error.message || 'No se pudo actualizar la contraseña', variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: 'Error', description: error instanceof Error ? error.message : 'No se pudo actualizar la contraseña', variant: 'destructive' });
     } finally {
       setChangingPwd(false);
     }
@@ -274,14 +274,14 @@ const Settings = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
-          {quickStats.map((stat, index) => (
-            <Card key={index} className="argon-card relative overflow-hidden">
+          {quickStats.map((stat) => (
+            <Card key={stat.title} className="argon-card relative overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
                 <div className="min-w-0 flex-1">
-                  <CardDescription className="text-xs font-medium text-gray-600 uppercase tracking-wider">
+                  <CardDescription className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     {stat.title}
                   </CardDescription>
-                  <CardTitle className="text-xl lg:text-2xl font-bold text-gray-800 truncate">
+                  <CardTitle className="text-xl lg:text-2xl font-bold text-foreground truncate">
                     {stat.value}
                   </CardTitle>
                 </div>
@@ -290,8 +290,8 @@ const Settings = () => {
                 </div>
               </CardHeader>
               <CardContent className="relative z-10">
-                <p className="text-sm text-gray-600">
-                  <span className={`font-semibold ${stat.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                <p className="text-sm text-muted-foreground">
+                  <span className={`font-semibold ${stat.isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                     {stat.change}
                   </span>{' '}
                   {stat.period}
@@ -452,7 +452,7 @@ const Settings = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">Autenticación de Dos Factores</p>
-                      <p className="text-sm text-gray-500">Agrega una capa extra de seguridad</p>
+                      <p className="text-sm text-muted-foreground">Agrega una capa extra de seguridad</p>
                     </div>
                     <Switch
                       checked={securityPrefs.two_factor}
@@ -463,7 +463,7 @@ const Settings = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">Notificaciones de Inicio de Sesión</p>
-                      <p className="text-sm text-gray-500">Recibe avisos de nuevos inicios de sesión</p>
+                      <p className="text-sm text-muted-foreground">Recibe avisos de nuevos inicios de sesión</p>
                     </div>
                     <Switch
                       checked={securityPrefs.login_notifications}
@@ -474,7 +474,7 @@ const Settings = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">Cierre de Sesión Automático</p>
-                      <p className="text-sm text-gray-500">Cierre automático tras período de inactividad</p>
+                      <p className="text-sm text-muted-foreground">Cierre automático tras período de inactividad</p>
                     </div>
                     <Switch
                       checked={securityPrefs.session_timeout}
@@ -641,7 +641,7 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Vista Compacta</p>
-                    <p className="text-sm text-gray-500">Muestra más información en menos espacio</p>
+                    <p className="text-sm text-muted-foreground">Muestra más información en menos espacio</p>
                   </div>
                   <Switch />
                 </div>
@@ -649,7 +649,7 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Actualización Automática</p>
-                    <p className="text-sm text-gray-500">Actualiza automáticamente los datos del dashboard</p>
+                    <p className="text-sm text-muted-foreground">Actualiza automáticamente los datos del dashboard</p>
                   </div>
                   <Switch defaultChecked />
                 </div>
@@ -657,7 +657,7 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Mostrar Tooltips</p>
-                    <p className="text-sm text-gray-500">Muestra sugerencias y consejos de ayuda</p>
+                    <p className="text-sm text-muted-foreground">Muestra sugerencias y consejos de ayuda</p>
                   </div>
                   <Switch defaultChecked />
                 </div>

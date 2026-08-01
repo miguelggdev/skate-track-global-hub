@@ -1,13 +1,23 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
-import { User, Lock } from 'lucide-react';
+import { User, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+
+const loginSchema = z.object({
+  email: z.string().email('Email inválido').max(254).transform(v => v.trim().toLowerCase()),
+  password: z.string().min(1, 'Contraseña requerida').max(128),
+});
+
+const resetSchema = z.object({
+  email: z.string().email('Email inválido').max(254).transform(v => v.trim().toLowerCase()),
+});
 
 const Login = () => {
   const navigate = useNavigate();
@@ -19,6 +29,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -29,9 +40,15 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    const { error } = await signIn(email, password);
+    const result = loginSchema.safeParse({ email, password });
+    if (!result.success) {
+      toast({ title: 'Datos inválidos', description: result.error.errors[0].message, variant: 'destructive' });
+      return;
+    }
+
+    setIsLoading(true);
+    const { error } = await signIn(result.data.email, result.data.password);
 
     if (error) {
       toast({
@@ -52,9 +69,15 @@ const Login = () => {
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    const { error } = await resetPassword(resetEmail);
+    const result = resetSchema.safeParse({ email: resetEmail });
+    if (!result.success) {
+      toast({ title: 'Email inválido', description: result.error.errors[0].message, variant: 'destructive' });
+      return;
+    }
+
+    setIsLoading(true);
+    const { error } = await resetPassword(result.data.email);
 
     if (error) {
       toast({
@@ -88,6 +111,11 @@ const Login = () => {
       {/* Glassmorphism card */}
       <Card className="w-full max-w-md backdrop-blur-lg bg-black/40 shadow-2xl border-white/30 relative z-10 animate-scale-in">
         <CardHeader className="text-center space-y-1 pb-4">
+          <div className="flex justify-center mb-2">
+            <div className="w-16 h-16 rounded-full bg-blue-600/80 flex items-center justify-center border-2 border-white/30 shadow-lg">
+              <span className="text-3xl">⛸️</span>
+            </div>
+          </div>
           <CardTitle className="text-3xl font-bold text-white">
             SpeedSkate Academy
           </CardTitle>
@@ -116,13 +144,20 @@ const Login = () => {
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <Input
                     id="password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     placeholder={t('login.password')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 bg-white/75 border-white/40 text-gray-900 placeholder:text-gray-600"
+                    className="pl-10 pr-10 bg-white/75 border-white/40 text-gray-900 placeholder:text-gray-600"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
               </div>
               <Button 
@@ -130,7 +165,9 @@ const Login = () => {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
                 disabled={isLoading}
               >
-                {isLoading ? t('login.signing_in') : t('login.submit')}
+                {isLoading ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('login.signing_in')}</>
+                ) : t('login.submit')}
               </Button>
               <div className="text-center pt-2">
                 <Button
@@ -162,7 +199,9 @@ const Login = () => {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
                 disabled={isLoading}
               >
-                {isLoading ? t('common.loading') : t('action.confirm')}
+                {isLoading ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('common.loading')}</>
+                ) : t('action.confirm')}
               </Button>
               <div className="text-center">
                 <Button
@@ -180,9 +219,15 @@ const Login = () => {
             </form>
           )}
           
-          <div className="text-center mt-6 pt-4 border-t border-white/10">
+          <div className="text-center mt-4 pt-4 border-t border-white/10 space-y-2">
             <p className="text-xs text-gray-400">
-              © 2025 SpeedSkate Academy - Todos los derechos reservados
+              ¿Primer acceso?{' '}
+              <Link to="/register" className="text-blue-300 hover:text-blue-200 underline transition-colors">
+                Crear cuenta de administrador
+              </Link>
+            </p>
+            <p className="text-xs text-gray-400">
+              © 2026 SpeedSkate Academy - Todos los derechos reservados
             </p>
           </div>
         </CardContent>

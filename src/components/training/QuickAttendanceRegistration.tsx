@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -76,7 +76,7 @@ export default function QuickAttendanceRegistration() {
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(athlete => 
-        `${athlete.first_name || ''} ${athlete.last_name || ''}`.toLowerCase().includes(searchLower)
+        `${athlete.first_name ?? ''} ${athlete.last_name ?? ''}`.toLowerCase().includes(searchLower)
       );
     }
     

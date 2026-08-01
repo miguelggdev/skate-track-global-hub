@@ -66,35 +66,76 @@ export function AdminClubHealthRadar() {
   const { data } = useQuery({
     queryKey: ['club-health-radar'],
     queryFn: async () => {
-      const [athletesRes, transactionsRes] = await Promise.all([
-        supabase.from('athletes').select('status'),
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000).toISOString();
+      const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+
+      const [
+        athletesRes, transactionsRes,
+        attendanceRes, docsRes, equipmentRes,
+      ] = await Promise.all([
+        supabase.from('athletes').select('id, status, performance_score'),
         supabase.from('transactions').select('status'),
+        supabase
+          .from('training_attendance')
+          .select('attended')
+          .gte('created_at', monthStart),
+        supabase.from('user_documents').select('athlete_id').not('file_url', 'is', null),
+        supabase.from('athlete_equipment').select('athlete_id'),
       ]);
+
       return {
-        athletes: athletesRes.data ?? [],
+        athletes:    athletesRes.data    ?? [],
         transactions: transactionsRes.data ?? [],
+        attendance:  attendanceRes.data  ?? [],
+        docs:        docsRes.data        ?? [],
+        equipment:   equipmentRes.data   ?? [],
       };
     },
   });
 
-  const athletes = data?.athletes ?? [];
+  const athletes     = data?.athletes    ?? [];
   const transactions = data?.transactions ?? [];
+  const attendance   = data?.attendance  ?? [];
+  const docs         = data?.docs        ?? [];
+  const equipment    = data?.equipment   ?? [];
 
-  const totalAthletes = athletes.length;
+  const totalAthletes  = athletes.length;
   const activeAthletes = athletes.filter(a => a.status === 'active').length;
-  const retention = totalAthletes > 0 ? Math.round((activeAthletes / totalAthletes) * 100) : 85;
+  const retention      = totalAthletes > 0 ? Math.round((activeAthletes / totalAthletes) * 100) : 0;
 
   const totalTx = transactions.length;
-  const paidTx = transactions.filter(t => t.status === 'paid').length;
-  const finanzas = totalTx > 0 ? Math.round((paidTx / totalTx) * 100) : 75;
+  const paidTx  = transactions.filter(t => t.status === 'paid').length;
+  const finanzas = totalTx > 0 ? Math.round((paidTx / totalTx) * 100) : 0;
+
+  const avgPerformance = activeAthletes > 0
+    ? Math.min(100, Math.round(
+        athletes
+          .filter(a => a.status === 'active')
+          .reduce((s, a) => s + (a.performance_score ?? 0), 0) / activeAthletes
+      ))
+    : 0;
+
+  const attendanceRate = attendance.length > 0
+    ? Math.round((attendance.filter(a => a.attended).length / attendance.length) * 100)
+    : 0;
+
+  const athleteIdsWithDocs = new Set(docs.map(d => d.athlete_id));
+  const documentos = totalAthletes > 0
+    ? Math.round((athleteIdsWithDocs.size / totalAthletes) * 100)
+    : 0;
+
+  const athleteIdsWithEquip = new Set(equipment.map(e => e.athlete_id));
+  const equipos = totalAthletes > 0
+    ? Math.round((athleteIdsWithEquip.size / totalAthletes) * 100)
+    : 0;
 
   const HEALTH_DATA = [
-    { axis: 'Finanzas', score: finanzas },
-    { axis: 'Rendimiento', score: 78 },
-    { axis: 'Asistencia', score: 85 },
-    { axis: 'Documentos', score: 70 },
-    { axis: 'Retención', score: retention },
-    { axis: 'Equipos', score: 74 },
+    { axis: 'Finanzas',    score: finanzas },
+    { axis: 'Rendimiento', score: avgPerformance },
+    { axis: 'Asistencia',  score: attendanceRate },
+    { axis: 'Documentos',  score: documentos },
+    { axis: 'Retención',   score: retention },
+    { axis: 'Equipos',     score: equipos },
   ];
 
   const avg = Math.round(HEALTH_DATA.reduce((s, d) => s + d.score, 0) / HEALTH_DATA.length);

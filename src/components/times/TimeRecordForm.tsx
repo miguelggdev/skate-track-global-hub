@@ -214,7 +214,7 @@ export function TimeRecordForm({ defaultAthleteId }: Props) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {(competitions as any[]).map(c => (
+                      {competitions.map(c => (
                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                       ))}
                     </SelectContent>

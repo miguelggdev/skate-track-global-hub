@@ -149,8 +149,8 @@ export const CompetitionReportView: React.FC<CompetitionReportViewProps> = ({ da
             </TableHeader>
             <TableBody>
               {athletes.map((athlete, index) => (
-                <TableRow 
-                  key={index}
+                <TableRow
+                  key={`${athlete.first_name}-${athlete.last_name}-${index}`}
                   className="hover:bg-muted/30 transition-colors"
                 >
                   <TableCell className="font-medium text-muted-foreground">

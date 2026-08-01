@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Heart, Brain, Stethoscope, AlertCircle } from 'lucide-react';
@@ -50,7 +50,7 @@ const AthleteMedicalSection: React.FC<AthleteMedicalSectionProps> = ({
   ];
 
   // Parse injuries if present
-  const activeInjuries = injuries?.split(',').map(i => i.trim()).filter(Boolean) || [];
+  const activeInjuries = injuries?.split(',').map(i => i.trim()).filter(Boolean) ?? [];
 
   return (
     <Card>

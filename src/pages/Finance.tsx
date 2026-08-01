@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -60,21 +60,23 @@ const Finance = () => {
   
   const [selectedPeriod, setSelectedPeriod] = useState<ReportPeriod>('month');
   const [searchTerm, setSearchTerm] = useState('');
+  const parsedMonth = parseInt(searchParams.get('month') ?? '');
+  const parsedYear = parseInt(searchParams.get('year') ?? '');
+  const parsedPage = parseInt(searchParams.get('page') ?? '');
   const [filterMonth, setFilterMonth] = useState<number | null>(
-    searchParams.get('month') ? parseInt(searchParams.get('month')!) : currentMonth
+    !isNaN(parsedMonth) ? parsedMonth : currentMonth
   );
   const [filterYear, setFilterYear] = useState<number | null>(
-    searchParams.get('year') ? parseInt(searchParams.get('year')!) : currentYear
+    !isNaN(parsedYear) ? parsedYear : currentYear
   );
   const [selectedTransactionType, setSelectedTransactionType] = useState(
-    searchParams.get('type') || "all"
+    searchParams.get('type') ?? "all"
   );
   const [currentPage, setCurrentPage] = useState(
-    searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1
+    !isNaN(parsedPage) && parsedPage > 0 ? parsedPage : 1
   );
   const [selectedReportType, setSelectedReportType] = useState<ReportType>('complete');
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [generatedReport, setGeneratedReport] = useState(null);
+  const [generatedReport, setGeneratedReport] = useState<object | null>(null);
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
 
   const pageSize = 15;
@@ -88,8 +90,8 @@ const Finance = () => {
     selectedTransactionType
   );
 
-  const transactions = paginatedData?.data || [];
-  const totalRecords = paginatedData?.count || 0;
+  const transactions = paginatedData?.data ?? [];
+  const totalRecords = paginatedData?.count ?? 0;
   const totalPages = paginatedData?.totalPages || 1;
 
   const { data: financialStats, isLoading: statsLoading } = useFinancialStats();
@@ -207,12 +209,12 @@ const Finance = () => {
         id: transactionId,
         updates: { receipt_url: receiptUrl }
       });
-    } catch (error: any) {
-      toast({ title: 'Error', description: error?.message || 'No se pudo guardar el recibo', variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: 'Error', description: error instanceof Error ? error.message : 'No se pudo guardar el recibo', variant: 'destructive' });
     }
   };
 
-  const handleGenerateReport = async () => {
+  const handleGenerateReport = () => {
     if (!reportData) {
       toast({
         title: "Error",
@@ -221,23 +223,11 @@ const Finance = () => {
       });
       return;
     }
-
-    setIsGeneratingReport(true);
-    try {
-      setGeneratedReport(reportData);
-      toast({
-        title: "Éxito",
-        description: "Informe generado correctamente",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Error al generar el informe",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingReport(false);
-    }
+    setGeneratedReport(reportData as object);
+    toast({
+      title: "Éxito",
+      description: "Informe generado correctamente",
+    });
   };
 
   const handlePreviewReport = () => {
@@ -308,8 +298,8 @@ const Finance = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <Card key={index} className="relative overflow-hidden">
+          {stats.map((stat) => (
+            <Card key={stat.title} className="relative overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <div>
                   <CardDescription className="text-xs font-medium uppercase tracking-wider">
@@ -325,7 +315,7 @@ const Finance = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  <span className={`font-semibold ${stat.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className={`font-semibold ${stat.isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                     {stat.change}
                   </span>{' '}
                   {stat.period}
@@ -396,21 +386,21 @@ const Finance = () => {
                   <div className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium">Cuotas Enero</p>
-                      <p className="text-sm text-gray-500">Vence: 31/01/2024</p>
+                      <p className="text-sm text-muted-foreground">Vence: 31/01/2024</p>
                     </div>
                     <span className="text-lg font-bold text-green-600">{formatCurrency(2450, currency)}</span>
                   </div>
                   <div className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium">Alquiler Instalaciones</p>
-                      <p className="text-sm text-gray-500">Vence: 15/01/2024</p>
+                      <p className="text-sm text-muted-foreground">Vence: 15/01/2024</p>
                     </div>
                     <span className="text-lg font-bold text-orange-600">{formatCurrency(1200, currency)}</span>
                   </div>
                   <div className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium">Seguros</p>
-                      <p className="text-sm text-gray-500">Vence: 20/01/2024</p>
+                      <p className="text-sm text-muted-foreground">Vence: 20/01/2024</p>
                     </div>
                     <span className="text-lg font-bold text-red-600">{formatCurrency(850, currency)}</span>
                   </div>
@@ -458,7 +448,7 @@ const Finance = () => {
                 </div>
 
                 <div className="border rounded-lg overflow-hidden">
-                  <div className="grid grid-cols-7 gap-4 p-4 font-medium border-b bg-gray-50">
+                  <div className="grid grid-cols-7 gap-4 p-4 font-medium border-b bg-muted/50">
                     <span>Fecha</span>
                     <span>Concepto</span>
                     <span>Pagador</span>
@@ -476,7 +466,7 @@ const Finance = () => {
                     </div>
                   ) : (
                     filteredTransactions.map((transaction) => (
-                      <div key={transaction.id} className="grid grid-cols-7 gap-4 p-4 border-b hover:bg-gray-50">
+                      <div key={transaction.id} className="grid grid-cols-7 gap-4 p-4 border-b hover:bg-muted/50">
                         <span className="text-sm">{new Date(transaction.transaction_date).toLocaleDateString('es-ES')}</span>
                         <div className="space-y-1">
                           <span className="font-medium block">{transaction.description}</span>
@@ -493,7 +483,7 @@ const Finance = () => {
                         <Badge variant={['mensualidad', 'anualidad', 'registration_fee'].includes(transaction.transaction_type) ? 'default' : 'secondary'}>
                           {['mensualidad', 'anualidad', 'registration_fee'].includes(transaction.transaction_type) ? 'Ingreso' : 'Gasto'}
                         </Badge>
-                        <span className={`font-bold ${transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <span className={`font-bold ${transaction.amount > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                           {formatCurrency(Math.abs(transaction.amount), currency)}
                         </span>
                         <div className="flex items-center gap-1">
@@ -550,7 +540,7 @@ const Finance = () => {
                     <CardContent>
                       <div className="text-2xl font-bold">{formatCurrency(totalBudget, currency)}</div>
                       <Progress value={(totalSpent / totalBudget) * 100} className="mt-2" />
-                      <p className="text-xs text-gray-500 mt-1">{Math.round((totalSpent / totalBudget) * 100)}% ejecutado</p>
+                      <p className="text-xs text-muted-foreground mt-1">{Math.round((totalSpent / totalBudget) * 100)}% ejecutado</p>
                     </CardContent>
                   </Card>
 
@@ -561,7 +551,7 @@ const Finance = () => {
                     <CardContent>
                       <div className="text-2xl font-bold text-red-600">{formatCurrency(totalSpent, currency)}</div>
                       <Progress value={(totalSpent / totalBudget) * 100} className="mt-2" />
-                      <p className="text-xs text-gray-500 mt-1">{Math.round((totalSpent / totalBudget) * 100)}% del presupuesto</p>
+                      <p className="text-xs text-muted-foreground mt-1">{Math.round((totalSpent / totalBudget) * 100)}% del presupuesto</p>
                     </CardContent>
                   </Card>
 
@@ -572,7 +562,7 @@ const Finance = () => {
                     <CardContent>
                       <div className="text-2xl font-bold text-green-600">{formatCurrency(totalAvailable, currency)}</div>
                       <Progress value={(totalAvailable / totalBudget) * 100} className="mt-2" />
-                      <p className="text-xs text-gray-500 mt-1">{Math.round((totalAvailable / totalBudget) * 100)}% restante</p>
+                      <p className="text-xs text-muted-foreground mt-1">{Math.round((totalAvailable / totalBudget) * 100)}% restante</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -580,8 +570,8 @@ const Finance = () => {
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Desglose por Categorías</h3>
                   <div className="space-y-4">
-                    {budgetCategories.map((category, index) => (
-                      <div key={index} className="flex justify-between items-center p-4 border rounded-lg">
+                    {budgetCategories.map((category) => (
+                      <div key={category.name} className="flex justify-between items-center p-4 border rounded-lg">
                         <div className="flex items-center gap-3">
                           <div className={`w-4 h-4 rounded ${category.color}`}></div>
                           <span className="font-medium">{category.name}</span>
@@ -648,12 +638,12 @@ const Finance = () => {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button 
+                    <Button
                       onClick={handleGenerateReport}
-                      disabled={isGeneratingReport || reportLoading}
+                      disabled={reportLoading}
                       className="bg-primary text-primary-foreground hover:bg-primary/90"
                     >
-                      {isGeneratingReport ? 'Generando...' : 'Generar Informe'}
+                      Generar Informe
                     </Button>
                     <Button variant="outline" onClick={handlePreviewReport} disabled={!reportData}>
                       Vista Previa
@@ -700,7 +690,7 @@ const Finance = () => {
                         <div className="text-2xl font-bold text-green-600">
                           {financialStats ? formatCurrency(financialStats.totalIncome, currency) : formatCurrency(24680, currency)}
                         </div>
-                        <p className="text-sm text-gray-500">Pagos Recibidos</p>
+                        <p className="text-sm text-muted-foreground">Pagos Recibidos</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -711,7 +701,7 @@ const Finance = () => {
                         <div className="text-2xl font-bold text-yellow-600">
                           {financialStats ? formatCurrency(financialStats.pendingPayments, currency) : formatCurrency(8924, currency)}
                         </div>
-                        <p className="text-sm text-gray-500">Pagos Pendientes</p>
+                        <p className="text-sm text-muted-foreground">Pagos Pendientes</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -720,7 +710,7 @@ const Finance = () => {
                     <CardContent className="p-4">
                       <div className="text-center">
                         <div className="text-2xl font-bold text-red-600">{formatCurrency(2150, currency)}</div>
-                        <p className="text-sm text-gray-500">Pagos Vencidos</p>
+                        <p className="text-sm text-muted-foreground">Pagos Vencidos</p>
                       </div>
                     </CardContent>
                   </Card>

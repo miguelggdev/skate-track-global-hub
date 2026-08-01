@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -92,7 +92,7 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
   };
 
   const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
+    return `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase();
   };
 
   const getStatusColor = (status: string) => {
@@ -221,7 +221,7 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${athlete.first_name} ${athlete.last_name}`} />
                         <AvatarFallback>
-                          {getInitials(athlete.first_name || '', athlete.last_name || '')}
+                          {getInitials(athlete.first_name ?? '', athlete.last_name ?? '')}
                         </AvatarFallback>
                       </Avatar>
                       <div>

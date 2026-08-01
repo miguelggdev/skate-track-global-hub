@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+﻿import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfMonth, endOfMonth, subMonths, format, differenceInMonths } from "date-fns";
 
@@ -209,7 +209,7 @@ export function useFinancialAnalytics(filters?: FilterState) {
         .filter(t => t.payment_status === "paid")
         .forEach(t => {
           const type = t.transaction_type || "otros";
-          incomeByType[type] = (incomeByType[type] || 0) + Number(t.amount);
+          incomeByType[type] = (incomeByType[type] ?? 0) + Number(t.amount);
         });
       const totalIncome = Object.values(incomeByType).reduce((s, v) => s + v, 0);
       const incomeByTypeData = Object.entries(incomeByType).map(([name, value]) => ({

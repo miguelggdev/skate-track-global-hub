@@ -215,7 +215,7 @@ const TrainingCalendar = () => {
                   key={mode}
                   variant={viewMode === mode ? 'default' : 'ghost'}
                   size="sm"
-                  onClick={() => setViewMode(mode as any)}
+                  onClick={() => setViewMode(mode as 'month' | 'week' | 'day')}
                   className="px-3"
                 >
                   {mode === 'month' ? 'Mes' : mode === 'week' ? 'Semana' : 'Día'}

@@ -34,15 +34,15 @@ const CoachDashboard = () => {
       ] = await Promise.all([
         supabase.from('athletes').select('id', { count: 'exact' }).eq('status', 'active'),
         supabase.from('training_sessions').select('id', { count: 'exact' }).gte('scheduled_at', monthStart),
-        (supabase
-          .from('training_attendance' as never)
+        supabase
+          .from('training_attendance')
           .select('attended, athlete_id')
-          .gte('created_at', thirtyDaysAgo) as unknown as Promise<{ data: { attended: boolean; athlete_id: string }[] | null }>),
-        (supabase
-          .from('training_attendance' as never)
+          .gte('created_at', thirtyDaysAgo),
+        supabase
+          .from('training_attendance')
           .select('athlete_id')
           .gte('created_at', sevenDaysAgo)
-          .eq('attended', true) as unknown as Promise<{ data: { athlete_id: string }[] | null }>),
+          .eq('attended', true),
         supabase.from('competition_results').select('id', { count: 'exact' })
           .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
         supabase.from('user_roles').select('user_id', { count: 'exact' }).eq('role', 'coach'),

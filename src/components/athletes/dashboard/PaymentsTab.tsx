@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -78,7 +78,7 @@ export const PaymentsTab = () => {
     const yearMatch = transactionYear === selectedYear;
     const typeMatch = selectedType === 'all' || transaction.transaction_type === selectedType;
     return yearMatch && typeMatch;
-  }) || [];
+  }) ?? [];
 
   // Get unique years from transactions
   const availableYears = transactions && transactions.length > 0 

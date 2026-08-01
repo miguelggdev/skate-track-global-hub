@@ -33,6 +33,10 @@ const ITEMS_BY_ROLE: Record<string, NavItem[]> = {
     { title: 'Finanzas',      icon: DollarSign, path: '/finance' },
     { title: 'Ajustes',       icon: Settings,   path: '/settings' },
   ],
+  parent: [
+    { title: 'Inicio',        icon: Home,     path: '/parent-dashboard' },
+    { title: 'Ajustes',       icon: Settings, path: '/settings' },
+  ],
   admin: [
     { title: 'Inicio',        icon: Home,     path: '/admin-dashboard' },
     { title: 'Atletas',       icon: Users,    path: '/athletes' },

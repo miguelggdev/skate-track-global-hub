@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentAthlete } from './useCurrentAthlete';
 import { useToast } from '@/hooks/use-toast';
@@ -42,7 +42,7 @@ export const useAthleteTraining = () => {
         .select('training_session_id')
         .eq('athlete_id', athlete.id);
 
-      const sessionIds = registeredSessionIds?.map(r => r.training_session_id) || [];
+      const sessionIds = registeredSessionIds?.map(r => r.training_session_id) ?? [];
 
       // Fetch upcoming sessions (only those athlete is registered for or open for registration)
       const { data, error } = await supabase
@@ -165,7 +165,7 @@ export const useAthleteTraining = () => {
 
   // Check if athlete is registered for a session
   const isRegisteredForSession = (sessionId: string): boolean => {
-    return attendanceRecords?.some(record => record.training_session_id === sessionId) || false;
+    return attendanceRecords?.some(record => record.training_session_id === sessionId) ?? false;
   };
 
   return {

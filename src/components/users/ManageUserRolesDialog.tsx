@@ -6,6 +6,9 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import type { Database } from '@/integrations/supabase/types';
+
+type UserRole = Database['public']['Enums']['user_role'];
 
 interface ManageUserRolesDialogProps {
   user: {
@@ -68,7 +71,7 @@ export function ManageUserRolesDialog({ user, open, onOpenChange, onRoleChanged,
 
       const { error: insertError } = await supabase
         .from('user_roles')
-        .insert([{ user_id: user.id, role: selectedRole as any }]);
+        .insert([{ user_id: user.id, role: selectedRole as UserRole }]);
 
       if (insertError) throw insertError;
 

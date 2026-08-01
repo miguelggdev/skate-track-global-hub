@@ -69,8 +69,19 @@ CIERRE DEL DÍA
 
 ---
 
-## SPRINT 2 — Backend Python + Agentes IA (Semanas 3-4)
-**Objetivo:** FastAPI + LangGraph funcionando, AG-01 (Admin) y AG-02 (Coach) MVP
+## SPRINT 2 — Frontend Onboarding + Backend Python + Agentes IA (Semanas 3-4)
+
+### Specs de Onboarding y Features Frontend (completados)
+| Spec | Título | Status |
+|------|--------|--------|
+| SPEC-009 | Registro primer administrador (`/register` + trigger seguro) | ✅ done |
+| SPEC-010 | Wizard de onboarding del club (`/onboarding`, 4 pasos) | ✅ done |
+| SPEC-011 | Guard de onboarding (redirect si club no configurado) | ✅ done |
+| SPEC-012 | Portal de padres — rol `parent`, `parent_athletes`, dashboard | ✅ done |
+
+---
+
+**Objetivo backend:** FastAPI + LangGraph funcionando, AG-01 (Admin) y AG-02 (Coach) MVP
 
 ### Estructura a crear
 ```
@@ -93,19 +104,20 @@ backend/
 ```
 
 ### Días 6-8
-| Tarea | Agente | Status |
-|-------|--------|--------|
-| Setup FastAPI + estructura backend | AG-CLAUDE-BACKEND | ⬜ |
-| Conexión Supabase desde Python | AG-CLAUDE-BACKEND | ⬜ |
-| base_agent.py con RAG + DB access | AG-CLAUDE-BACKEND | ⬜ |
-| admin_agent.py (AG-01) MVP | AG-CLAUDE-BACKEND | ⬜ |
+| Tarea | Agente | Status | SPEC |
+|-------|--------|--------|------|
+| Setup FastAPI + estructura backend | AG-CLAUDE-BACKEND | ✅ done | SPEC-013 |
+| Conexión Supabase desde Python | AG-CLAUDE-BACKEND | ✅ done | SPEC-013 |
+| base_agent.py con DB access | AG-CLAUDE-BACKEND | ✅ done | SPEC-013 |
+| admin_agent.py (AG-01) MVP | AG-CLAUDE-BACKEND | ✅ done | SPEC-013 |
 
 ### Días 9-10
-| Tarea | Agente | Status |
-|-------|--------|--------|
-| skating_agent.py (AG-02) MVP | AG-CLAUDE-BACKEND | ⬜ |
-| Celery + Redis configuración | AG-CLAUDE-BACKEND | ⬜ |
-| WebSocket endpoint para streaming | AG-CLAUDE-BACKEND | ⬜ |
+| Tarea | Agente | Status | SPEC |
+|-------|--------|--------|------|
+| skating_agent.py (AG-02) MVP | AG-CLAUDE-BACKEND | ✅ done | SPEC-013 |
+| Celery + Redis configuración | AG-CLAUDE-BACKEND | ✅ done | SPEC-014 |
+| SSE streaming endpoint | AG-CLAUDE-BACKEND | ✅ done | SPEC-015 |
+| RAG con pgvector (LangGraph) | AG-CLAUDE-BACKEND | ✅ done | SPEC-025 |
 
 ---
 

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -77,7 +77,7 @@ export const HistoryRecordsTable: React.FC<HistoryRecordsTableProps> = ({
                 )}
               </TableCell>
               <TableCell>{record.previous_club || '-'}</TableCell>
-              <TableCell>{record.years_experience || 0}</TableCell>
+              <TableCell>{record.years_experience ?? 0}</TableCell>
               <TableCell>
                 {record.start_date ? format(new Date(record.start_date), 'dd/MM/yyyy') : '-'}
               </TableCell>

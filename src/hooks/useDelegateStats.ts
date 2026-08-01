@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface DelegateStats {
@@ -32,7 +32,7 @@ export const useDelegateStats = () => {
       const athletesByCategory: Record<string, number> = {};
       athletes?.forEach(athlete => {
         const category = athlete.category || 'Sin categoría';
-        athletesByCategory[category] = (athletesByCategory[category] || 0) + 1;
+        athletesByCategory[category] = (athletesByCategory[category] ?? 0) + 1;
       });
 
       // Calculate upcoming birthdays (next 30 days)
@@ -48,13 +48,13 @@ export const useDelegateStats = () => {
           const daysUntil = Math.ceil((thisYearBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
           return {
             id: athlete.id,
-            name: `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim(),
+            name: `${athlete.first_name ?? ''} ${athlete.last_name ?? ''}`.trim(),
             date_of_birth: athlete.date_of_birth!,
             daysUntil,
           };
         })
         .filter(b => b.daysUntil <= 30 && b.daysUntil >= 0)
-        .sort((a, b) => a.daysUntil - b.daysUntil) || [];
+        .sort((a, b) => a.daysUntil - b.daysUntil) ?? [];
 
       // Get upcoming competitions
       const { data: competitions, error: competitionsError } = await supabase
@@ -73,13 +73,13 @@ export const useDelegateStats = () => {
 
       if (paymentsError) throw paymentsError;
 
-      const pendingPayments = payments?.filter(p => p.payment_status === 'pending' || p.payment_status === 'overdue') || [];
-      const completedPayments = payments?.filter(p => p.payment_status === 'paid') || [];
+      const pendingPayments = payments?.filter(p => p.payment_status === 'pending' || p.payment_status === 'overdue') ?? [];
+      const completedPayments = payments?.filter(p => p.payment_status === 'paid') ?? [];
 
       return {
-        totalAthletes: athletes?.length || 0,
+        totalAthletes: athletes?.length ?? 0,
         athletesByCategory,
-        upcomingCompetitions: competitions?.length || 0,
+        upcomingCompetitions: competitions?.length ?? 0,
         pendingPayments: pendingPayments.length,
         pendingPaymentsAmount: pendingPayments.reduce((sum, p) => sum + Number(p.amount), 0),
         completedPaymentsAmount: completedPayments.reduce((sum, p) => sum + Number(p.amount), 0),

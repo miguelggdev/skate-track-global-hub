@@ -232,10 +232,13 @@ export function AwardSchemeSettings() {
                         min={1}
                         max={15}
                         value={customConfig[cat]?.count ?? 3}
-                        onChange={e => setCustomConfig(prev => ({
-                          ...prev,
-                          [cat]: { ...prev[cat], count: parseInt(e.target.value) || 3 },
-                        }))}
+                        onChange={e => {
+                          const parsed = parseInt(e.target.value);
+                          setCustomConfig(prev => ({
+                            ...prev,
+                            [cat]: { ...prev[cat], count: !isNaN(parsed) ? parsed : 3 },
+                          }));
+                        }}
                         className="h-7 w-14 text-xs text-center"
                       />
                       <span className="text-xs text-muted-foreground">premiados</span>

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -53,38 +53,38 @@ const Training = () => {
   const { data: trainingStats, isLoading: isStatsLoading } = useTrainingStats();
 
   const stats = [
-    { 
-      title: "ACTIVE SESSIONS", 
-      value: trainingStats?.activeSessions?.toString() || "0", 
-      change: "+8%", 
-      period: "from last week",
+    {
+      title: "SESIONES ACTIVAS",
+      value: trainingStats?.activeSessions?.toString() ?? "0",
+      change: "+8%",
+      period: "desde la semana pasada",
       icon: Activity,
       bgColor: "argon-gradient-blue",
       isPositive: true
     },
-    { 
-      title: "TOTAL ATHLETES", 
-      value: trainingStats?.totalAthletes?.toString() || "0", 
-      change: `${trainingStats?.activeAthletes || 0} active`, 
-      period: "in last 30 days",
+    {
+      title: "TOTAL ATLETAS",
+      value: trainingStats?.totalAthletes?.toString() ?? "0",
+      change: `${trainingStats?.activeAthletes ?? 0} activos`,
+      period: "en los últimos 30 días",
       icon: Users,
       bgColor: "argon-gradient-green",
       isPositive: true
     },
-    { 
-      title: "COMPLETION RATE", 
-      value: `${trainingStats?.completionRate?.toFixed(1) || "0"}%`, 
-      change: "+2.1%", 
-      period: "from last month",
+    {
+      title: "TASA DE FINALIZACIÓN",
+      value: `${trainingStats?.completionRate?.toFixed(1) ?? "0"}%`,
+      change: "+2.1%",
+      period: "desde el mes pasado",
       icon: Target,
       bgColor: "argon-gradient-orange",
       isPositive: true
     },
-    { 
-      title: "AVG SESSION TIME", 
-      value: `${trainingStats?.avgSessionTime?.toFixed(1) || "0"}h`, 
-      change: "stable", 
-      period: "average duration",
+    {
+      title: "TIEMPO PROM. SESIÓN",
+      value: `${trainingStats?.avgSessionTime?.toFixed(1) ?? "0"}h`,
+      change: "estable",
+      period: "duración promedio",
       icon: Timer,
       bgColor: "argon-gradient-red",
       isPositive: true
@@ -92,10 +92,10 @@ const Training = () => {
   ];
 
   const trainingPrograms = [
-    { name: "Sprint Development", progress: 75, color: "bg-blue-500", athletes: 24 },
-    { name: "Endurance Building", progress: 60, color: "bg-green-500", athletes: 18 },
-    { name: "Technique Mastery", progress: 90, color: "bg-purple-500", athletes: 12 },
-    { name: "Competition Ready", progress: 45, color: "bg-orange-500", athletes: 8 }
+    { name: "Desarrollo de Velocidad", progress: 75, color: "bg-blue-500", athletes: 24 },
+    { name: "Resistencia y Fondo", progress: 60, color: "bg-green-500", athletes: 18 },
+    { name: "Dominio Técnico", progress: 90, color: "bg-purple-500", athletes: 12 },
+    { name: "Preparación Competitiva", progress: 45, color: "bg-orange-500", athletes: 8 }
   ];
 
   const getStatusColor = (status: string) => {
@@ -104,7 +104,7 @@ const Training = () => {
       case 'in-progress': return 'bg-orange-100 text-orange-800';
       case 'completed': return 'bg-green-100 text-green-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -134,30 +134,30 @@ const Training = () => {
     .filter(session => {
       const matchesSearch = session.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            session.coach.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           session.location?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+                           (session.location?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
       const matchesFilter = filterStatus === 'all' || session.status === filterStatus;
       return matchesSearch && matchesFilter;
     })
     .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
 
   return (
-    <DashboardLayout title="Training Management">
+    <DashboardLayout title="Gestión de Entrenamientos">
       <div className="space-y-6 w-full">
         {/* Header Actions */}
         <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div className="min-w-0">
-            <p className="text-sm text-gray-600 truncate">Manage training sessions and programs</p>
+            <p className="text-sm text-muted-foreground truncate">Gestiona sesiones de entrenamiento y programas</p>
           </div>
           <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-3">
             {(isAdmin) && (
               <CreateTrainingDialog>
                 <Button className="argon-gradient-blue text-white hover:opacity-90 text-sm">
                   <Plus className="h-4 w-4 mr-2" />
-                  New Session
+                  Nueva Sesión
                 </Button>
               </CreateTrainingDialog>
             )}
-            <Button 
+            <Button
               onClick={() => {
                 if (currentView === 'sessions') {
                   setCurrentView('attendance');
@@ -171,10 +171,10 @@ const Training = () => {
               className="argon-gradient-green text-white hover:opacity-90 text-sm"
             >
               <CheckCircle className="h-4 w-4 mr-2" />
-              {currentView === 'sessions' ? 'Register Attendance' : 
-               currentView === 'attendance' ? 'View Reports' : 'View Sessions'}
+              {currentView === 'sessions' ? 'Registrar Asistencia' :
+               currentView === 'attendance' ? 'Ver Reportes' : 'Ver Sesiones'}
             </Button>
-            <Button 
+            <Button
               onClick={() => {
                 if (currentView === 'sessions') {
                   setCurrentView('reports');
@@ -185,11 +185,11 @@ const Training = () => {
                   setCurrentView('sessions');
                 }
               }}
-              variant="outline" 
+              variant="outline"
               className="text-sm"
             >
               <TrendingUp className="h-4 w-4 mr-2" />
-              {currentView === 'reports' ? 'Register Attendance' : 'Attendance Reports'}
+              {currentView === 'reports' ? 'Registrar Asistencia' : 'Reportes de Asistencia'}
             </Button>
           </div>
         </div>
@@ -199,14 +199,14 @@ const Training = () => {
           <>
             <DailyAttendanceIndicator />
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-              {stats.map((stat, index) => (
-                <Card key={index} className="argon-card relative overflow-hidden">
+              {stats.map((stat) => (
+                <Card key={stat.title} className="argon-card relative overflow-hidden">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <div className="min-w-0 flex-1 pr-2">
-                      <CardDescription className="text-xs font-medium text-gray-600 uppercase tracking-wider truncate">
+                      <CardDescription className="text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">
                         {stat.title}
                       </CardDescription>
-                      <CardTitle className="text-xl font-bold text-gray-800 truncate">
+                      <CardTitle className="text-xl font-bold text-foreground truncate">
                         {isStatsLoading ? "..." : stat.value}
                       </CardTitle>
                     </div>
@@ -215,7 +215,7 @@ const Training = () => {
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <p className="text-xs text-gray-600 truncate">
+                    <p className="text-xs text-muted-foreground truncate">
                       <span className={`font-semibold ${stat.isPositive ? 'text-green-600' : 'text-red-600'}`}>
                         {stat.change}
                       </span>{' '}
@@ -231,8 +231,8 @@ const Training = () => {
               <div className="mt-6">
                 <Card className="argon-card">
                   <CardHeader>
-                    <CardTitle className="text-lg font-semibold text-gray-800">Training Analytics</CardTitle>
-                    <CardDescription className="text-sm text-gray-600">Performance insights and trends</CardDescription>
+                    <CardTitle className="text-lg font-semibold text-foreground">Análisis de Entrenamientos</CardTitle>
+                    <CardDescription className="text-sm text-muted-foreground">Información y tendencias de desempeño</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <TrainingStatsCharts stats={trainingStats} isLoading={isStatsLoading} />
@@ -247,22 +247,22 @@ const Training = () => {
         {currentView === 'attendance' ? (
           <div ref={attendanceRef} className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Attendance Registration</h2>
+              <h2 className="text-xl font-semibold">Registro de Asistencia</h2>
               <div className="flex gap-2">
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => setCurrentView('reports')}
                   className="text-sm"
                 >
                   <TrendingUp className="h-4 w-4 mr-2" />
-                  View Reports
+                  Ver Reportes
                 </Button>
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => setCurrentView('sessions')}
                   className="text-sm"
                 >
-                  Back to Sessions
+                  Volver a Sesiones
                 </Button>
               </div>
             </div>
@@ -271,22 +271,22 @@ const Training = () => {
         ) : currentView === 'reports' ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Attendance Reports</h2>
+              <h2 className="text-xl font-semibold">Reportes de Asistencia</h2>
               <div className="flex gap-2">
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => setCurrentView('attendance')}
                   className="text-sm"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Register Attendance
+                  Registrar Asistencia
                 </Button>
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => setCurrentView('sessions')}
                   className="text-sm"
                 >
-                  Back to Sessions
+                  Volver a Sesiones
                 </Button>
               </div>
             </div>
@@ -300,28 +300,28 @@ const Training = () => {
               <CardHeader className="pb-4">
                 <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
                   <div className="min-w-0 flex-1">
-                    <CardTitle className="text-lg font-semibold text-gray-800 truncate">Training Sessions</CardTitle>
-                    <CardDescription className="text-sm text-gray-600">Today's schedule and upcoming sessions</CardDescription>
+                    <CardTitle className="text-lg font-semibold text-foreground truncate">Sesiones de Entrenamiento</CardTitle>
+                    <CardDescription className="text-sm text-muted-foreground">Horario de hoy y próximas sesiones</CardDescription>
                   </div>
                   <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 lg:flex-shrink-0">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                       <Input
-                        placeholder="Search..."
+                        placeholder="Buscar..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 w-full sm:w-40 lg:w-48 text-sm"
+                        className="pl-10 w-full sm:w-40 lg:w-48 text-sm bg-background"
                       />
                     </div>
                     <select 
                       value={filterStatus}
                       onChange={(e) => setFilterStatus(e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white min-w-0"
+                      className="px-3 py-2 border border-input rounded-md text-sm bg-background min-w-0"
                     >
-                      <option value="all">All Status</option>
-                      <option value="scheduled">Scheduled</option>
-                      <option value="in-progress">In Progress</option>
-                      <option value="completed">Completed</option>
+                      <option value="all">Todos los estados</option>
+                      <option value="scheduled">Programado</option>
+                      <option value="in-progress">En progreso</option>
+                      <option value="completed">Completado</option>
                     </select>
                   </div>
                 </div>
@@ -334,22 +334,22 @@ const Training = () => {
                  ) : (
                    <div className="space-y-4 max-h-96 overflow-y-auto">
                      {filteredSessions.length === 0 ? (
-                       <div className="text-center py-8 text-gray-500">
-                         <Activity className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                       <div className="text-center py-8 text-muted-foreground">
+                         <Activity className="h-16 w-16 mx-auto mb-4 text-muted" />
                          <p className="text-lg font-semibold">No hay sesiones de entrenamiento</p>
                          <p className="text-sm">Crea una nueva sesión para comenzar</p>
                        </div>
                      ) : (
                        filteredSessions.map((session) => (
-                         <div key={session.id} className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                         <div key={session.id} className="bg-muted/50 rounded-lg p-4 hover:bg-muted transition-colors">
                            <div className="flex flex-col space-y-3 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
                              <div className="flex items-start space-x-3 min-w-0 flex-1">
                                <div className={`p-2 rounded-lg ${getTypeGradient(session.training_type)} text-white flex-shrink-0`}>
                                  {getTypeIcon(session.training_type)}
                                </div>
                                <div className="min-w-0 flex-1">
-                                 <h4 className="font-semibold text-gray-800 text-sm truncate">{session.title}</h4>
-                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600 mt-1">
+                                 <h4 className="font-semibold text-foreground text-sm truncate">{session.title}</h4>
+                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
                                    <span className="flex items-center flex-shrink-0">
                                      <Clock className="h-3 w-3 mr-1" />
                                      {new Date(session.scheduled_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
@@ -364,7 +364,7 @@ const Training = () => {
                                      <span className="truncate max-w-20">{session.location || 'No especificado'}</span>
                                    </span>
                                  </div>
-                                 <p className="text-xs text-gray-500 mt-1 truncate">Coach: {session.coach}</p>
+                                 <p className="text-xs text-muted-foreground mt-1 truncate">Coach: {session.coach}</p>
                                </div>
                              </div>
                              <div className="flex items-center justify-between lg:justify-end gap-3 flex-shrink-0">
@@ -410,19 +410,19 @@ const Training = () => {
             <Card className="argon-card argon-gradient-purple text-white h-full">
               <CardContent className="p-6">
                 <div className="text-center">
-                  <h3 className="text-xl font-bold mb-2">Training Control</h3>
-                  <p className="text-purple-100 mb-6 text-sm">Quick actions for training management</p>
+                  <h3 className="text-xl font-bold mb-2">Control de Entrenamiento</h3>
+                  <p className="text-purple-100 mb-6 text-sm">Acciones rápidas para gestión de entrenamientos</p>
                   <div className="space-y-3">
                     {(isAdmin) && (
                       <CreateTrainingDialog>
                         <Button className="w-full bg-white text-purple-600 hover:bg-gray-100 text-sm">
                           <Plus className="h-4 w-4 mr-2" />
-                          Schedule Session
+                          Programar Sesión
                         </Button>
                       </CreateTrainingDialog>
                     )}
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="w-full border-white text-white hover:bg-white hover:text-purple-600 text-sm"
                       onClick={() => window.location.href = '/training/calendar'}
                     >
@@ -431,11 +431,11 @@ const Training = () => {
                     </Button>
                     <Button variant="outline" className="w-full border-white text-white hover:bg-white hover:text-purple-600 text-sm">
                       <Activity className="h-4 w-4 mr-2" />
-                      Performance Reports
+                      Reportes de Desempeño
                     </Button>
                     <Button variant="outline" className="w-full border-white text-white hover:bg-white hover:text-purple-600 text-sm">
                       <Trophy className="h-4 w-4 mr-2" />
-                      Competition Prep
+                      Preparación Competitiva
                     </Button>
                   </div>
                 </div>
@@ -450,12 +450,12 @@ const Training = () => {
           {/* Training Programs Progress */}
           <Card className="argon-card">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold text-gray-800">Training Programs</CardTitle>
-              <CardDescription className="text-sm text-gray-600">Current program progress and participation</CardDescription>
+              <CardTitle className="text-lg font-semibold text-foreground">Programas de Entrenamiento</CardTitle>
+              <CardDescription className="text-sm text-muted-foreground">Progreso actual y participación en programas</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {trainingPrograms.map((program, index) => (
-                <div key={index} className="space-y-2">
+              {trainingPrograms.map((program) => (
+                <div key={program.name} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3 min-w-0 flex-1">
                       <div className={`w-8 h-8 rounded-lg ${program.color} flex items-center justify-center flex-shrink-0`}>
@@ -464,13 +464,13 @@ const Training = () => {
                         </span>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <span className="font-medium text-gray-800 text-sm block truncate">{program.name}</span>
-                        <p className="text-xs text-gray-500">{program.athletes} athletes enrolled</p>
+                        <span className="font-medium text-foreground text-sm block truncate">{program.name}</span>
+                        <p className="text-xs text-muted-foreground">{program.athletes} atletas inscritos</p>
                       </div>
                     </div>
-                    <span className="text-sm font-semibold text-gray-600 flex-shrink-0">{program.progress}%</span>
+                    <span className="text-sm font-semibold text-muted-foreground flex-shrink-0">{program.progress}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-muted rounded-full h-2">
                     <div 
                       className={`h-2 rounded-full ${program.color}`}
                       style={{ width: `${program.progress}%` }}
@@ -484,22 +484,22 @@ const Training = () => {
           {/* Weekly Overview */}
           <Card className="argon-card">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold text-gray-800">Weekly Overview</CardTitle>
-              <CardDescription className="text-sm text-gray-600">Training statistics for this week</CardDescription>
+              <CardTitle className="text-lg font-semibold text-foreground">Resumen Semanal</CardTitle>
+              <CardDescription className="text-sm text-muted-foreground">Estadísticas de entrenamiento de esta semana</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-64 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg flex items-center justify-center">
+              <div className="h-64 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-lg flex items-center justify-center">
                 <div className="text-center">
                   <TrendingUp className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-4">Performance Analytics</p>
+                  <p className="text-muted-foreground mb-4">Análisis de Desempeño</p>
                   <div className="grid grid-cols-2 gap-4 text-center">
                     <div>
                       <p className="text-2xl font-bold text-blue-600">24</p>
-                      <p className="text-sm text-gray-500">Sessions</p>
+                      <p className="text-sm text-muted-foreground">Sesiones</p>
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-green-600">92%</p>
-                      <p className="text-sm text-gray-500">Attendance</p>
+                      <p className="text-sm text-muted-foreground">Asistencia</p>
                     </div>
                   </div>
                 </div>

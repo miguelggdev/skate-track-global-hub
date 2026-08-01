@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -71,7 +71,7 @@ const DelegateAthletes = () => {
   };
 
   const getInitials = (firstName: string | null, lastName: string | null) => {
-    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase() || 'AT';
+    return `${firstName?.charAt(0) ?? ''}${lastName?.charAt(0) ?? ''}`.toUpperCase() || 'AT';
   };
 
   const openAthleteDetails = (athlete: DelegateAthlete) => {
@@ -97,7 +97,7 @@ const DelegateAthletes = () => {
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Users className="h-4 w-4" />
-                <span>{athletes?.length || 0} atletas</span>
+                <span>{athletes?.length ?? 0} atletas</span>
               </div>
             </div>
           </CardHeader>
@@ -257,7 +257,7 @@ const AthleteDetailsDialog = ({ athlete, open, onOpenChange, currency }: Athlete
         .eq('athlete_id', athlete.id)
         .order('registration_date', { ascending: false });
       if (error) throw error;
-      return data || [];
+      return data ?? [];
     },
     enabled: !!athlete?.id && open
   });
@@ -278,7 +278,7 @@ const AthleteDetailsDialog = ({ athlete, open, onOpenChange, currency }: Athlete
             <Avatar className="h-12 w-12">
               <AvatarImage src={athlete.photo_url || undefined} />
               <AvatarFallback>
-                {`${athlete.first_name?.charAt(0) || ''}${athlete.last_name?.charAt(0) || ''}`.toUpperCase()}
+                {`${athlete.first_name?.charAt(0) ?? ''}${athlete.last_name?.charAt(0) ?? ''}`.toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div>

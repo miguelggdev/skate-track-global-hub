@@ -27,7 +27,7 @@ const UpcomingEvents = () => {
   return (
     <Card className="argon-card">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-gray-800">Upcoming Events</CardTitle>
+        <CardTitle className="text-lg font-semibold text-foreground">Próximos Eventos</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {isLoading ? (
@@ -36,11 +36,11 @@ const UpcomingEvents = () => {
           </div>
         ) : error ? (
           <div className="flex items-center justify-center h-32">
-            <p className="text-red-500 text-sm">Error loading events</p>
+            <p className="text-red-500 text-sm">Error al cargar eventos</p>
           </div>
         ) : competitions.length === 0 ? (
           <div className="flex items-center justify-center h-32">
-            <p className="text-gray-500 text-sm">No upcoming events</p>
+            <p className="text-muted-foreground text-sm">Sin próximos eventos</p>
           </div>
         ) : (
           competitions.slice(0, 5).map((competition) => {
@@ -50,10 +50,10 @@ const UpcomingEvents = () => {
                 <div className="flex items-center space-x-3">
                   <div className={`w-3 h-3 rounded-full ${getStatusColor(competition.status)}`}></div>
                   <div>
-                    <p className="font-medium text-gray-800">{competition.name}</p>
-                    <p className="text-sm text-gray-600">
-                      {format(new Date(competition.start_date), 'MMM dd')} 
-                      {daysUntil >= 0 ? ` (${daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `in ${daysUntil} days`})` : ' (Past)'}
+                    <p className="font-medium text-foreground">{competition.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {format(new Date(competition.start_date), 'MMM dd')}
+                      {daysUntil >= 0 ? ` (${daysUntil === 0 ? 'Hoy' : daysUntil === 1 ? 'Mañana' : `en ${daysUntil} días`})` : ' (Pasado)'}
                     </p>
                   </div>
                 </div>

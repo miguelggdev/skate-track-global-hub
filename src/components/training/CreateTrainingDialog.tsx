@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -282,7 +282,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
         return supabase.from('training_sessions').insert({
           coach_id: (item.coach_id === 'unassigned' || !item.coach_id) ? coachId : item.coach_id,
           title: `${selectedType?.label} - ${categories.find(c => c.value === item.category)?.label}`,
-          description: selectedType?.description || formData.description || '',
+          description: selectedType?.description || (formData.description ?? ''),
           scheduled_at: scheduledAt,
           duration_minutes: durationMinutes > 0 ? durationMinutes : 60,
           location: item.location || null,
@@ -755,7 +755,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                                                 training.training_type === 'physical' ? 'bg-red-500' :
                                                 training.training_type === 'mental' ? 'bg-purple-500' : 'bg-green-500';
                                 
-                                const categoryText = categories.find(c => c.value === training.category)?.label || '';
+                                const categoryText = categories.find(c => c.value === training.category)?.label ?? '';
                                 
                                 return (
                                   <div key={idx} className={`text-xs text-center text-white p-1 rounded mb-1 ${typeColor}`}>
@@ -791,8 +791,8 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                 {weeklySchedule.length > 0 && (
                   <div className="space-y-2">
                     <Label className="text-base font-medium">Lista de Entrenamientos:</Label>
-                    {weeklySchedule.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                    {weeklySchedule.map((item) => (
+                      <div key={item.day} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                         <div className="flex items-center space-x-4">
                           <CalendarIcon className="h-4 w-4" />
                           <span className="font-medium">

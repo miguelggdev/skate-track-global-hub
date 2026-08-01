@@ -110,7 +110,7 @@ export default function QuickAttendanceDialog({ children }: QuickAttendanceDialo
           title: `${label} Training`,
           scheduled_at: scheduledAt,
           duration_minutes: totalDurationMinutes,
-          training_type: trainingType as any,
+          training_type: trainingType as 'gym' | 'road_skating' | 'track_skating' | 'bicycle' | 'static_bicycle' | 'technical' | 'physical' | 'mental' | 'recovery' | 'simulator',
           description: `${label} Training`,
         })
         .select()

@@ -65,7 +65,7 @@ const PerformanceCard: React.FC<PerformanceCardProps> = ({
   const progressPercentage = target ? Math.min((value / target) * 100, 100) : 0;
 
   return (
-    <Card className={`hover:scale-105 transition-all duration-300 animate-scale-in ${className}`}>
+    <Card className={`md:hover:scale-105 transition-all duration-300 animate-scale-in ${className}`}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
         <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">

@@ -1,4 +1,4 @@
-import jsPDF from 'jspdf';
+﻿import jsPDF from 'jspdf';
 
 export interface ClubInfo {
   club_name?: string;
@@ -116,7 +116,7 @@ export class ReportTemplateGenerator {
 
     // Essential contact info (left side, below name)
     if (this.settings.report_include_contact) {
-      const contact = this.clubInfo.contact_email || this.clubInfo.contact_phone || '';
+      const contact = this.clubInfo.contact_email || (this.clubInfo.contact_phone ?? '');
       if (contact) {
         this.doc.setFontSize(9);
         this.doc.setTextColor(75, 85, 99);

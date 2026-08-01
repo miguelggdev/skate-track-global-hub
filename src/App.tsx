@@ -1,3 +1,4 @@
+import React, { Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,76 +9,93 @@ import { AuthProvider } from "@/providers/AuthProvider";
 import { TranslationProvider } from "@/providers/TranslationProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import Index from "./pages/Index";
+import { useOnboardingGuard } from "@/hooks/useOnboardingGuard";
+
+// Static imports — always needed immediately (tiny files, auth critical path)
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
-import AdminDashboard from "./pages/AdminDashboard";
-import CoachDashboard from "./pages/CoachDashboard";
-import AthleteDashboard from "./pages/AthleteDashboard";
 import NotFound from "./pages/NotFound";
-import DelegateDashboard from "./pages/DelegateDashboard";
-import FinanceDashboard from "./pages/FinanceDashboard";
-import LeaderDashboard from "./pages/LeaderDashboard";
-import Athletes from "./pages/Athletes";
-import Training from "./pages/Training";
-import TrainingCalendar from "./pages/TrainingCalendar";
-import Competitions from "./pages/Competitions";
-import Finance from "./pages/Finance";
-import Settings from "./pages/Settings";
-import UserManagement from "./pages/UserManagement";
-import ClubConfig from "./pages/ClubConfig";
-import Reports from "./pages/Reports";
-import AthleteTraining from "./pages/AthleteTraining";
-import AthleteCompetitions from "./pages/AthleteCompetitions";
-import DelegateAthletes from "./pages/DelegateAthletes";
-import DelegateCompetitions from "./pages/DelegateCompetitions";
-import DelegatePayments from "./pages/DelegatePayments";
-import DelegateTraining from "./pages/DelegateTraining";
-import DelegateReports from "./pages/DelegateReports";
-import Tiempos from "./pages/Tiempos";
-import Documents from "./pages/Documents";
-import EquipmentPage from "./pages/EquipmentPage";
-import EvaluationsPage from "./pages/EvaluationsPage";
-import MessagesPage from "./pages/MessagesPage";
-import MedicalPage from "./pages/MedicalPage";
-import PublicAthletePage from "./pages/PublicAthletePage";
+
+// Lazy imports — large feature pages loaded on demand to reduce initial bundle
+const Onboarding         = React.lazy(() => import('./pages/Onboarding'));
+const AdminDashboard     = React.lazy(() => import('./pages/AdminDashboard'));
+const CoachDashboard     = React.lazy(() => import('./pages/CoachDashboard'));
+const AthleteDashboard   = React.lazy(() => import('./pages/AthleteDashboard'));
+const DelegateDashboard  = React.lazy(() => import('./pages/DelegateDashboard'));
+const FinanceDashboard   = React.lazy(() => import('./pages/FinanceDashboard'));
+const LeaderDashboard    = React.lazy(() => import('./pages/LeaderDashboard'));
+const ParentDashboard    = React.lazy(() => import('./pages/ParentDashboard'));
+const Athletes           = React.lazy(() => import('./pages/Athletes'));
+const Training           = React.lazy(() => import('./pages/Training'));
+const TrainingCalendar   = React.lazy(() => import('./pages/TrainingCalendar'));
+const Competitions       = React.lazy(() => import('./pages/Competitions'));
+const Finance            = React.lazy(() => import('./pages/Finance'));
+const Settings           = React.lazy(() => import('./pages/Settings'));
+const UserManagement     = React.lazy(() => import('./pages/UserManagement'));
+const ClubConfig         = React.lazy(() => import('./pages/ClubConfig'));
+const Reports            = React.lazy(() => import('./pages/Reports'));
+const AthleteTraining    = React.lazy(() => import('./pages/AthleteTraining'));
+const AthleteCompetitions = React.lazy(() => import('./pages/AthleteCompetitions'));
+const DelegateAthletes   = React.lazy(() => import('./pages/DelegateAthletes'));
+const DelegateCompetitions = React.lazy(() => import('./pages/DelegateCompetitions'));
+const DelegatePayments   = React.lazy(() => import('./pages/DelegatePayments'));
+const DelegateTraining   = React.lazy(() => import('./pages/DelegateTraining'));
+const DelegateReports    = React.lazy(() => import('./pages/DelegateReports'));
+const Tiempos            = React.lazy(() => import('./pages/Tiempos'));
+const Documents          = React.lazy(() => import('./pages/Documents'));
+const EquipmentPage      = React.lazy(() => import('./pages/EquipmentPage'));
+const EvaluationsPage    = React.lazy(() => import('./pages/EvaluationsPage'));
+const MessagesPage       = React.lazy(() => import('./pages/MessagesPage'));
+const MedicalPage        = React.lazy(() => import('./pages/MedicalPage'));
+const PublicAthletePage  = React.lazy(() => import('./pages/PublicAthletePage'));
 
 const queryClient = new QueryClient();
+
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen bg-background">
+    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+  </div>
+);
 
 // Componente para redirigir usuarios según su rol
 const RoleBasedRedirect = () => {
   const { user, loading } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile();
-  
-  if (loading || profileLoading) {
-    return <div className="flex items-center justify-center min-h-screen">Cargando...</div>;
+  const isAdminOrLeader = profile?.role === 'admin' || profile?.role === 'leader';
+  const { needsOnboarding, loading: guardLoading } = useOnboardingGuard(
+    !loading && !profileLoading && isAdminOrLeader
+  );
+
+  if (loading || profileLoading || (isAdminOrLeader && guardLoading)) {
+    return <PageLoader />;
   }
-  
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Redirect based on user role
   if (profile?.role) {
+    if (profile.role === 'admin') {
+      return needsOnboarding
+        ? <Navigate to="/onboarding" replace />
+        : <Navigate to="/admin-dashboard" replace />;
+    }
+    if (profile.role === 'leader') {
+      return needsOnboarding
+        ? <Navigate to="/onboarding" replace />
+        : <Navigate to="/leader-dashboard" replace />;
+    }
     switch (profile.role) {
-      case 'admin':
-        return <Navigate to="/admin-dashboard" replace />;
-      case 'coach':
-        return <Navigate to="/coach-dashboard" replace />;
-      case 'athlete':
-        return <Navigate to="/athlete-dashboard" replace />;
-      case 'delegate':
-        return <Navigate to="/delegate-dashboard" replace />;
-      case 'leader':
-        return <Navigate to="/leader-dashboard" replace />;
-      case 'finance':
-        return <Navigate to="/finance-dashboard" replace />;
-      default:
-        return <Navigate to="/athlete-dashboard" replace />;
+      case 'coach':    return <Navigate to="/coach-dashboard" replace />;
+      case 'athlete':  return <Navigate to="/athlete-dashboard" replace />;
+      case 'delegate': return <Navigate to="/delegate-dashboard" replace />;
+      case 'finance':  return <Navigate to="/finance-dashboard" replace />;
+      case 'parent':   return <Navigate to="/parent-dashboard" replace />;
+      default:         return <Navigate to="/athlete-dashboard" replace />;
     }
   }
-  
-  // Default fallback
+
   return <Navigate to="/athlete-dashboard" replace />;
 };
 
@@ -85,33 +103,25 @@ const RoleBasedRedirect = () => {
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
   const { user, loading } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile();
-  
+
   if (loading || profileLoading) {
-    return <div className="flex items-center justify-center min-h-screen">Cargando...</div>;
+    return <PageLoader />;
   }
-  
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Check role-based access if allowedRoles is specified
   if (allowedRoles && profile?.role && !allowedRoles.includes(profile.role)) {
-    // Redirect to user's appropriate dashboard
     switch (profile.role) {
-      case 'admin':
-        return <Navigate to="/admin-dashboard" replace />;
-      case 'coach':
-        return <Navigate to="/coach-dashboard" replace />;
-      case 'athlete':
-        return <Navigate to="/athlete-dashboard" replace />;
-      case 'delegate':
-        return <Navigate to="/delegate-dashboard" replace />;
-      case 'leader':
-        return <Navigate to="/leader-dashboard" replace />;
-      case 'finance':
-        return <Navigate to="/finance-dashboard" replace />;
-      default:
-        return <Navigate to="/athlete-dashboard" replace />;
+      case 'admin':    return <Navigate to="/admin-dashboard" replace />;
+      case 'coach':    return <Navigate to="/coach-dashboard" replace />;
+      case 'athlete':  return <Navigate to="/athlete-dashboard" replace />;
+      case 'delegate': return <Navigate to="/delegate-dashboard" replace />;
+      case 'leader':   return <Navigate to="/leader-dashboard" replace />;
+      case 'finance':  return <Navigate to="/finance-dashboard" replace />;
+      case 'parent':   return <Navigate to="/parent-dashboard" replace />;
+      default:         return <Navigate to="/athlete-dashboard" replace />;
     }
   }
 
@@ -133,242 +143,260 @@ const App = () => (
             <Toaster />
             <Sonner />
             <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
-            <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/app" element={<RoleBasedRedirect />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route 
-            path="/athletes" 
-            element={
-              <ProtectedRoute allowedRoles={['admin', 'coach', 'leader']}>
-                <Athletes />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/training" 
-            element={
-              <ProtectedRoute allowedRoles={['admin', 'coach', 'athlete', 'leader', 'delegate']}>
-                <Training />
-              </ProtectedRoute>
-            } 
-          />
-          <Route
-            path="/tiempos"
-            element={
-              <ProtectedRoute allowedRoles={['admin', 'coach', 'leader']}>
-                <Tiempos />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/documentos"
-            element={
-              <ProtectedRoute allowedRoles={['admin', 'coach', 'leader']}>
-                <Documents />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/equipamiento"
-            element={
-              <ProtectedRoute allowedRoles={['admin', 'coach', 'leader']}>
-                <EquipmentPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/evaluaciones"
-            element={
-              <ProtectedRoute allowedRoles={['admin', 'coach', 'leader']}>
-                <EvaluationsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/mensajes"
-            element={
-              <ProtectedRoute>
-                <MessagesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/training/calendar"
-            element={
-              <ProtectedRoute allowedRoles={['admin', 'coach', 'athlete', 'leader']}>
-                <TrainingCalendar />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/competitions" 
-            element={
-              <ProtectedRoute allowedRoles={['admin', 'delegate', 'coach', 'athlete', 'leader']}>
-                <Competitions />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/finance" 
-            element={
-              <ProtectedRoute allowedRoles={['admin', 'finance', 'leader']}>
-                <Finance />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/settings" 
-            element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/club-config" 
-            element={
-              <ProtectedRoute allowedRoles={['admin', 'leader']}>
-                <ClubConfig />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/user-management" 
-            element={
-              <ProtectedRoute allowedRoles={['admin', 'leader']}>
-                <UserManagement />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/admin-dashboard" 
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/coach-dashboard" 
-            element={
-              <ProtectedRoute allowedRoles={['coach']}>
-                <CoachDashboard />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/athlete-dashboard" 
-            element={
-              <ProtectedRoute allowedRoles={['athlete']}>
-                <AthleteDashboard />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/delegate-dashboard" 
-            element={
-              <ProtectedRoute allowedRoles={['delegate']}>
-                <DelegateDashboard />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/finance-dashboard" 
-            element={
-              <ProtectedRoute allowedRoles={['finance']}>
-                <FinanceDashboard />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/leader-dashboard" 
-            element={
-              <ProtectedRoute allowedRoles={['leader']}>
-                <LeaderDashboard />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/reports" 
-            element={
-              <ProtectedRoute allowedRoles={['admin', 'leader', 'finance']}>
-                <Reports />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/athlete/training" 
-            element={
-              <ProtectedRoute allowedRoles={['athlete']}>
-                <AthleteTraining />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/athlete/competitions" 
-            element={
-              <ProtectedRoute allowedRoles={['athlete']}>
-                <AthleteCompetitions />
-              </ProtectedRoute>
-            } 
-            />
-          {/* Delegate Routes */}
-          <Route 
-            path="/delegate/athletes" 
-            element={
-              <ProtectedRoute allowedRoles={['delegate']}>
-                <DelegateAthletes />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/delegate/competitions" 
-            element={
-              <ProtectedRoute allowedRoles={['delegate']}>
-                <DelegateCompetitions />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/delegate/payments" 
-            element={
-              <ProtectedRoute allowedRoles={['delegate']}>
-                <DelegatePayments />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/delegate/training" 
-            element={
-              <ProtectedRoute allowedRoles={['delegate']}>
-                <DelegateTraining />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/delegate/reports" 
-            element={
-              <ProtectedRoute allowedRoles={['delegate']}>
-                <DelegateReports />
-              </ProtectedRoute>
-            } 
-          />
-          <Route
-            path="/medico"
-            element={
-              <ProtectedRoute allowedRoles={['admin', 'coach']}>
-                <MedicalPage />
-              </ProtectedRoute>
-            }
-          />
-          {/* Public page — no auth required, for sharing with parents */}
-          <Route path="/publico/atleta/:athleteId" element={<PublicAthletePage />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+              <BrowserRouter>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    <Route path="/" element={<Navigate to="/login" replace />} />
+                    <Route path="/app" element={<RoleBasedRedirect />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route
+                      path="/onboarding"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'leader']}>
+                          <Onboarding />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/athletes"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'coach', 'leader']}>
+                          <Athletes />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/training"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'coach', 'athlete', 'leader', 'delegate']}>
+                          <Training />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/tiempos"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'coach', 'leader']}>
+                          <Tiempos />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/documentos"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'coach', 'leader']}>
+                          <Documents />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/equipamiento"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'coach', 'leader']}>
+                          <EquipmentPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/evaluaciones"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'coach', 'leader']}>
+                          <EvaluationsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/mensajes"
+                      element={
+                        <ProtectedRoute>
+                          <MessagesPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/training/calendar"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'coach', 'athlete', 'leader']}>
+                          <TrainingCalendar />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/competitions"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'delegate', 'coach', 'athlete', 'leader']}>
+                          <Competitions />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/finance"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'finance', 'leader']}>
+                          <Finance />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/settings"
+                      element={
+                        <ProtectedRoute>
+                          <Settings />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/club-config"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'leader']}>
+                          <ClubConfig />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/user-management"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'leader']}>
+                          <UserManagement />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin-dashboard"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin']}>
+                          <AdminDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/coach-dashboard"
+                      element={
+                        <ProtectedRoute allowedRoles={['coach']}>
+                          <CoachDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/athlete-dashboard"
+                      element={
+                        <ProtectedRoute allowedRoles={['athlete']}>
+                          <AthleteDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/delegate-dashboard"
+                      element={
+                        <ProtectedRoute allowedRoles={['delegate']}>
+                          <DelegateDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/finance-dashboard"
+                      element={
+                        <ProtectedRoute allowedRoles={['finance']}>
+                          <FinanceDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/leader-dashboard"
+                      element={
+                        <ProtectedRoute allowedRoles={['leader']}>
+                          <LeaderDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/reports"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'leader', 'finance']}>
+                          <Reports />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/athlete/training"
+                      element={
+                        <ProtectedRoute allowedRoles={['athlete']}>
+                          <AthleteTraining />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/athlete/competitions"
+                      element={
+                        <ProtectedRoute allowedRoles={['athlete']}>
+                          <AthleteCompetitions />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/delegate/athletes"
+                      element={
+                        <ProtectedRoute allowedRoles={['delegate']}>
+                          <DelegateAthletes />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/delegate/competitions"
+                      element={
+                        <ProtectedRoute allowedRoles={['delegate']}>
+                          <DelegateCompetitions />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/delegate/payments"
+                      element={
+                        <ProtectedRoute allowedRoles={['delegate']}>
+                          <DelegatePayments />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/delegate/training"
+                      element={
+                        <ProtectedRoute allowedRoles={['delegate']}>
+                          <DelegateTraining />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/delegate/reports"
+                      element={
+                        <ProtectedRoute allowedRoles={['delegate']}>
+                          <DelegateReports />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/medico"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'coach']}>
+                          <MedicalPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/parent-dashboard"
+                      element={
+                        <ProtectedRoute allowedRoles={['parent']}>
+                          <ParentDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    {/* Public page — no auth required, for sharing with parents */}
+                    <Route path="/publico/atleta/:athleteId" element={<PublicAthletePage />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
               </BrowserRouter>
             </div>
           </TooltipProvider>

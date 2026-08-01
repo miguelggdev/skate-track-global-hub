@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export type ReportType = 'income' | 'expenses' | 'balance' | 'complete';
@@ -118,12 +118,12 @@ export const useFinancialReports = (reportType: ReportType, period: ReportPeriod
 
       incomeTransactions.forEach(t => {
         const label = typeLabels[t.transaction_type as keyof typeof typeLabels] || t.transaction_type;
-        incomeBreakdown[label] = (incomeBreakdown[label] || 0) + Math.abs(t.amount);
+        incomeBreakdown[label] = (incomeBreakdown[label] ?? 0) + Math.abs(t.amount);
       });
 
       expenseTransactions.forEach(t => {
         const label = typeLabels[t.transaction_type as keyof typeof typeLabels] || t.transaction_type;
-        expenseBreakdown[label] = (expenseBreakdown[label] || 0) + Math.abs(t.amount);
+        expenseBreakdown[label] = (expenseBreakdown[label] ?? 0) + Math.abs(t.amount);
       });
 
       // Monthly trends (for the past 6 months)

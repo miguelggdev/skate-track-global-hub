@@ -13,9 +13,9 @@ function isSilver(mt: string | null) { return ['silver', 'plata'].includes((mt ?
 function isBronze(mt: string | null) { return ['bronze', 'bronce'].includes((mt ?? '').toLowerCase()); }
 
 const getMedalIcon = (medal: MedalKind) => {
-  if (medal === 'gold')   return <Trophy className="h-6 w-6 text-yellow-500" />;
-  if (medal === 'silver') return <Medal className="h-6 w-6 text-gray-400" />;
-  return <Award className="h-6 w-6 text-amber-600" />;
+  if (medal === 'gold')   return <Trophy className="h-6 w-6 text-yellow-500 dark:text-yellow-400" />;
+  if (medal === 'silver') return <Medal className="h-6 w-6 text-gray-400 dark:text-gray-300" />;
+  return <Award className="h-6 w-6 text-amber-600 dark:text-amber-400" />;
 };
 
 const getMedalColor = (medal: MedalKind) => {
@@ -131,22 +131,22 @@ const MedalPodium: React.FC = () => {
             <div className="grid grid-cols-3 gap-4 pt-4 border-t">
               <div className="text-center">
                 <div className="flex items-center justify-center mb-2">
-                  <Trophy className="h-5 w-5 text-yellow-500 mr-1" />
-                  <span className="text-2xl font-bold text-yellow-600">{totalGold}</span>
+                  <Trophy className="h-5 w-5 text-yellow-500 dark:text-yellow-400 mr-1" />
+                  <span className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{totalGold}</span>
                 </div>
                 <p className="text-xs text-muted-foreground">Medallas de Oro</p>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center mb-2">
-                  <Medal className="h-5 w-5 text-gray-400 mr-1" />
-                  <span className="text-2xl font-bold text-gray-600">{totalSilver}</span>
+                  <Medal className="h-5 w-5 text-gray-400 dark:text-gray-300 mr-1" />
+                  <span className="text-2xl font-bold text-muted-foreground">{totalSilver}</span>
                 </div>
                 <p className="text-xs text-muted-foreground">Medallas de Plata</p>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center mb-2">
-                  <Award className="h-5 w-5 text-amber-600 mr-1" />
-                  <span className="text-2xl font-bold text-amber-600">{totalBronze}</span>
+                  <Award className="h-5 w-5 text-amber-600 dark:text-amber-400 mr-1" />
+                  <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">{totalBronze}</span>
                 </div>
                 <p className="text-xs text-muted-foreground">Medallas de Bronce</p>
               </div>

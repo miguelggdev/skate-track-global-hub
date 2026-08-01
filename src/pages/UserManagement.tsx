@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -20,7 +20,7 @@ export interface User {
   date_of_birth?: string;
   avatar_url?: string;
   bio?: string;
-  role: 'admin' | 'coach' | 'athlete' | 'delegate' | 'leader' | 'finance';
+  role: 'admin' | 'coach' | 'athlete' | 'delegate' | 'leader' | 'finance' | 'parent';
   created_at: string;
   updated_at: string;
   blocked?: boolean;
@@ -28,7 +28,7 @@ export interface User {
   id_number?: string;
 }
 
-const ROLE_PRIORITY = ['admin', 'leader', 'coach', 'delegate', 'finance', 'athlete'] as const;
+const ROLE_PRIORITY = ['admin', 'leader', 'coach', 'delegate', 'finance', 'athlete', 'parent'] as const;
 
 const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -283,7 +283,7 @@ const UserManagement = () => {
             open={resettingPasswordUser !== null}
             onOpenChange={(open) => !open && setResettingPasswordUser(null)}
             onConfirm={handlePasswordResetConfirm}
-            userEmail={resettingPasswordUser?.email || ''}
+            userEmail={resettingPasswordUser?.email ?? ''}
           />
         </div>
       </div>

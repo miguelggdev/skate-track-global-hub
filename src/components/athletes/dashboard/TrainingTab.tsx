@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,9 +23,9 @@ export const TrainingTab = () => {
 
   const upcomingSessions = availableSessions?.filter(session =>
     new Date(session.scheduled_at) >= new Date()
-  ) || [];
+  ) ?? [];
 
-  const recentAttendance = attendanceRecords?.slice(0, 5) || [];
+  const recentAttendance = attendanceRecords?.slice(0, 5) ?? [];
 
   const handleRegisterClick = (sessionId: string) => {
     setSelectedSession(sessionId);
@@ -178,10 +178,10 @@ export const TrainingTab = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <CardTitle className="text-lg">
-                          {(record.training_sessions as any).title}
+                          {record.training_sessions.title}
                         </CardTitle>
                         <CardDescription>
-                          {format(new Date((record.training_sessions as any).scheduled_at), 'PPP', { locale: es })}
+                          {format(new Date(record.training_sessions.scheduled_at), 'PPP', { locale: es })}
                         </CardDescription>
                       </div>
                       <div className="flex items-center gap-2">
@@ -223,7 +223,7 @@ export const TrainingTab = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {attendanceRecords?.length || 0}
+                  {attendanceRecords?.length ?? 0}
                 </div>
               </CardContent>
             </Card>
@@ -237,7 +237,7 @@ export const TrainingTab = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {attendanceRecords?.filter(r => r.attended).length || 0}
+                  {attendanceRecords?.filter(r => r.attended).length ?? 0}
                 </div>
               </CardContent>
             </Card>
@@ -255,7 +255,7 @@ export const TrainingTab = () => {
                     ? (
                         attendanceRecords
                           .filter(r => r.performance_rating)
-                          .reduce((sum, r) => sum + (r.performance_rating || 0), 0) /
+                          .reduce((sum, r) => sum + (r.performance_rating ?? 0), 0) /
                         attendanceRecords.filter(r => r.performance_rating).length
                       ).toFixed(1)
                     : '0.0'}

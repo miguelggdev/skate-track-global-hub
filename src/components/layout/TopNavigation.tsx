@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, User, LogOut, Settings, ChevronDown, Menu } from 'lucide-react';
+﻿import React, { useState, useEffect, useRef } from 'react';
+import { Search, User, LogOut, Settings, ChevronDown, Menu, Globe } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { useMarkNotificationRead } from '@/hooks/useNotifications';
+import { useTranslation, AVAILABLE_LANGUAGES, LanguageCode } from '@/hooks/useTranslation';
 
 interface SearchResult {
   id: string;
@@ -41,9 +42,11 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
   const _ = useTheme(); // keep provider warm
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t, currentLanguage, setLanguage } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [clubLogo, setClubLogo] = useState<string>('');
   const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -187,8 +190,8 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
                   .map((c: any) => ({ ...c.profiles, id: c.user_id }))
                   .filter((p: any) => {
                     const q = searchQuery.toLowerCase();
-                    return (p.first_name || '').toLowerCase().includes(q)
-                      || (p.last_name || '').toLowerCase().includes(q);
+                    return (p.first_name ?? '').toLowerCase().includes(q)
+                      || (p.last_name ?? '').toLowerCase().includes(q);
                   }),
               }))
           );
@@ -250,7 +253,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
               result.data.forEach((athlete: any) => {
                 results.push({
                   id: athlete.id,
-                  title: `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim(),
+                  title: `${athlete.first_name ?? ''} ${athlete.last_name ?? ''}`.trim(),
                   type: 'athlete',
                   subtitle: athlete.athlete_number || athlete.category,
                 });
@@ -299,7 +302,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
                   id: equipment.id,
                   title: equipment.name,
                   type: 'equipment',
-                  subtitle: `${equipment.brand || ''} ${equipment.model || ''}`.trim(),
+                  subtitle: `${equipment.brand ?? ''} ${equipment.model ?? ''}`.trim(),
                   metadata: equipment.category,
                 });
               });
@@ -309,7 +312,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
               result.data.forEach((coach: any) => {
                 results.push({
                   id: coach.id,
-                  title: `${coach.first_name || ''} ${coach.last_name || ''}`.trim(),
+                  title: `${coach.first_name ?? ''} ${coach.last_name ?? ''}`.trim(),
                   type: 'coach',
                 });
               });
@@ -354,7 +357,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
               result.data.forEach((user: any) => {
                 results.push({
                   id: user.id,
-                  title: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+                  title: `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim(),
                   type: 'user',
                   subtitle: user.email,
                   metadata: user.role,
@@ -440,14 +443,14 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
       localStorage.removeItem('userRole');
       localStorage.removeItem('userEmail');
       toast({
-        title: "Sesión cerrada",
-        description: "Has cerrado sesión correctamente",
+        title: t('message.session_closed'),
+        description: t('message.session_closed_desc'),
       });
       navigate('/login');
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Error al cerrar sesión",
+        title: t('common.error'),
+        description: t('message.logout_error'),
         variant: "destructive",
       });
     }
@@ -494,13 +497,13 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
           )}
         </div>
 
-        {/* Search Bar */}
-        <div className="flex-1 max-w-[60%] mr-4" ref={searchRef}>
+        {/* Search Bar — desktop only */}
+        <div className="hidden sm:block flex-1 max-w-[60%] mr-4" ref={searchRef}>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Buscar atletas, competencias, entrenamientos..."
+              placeholder={t('common.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -539,16 +542,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
                         )}
                       </div>
                       <Badge variant="secondary" className="text-xs">
-                        {result.type === 'athlete' ? 'Atleta' :
-                         result.type === 'competition' ? 'Competencia' :
-                         result.type === 'training' ? 'Entrenamiento' :
-                         result.type === 'financial' ? 'Finanzas' :
-                         result.type === 'equipment' ? 'Equipo' :
-                         result.type === 'coach' ? 'Entrenador' :
-                         result.type === 'award' ? 'Premio' :
-                         result.type === 'team' ? 'Equipo' :
-                         result.type === 'notification' ? 'Notificación' :
-                         result.type === 'user' ? 'Usuario' : 'Otro'}
+                        {t(`search.${result.type}`)}
                       </Badge>
                     </div>
                   </div>
@@ -560,7 +554,43 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
 
 
         {/* Right Side Actions */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1 sm:space-x-2 ml-auto">
+          {/* Mobile search toggle */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="sm:hidden"
+            onClick={() => { setMobileSearchOpen(v => !v); setSearchQuery(''); setIsSearchOpen(false); }}
+            aria-label="Buscar"
+          >
+            <Search className="h-5 w-5" />
+          </Button>
+
+          {/* Language Switcher */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="px-2 gap-1 text-xs font-medium" aria-label="Language">
+                <Globe className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  {AVAILABLE_LANGUAGES.find(l => l.code === currentLanguage)?.flag}
+                  {' '}{currentLanguage.toUpperCase()}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44 bg-popover border border-border shadow-xl rounded-xl">
+              {AVAILABLE_LANGUAGES.map(lang => (
+                <DropdownMenuItem
+                  key={lang.code}
+                  onClick={() => setLanguage(lang.code as LanguageCode)}
+                  className={currentLanguage === lang.code ? 'bg-muted font-semibold' : ''}
+                >
+                  <span className="mr-2">{lang.flag}</span>
+                  {lang.nativeName}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {/* Theme Toggle */}
           <ThemeToggle />
 
@@ -589,25 +619,61 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-popover border border-border shadow-xl rounded-xl">
-              <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+              <DropdownMenuLabel>{t('common.my_account')}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate('/settings')}>
                 <User className="mr-2 h-4 w-4" />
-                Perfil
+                {t('common.profile')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/settings')}>
                 <Settings className="mr-2 h-4 w-4" />
-                Configuración
+                {t('common.config')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                Cerrar Sesión
+                {t('common.close_session')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Mobile search row */}
+      {mobileSearchOpen && (
+        <div className="sm:hidden px-3 pb-2 border-t border-border/40">
+          <div className="relative mt-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              autoFocus
+              placeholder={t('common.search')}
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Escape') { setMobileSearchOpen(false); setSearchQuery(''); }
+              }}
+              className="w-full pl-9 pr-4 py-2 text-sm bg-muted/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-orange-500/50"
+            />
+          </div>
+          {isSearchOpen && searchResults.length > 0 && (
+            <div className="mt-1 bg-popover border border-border rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto">
+              {searchResults.map((result) => (
+                <div
+                  key={result.id}
+                  className="px-3 py-2.5 hover:bg-muted/50 cursor-pointer transition-colors border-b border-border last:border-b-0"
+                  onClick={() => { handleSearchResultClick(result); setMobileSearchOpen(false); }}
+                >
+                  <p className="font-medium text-sm text-foreground truncate">{result.title}</p>
+                  {result.subtitle && (
+                    <p className="text-xs text-muted-foreground truncate">{result.subtitle}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </header>
   );
 };

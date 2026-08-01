@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import { toast } from 'sonner';
@@ -128,16 +128,16 @@ const DelegateReports = () => {
 
       if (reportType === 'athletes') {
         sheetData = (athletes ?? []).map(a => ({
-          'Nombre': `${a.first_name || ''} ${a.last_name || ''}`.trim(),
-          'Número': a.athlete_number || '',
+          'Nombre': `${a.first_name ?? ''} ${a.last_name ?? ''}`.trim(),
+          'Número': a.athlete_number ?? '',
           'Categoría': CATEGORY_LABELS[a.category] || a.category,
-          'Nivel': a.level || '',
+          'Nivel': a.level ?? '',
           'Género': a.gender === 'masculino' ? 'Masculino' : a.gender === 'femenino' ? 'Femenino' : '',
           'F. Nacimiento': fmtDate(a.date_of_birth),
-          'Email': a.email || '',
+          'Email': a.email ?? '',
           'Estado': STATUS_LABELS[a.status] || a.status,
-          'Contacto emergencia': a.emergency_contact_name || '',
-          'Tel. emergencia': a.emergency_contact_phone || '',
+          'Contacto emergencia': a.emergency_contact_name ?? '',
+          'Tel. emergencia': a.emergency_contact_phone ?? '',
           'F. Ingreso': fmtDate(a.join_date),
         }));
         sheetName = 'Atletas';
@@ -148,7 +148,7 @@ const DelegateReports = () => {
           'Inicio': fmtDate(c.start_date),
           'Fin': fmtDate(c.end_date),
           'Sede': c.location,
-          'Categoría': CATEGORY_LABELS[c.category || ''] || c.category || '',
+          'Categoría': CATEGORY_LABELS[c.category ?? ''] || (c.category ?? ''),
           'Estado': STATUS_LABELS[c.status] || c.status,
           'Inscripción hasta': fmtDate(c.registration_deadline),
           'Cuota': c.entry_fee != null ? String(c.entry_fee) : '',
@@ -160,7 +160,7 @@ const DelegateReports = () => {
           .filter(p => inRange(p.transaction_date))
           .map(p => ({
             'Atleta': p.athletes
-              ? `${p.athletes.first_name || ''} ${p.athletes.last_name || ''}`.trim()
+              ? `${p.athletes.first_name ?? ''} ${p.athletes.last_name ?? ''}`.trim()
               : '',
             'Categoría': p.athletes
               ? CATEGORY_LABELS[p.athletes.category] || p.athletes.category
@@ -169,7 +169,7 @@ const DelegateReports = () => {
             'Monto': String(p.amount),
             'Estado': STATUS_LABELS[p.payment_status] || p.payment_status,
             'Fecha': fmtDate(p.transaction_date),
-            'Descripción': p.description || '',
+            'Descripción': p.description ?? '',
             'Vencimiento': fmtDate(p.due_date),
           }));
         sheetName = 'Pagos';
@@ -217,10 +217,10 @@ const DelegateReports = () => {
     if (reportType === 'athletes') {
       const headers = ['Nombre', '#', 'Categoría', 'Nivel', 'Género', 'F. Nac.', 'Estado'];
       const rows = (athletes ?? []).map(a => [
-        `${a.first_name || ''} ${a.last_name || ''}`.trim(),
-        a.athlete_number || '',
+        `${a.first_name ?? ''} ${a.last_name ?? ''}`.trim(),
+        a.athlete_number ?? '',
         CATEGORY_LABELS[a.category] || a.category,
-        a.level || '',
+        a.level ?? '',
         a.gender === 'masculino' ? 'M' : a.gender === 'femenino' ? 'F' : '',
         fmtDate(a.date_of_birth),
         STATUS_LABELS[a.status] || a.status,
@@ -234,7 +234,7 @@ const DelegateReports = () => {
         fmtDate(c.start_date),
         fmtDate(c.end_date),
         c.location,
-        CATEGORY_LABELS[c.category || ''] || c.category || '',
+        CATEGORY_LABELS[c.category ?? ''] || (c.category ?? ''),
         STATUS_LABELS[c.status] || c.status,
         c.entry_fee != null ? `$${c.entry_fee}` : '',
       ]);
@@ -245,7 +245,7 @@ const DelegateReports = () => {
       const headers = ['Atleta', 'Tipo', 'Monto', 'Estado', 'Fecha', 'Vencimiento'];
       const rows = filtered.map(p => [
         p.athletes
-          ? `${p.athletes.first_name || ''} ${p.athletes.last_name || ''}`.trim()
+          ? `${p.athletes.first_name ?? ''} ${p.athletes.last_name ?? ''}`.trim()
           : '',
         TRANS_TYPE_MAP[p.transaction_type] || p.transaction_type,
         formatCurrency(p.amount, currency),
@@ -314,21 +314,21 @@ const DelegateReports = () => {
             icon={Users}
             title="Atletas por Categoría"
             description="Lista de atletas agrupados por categoría"
-            value={`${athletes?.length || 0} atletas`}
+            value={`${athletes?.length ?? 0} atletas`}
             onClick={() => setReportType('athletes')}
           />
           <ReportCard
             icon={Trophy}
             title="Competencias"
             description="Historial de competencias y resultados"
-            value={`${competitions?.length || 0} competencias`}
+            value={`${competitions?.length ?? 0} competencias`}
             onClick={() => setReportType('competitions')}
           />
           <ReportCard
             icon={CreditCard}
             title="Pagos de Competencias"
             description="Resumen de pagos externos recibidos"
-            value={formatCurrency(stats?.completedPaymentsAmount || 0, currency)}
+            value={formatCurrency(stats?.completedPaymentsAmount ?? 0, currency)}
             onClick={() => setReportType('payments')}
           />
           <ReportCard

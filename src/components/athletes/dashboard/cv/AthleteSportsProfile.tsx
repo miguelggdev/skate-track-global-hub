@@ -73,8 +73,8 @@ const AthleteSportsProfile: React.FC<AthleteSportsProfileProps> = ({
                   </div>
                   <div className="pl-8 flex flex-wrap gap-2">
                     {valueChips.map((value, index) => (
-                      <Badge 
-                        key={index} 
+                      <Badge
+                        key={`${value}-${index}`}
                         variant="secondary"
                         className="px-3 py-1 text-sm font-medium bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500/20 border-0"
                       >

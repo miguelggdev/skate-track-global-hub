@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -68,13 +68,13 @@ export const HistoryTab = () => {
 
       if (data) {
         setFormData({
-          previous_club: data.previous_club || '',
-          years_experience: data.years_experience || 0,
-          start_date: data.start_date || '',
-          league_date: data.league_date || '',
-          federation_date: data.federation_date || '',
-          is_league: data.is_league || false,
-          is_federated: data.is_federated || false,
+          previous_club: data.previous_club ?? '',
+          years_experience: data.years_experience ?? 0,
+          start_date: data.start_date ?? '',
+          league_date: data.league_date ?? '',
+          federation_date: data.federation_date ?? '',
+          is_league: data.is_league ?? false,
+          is_federated: data.is_federated ?? false,
         });
       }
     } catch (error) {
@@ -94,7 +94,7 @@ export const HistoryTab = () => {
 
       if (error) throw error;
 
-      setRecords(data || []);
+      setRecords(data ?? []);
     } catch (error) {
       toast({
         title: "Error",
@@ -202,7 +202,7 @@ export const HistoryTab = () => {
                 type="number" 
                 placeholder="Años"
                 value={formData.years_experience}
-                onChange={(e) => handleInputChange('years_experience', parseInt(e.target.value) || 0)}
+                onChange={(e) => handleInputChange('years_experience', parseInt(e.target.value) ?? 0)}
               />
             </div>
           </div>

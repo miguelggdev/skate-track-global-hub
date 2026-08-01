@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,13 +43,13 @@ export const FamilyTab = () => {
 
       if (data) {
         setFormData({
-          parent_name: data.parent_name || '',
-          parent_phone: data.parent_phone || '',
-          parent_email: data.parent_email || '',
-          guardian_name: data.guardian_name || '',
-          guardian_relationship: data.guardian_relationship || '',
-          guardian_phone: data.guardian_phone || '',
-          guardian_email: data.guardian_email || '',
+          parent_name: data.parent_name ?? '',
+          parent_phone: data.parent_phone ?? '',
+          parent_email: data.parent_email ?? '',
+          guardian_name: data.guardian_name ?? '',
+          guardian_relationship: data.guardian_relationship ?? '',
+          guardian_phone: data.guardian_phone ?? '',
+          guardian_email: data.guardian_email ?? '',
         });
       }
     } catch (error) {

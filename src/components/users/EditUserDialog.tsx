@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -156,14 +156,14 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
         first_name: userDetails.first_name,
         last_name: userDetails.last_name,
         email: userDetails.email,
-        phone: userDetails.phone || '',
-        date_of_birth: userDetails.date_of_birth || '',
-        role: userDetails.role as any,
+        phone: userDetails.phone ?? '',
+        date_of_birth: userDetails.date_of_birth ?? '',
+        role: userDetails.role as EditUserFormData['role'],
         // Coach details (only columns that exist in our coaches table)
-        license_number: userDetails.coach_details?.license_number || '',
-        certification_level: userDetails.coach_details?.certification_level || '',
-        years_experience: userDetails.coach_details?.years_experience || 0,
-        specialization: userDetails.coach_details?.specialization || '',
+        license_number: userDetails.coach_details?.license_number ?? '',
+        certification_level: userDetails.coach_details?.certification_level ?? '',
+        years_experience: userDetails.coach_details?.years_experience ?? 0,
+        specialization: userDetails.coach_details?.specialization ?? '',
         created_at: userDetails.created_at,
         updated_at: userDetails.updated_at,
       });
@@ -196,7 +196,7 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
       // Role is stored in user_roles, not in profiles
       if (canEditRoles) {
         await supabase.from('user_roles').delete().eq('user_id', user.id);
-        await supabase.from('user_roles').insert([{ user_id: user.id, role: data.role as any }]);
+        await supabase.from('user_roles').insert([{ user_id: user.id, role: data.role }]);
       }
 
       // Update coach details if role is coach (only columns that exist in our coaches table)
@@ -212,7 +212,7 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
           license_number: data.license_number || null,
           certification_level: data.certification_level || null,
           specialization: data.specialization || null,
-          years_experience: data.years_experience || 0,
+          years_experience: data.years_experience ?? 0,
           updated_at: new Date().toISOString(),
         };
 

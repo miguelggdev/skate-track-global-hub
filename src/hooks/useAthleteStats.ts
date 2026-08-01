@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface AthleteStats {
@@ -48,14 +48,14 @@ export const useAthleteStats = () => {
       
       // Count athletes by category
       const categoryCounts = activeAthletes.reduce((acc, athlete) => {
-        acc[athlete.category] = (acc[athlete.category] || 0) + 1;
+        acc[athlete.category] = (acc[athlete.category] ?? 0) + 1;
         return acc;
       }, {} as Record<string, number>);
 
       // Count athletes by gender
       const genderCounts = activeAthletes.reduce((acc, athlete) => {
         if (athlete.gender) {
-          acc[athlete.gender] = (acc[athlete.gender] || 0) + 1;
+          acc[athlete.gender] = (acc[athlete.gender] ?? 0) + 1;
         }
         return acc;
       }, {} as Record<string, number>);
@@ -96,15 +96,15 @@ export const useAthleteStats = () => {
       const inactiveAthletes = athleteData.filter(athlete => athlete.status !== 'active').length;
 
       const stats: AthleteStats = {
-        totalAthletes: totalAthletes || 0,
-        schoolAthletes: schoolAthletes || 0,
-        menoresAthletes: categoryCounts['menores'] || 0,
-        transicionAthletes: categoryCounts['transicion'] || 0,
-        mayoresAthletes: categoryCounts['mayores'] || 0,
-        escuelaAthletes: categoryCounts['escuela'] || 0,
-        juvenilAthletes: categoryCounts['juvenil'] || 0,
-        maleAthletes: genderCounts['masculino'] || 0,
-        femaleAthletes: genderCounts['femenino'] || 0,
+        totalAthletes: totalAthletes ?? 0,
+        schoolAthletes: schoolAthletes ?? 0,
+        menoresAthletes: categoryCounts['menores'] ?? 0,
+        transicionAthletes: categoryCounts['transicion'] ?? 0,
+        mayoresAthletes: categoryCounts['mayores'] ?? 0,
+        escuelaAthletes: categoryCounts['escuela'] ?? 0,
+        juvenilAthletes: categoryCounts['juvenil'] ?? 0,
+        maleAthletes: genderCounts['masculino'] ?? 0,
+        femaleAthletes: genderCounts['femenino'] ?? 0,
         newRecruitsThisMonth,
         newRecruitsThisYear,
         retentionRate: Math.round(retentionRate),

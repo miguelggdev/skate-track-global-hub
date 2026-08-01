@@ -220,8 +220,8 @@ export function TimeHistoryChart({ athleteId, athleteName }: Props) {
                         </div>
                         <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
                           <span>{new Date(r.recorded_at).toLocaleDateString('es-CO')}</span>
-                          {(r.race_events as any)?.name && (
-                            <span>{(r.race_events as any).name}</span>
+                          {r.race_events?.name && (
+                            <span>{r.race_events.name}</span>
                           )}
                           {r.conditions && <span>{r.conditions}</span>}
                         </div>

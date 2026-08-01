@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile } from './useUserProfile';
 import { useCurrentAthlete } from './useCurrentAthlete';
@@ -61,7 +61,7 @@ export const useTrainingKPIs = (month?: string) => {
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data ?? []).map(kpi => ({ ...kpi, month: (kpi as any).period_month ?? '' })) as TrainingKPIs[];
+      return (data ?? []).map(kpi => ({ ...kpi, month: (kpi as { period_month?: string }).period_month ?? '' })) as TrainingKPIs[];
     },
     enabled: !!profile,
   });
@@ -93,13 +93,13 @@ export const useTrainingKPIs = (month?: string) => {
 
       if (error) throw error;
 
-      const total_sessions = data?.length || 0;
-      const total_attended = data?.filter(record => record.attended).length || 0;
+      const total_sessions = data?.length ?? 0;
+      const total_attended = data?.filter(record => record.attended).length ?? 0;
       const attendance_rate = total_sessions > 0 ? (total_attended / total_sessions) * 100 : 0;
       
-      const ratingsWithValues = data?.filter(record => record.performance_rating !== null) || [];
+      const ratingsWithValues = data?.filter(record => record.performance_rating !== null) ?? [];
       const avg_performance_rating = ratingsWithValues.length > 0
-        ? ratingsWithValues.reduce((sum, record) => sum + (record.performance_rating || 0), 0) / ratingsWithValues.length
+        ? ratingsWithValues.reduce((sum, record) => sum + (record.performance_rating ?? 0), 0) / ratingsWithValues.length
         : undefined;
 
       return {
@@ -135,12 +135,12 @@ export const useTrainingKPIs = (month?: string) => {
       if (error) throw error;
 
       return data?.map(kpi => ({
-        athlete_id: kpi.athlete_id || '',
+        athlete_id: kpi.athlete_id ?? '',
         athlete_name: `${kpi.athletes.first_name} ${kpi.athletes.last_name}`,
         total_hours: kpi.total_hours,
         attendance_percentage: kpi.attendance_percentage,
         recent_trend: 'stable' as const, // Would need historical data to calculate
-      })) as AthletePerformanceStats[] || [];
+      })) as AthletePerformanceStats[] ?? [];
     },
     enabled: !!profile && ['admin', 'coach', 'leader'].includes(profile.role),
   });
@@ -183,7 +183,7 @@ export const useTrainingKPIs = (month?: string) => {
           };
         }
 
-        const duration = (session.duration_minutes || 0) / 60;
+        const duration = (session.duration_minutes ?? 0) / 60;
 
         acc[type].total_hours += duration;
         acc[type].session_count += 1;

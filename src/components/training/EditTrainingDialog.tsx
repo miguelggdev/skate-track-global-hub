@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,10 +60,10 @@ export default function EditTrainingDialog({ children, session }: EditTrainingDi
       date: format(sessionDt, 'yyyy-MM-dd'),
       start_time: format(sessionDt, 'HH:mm'),
       end_time: format(sessionEndDt, 'HH:mm'),
-      training_type: session.training_type as any,
-      location: session.location || '',
-      description: session.description || '',
-      max_athletes: session.max_athletes?.toString() || '',
+      training_type: session.training_type as EditTrainingFormData['training_type'],
+      location: session.location ?? '',
+      description: session.description ?? '',
+      max_athletes: session.max_athletes?.toString() ?? '',
     }
   });
 
@@ -136,7 +136,7 @@ export default function EditTrainingDialog({ children, session }: EditTrainingDi
               <Label htmlFor="training_type">Tipo de Entrenamiento *</Label>
               <Select
                 value={trainingType}
-                onValueChange={(value) => setValue('training_type', value as any)}
+                onValueChange={(value) => setValue('training_type', value as EditTrainingFormData['training_type'])}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecciona el tipo" />
