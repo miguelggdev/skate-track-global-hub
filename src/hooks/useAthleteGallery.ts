@@ -102,20 +102,20 @@ export const useAthleteGallery = (athleteId: string | null) => {
       const imageToDelete = images.find(img => img.id === imageId);
       if (!imageToDelete) throw new Error('Imagen no encontrada');
 
-      // Extract file path from URL
-      const urlParts = imageToDelete.image_url.split('/athlete-gallery/');
-      if (urlParts.length > 1) {
-        const filePath = urlParts[1];
-        await supabase.storage.from('athlete-gallery').remove([filePath]);
-      }
-
-      // Delete from database
+      // Delete DB record first — if this fails we haven't lost the file yet
       const { error } = await supabase
         .from('athlete_gallery')
         .delete()
         .eq('id', imageId);
 
       if (error) throw error;
+
+      // Remove from storage only after DB delete succeeds
+      const urlParts = imageToDelete.image_url.split('/athlete-gallery/');
+      if (urlParts.length > 1) {
+        const filePath = urlParts[1];
+        await supabase.storage.from('athlete-gallery').remove([filePath]);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['athlete-gallery', athleteId] });

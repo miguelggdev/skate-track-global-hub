@@ -5,10 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
-  Trophy, Calendar, Activity, AlertTriangle, CheckCircle2,
-  Clock, MapPin, User, Shield, Timer,
+  Trophy, Shield, Timer,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -18,27 +16,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   preclub: 'Preclub', adultos: 'Adultos',
 };
 
-const TRAINING_TYPE_LABELS: Record<string, string> = {
-  technical: 'Técnico', physical: 'Físico', mental: 'Mental',
-  recovery: 'Recuperación', gym: 'Gimnasio', road_skating: 'Patinaje Ruta',
-  track_skating: 'Patinaje Pista', bicycle: 'Bicicleta',
-  static_bicycle: 'Bicicleta Estática', simulator: 'Simulador',
-};
-
-const TRAINING_TYPE_COLORS: Record<string, string> = {
-  technical: 'bg-blue-500', physical: 'bg-emerald-500', mental: 'bg-purple-500',
-  recovery: 'bg-orange-500', gym: 'bg-red-500', road_skating: 'bg-cyan-500',
-  track_skating: 'bg-indigo-500', bicycle: 'bg-yellow-500',
-  static_bicycle: 'bg-amber-500', simulator: 'bg-pink-500',
-};
-
-function formatDate(d: string) {
-  return new Date(d).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
-}
-
-function formatTime(t: string) {
-  return t ? t.slice(0, 5) : '';
-}
 
 function formatSeconds(s: number) {
   const m = Math.floor(s / 60);
@@ -46,9 +23,7 @@ function formatSeconds(s: number) {
   return `${m}:${sec.padStart(5, '0')}`;
 }
 
-const today = new Date().toISOString().split('T')[0];
 const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
-const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString().split('T')[0];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -66,20 +41,6 @@ export default function PublicAthletePage() {
         .eq('status', 'active')
         .maybeSingle();
       return data;
-    },
-    enabled: !!athleteId,
-  });
-
-  const { data: upcomingSessions = [] } = useQuery({
-    queryKey: ['public-sessions', athleteId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('training_sessions')
-        .select('id, title, scheduled_at, duration_minutes, location, training_type')
-        .gte('scheduled_at', today)
-        .order('scheduled_at', { ascending: true })
-        .limit(6);
-      return data ?? [];
     },
     enabled: !!athleteId,
   });
@@ -109,21 +70,6 @@ export default function PublicAthletePage() {
         .eq('athlete_id', athleteId)
         .gte('created_at', thirtyDaysAgo);
       return (data ?? []) as { attended: boolean; created_at: string }[];
-    },
-    enabled: !!athleteId,
-  });
-
-  const { data: hasRestriction = false } = useQuery({
-    queryKey: ['public-restriction', athleteId],
-    queryFn: async () => {
-      if (!athleteId) return false;
-      const { data } = await supabase
-        .from('medical_sessions')
-        .select('id')
-        .eq('athlete_id', athleteId)
-        .in('status', ['active_restriction', 'partial_restriction'])
-        .limit(1);
-      return (data ?? []).length > 0;
     },
     enabled: !!athleteId,
   });
@@ -214,17 +160,6 @@ export default function PublicAthletePage() {
               <Badge variant="secondary" className="capitalize">
                 {CATEGORY_LABELS[athlete.category] ?? athlete.category}
               </Badge>
-              {hasRestriction ? (
-                <Badge className="gap-1 bg-amber-500/15 text-amber-700 border-amber-200 border text-xs">
-                  <AlertTriangle className="h-3 w-3" />
-                  Con restricción médica
-                </Badge>
-              ) : (
-                <Badge className="gap-1 bg-emerald-500/15 text-emerald-700 border-emerald-200 border text-xs">
-                  <CheckCircle2 className="h-3 w-3" />
-                  Apto para entrenar
-                </Badge>
-              )}
             </div>
           </CardContent>
         </Card>
@@ -256,59 +191,6 @@ export default function PublicAthletePage() {
               <p className="text-xs text-muted-foreground mt-1">Podios<br />por tipo</p>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Upcoming training */}
-        <div className="space-y-3">
-          <h2 className="text-base font-bold flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-orange-500" />
-            Próximas sesiones de entrenamiento
-          </h2>
-          {upcomingSessions.length === 0 ? (
-            <Card>
-              <CardContent className="py-10 text-center">
-                <Calendar className="h-10 w-10 text-muted-foreground/25 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Sin sesiones programadas próximamente</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-2">
-              {upcomingSessions.map(s => (
-                <Card key={s.id} className="hover:shadow-sm transition-shadow">
-                  <CardContent className="p-4 flex items-start gap-3">
-                    <div className={cn(
-                      'w-2 h-full min-h-[40px] rounded-full flex-shrink-0',
-                      TRAINING_TYPE_COLORS[s.training_type] ?? 'bg-muted',
-                    )} />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm">{s.title}</p>
-                      <p className="text-xs text-muted-foreground capitalize mt-0.5">
-                        {formatDate(s.scheduled_at)}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-muted-foreground">
-                        {s.scheduled_at && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {new Date(s.scheduled_at).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
-                            {s.duration_minutes ? ` — ${s.duration_minutes} min` : ''}
-                          </span>
-                        )}
-                        {s.location && (
-                          <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {s.location}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <Badge variant="outline" className="text-[10px] flex-shrink-0">
-                      {TRAINING_TYPE_LABELS[s.training_type] ?? s.training_type}
-                    </Badge>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Recent results */}

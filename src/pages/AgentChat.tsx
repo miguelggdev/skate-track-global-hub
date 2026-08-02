@@ -198,6 +198,13 @@ export default function AgentChat() {
   const availableAgents = ALL_AGENTS.filter(a => a.roles.includes(role));
   const [activeAgent, setActiveAgent] = useState<AgentDef>(availableAgents[0] ?? ALL_AGENTS[0]);
 
+  useEffect(() => {
+    setActiveAgent(prev =>
+      availableAgents.find(a => a.id === prev.id) ? prev : (availableAgents[0] ?? ALL_AGENTS[0])
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role]);
+
   const { messages, sendMessage, isLoading, error, clearMessages } = useAgentChat(activeAgent.id);
 
   const [input, setInput] = useState('');
@@ -314,8 +321,8 @@ export default function AgentChat() {
               </div>
             )}
 
-            {messages.map((msg, i) => (
-              <MessageBubble key={i} msg={msg} />
+            {messages.map((msg) => (
+              <MessageBubble key={msg.id} msg={msg} />
             ))}
 
             {isLoading && (

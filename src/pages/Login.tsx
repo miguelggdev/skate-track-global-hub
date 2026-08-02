@@ -31,10 +31,9 @@ const Login = () => {
   const [resetEmail, setResetEmail] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      navigate('/');
+      navigate('/app', { replace: true });
     }
   }, [user, navigate]);
 
@@ -61,7 +60,7 @@ const Login = () => {
         title: t('common.success'),
         description: t('login.welcome'),
       });
-      navigate('/');
+      navigate('/app', { replace: true });
     }
     setIsLoading(false);
   };

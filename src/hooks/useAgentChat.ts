@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface ChatMessage {
+  id: string;
   role: 'user' | 'assistant';
   content: string;
 }
@@ -24,13 +25,19 @@ export function useAgentChat(agentId: AgentId) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isLoading) return;
+
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setIsLoading(true);
     setError(null);
 
-    const userMsg: ChatMessage = { role: 'user', content: text };
+    const userMsg: ChatMessage = { id: crypto.randomUUID(), role: 'user', content: text };
     setMessages(prev => [...prev, userMsg]);
 
     try {
@@ -46,6 +53,7 @@ export function useAgentChat(agentId: AgentId) {
           Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ message: text, history }),
+        signal: controller.signal,
       });
 
       if (!res.ok) {
@@ -54,8 +62,9 @@ export function useAgentChat(agentId: AgentId) {
       }
 
       const data = await res.json();
-      setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: data.response }]);
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       let msg = 'Error desconocido';
       if (err instanceof TypeError && err.message === 'Failed to fetch') {
         msg = 'No se puede conectar con el servidor de agentes. Verifica que el backend esté en línea.';

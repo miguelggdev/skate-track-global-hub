@@ -170,7 +170,14 @@ export const useTrainingKPIs = (month?: string) => {
 
       if (error) throw error;
 
-      // Group by training type and calculate statistics
+      interface TypeAccum {
+        training_type: string;
+        total_hours: number;
+        session_count: number;
+        total_attendances: number;
+        total_possible_attendances: number;
+      }
+
       const distribution = data?.reduce((acc, session) => {
         const type = session.training_type;
         if (!acc[type]) {
@@ -187,7 +194,7 @@ export const useTrainingKPIs = (month?: string) => {
 
         acc[type].total_hours += duration;
         acc[type].session_count += 1;
-        
+
         if (session.training_attendance) {
           session.training_attendance.forEach(attendance => {
             acc[type].total_possible_attendances += 1;
@@ -198,7 +205,7 @@ export const useTrainingKPIs = (month?: string) => {
         }
 
         return acc;
-      }, {} as Record<string, any>) || {};
+      }, {} as Record<string, TypeAccum>) || {};
 
       return Object.values(distribution).map(dist => ({
         training_type: dist.training_type,

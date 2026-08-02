@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -16,66 +16,63 @@ export interface CreateUserData {
   gender?: string;
 }
 
+const parseErrorMessage = (msg: string): string => {
+  if (msg.includes('User with this email already exists') || msg.includes('already registered'))
+    return 'Este email ya está registrado';
+  if (msg.includes('invalid email'))
+    return 'Email inválido';
+  if (msg.includes('weak password') || msg.includes('Password should be'))
+    return 'La contraseña es muy débil (mínimo 6 caracteres)';
+  if (msg.includes('Insufficient permissions'))
+    return 'No tienes permisos para crear usuarios';
+  return msg || 'No se pudo crear el usuario';
+};
+
 export const useCreateUser = () => {
-  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const createUser = async (data: CreateUserData) => {
-    try {
-      setLoading(true);
-
+  const mutation = useMutation({
+    mutationFn: async (data: CreateUserData) => {
       const { data: result, error } = await supabase.functions.invoke('create-user-admin', {
         body: {
-          email: data.email,
-          password: data.password,
-          first_name: data.first_name,
-          last_name: data.last_name,
-          id_type: data.id_type || null,
-          id_number: data.id_number || null,
-          role: data.role,
-          phone: data.phone || null,
-          date_of_birth: data.date_of_birth || null,
-          gender: data.gender || null,
-        }
+          email:          data.email,
+          password:       data.password,
+          first_name:     data.first_name,
+          last_name:      data.last_name,
+          id_type:        data.id_type        ?? null,
+          id_number:      data.id_number      ?? null,
+          role:           data.role,
+          phone:          data.phone          ?? null,
+          date_of_birth:  data.date_of_birth  ?? null,
+          gender:         data.gender         ?? null,
+        },
       });
 
       if (error) throw new Error(error.message || 'Failed to create user');
       if (!result?.success) throw new Error(result?.error || 'Failed to create user');
-
-      toast({
-        title: 'Éxito',
-        description: 'Usuario creado exitosamente',
-      });
-
-      return { success: true };
-
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : '';
-
-      let errorMessage = 'No se pudo crear el usuario';
-      if (msg.includes('User with this email already exists') || msg.includes('already registered')) {
-        errorMessage = 'Este email ya está registrado';
-      } else if (msg.includes('invalid email')) {
-        errorMessage = 'Email inválido';
-      } else if (msg.includes('weak password') || msg.includes('Password should be')) {
-        errorMessage = 'La contraseña es muy débil (mínimo 6 caracteres)';
-      } else if (msg.includes('Insufficient permissions')) {
-        errorMessage = 'No tienes permisos para crear usuarios';
-      } else if (msg) {
-        errorMessage = msg;
-      }
-
+      return result;
+    },
+    onSuccess: () => {
+      toast({ title: 'Éxito', description: 'Usuario creado exitosamente' });
+    },
+    onError: (error: Error) => {
       toast({
         title: 'Error',
-        description: errorMessage,
+        description: parseErrorMessage(error.message),
         variant: 'destructive',
       });
+    },
+  });
 
-      return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
+  const createUser = async (data: CreateUserData): Promise<{ success: boolean; error?: string }> => {
+    try {
+      await mutation.mutateAsync(data);
+      return { success: true };
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : '';
+      return { success: false, error: parseErrorMessage(msg) };
     }
   };
 
-  return { createUser, loading };
+  return { createUser, loading: mutation.isPending };
 };

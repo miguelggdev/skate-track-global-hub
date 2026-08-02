@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -32,9 +32,9 @@ export const useAthleteSocials = (athleteId: string | null) => {
     enabled: !!athleteId,
   });
 
-  const updateSocials = async (updates: Partial<AthleteSocials>) => {
-    if (!athleteId) return;
-    try {
+  const updateMutation = useMutation({
+    mutationFn: async (updates: Partial<AthleteSocials>) => {
+      if (!athleteId) return;
       if (socials) {
         const { error } = await supabase.from('athlete_socials').update(updates).eq('athlete_id', athleteId);
         if (error) throw error;
@@ -42,12 +42,15 @@ export const useAthleteSocials = (athleteId: string | null) => {
         const { error } = await supabase.from('athlete_socials').insert({ athlete_id: athleteId, ...updates });
         if (error) throw error;
       }
+    },
+    onSuccess: () => {
       toast({ title: 'Redes sociales actualizadas' });
       queryClient.invalidateQueries({ queryKey: ['athlete-socials', athleteId] });
-    } catch {
+    },
+    onError: () => {
       toast({ title: 'Error al actualizar', variant: 'destructive' });
-    }
-  };
+    },
+  });
 
-  return { socials, loading, updateSocials, refetch };
+  return { socials, loading, updateSocials: updateMutation.mutate, isUpdating: updateMutation.isPending, refetch };
 };

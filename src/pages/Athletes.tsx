@@ -10,6 +10,8 @@ import RecentActivity from '@/components/athletes/RecentActivity';
 import UpcomingBirthdays from '@/components/athletes/UpcomingBirthdays';
 import AthletesHeader from '@/components/athletes/AthletesHeader';
 import { Athlete } from '@/hooks/useAthletes';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { useAuth } from '@/hooks/useAuth';
 
 // Raw row from athletes table including columns added via ALTER TABLE migrations
 interface AthleteRow extends Athlete {
@@ -46,17 +48,28 @@ const ITEMS_PER_PAGE = 25;
 const Athletes = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const queryClient = useQueryClient();
+  const { profile } = useUserProfile();
+  const { user } = useAuth();
+
+  const isCoach = profile?.role === 'coach';
 
   const { data, isLoading } = useQuery({
-    queryKey: ['athletes', currentPage],
+    queryKey: ['athletes', currentPage, isCoach ? user?.id : null],
     queryFn: async () => {
       const offset = (currentPage - 1) * ITEMS_PER_PAGE;
-      const { data, error, count } = await supabase
+      let query = supabase
         .from('athletes')
         .select(`
-          *,
+          id, first_name, last_name, email, category, level, status,
+          performance_score, athlete_number, coach_id, created_at,
           profiles(avatar_url, date_of_birth, phone)
-        `, { count: 'exact' })
+        `, { count: 'exact' });
+
+      if (isCoach && user?.id) {
+        query = query.eq('coach_id', user.id);
+      }
+
+      const { data, error, count } = await query
         .range(offset, offset + ITEMS_PER_PAGE - 1)
         .order('created_at', { ascending: false });
 

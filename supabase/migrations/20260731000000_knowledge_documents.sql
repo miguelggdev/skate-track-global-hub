@@ -25,7 +25,27 @@ CREATE POLICY "admin_manage_knowledge_documents"
   USING (has_role(auth.uid(), 'admin'))
   WITH CHECK (has_role(auth.uid(), 'admin'));
 
--- RLS para document_chunks (ya existe la tabla, solo agregar si faltan policies)
+-- Tabla de chunks vectoriales para RAG (SPEC-025)
+CREATE TABLE IF NOT EXISTS public.document_chunks (
+  id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_id  uuid        REFERENCES public.knowledge_documents(id) ON DELETE CASCADE,
+  content      text        NOT NULL,
+  metadata     jsonb       NOT NULL DEFAULT '{}',
+  embedding    extensions.vector(1536),
+  chunk_index  integer     NOT NULL DEFAULT 0,
+  created_at   timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_document_chunks_document
+  ON public.document_chunks(document_id);
+
+CREATE INDEX IF NOT EXISTS idx_document_chunks_embedding
+  ON public.document_chunks
+  USING ivfflat (embedding extensions.vector_cosine_ops)
+  WITH (lists = 100);
+
+ALTER TABLE public.document_chunks ENABLE ROW LEVEL SECURITY;
+
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -35,9 +55,9 @@ BEGIN
   END IF;
 END $$;
 
--- Función pgvector para búsqueda semántica
+-- Función pgvector para búsqueda semántica (plpgsql para que <=> resuelva con el search_path en tiempo de ejecución)
 CREATE OR REPLACE FUNCTION public.match_document_chunks(
-  query_embedding vector(1536),
+  query_embedding extensions.vector(1536),
   match_threshold  float   DEFAULT 0.70,
   match_count      integer DEFAULT 5
 )
@@ -47,18 +67,21 @@ RETURNS TABLE (
   metadata    jsonb,
   similarity  float
 )
-LANGUAGE sql STABLE
-SECURITY DEFINER SET search_path = 'public'
+LANGUAGE plpgsql STABLE
+SECURITY DEFINER SET search_path = 'extensions, public'
 AS $$
+BEGIN
+  RETURN QUERY
   SELECT
     dc.id,
     dc.content,
     dc.metadata,
-    1 - (dc.embedding <=> query_embedding) AS similarity
+    (1 - (dc.embedding <=> query_embedding))::float AS similarity
   FROM public.document_chunks dc
-  WHERE 1 - (dc.embedding <=> query_embedding) > match_threshold
+  WHERE (1 - (dc.embedding <=> query_embedding)) > match_threshold
   ORDER BY dc.embedding <=> query_embedding
   LIMIT match_count;
+END;
 $$;
 
 COMMENT ON TABLE public.knowledge_documents IS 'Registro de documentos PDF indexados para RAG (SPEC-025)';

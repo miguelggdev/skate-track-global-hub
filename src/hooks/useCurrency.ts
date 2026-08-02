@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CurrencyCode } from '@/utils/currency';
 
@@ -25,8 +25,8 @@ export const useCurrency = () => {
   const currency: CurrencyCode =
     rawCurrency && VALID_CURRENCIES.includes(rawCurrency) ? rawCurrency : 'COP';
 
-  const updateCurrency = async (newCurrency: CurrencyCode): Promise<boolean> => {
-    try {
+  const updateMutation = useMutation({
+    mutationFn: async (newCurrency: CurrencyCode) => {
       if (data?.id) {
         const { error } = await supabase
           .from('club_settings')
@@ -39,7 +39,15 @@ export const useCurrency = () => {
           .insert({ currency: newCurrency, club_name: 'Mi Club', timezone: 'America/Bogota', language: 'es' });
         if (error) throw error;
       }
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['club-settings'] });
+    },
+  });
+
+  const updateCurrency = async (newCurrency: CurrencyCode): Promise<boolean> => {
+    try {
+      await updateMutation.mutateAsync(newCurrency);
       return true;
     } catch {
       return false;

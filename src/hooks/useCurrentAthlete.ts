@@ -78,6 +78,7 @@ export const useCurrentAthlete = () => {
       return data as AthleteData;
     },
     enabled: !!user && isAthlete,
+    retry: false,
   });
 
   const refreshAthlete = () => queryClient.invalidateQueries({ queryKey: ['current-athlete', user?.id] });

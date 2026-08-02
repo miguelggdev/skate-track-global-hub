@@ -4,6 +4,17 @@ import { supabase } from '@/integrations/supabase/client';
 export type ReportType = 'income' | 'expenses' | 'balance' | 'complete';
 export type ReportPeriod = 'week' | 'month' | 'quarter' | 'year' | 'custom';
 
+export interface FinancialTransaction {
+  id: string;
+  amount: number;
+  transaction_type: string;
+  payment_status: string;
+  transaction_date: string;
+  description?: string | null;
+  athlete_id?: string | null;
+  created_at?: string;
+}
+
 export interface DateRange {
   startDate: Date;
   endDate: Date;
@@ -20,7 +31,7 @@ export interface FinancialReport {
     transactionCount: number;
     pendingAmount: number;
   };
-  transactions: any[];
+  transactions: FinancialTransaction[];
   categoryBreakdown: {
     income: { [key: string]: number };
     expenses: { [key: string]: number };
@@ -126,36 +137,41 @@ export const useFinancialReports = (reportType: ReportType, period: ReportPeriod
         expenseBreakdown[label] = (expenseBreakdown[label] ?? 0) + Math.abs(t.amount);
       });
 
-      // Monthly trends (for the past 6 months)
-      const monthlyTrends = [];
-      for (let i = 5; i >= 0; i--) {
-        const monthDate = new Date();
-        monthDate.setMonth(monthDate.getMonth() - i);
-        const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-        const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+      // Monthly trends (for the past 6 months) — single query, grouped in JS
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+      const trendsStart = new Date(sixMonthsAgo.getFullYear(), sixMonthsAgo.getMonth(), 1);
 
-        const { data: monthRaw = [] } = await supabase
-          .from('financial_transactions')
-          .select('amount, transaction_type')
-          .gte('transaction_date', monthStart.toISOString().split('T')[0])
-          .lte('transaction_date', monthEnd.toISOString().split('T')[0]);
-        const monthTransactions = monthRaw;
+      const { data: trendsRaw = [] } = await supabase
+        .from('financial_transactions')
+        .select('amount, transaction_type, transaction_date')
+        .gte('transaction_date', trendsStart.toISOString().split('T')[0]);
+
+      const monthlyTrends = Array.from({ length: 6 }, (_, idx) => {
+        const monthDate = new Date();
+        monthDate.setMonth(monthDate.getMonth() - (5 - idx));
+        const yr = monthDate.getFullYear();
+        const mo = monthDate.getMonth();
+
+        const monthTransactions = trendsRaw.filter(t => {
+          const d = new Date(t.transaction_date);
+          return d.getFullYear() === yr && d.getMonth() === mo;
+        });
 
         const monthIncome = monthTransactions
           .filter(t => INCOME_TYPES.includes(t.transaction_type))
           .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-
         const monthExpenses = monthTransactions
           .filter(t => EXPENSE_TYPES.includes(t.transaction_type))
           .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-        monthlyTrends.push({
+        return {
           month: monthDate.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }),
           income: monthIncome,
           expenses: monthExpenses,
-          balance: monthIncome - monthExpenses
-        });
-      }
+          balance: monthIncome - monthExpenses,
+        };
+      });
 
       // Filter transactions based on report type
       let reportTransactions = filteredTransactions;

@@ -173,27 +173,33 @@ export const useTrainingStats = () => {
       const uniqueCoaches = new Set(coachSessionsData?.map(s => s.coach_id).filter(Boolean));
       const coachUtilization = uniqueCoaches.size;
 
-      // Get attendance trends (last 7 days)
-      const attendanceTrends: Array<{ date: string; attendanceRate: number }> = [];
-      for (let i = 6; i >= 0; i--) {
+      // Get attendance trends (last 7 days) — single query, grouped in JS
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+      const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+
+      const { data: weekAttendance = [] } = await supabase
+        .from('training_attendance')
+        .select('attended, training_sessions!inner(scheduled_at)')
+        .gte('training_sessions.scheduled_at', sevenDaysAgoStr);
+
+      const attendanceTrends = Array.from({ length: 7 }, (_, idx) => {
         const date = new Date();
-        date.setDate(date.getDate() - i);
+        date.setDate(date.getDate() - (6 - idx));
         const dateStr = date.toISOString().split('T')[0];
 
-        const { data: dayAttendance } = await supabase
-          .from('training_attendance')
-          .select('attended, training_sessions!inner(scheduled_at)')
-          .eq('training_sessions.scheduled_at', dateStr);
-
-        const totalForDay = dayAttendance?.length ?? 0;
-        const attendedForDay = dayAttendance?.filter(a => a.attended).length ?? 0;
-        const rate = totalForDay > 0 ? (attendedForDay / totalForDay) * 100 : 0;
-
-        attendanceTrends.push({
-          date: dateStr,
-          attendanceRate: rate,
+        const dayRecords = weekAttendance.filter(a => {
+          const s = a.training_sessions as { scheduled_at: string } | null;
+          return s?.scheduled_at?.startsWith(dateStr);
         });
-      }
+
+        const total = dayRecords.length;
+        const attended = dayRecords.filter(a => a.attended).length;
+        return {
+          date: dateStr,
+          attendanceRate: total > 0 ? (attended / total) * 100 : 0,
+        };
+      });
 
       // Get peak training times
       const { data: peakTimesData, error: peakTimesError } = await supabase

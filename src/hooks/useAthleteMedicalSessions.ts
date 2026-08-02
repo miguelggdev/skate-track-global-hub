@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -31,16 +31,19 @@ export const useAthleteMedicalSessions = (athleteId: string | null) => {
     enabled: !!athleteId,
   });
 
-  const addSession = async (session: Omit<MedicalSession, 'id'>) => {
-    try {
+  const addMutation = useMutation({
+    mutationFn: async (session: Omit<MedicalSession, 'id'>) => {
       const { error } = await supabase.from('medical_sessions').insert(session);
       if (error) throw error;
+    },
+    onSuccess: () => {
       toast({ title: 'Sesión médica registrada' });
       queryClient.invalidateQueries({ queryKey: ['medical-sessions', athleteId] });
-    } catch {
+    },
+    onError: () => {
       toast({ title: 'Error al registrar sesión', variant: 'destructive' });
-    }
-  };
+    },
+  });
 
   const getSessionCounts = (year?: number, month?: number) => {
     let filtered = sessions;
@@ -55,5 +58,5 @@ export const useAthleteMedicalSessions = (athleteId: string | null) => {
     };
   };
 
-  return { sessions, loading, addSession, getSessionCounts, refetch };
+  return { sessions, loading, addSession: addMutation.mutate, isAdding: addMutation.isPending, getSessionCounts, refetch };
 };

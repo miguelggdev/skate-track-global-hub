@@ -71,7 +71,7 @@ export function BottomNav({ role }: BottomNavProps) {
               key={item.path}
               onClick={() => navigate(item.path)}
               className={cn(
-                'flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl min-w-[56px] transition-all duration-200',
+                'relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl min-w-[56px] transition-all duration-200',
                 isActive
                   ? 'text-primary'
                   : 'text-muted-foreground hover:text-foreground'

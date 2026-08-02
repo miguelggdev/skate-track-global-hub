@@ -44,8 +44,11 @@ export const useAthleteKPIs = (athleteId: string | null) => {
       ]);
 
       const trainingSessions: TrainingSession[] = (attendanceRes.data ?? [])
-        .map((a: any) => a.training_sessions)
-        .filter(Boolean);
+        .flatMap(a => {
+          const s = a.training_sessions as TrainingSession | TrainingSession[] | null;
+          if (!s) return [];
+          return Array.isArray(s) ? s : [s];
+        });
 
       return {
         trainingSessions,

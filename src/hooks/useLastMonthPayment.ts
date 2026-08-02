@@ -56,11 +56,9 @@ export const useClubSettings = () => {
         .from('club_settings')
         .select('*')
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
-        throw new Error(error.message);
-      }
+      if (error) throw new Error(error.message);
 
       return data;
     },

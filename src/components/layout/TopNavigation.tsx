@@ -415,7 +415,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
         navigate(`/finance?highlight=${result.id}`);
         break;
       case 'equipment':
-        navigate(`/athletes?tab=equipment&highlight=${result.id}`);
+        navigate(`/equipamiento?highlight=${result.id}`);
         break;
       case 'coach':
         navigate(`/training?coach=${result.id}`);

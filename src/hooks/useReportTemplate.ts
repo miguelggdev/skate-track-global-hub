@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ClubInfo, ReportSettings, ReportTemplateGenerator } from '@/utils/reportTemplateGenerator';
 import jsPDF from 'jspdf';
@@ -71,8 +71,8 @@ export const useReportTemplate = () => {
     return generator;
   };
 
-  const updateReportSettings = async (newSettings: Partial<ReportSettings>) => {
-    try {
+  const updateMutation = useMutation({
+    mutationFn: async (newSettings: Partial<ReportSettings>) => {
       if (data) {
         const { error } = await supabase
           .from('club_settings')
@@ -85,13 +85,19 @@ export const useReportTemplate = () => {
           .insert({ club_name: 'Mi Club', ...newSettings });
         if (error) throw error;
       }
-
       queryClient.invalidateQueries({ queryKey: ['club-settings'] });
+    },
+  });
+
+  const updateReportSettings = async (newSettings: Partial<ReportSettings>): Promise<{ success: boolean; error?: string }> => {
+    try {
+      await updateMutation.mutateAsync(newSettings);
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : '';
       return {
         success: false,
-        error: error.message?.includes('insufficient_privilege') || error.message?.includes('policy')
+        error: msg.includes('insufficient_privilege') || msg.includes('policy')
           ? 'No tienes permisos para modificar la configuración de reportes'
           : 'No se pudo actualizar la configuración de reportes',
       };
