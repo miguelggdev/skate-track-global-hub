@@ -55,7 +55,7 @@ def get_athletes_requiring_medical_attention() -> str:
         client.table("athletes")
         .select("id, first_name, last_name, category, allergies, chronic_conditions, blood_type")
         .eq("status", "active")
-        .not_.is_("chronic_conditions", "null")
+        .or_("chronic_conditions.not.is.null,allergies.not.is.null")
         .limit(50)
         .execute()
     )
@@ -69,7 +69,6 @@ def get_equipment_status() -> str:
     result = (
         client.table("equipment")
         .select("name, equipment_type, status, condition_notes, next_maintenance_at")
-        .eq("equipment_type", "medical")
         .execute()
     )
     return json.dumps(result.data or [], ensure_ascii=False, default=str)

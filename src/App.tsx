@@ -48,6 +48,7 @@ const EquipmentPage      = React.lazy(() => import('./pages/EquipmentPage'));
 const EvaluationsPage    = React.lazy(() => import('./pages/EvaluationsPage'));
 const MessagesPage       = React.lazy(() => import('./pages/MessagesPage'));
 const MedicalPage        = React.lazy(() => import('./pages/MedicalPage'));
+const AgentChat          = React.lazy(() => import('./pages/AgentChat'));
 const PublicAthletePage  = React.lazy(() => import('./pages/PublicAthletePage'));
 
 const queryClient = new QueryClient();
@@ -236,6 +237,14 @@ const App = () => (
                       element={
                         <ProtectedRoute allowedRoles={['admin', 'finance', 'leader']}>
                           <Finance />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/chat"
+                      element={
+                        <ProtectedRoute>
+                          <AgentChat />
                         </ProtectedRoute>
                       }
                     />

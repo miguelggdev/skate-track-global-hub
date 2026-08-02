@@ -12,6 +12,9 @@ from agents.gym_agent import GymAgent
 from agents.medical_agent import MedicalAgent
 from agents.cycling_agent import CyclingAgent
 from agents.psychology_agent import PsychologyAgent
+from agents.finance_agent import FinanceAgent
+from agents.marketing_agent import MarketingAgent
+from agents.results_agent import ResultsAgent
 from api.deps import get_current_user, require_roles, PRIVILEGED_ROLES
 
 router = APIRouter(prefix="/agents", tags=["agents"])
@@ -24,10 +27,13 @@ _registry: dict = {
     "medical":    MedicalAgent(),
     "cycling":    CyclingAgent(),
     "psychology": PsychologyAgent(),
+    "finance":    FinanceAgent(),
+    "marketing":  MarketingAgent(),
+    "results":    ResultsAgent(),
 }
 
 # Agentes que requieren rol privilegiado (admin/coach/leader)
-_RESTRICTED_AGENTS = {"admin", "medical"}
+_RESTRICTED_AGENTS = {"admin", "medical", "finance"}
 
 
 class HistoryMessage(BaseModel):
@@ -106,6 +112,24 @@ def list_agents(current_user: dict = Depends(get_current_user)) -> dict:
                 "id": "psychology",
                 "name": "Psicólogo Deportivo",
                 "description": "Preparación mental, manejo de ansiedad y concentración competitiva",
+                "restricted": False,
+            },
+            {
+                "id": "finance",
+                "name": "Asesor Financiero",
+                "description": "Ingresos, egresos, pagos pendientes y metas económicas del club",
+                "restricted": True,
+            },
+            {
+                "id": "marketing",
+                "name": "Marketing y Comunicación",
+                "description": "Contenido para redes sociales, comunicados y estrategias de crecimiento",
+                "restricted": False,
+            },
+            {
+                "id": "results",
+                "name": "Analista de Resultados",
+                "description": "Resultados de competencias, rankings, historial y análisis de rendimiento",
                 "restricted": False,
             },
         ]

@@ -52,6 +52,7 @@ INSERT INTO public.ui_translations (key, es, en, fr, it, de, pt) VALUES
 ('menu.finance',      'Finanzas',       'Finance',         'Finances',          'Finanze',          'Finanzen',              'Finanças'),
 ('menu.club_config',  'Config. Club',   'Club Settings',   'Paramètres club',   'Impost. club',     'Club-Einstellungen',    'Config. Clube'),
 ('menu.settings',     'Ajustes',        'Settings',        'Paramètres',        'Impostazioni',     'Einstellungen',         'Configurações'),
+('menu.agents',       'Asistentes IA',  'AI Assistants',   'Assistants IA',     'Assistenti IA',    'KI-Assistenten',        'Assistentes IA'),
 ('menu.users',        'Usuarios',       'Users',           'Utilisateurs',      'Utenti',           'Benutzer',              'Usuários'),
 ('menu.logout',       'Cerrar sesión',  'Log out',         'Se déconnecter',    'Esci',             'Abmelden',              'Sair'),
 

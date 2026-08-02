@@ -36,13 +36,13 @@ def get_athlete_training_history(athlete_id: str) -> str:
     thirty_days_ago = (datetime.now() - timedelta(days=30)).isoformat()
     result = (
         client.table("training_attendance")
-        .select("status, training_session_id")
+        .select("attended, training_session_id")
         .eq("athlete_id", athlete_id)
         .gte("created_at", thirty_days_ago)
         .execute()
     )
     attendances = result.data or []
-    attended = sum(1 for a in attendances if a.get("status") == "present")
+    attended = sum(1 for a in attendances if a.get("attended") is True)
     total = len(attendances)
     return json.dumps({
         "total_sesiones": total,

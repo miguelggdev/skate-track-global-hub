@@ -201,7 +201,7 @@ const LeaderDashboard = () => {
                 </div>
               </div>
               <p className="text-2xl font-black text-foreground">
-                {Math.round((athletes / TARGET_ATHLETES) * 100)}%
+                {TARGET_ATHLETES > 0 ? Math.round((athletes / TARGET_ATHLETES) * 100) : 0}%
               </p>
               <p className="text-xs text-muted-foreground mt-1">{athletes} / {TARGET_ATHLETES} atletas meta</p>
             </CardContent>

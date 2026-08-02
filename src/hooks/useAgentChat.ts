@@ -6,9 +6,21 @@ export interface ChatMessage {
   content: string;
 }
 
+export type AgentId =
+  | 'admin'
+  | 'skating'
+  | 'nutrition'
+  | 'gym'
+  | 'medical'
+  | 'cycling'
+  | 'psychology'
+  | 'finance'
+  | 'marketing'
+  | 'results';
+
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:8000';
 
-export function useAgentChat(agentId: 'admin' | 'skating') {
+export function useAgentChat(agentId: AgentId) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

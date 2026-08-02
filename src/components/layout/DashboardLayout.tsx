@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Home, Users, Calendar, Trophy, DollarSign, Settings, Cog, LogOut, Timer, FileText, Package, ClipboardList, MessageSquare, HeartPulse,
+  Home, Users, Calendar, Trophy, DollarSign, Settings, Cog, LogOut, Timer, FileText, Package, ClipboardList, MessageSquare, HeartPulse, Bot,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -71,7 +71,7 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
     if (role === 'parent') {
       return [
         { title: t('menu.dashboard'), icon: Home, path: '/parent-dashboard' },
-        { title: t('menu.competitions'), icon: Trophy, path: '/parent-dashboard' },
+        { title: t('menu.competitions'), icon: Trophy, path: '/competitions' },
         { title: t('menu.messages'), icon: MessageSquare, path: '/mensajes' },
         { title: t('menu.settings'), icon: Settings, path: '/settings' },
       ];
@@ -89,6 +89,7 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
       { title: t('menu.competitions'), icon: Trophy, path: '/competitions' },
       { title: t('menu.finance'), icon: DollarSign, path: '/finance' },
       { title: t('menu.club_config'), icon: Cog, path: '/club-config' },
+      { title: t('menu.agents'), icon: Bot, path: '/chat' },
       { title: t('menu.settings'), icon: Settings, path: '/settings' },
     ];
   };
@@ -126,11 +127,11 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
 
     // Filter by path — language-independent
     const allowedPaths: Record<string, string[]> = {
-      admin:    ['/', '/athletes', '/training', '/tiempos', '/documentos', '/equipamiento', '/evaluaciones', '/mensajes', '/medico', '/competitions', '/finance', '/club-config', '/settings'],
-      coach:    ['/', '/athletes', '/training', '/tiempos', '/documentos', '/equipamiento', '/evaluaciones', '/mensajes', '/medico', '/competitions', '/settings'],
-      delegate: ['/', '/mensajes', '/competitions', '/settings'],
-      leader:   ['/', '/athletes', '/training', '/tiempos', '/documentos', '/equipamiento', '/evaluaciones', '/mensajes', '/competitions', '/finance', '/club-config', '/settings'],
-      finance:  ['/', '/mensajes', '/finance', '/settings'],
+      admin:    ['/', '/athletes', '/training', '/tiempos', '/documentos', '/equipamiento', '/evaluaciones', '/mensajes', '/medico', '/competitions', '/finance', '/club-config', '/chat', '/settings'],
+      coach:    ['/', '/athletes', '/training', '/tiempos', '/documentos', '/equipamiento', '/evaluaciones', '/mensajes', '/medico', '/competitions', '/chat', '/settings'],
+      delegate: ['/', '/mensajes', '/competitions', '/chat', '/settings'],
+      leader:   ['/', '/athletes', '/training', '/tiempos', '/documentos', '/equipamiento', '/evaluaciones', '/mensajes', '/competitions', '/finance', '/club-config', '/chat', '/settings'],
+      finance:  ['/', '/mensajes', '/finance', '/chat', '/settings'],
     };
     const paths = role ? allowedPaths[role] : roleItems.map(i => i.path);
     return roleItems

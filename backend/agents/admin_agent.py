@@ -35,13 +35,13 @@ def get_financial_summary() -> str:
     start = f"{now.year}-{now.month:02d}-01"
     result = (
         client.table("financial_transactions")
-        .select("amount, type, description, date")
-        .gte("date", start)
+        .select("amount, transaction_type, description, transaction_date")
+        .gte("transaction_date", start)
         .execute()
     )
     transactions = result.data or []
-    income = sum(float(t.get("amount", 0)) for t in transactions if t.get("type") == "income")
-    expense = sum(float(t.get("amount", 0)) for t in transactions if t.get("type") == "expense")
+    income = sum(float(t.get("amount", 0)) for t in transactions if t.get("transaction_type") == "income")
+    expense = sum(float(t.get("amount", 0)) for t in transactions if t.get("transaction_type") == "expense")
     return json.dumps(
         {
             "mes": f"{now.year}-{now.month:02d}",
@@ -61,9 +61,9 @@ def get_upcoming_competitions() -> str:
     today = datetime.now().date().isoformat()
     result = (
         client.table("competitions")
-        .select("name, date, location, status, max_participants")
-        .gte("date", today)
-        .order("date")
+        .select("name, start_date, location, competition_level, max_participants")
+        .gte("start_date", today)
+        .order("start_date")
         .limit(5)
         .execute()
     )
