@@ -16,12 +16,14 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import {
   Stethoscope, HeartPulse, Plus, AlertTriangle, CheckCircle2,
-  Clock, Shield, Activity, Phone, User,
+  Clock, Shield, Activity, Phone, User, Syringe,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { MedicalSessionForm, SESSION_TYPES, SESSION_STATUSES } from './MedicalSessionForm';
+import { VaccineRecordsTab } from './VaccineRecordsTab';
+import { FitnessTestsTab } from './FitnessTestsTab';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -198,21 +200,27 @@ export function AthleteMedicalDialog({ athlete, onClose }: Props) {
         {/* Tabs */}
         <div className="flex-1 overflow-auto">
           <Tabs defaultValue="ficha" className="h-full flex flex-col">
-            <TabsList className="mx-6 mt-4 grid grid-cols-3 w-auto max-w-xs flex-shrink-0">
-              <TabsTrigger value="ficha" className="gap-1.5 text-xs">
+            <TabsList className="mx-6 mt-4 grid grid-cols-5 w-auto flex-shrink-0">
+              <TabsTrigger value="ficha" className="gap-1 text-xs">
                 <Shield className="h-3.5 w-3.5" /> Ficha
               </TabsTrigger>
-              <TabsTrigger value="sesiones" className="gap-1.5 text-xs">
+              <TabsTrigger value="sesiones" className="gap-1 text-xs">
                 <Activity className="h-3.5 w-3.5" /> Sesiones
                 {sessions.length > 0 && (
-                  <Badge variant="secondary" className="h-4 px-1 text-[10px] ml-1">{sessions.length}</Badge>
+                  <Badge variant="secondary" className="h-4 px-1 text-[10px] ml-0.5">{sessions.length}</Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="restricciones" className="gap-1.5 text-xs">
+              <TabsTrigger value="restricciones" className="gap-1 text-xs">
                 <AlertTriangle className="h-3.5 w-3.5" /> Restricciones
                 {activeRestrictions.length > 0 && (
-                  <Badge className="h-4 px-1 text-[10px] ml-1 bg-red-500 text-white">{activeRestrictions.length}</Badge>
+                  <Badge className="h-4 px-1 text-[10px] ml-0.5 bg-red-500 text-white">{activeRestrictions.length}</Badge>
                 )}
+              </TabsTrigger>
+              <TabsTrigger value="vacunas" className="gap-1 text-xs">
+                <Syringe className="h-3.5 w-3.5" /> Vacunas
+              </TabsTrigger>
+              <TabsTrigger value="tests" className="gap-1 text-xs">
+                <Stethoscope className="h-3.5 w-3.5" /> Tests
               </TabsTrigger>
             </TabsList>
 
@@ -441,6 +449,22 @@ export function AthleteMedicalDialog({ athlete, onClose }: Props) {
                   ))}
                 </div>
               )}
+            </TabsContent>
+
+            {/* ── Tab: Vacunas ── */}
+            <TabsContent value="vacunas" className="flex-1 overflow-auto px-6 py-4">
+              <VaccineRecordsTab
+                athleteId={athlete.id}
+                athleteName={athlete.first_name}
+              />
+            </TabsContent>
+
+            {/* ── Tab: Tests físicos ── */}
+            <TabsContent value="tests" className="flex-1 overflow-auto px-6 py-4">
+              <FitnessTestsTab
+                athleteId={athlete.id}
+                athleteName={athlete.first_name}
+              />
             </TabsContent>
           </Tabs>
         </div>

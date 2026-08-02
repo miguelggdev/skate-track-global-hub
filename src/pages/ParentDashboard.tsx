@@ -6,14 +6,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   Users, Trophy, DollarSign, Calendar, CheckCircle2, XCircle,
-  Clock, AlertCircle, Medal, ChevronRight, Baby,
+  Clock, AlertCircle, Medal, ChevronRight, Baby, HeartPulse, MessageSquare,
 } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { formatDistanceToNow, format, isFuture } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -59,6 +60,15 @@ interface Award {
   medal_type: string | null;
   award_date: string;
   competitions: { name: string } | null;
+}
+
+interface MedicalRestriction {
+  id: string;
+  session_type: string;
+  status: string;
+  diagnosis: string | null;
+  follow_up_date: string | null;
+  session_date: string;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -119,6 +129,7 @@ function txStatusBadge(status: string) {
 const ParentDashboard: React.FC = () => {
   const { user } = useAuth();
   const { profile } = useUserProfile();
+  const navigate = useNavigate();
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
 
   // 1. Fetch linked athletes
@@ -210,6 +221,22 @@ const ParentDashboard: React.FC = () => {
         .order('award_date', { ascending: false })
         .limit(5);
       return (data ?? []) as Award[];
+    },
+    enabled: !!activeAthleteId,
+  });
+
+  // 6. Medical restrictions for linked athlete
+  const { data: medicalRestrictions = [] } = useQuery({
+    queryKey: ['parent-medical', activeAthleteId],
+    queryFn: async () => {
+      if (!activeAthleteId) return [];
+      const { data } = await supabase
+        .from('medical_sessions')
+        .select('id, session_type, status, diagnosis, follow_up_date, session_date')
+        .eq('athlete_id', activeAthleteId)
+        .in('status', ['active_restriction', 'partial_restriction', 'scheduled'])
+        .order('session_date', { ascending: false });
+      return (data ?? []) as MedicalRestriction[];
     },
     enabled: !!activeAthleteId,
   });
@@ -520,6 +547,80 @@ const ParentDashboard: React.FC = () => {
                       })}
                     </div>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* Medical status */}
+              <Card className={medicalRestrictions.some(r => r.status === 'active_restriction') ? 'border-red-200' : ''}>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <HeartPulse className={`h-4 w-4 ${medicalRestrictions.some(r => r.status === 'active_restriction') ? 'text-red-500' : 'text-emerald-500'}`} />
+                    Estado médico
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {medicalRestrictions.length === 0 ? (
+                    <div className="flex items-center gap-2 py-2 text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
+                      <p className="text-sm font-medium">Apto para entrenar — sin restricciones activas</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {medicalRestrictions.map(r => (
+                        <div
+                          key={r.id}
+                          className={`p-3 rounded-lg border ${
+                            r.status === 'active_restriction'
+                              ? 'bg-red-500/10 border-red-200'
+                              : r.status === 'partial_restriction'
+                              ? 'bg-amber-500/10 border-amber-200'
+                              : 'bg-blue-500/10 border-blue-200'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <AlertCircle className={`h-4 w-4 flex-shrink-0 ${
+                              r.status === 'active_restriction' ? 'text-red-500' :
+                              r.status === 'partial_restriction' ? 'text-amber-500' : 'text-blue-500'
+                            }`} />
+                            <span className="text-sm font-semibold capitalize">
+                              {r.status === 'active_restriction' ? 'Restricción total' :
+                               r.status === 'partial_restriction' ? 'Restricción parcial' : 'Consulta programada'}
+                            </span>
+                          </div>
+                          {r.diagnosis && (
+                            <p className="text-xs text-muted-foreground">{r.diagnosis}</p>
+                          )}
+                          {r.follow_up_date && (
+                            <p className="text-xs mt-1 flex items-center gap-1 text-muted-foreground">
+                              <Clock className="h-3 w-3" />
+                              Seguimiento: {format(new Date(r.follow_up_date), "d 'de' MMMM", { locale: es })}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Messages shortcut */}
+              <Card>
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-blue-500/10 flex items-center justify-center">
+                      <MessageSquare className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Mensajes del club</p>
+                      <p className="text-xs text-muted-foreground">Comunícate con el equipo técnico</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => navigate('/mensajes')}
+                    className="text-xs text-blue-600 dark:text-blue-400 font-medium hover:underline flex items-center gap-1"
+                  >
+                    Abrir <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
                 </CardContent>
               </Card>
 

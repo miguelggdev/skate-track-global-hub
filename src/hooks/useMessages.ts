@@ -1,3 +1,4 @@
+import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -21,8 +22,9 @@ export interface SendMessagePayload {
 export function useInbox() {
   const { user } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile();
+  const qc = useQueryClient();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['messages-inbox', user?.id, profile?.role],
     queryFn: async () => {
       if (!user) return [];
@@ -39,8 +41,22 @@ export function useInbox() {
       return (data ?? []) as MessageRow[];
     },
     enabled: !!user && !profileLoading,
-    refetchInterval: 30_000,
+    staleTime: 5 * 60 * 1000,
   });
+
+  React.useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`messages-inbox:${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
+        qc.invalidateQueries({ queryKey: ['messages-inbox', user.id] });
+        qc.invalidateQueries({ queryKey: ['messages-unread-count', user.id] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user, qc]);
+
+  return query;
 }
 
 export function useSentMessages() {
@@ -64,7 +80,9 @@ export function useSentMessages() {
 
 export function useThread(messageId: string | null) {
   const { user } = useAuth();
-  return useQuery({
+  const qc = useQueryClient();
+
+  const query = useQuery({
     queryKey: ['messages-thread', messageId],
     queryFn: async () => {
       if (!messageId) return [];
@@ -77,8 +95,21 @@ export function useThread(messageId: string | null) {
       return (data ?? []) as MessageRow[];
     },
     enabled: !!messageId && !!user,
-    refetchInterval: 15_000,
+    staleTime: 5 * 60 * 1000,
   });
+
+  React.useEffect(() => {
+    if (!messageId || !user) return;
+    const channel = supabase
+      .channel(`messages-thread:${messageId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
+        qc.invalidateQueries({ queryKey: ['messages-thread', messageId] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [messageId, user, qc]);
+
+  return query;
 }
 
 export function useUnreadMessageCount() {
@@ -101,7 +132,7 @@ export function useUnreadMessageCount() {
       return count ?? 0;
     },
     enabled: !!user && !profileLoading,
-    refetchInterval: 30_000,
+    staleTime: 30_000,
   });
 }
 

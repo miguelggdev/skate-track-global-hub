@@ -22,6 +22,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { downloadICS } from '@/lib/generateICS';
+import { useToast } from '@/hooks/use-toast';
 
 interface TrainingSession {
   id: string;
@@ -46,6 +47,7 @@ const TrainingCalendar = () => {
   const [filterType, setFilterType] = useState<string>('all');
   const { isAdmin } = useUserProfile();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const weekStartsOn: 0 | 1 = 0;
 
   const dateKey = format(currentDate, 'yyyy-MM-dd');
