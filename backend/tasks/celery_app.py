@@ -5,7 +5,16 @@ celery_app = Celery(
     "skate_tasks",
     broker=settings.redis_url,
     backend=settings.redis_url,
-    include=["tasks.schedules"],
+    include=[
+        "tasks.schedules",
+        "tasks.calendar_tasks",
+        "tasks.finance_tasks",
+        "tasks.athlete_tasks",
+        "tasks.admin_tasks",
+        "tasks.marketing_tasks",
+        "tasks.reporting_tasks",
+        "tasks.security_tasks",
+    ],
 )
 
 celery_app.conf.update(

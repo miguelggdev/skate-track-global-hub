@@ -4,7 +4,7 @@
 
 PYTHON ?= py -3.11
 
-.PHONY: install dev test lint
+.PHONY: install dev test lint worker beat flower celery-all
 
 install:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -17,3 +17,15 @@ test:
 
 lint:
 	$(PYTHON) -m ruff check .
+
+worker:
+	$(PYTHON) -m celery -A tasks.schedules worker --loglevel=info --concurrency=4
+
+beat:
+	$(PYTHON) -m celery -A tasks.schedules beat --loglevel=info
+
+flower:
+	$(PYTHON) -m celery -A tasks.schedules flower --port=5555
+
+celery-all:
+	$(PYTHON) -m celery -A tasks.schedules worker --loglevel=info --beat --concurrency=4
