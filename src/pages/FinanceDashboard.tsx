@@ -28,6 +28,7 @@ import {
   DollarSign, TrendingUp, TrendingDown, Users, FileText, CreditCard,
   PieChart, Calculator, AlertCircle, CheckCircle, Clock, BarChart3, Percent
 } from 'lucide-react';
+import { DashboardAgentPanel } from '@/components/agents/DashboardAgentPanel';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -567,6 +568,20 @@ const FinanceDashboard = () => {
             />
           </TabsContent>
         </Tabs>
+
+        {/* AG-07 — Asistente Financiero IA */}
+        <DashboardAgentPanel
+          agentId="finance"
+          title="Asesor Financiero IA (AG-07)"
+          subtitle="Análisis de flujo de caja, proyecciones y recomendaciones"
+          accentColor="from-emerald-500 to-teal-500"
+          suggestedQuestions={[
+            '¿Cuál es la proyección de ingresos para el próximo mes?',
+            '¿Cuánto dinero está en mora y cuántos atletas tienen pagos vencidos?',
+            '¿Cómo mejorar la tasa de cobro del club?',
+            'Analiza el flujo de caja de los últimos 3 meses',
+          ]}
+        />
       </div>
     </DashboardLayout>
   );

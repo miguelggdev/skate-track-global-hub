@@ -1,0 +1,48 @@
+{
+  "name": "SpeedSkateTrack Hub",
+  "short_name": "SkateTrack",
+  "description": "Gestión inteligente para clubes de patinaje de velocidad",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#06080f",
+  "theme_color": "#f97316",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["sports", "productivity", "utilities"],
+  "lang": "es",
+  "shortcuts": [
+    {
+      "name": "Atletas",
+      "url": "/athletes",
+      "description": "Gestionar atletas del club"
+    },
+    {
+      "name": "Entrenamientos",
+      "url": "/training",
+      "description": "Ver sesiones de entrenamiento"
+    },
+    {
+      "name": "Finanzas",
+      "url": "/finance",
+      "description": "Panel financiero"
+    }
+  ]
+}

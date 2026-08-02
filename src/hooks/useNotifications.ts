@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,7 +9,9 @@ export type Notification = NotificationRow;
 
 export function useNotifications() {
   const { user } = useAuth();
-  return useQuery({
+  const qc = useQueryClient();
+
+  const query = useQuery({
     queryKey: ['notifications', user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -22,8 +25,36 @@ export function useNotifications() {
       return (data ?? []) as NotificationRow[];
     },
     enabled: !!user,
-    refetchInterval: 30_000,
+    // Keep a 5 min stale window; Realtime handles real-time updates
+    staleTime: 5 * 60 * 1000,
   });
+
+  // Supabase Realtime: invalidate cache on INSERT or UPDATE for this user
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`notifications:${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          qc.invalidateQueries({ queryKey: ['notifications', user.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, qc]);
+
+  return query;
 }
 
 export function useMarkNotificationRead() {

@@ -25,6 +25,7 @@ import AthletePDFExport from '@/components/athletes/dashboard/cv/AthletePDFExpor
 import AthleteProfileEditDialog from '@/components/athletes/dashboard/cv/AthleteProfileEditDialog';
 import { AthleteSkillsRadar, AthleteNextCompetition, AthleteAchievements } from '@/components/dashboard/AthleteCharts';
 import { AthleteCVDownloadButton } from '@/lib/pdf/AthleteCVDocument';
+import { DashboardAgentPanel } from '@/components/agents/DashboardAgentPanel';
 
 // Navigation Component
 import { AthleteTabNavigation } from '@/components/athletes/dashboard/AthleteTabNavigation';
@@ -317,6 +318,43 @@ const AthleteDashboard = () => {
             competitions={kpiData.competitions}
             awards={awards}
           />
+
+          {/* Asistentes IA del atleta */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <DashboardAgentPanel
+              agentId="skating"
+              title="Entrenador IA (AG-02)"
+              subtitle="Técnica, estrategia y periodización"
+              accentColor="from-blue-500 to-indigo-500"
+              suggestedQuestions={[
+                '¿Cómo mejorar mi técnica de empuje?',
+                '¿Cómo prepararme para mi próxima competencia?',
+                '¿Qué ejercicios de pista recomiendas para esta semana?',
+              ]}
+            />
+            <DashboardAgentPanel
+              agentId="nutrition"
+              title="Nutricionista IA (AG-04)"
+              subtitle="Alimentación y hidratación para el rendimiento"
+              accentColor="from-green-500 to-emerald-500"
+              suggestedQuestions={[
+                '¿Qué debo comer el día antes de competir?',
+                '¿Cómo hidratarme durante un entrenamiento largo?',
+                '¿Qué desayuno es ideal para entrenar en la mañana?',
+              ]}
+            />
+            <DashboardAgentPanel
+              agentId="psychology"
+              title="Psicología Deportiva (AG-13)"
+              subtitle="Motivación, concentración y bienestar mental"
+              accentColor="from-violet-500 to-purple-500"
+              suggestedQuestions={[
+                '¿Cómo manejar los nervios antes de una carrera?',
+                'Técnicas de visualización para competir mejor',
+                '¿Cómo recuperarme mentalmente después de una caída?',
+              ]}
+            />
+          </div>
         </div>
 
         {/* Existing Tabs */}

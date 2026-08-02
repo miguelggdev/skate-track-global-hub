@@ -14,6 +14,7 @@ import {
   CoachPerformanceBar, CoachAttendanceArea,
   CoachCategoryPie, CoachAthleteStatusTable, CoachTodaySession
 } from '@/components/dashboard/CoachCharts';
+import { DashboardAgentPanel } from '@/components/agents/DashboardAgentPanel';
 import { supabase } from '@/integrations/supabase/client';
 
 const CoachDashboard = () => {
@@ -188,6 +189,33 @@ const CoachDashboard = () => {
           <div className="lg:col-span-2">
             <CoachAthleteStatusTable />
           </div>
+        </div>
+
+        {/* AG-02 — Experto en Patinaje */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <DashboardAgentPanel
+            agentId="skating"
+            title="Entrenador IA — Patinaje (AG-02)"
+            subtitle="Periodización, técnica, estrategia de carrera"
+            accentColor="from-blue-500 to-indigo-500"
+            suggestedQuestions={[
+              '¿Qué ejercicios de viraje en pista recomiendas para categoría juvenil?',
+              'Crea un plan semanal de entrenamiento de fuerza para pista',
+              '¿Cómo periodizar la semana antes de una competencia importante?',
+              '¿Qué errores técnicos son más comunes en Prejuvenil?',
+            ]}
+          />
+          <DashboardAgentPanel
+            agentId="psychology"
+            title="Psicología Deportiva (AG-13)"
+            subtitle="Motivación, manejo de presión, bienestar mental"
+            accentColor="from-violet-500 to-purple-500"
+            suggestedQuestions={[
+              '¿Cómo preparar mentalmente a un atleta para su primera competencia?',
+              'Técnicas de concentración antes de la carrera',
+              '¿Cómo manejar un atleta con baja motivación?',
+            ]}
+          />
         </div>
 
         {/* Tools */}

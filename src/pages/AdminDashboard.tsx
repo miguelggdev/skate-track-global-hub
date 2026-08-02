@@ -19,6 +19,7 @@ import {
   AdminClubHealthRadar, AdminGenderDistribution,
   AdminMemberGrowth, AdminAuditFeed
 } from '@/components/dashboard/AdminHealthChart';
+import { DashboardAgentPanel } from '@/components/agents/DashboardAgentPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile } from '@/hooks/useUserProfile';
 
@@ -270,6 +271,20 @@ const AdminDashboard = () => {
 
         <AdminAuditFeed />
         <HighlightsSection />
+
+        {/* AG-01 — Asistente IA del Administrador */}
+        <DashboardAgentPanel
+          agentId="admin"
+          title="Asistente Administrador (AG-01)"
+          subtitle="Pregunta sobre cualquier dato del club en lenguaje natural"
+          accentColor="from-orange-500 to-amber-500"
+          suggestedQuestions={[
+            '¿Cuántos atletas han pagado este mes?',
+            '¿Qué atletas llevan más de 3 inasistencias?',
+            '¿Cuál es la asistencia promedio de esta semana?',
+            'Genera un resumen del estado actual del club',
+          ]}
+        />
 
         <Card className="animate-slide-up">
           <CardHeader>

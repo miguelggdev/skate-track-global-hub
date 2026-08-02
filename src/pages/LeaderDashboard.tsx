@@ -13,6 +13,7 @@ import {
   LeaderClubHealthRadar, LeaderAnnualTrend,
   LeaderStrategicAlerts, LeaderExecutiveKPIs
 } from '@/components/dashboard/LeaderCharts';
+import { DashboardAgentPanel } from '@/components/agents/DashboardAgentPanel';
 import { supabase } from '@/integrations/supabase/client';
 
 const TARGET_ATTENDANCE = 92;
@@ -213,6 +214,20 @@ const LeaderDashboard = () => {
           <LeaderClubHealthRadar />
           <LeaderAnnualTrend />
         </div>
+
+        {/* AG-01 — Asistente ejecutivo */}
+        <DashboardAgentPanel
+          agentId="admin"
+          title="Asistente Ejecutivo IA (AG-01)"
+          subtitle="Consulta sobre KPIs, tendencias y decisiones estratégicas del club"
+          accentColor="from-orange-500 to-amber-500"
+          suggestedQuestions={[
+            '¿Cuál es el estado financiero del club este mes?',
+            '¿Cómo está el nivel de retención de atletas vs el año pasado?',
+            '¿Qué acciones recomiendas para aumentar la asistencia?',
+            'Resume los principales logros del club este trimestre',
+          ]}
+        />
 
         {/* Alerts + Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
