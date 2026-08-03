@@ -15,6 +15,7 @@ from database.supabase_client import get_supabase
 def get_monthly_summary(months_back: int = 0) -> str:
     """Obtiene ingresos, egresos y balance de un mes. months_back=0 es el mes actual."""
     client = get_supabase()
+    months_back = max(0, int(months_back))
     now = datetime.now()
     year = now.year
     month = now.month - months_back

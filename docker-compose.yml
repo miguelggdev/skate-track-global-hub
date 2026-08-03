@@ -53,11 +53,13 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: celery -A tasks.celery_app beat --loglevel=info --schedule=/tmp/celerybeat-schedule
+    command: celery -A tasks.celery_app beat --loglevel=info --schedule=/var/celerybeat/celerybeat-schedule
     restart: unless-stopped
     env_file: .env.production
     environment:
       REDIS_URL: redis://redis:6379/0
+    volumes:
+      - celerybeat_data:/var/celerybeat
     depends_on:
       redis:
         condition: service_healthy
@@ -80,7 +82,7 @@ services:
 
   # ── Certbot (renovación automática SSL) ─────────────────────────────────
   certbot:
-    image: certbot/certbot:latest
+    image: certbot/certbot:v2.11.0
     restart: unless-stopped
     volumes:
       - letsencrypt:/etc/letsencrypt
@@ -91,3 +93,4 @@ volumes:
   redis_data:
   letsencrypt:
   acme_challenge:
+  celerybeat_data:

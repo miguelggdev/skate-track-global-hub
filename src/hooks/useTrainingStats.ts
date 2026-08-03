@@ -192,8 +192,7 @@ export const useTrainingStats = () => {
 
       const { data: weekAttendance = [] } = await supabase
         .from('training_attendance')
-        .select('attended, training_sessions!inner(scheduled_at)')
-        .gte('training_sessions.scheduled_at', sevenDaysAgoStr);
+        .select('attended, training_sessions!inner(scheduled_at)');
 
       const attendanceTrends = Array.from({ length: 7 }, (_, idx) => {
         const date = new Date();

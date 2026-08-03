@@ -330,12 +330,12 @@ def new_athlete_documents(athlete_id: str) -> dict:
 
     actions = 0
     for doc in doc_types:
-        db.table("user_documents").insert({
+        db.table("user_documents").upsert({
             "user_id": athlete.get("user_id") or athlete_id,
             "doc_type": doc["doc_type"],
             "doc_name": doc["doc_name"],
             "doc_status": "pending",
-        }).execute()
+        }, on_conflict="user_id,doc_type").execute()
         actions += 1
 
     msg = (

@@ -10,9 +10,13 @@ app = FastAPI(
     version="1.0.0",
 )
 
+_allowed_origins = [settings.frontend_url]
+if settings.environment == "development":
+    _allowed_origins.append("http://localhost:5173")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_url, "http://localhost:5173"],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["Content-Type", "Authorization"],

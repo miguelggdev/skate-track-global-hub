@@ -7,8 +7,10 @@ from langchain_core.messages import SystemMessage
 from langchain_core.tools import tool
 from langgraph.prebuilt import create_react_agent
 
-from agents.base_agent import BaseAgent
+from agents.base_agent import BaseAgent, current_user_id, current_user_role
 from database.supabase_client import get_supabase
+
+_STAFF_ROLES = {"admin", "coach", "leader"}
 
 
 @tool
@@ -55,6 +57,13 @@ def get_competitions_list(year: int = 0) -> str:
 def get_athlete_results_history(athlete_id: str) -> str:
     """Obtiene el historial de resultados competitivos de un atleta."""
     client = get_supabase()
+    role = current_user_role.get()
+    uid = current_user_id.get()
+    if role not in _STAFF_ROLES:
+        # Atletas solo pueden ver su propio historial
+        own = client.table("athletes").select("user_id").eq("id", athlete_id).limit(1).execute()
+        if not own.data or own.data[0].get("user_id") != uid:
+            return json.dumps({"error": "Sin permiso para ver este historial"}, ensure_ascii=False)
     result = (
         client.table("competition_results")
         .select("position, time_seconds, medal_type, category, gender, event_name, competition_id")
@@ -85,11 +94,19 @@ def get_club_ranking_summary() -> str:
     """Obtiene el ranking general del club: atletas con más medallas en el año."""
     client = get_supabase()
     year = datetime.now().year
+    comp_rows = (
+        client.table("competitions")
+        .select("id")
+        .gte("start_date", f"{year}-01-01")
+        .lte("start_date", f"{year}-12-31")
+        .execute()
+    ).data or []
+    comp_ids = [c["id"] for c in comp_rows] or ["00000000-0000-0000-0000-000000000000"]
     result = (
         client.table("competition_results")
         .select("athlete_id, medal_type")
         .not_.is_("medal_type", None)
-        .gte("competition_id", "")
+        .in_("competition_id", comp_ids)
         .execute()
     )
     medals_by_athlete: dict[str, dict] = {}

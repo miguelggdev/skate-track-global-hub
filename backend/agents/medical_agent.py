@@ -54,6 +54,8 @@ def get_athlete_health_profile(athlete_id: str) -> str:
 @tool
 def get_athletes_requiring_medical_attention() -> str:
     """Lista atletas activos con condiciones médicas registradas o alergias conocidas."""
+    if current_user_role.get() not in _AUTHORIZED_ROLES:
+        return json.dumps({"error": "Acceso no autorizado"}, ensure_ascii=False)
     client = get_supabase()
     result = (
         client.table("athletes")

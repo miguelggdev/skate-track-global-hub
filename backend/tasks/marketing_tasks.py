@@ -127,12 +127,13 @@ def reactivate_inactive_athletes() -> dict:
             f"¡Ven a entrenar esta semana!"
         )
 
-        # Log campaign
-        db.table("retention_campaigns").insert({
+        # Log campaign (upsert evita duplicados si la tarea reintenta)
+        db.table("retention_campaigns").upsert({
             "athlete_id": athlete["id"],
             "campaign_type": "reactivation",
+            "period": today.strftime("%Y-%m"),
             "message_sent": msg,
-        }).execute()
+        }, on_conflict="athlete_id,campaign_type,period").execute()
 
         if athlete.get("user_id"):
             notify_user(athlete["user_id"], "👋 ¡Te extrañamos!", msg, "info", "AUTO-22")

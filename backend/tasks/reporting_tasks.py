@@ -308,7 +308,7 @@ def predictive_analysis() -> dict:
             f"{'Aumentar frecuencia de entrenamiento.' if load_status == 'underloaded' else ''}"
         )
 
-        db.table("athlete_performance_predictions").insert({
+        db.table("athlete_performance_predictions").upsert({
             "athlete_id": athlete_id,
             "medal_potential": medal_potential,
             "injury_risk": injury_risk,
@@ -318,7 +318,7 @@ def predictive_analysis() -> dict:
                 "sessions_last_month": session_count,
                 "time_records_analyzed": len(time_records),
             },
-        }).execute()
+        }, on_conflict="athlete_id").execute()
         predictions_created += 1
 
     # Summary to coaches

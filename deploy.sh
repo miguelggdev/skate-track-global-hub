@@ -70,9 +70,12 @@ cmd_init() {
     info "Levantando contenedores (HTTP temporal)..."
     docker compose up -d --build
 
-    # Paso 5: Esperar a que Nginx esté listo
+    # Paso 5: Esperar a que Nginx esté listo (health check loop)
     info "Esperando a que Nginx esté listo..."
-    sleep 5
+    for i in $(seq 1 12); do
+        docker compose exec nginx curl -sf http://localhost:80/ >/dev/null 2>&1 && break
+        sleep 5
+    done
 
     # Paso 6: Obtener certificado SSL
     cmd_ssl
@@ -127,7 +130,7 @@ cmd_ssl() {
         -d "${DOMAIN}" \
         -d "www.${DOMAIN}" \
         && info "Certificado obtenido correctamente." \
-        || warn "No se pudo obtener el certificado. Verifica que el dominio apunte a este VPS."
+        || error "No se pudo obtener el certificado. Verifica que el dominio apunte a este VPS y vuelve a ejecutar ./deploy.sh ssl"
 }
 
 # ── Logs ───────────────────────────────────────────────────────────────────

@@ -13,12 +13,13 @@ from database.supabase_client import get_supabase
 def get_athletes_summary() -> str:
     """Obtiene estadísticas de atletas del club: total, activos, por categoría y por entrenador."""
     client = get_supabase()
-    result = client.table("athletes").select("id, status, category, first_name, last_name").execute()
-    athletes = result.data or []
-    total = len(athletes)
-    active = sum(1 for a in athletes if a.get("status") == "active")
+    total_res = client.table("athletes").select("id", count="exact").execute()
+    active_res = client.table("athletes").select("id", count="exact").eq("status", "active").execute()
+    cat_res = client.table("athletes").select("category").limit(1000).execute()
+    total = total_res.count or 0
+    active = active_res.count or 0
     categories: dict[str, int] = {}
-    for a in athletes:
+    for a in cat_res.data or []:
         cat = a.get("category") or "Sin categoría"
         categories[cat] = categories.get(cat, 0) + 1
     return json.dumps(

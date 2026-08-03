@@ -30,10 +30,15 @@ export const useAttendanceManagement = () => {
   const { data: attendanceRecords, isLoading } = useQuery({
     queryKey: ['attendance-records'],
     queryFn: async () => {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
       const { data, error } = await supabase
         .from('training_attendance')
         .select('*')
-        .order('created_at', { ascending: false });
+        .gte('created_at', thirtyDaysAgo.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(500);
 
       if (error) throw error;
       return data as AttendanceRecord[];

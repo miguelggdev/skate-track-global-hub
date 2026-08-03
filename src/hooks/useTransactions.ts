@@ -141,16 +141,6 @@ export const useDeleteTransaction = () => {
 
   return useMutation({
     mutationFn: async (transactionId: string) => {
-      // First get the transaction to check if it affects athlete status
-      const { data: transaction, error: fetchError } = await supabase
-        .from('financial_transactions')
-        .select('*, athletes!inner(*)')
-        .eq('id', transactionId)
-        .single();
-
-      if (fetchError) throw new Error(fetchError.message);
-
-      // Delete the transaction
       const { error: deleteError } = await supabase
         .from('financial_transactions')
         .delete()

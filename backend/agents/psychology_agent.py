@@ -7,14 +7,28 @@ from langchain_core.messages import SystemMessage
 from langchain_core.tools import tool
 from langgraph.prebuilt import create_react_agent
 
-from agents.base_agent import BaseAgent
+from agents.base_agent import BaseAgent, current_user_id, current_user_role
 from database.supabase_client import get_supabase
+
+_STAFF_ROLES = {"admin", "coach", "leader"}
+
+
+def _can_access_athlete(client, athlete_id: str) -> bool:
+    """Retorna True si el usuario en contexto puede acceder a los datos de este atleta."""
+    role = current_user_role.get()
+    if role in _STAFF_ROLES:
+        return True
+    uid = current_user_id.get()
+    own = client.table("athletes").select("user_id").eq("id", athlete_id).limit(1).execute()
+    return bool(own.data) and own.data[0].get("user_id") == uid
 
 
 @tool
 def get_athlete_competition_history(athlete_id: str) -> str:
     """Obtiene el historial de competencias de un atleta para contextualizar el trabajo psicológico."""
     client = get_supabase()
+    if not _can_access_athlete(client, athlete_id):
+        return json.dumps({"error": "Sin permiso para acceder a este atleta"}, ensure_ascii=False)
     result = (
         client.table("competition_registrations")
         .select("id, competition_id, created_at")
@@ -50,6 +64,8 @@ def get_upcoming_competitions() -> str:
 def get_athlete_profile(athlete_id: str) -> str:
     """Obtiene datos básicos del atleta para personalizar el apoyo psicológico."""
     client = get_supabase()
+    if not _can_access_athlete(client, athlete_id):
+        return json.dumps({"error": "Sin permiso para acceder a este atleta"}, ensure_ascii=False)
     result = (
         client.table("athletes")
         .select("first_name, last_name, category, birth_date, gender")
