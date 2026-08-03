@@ -273,6 +273,37 @@ docker compose exec certbot certbot certificates
 
 ---
 
+## Renovación automática del certificado SSL
+
+Certbot renueva el certificado automáticamente si quedan menos de 30 días de validez. Para garantizar que el proceso se ejecute, añade un cron en el VPS:
+
+```bash
+crontab -e
+
+# Añade esta línea (verifica cada domingo a las 03:00):
+0 3 * * 0 cd /opt/skatetrack && docker compose run --rm certbot renew --quiet && docker compose restart nginx
+```
+
+Para verificar el estado del certificado en cualquier momento:
+```bash
+docker compose exec certbot certbot certificates
+```
+
+---
+
+## Rollback automático
+
+El script `./deploy.sh update` incluye rollback automático: si el build falla o el health check post-deploy no pasa en 60 segundos, restaura automáticamente el commit anterior y reinicia los contenedores. No se requiere intervención manual.
+
+Si necesitas hacer rollback manual a un commit específico:
+```bash
+git log --oneline -10        # Ver commits recientes
+git checkout <SHA> -- .      # Restaurar archivos al commit SHA
+docker compose up -d --build # Reiniciar con la versión anterior
+```
+
+---
+
 ## Variables de entorno — referencia completa
 
 ### `.env.production` (backend + build)
@@ -291,3 +322,6 @@ docker compose exec certbot certbot certificates
 | `VITE_SUPABASE_ANON_KEY` | Sí | anon key pública de Supabase |
 | `VITE_BACKEND_URL` | Sí | `https://tudominio.com` (sin /api) |
 | `DOMAIN` | Sí | Dominio sin protocolo (ej: `skatetrack.com`) |
+| `CERTBOT_EMAIL` | Sí | Email para notificaciones de expiración Let's Encrypt |
+| `RESEND_API_KEY` | Sí | API key de resend.com para envío de emails transaccionales |
+| `RESEND_FROM_EMAIL` | No | Remitente de emails (ej: `noreply@tudominio.com`). Debe estar verificado en Resend |
