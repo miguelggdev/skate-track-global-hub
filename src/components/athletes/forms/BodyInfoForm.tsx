@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -47,18 +47,17 @@ export const BodyInfoForm: React.FC<BodyInfoFormProps> = ({ athleteId, onSave })
 
       if (data) {
         setFormData({
-          weight: data.weight?.toString() || '',
-          height: data.height?.toString() || '',
-          size: data.size || '',
-          blood_type: data.blood_type || '',
-          allergies: data.allergies || '',
-          surgeries: data.surgeries || '',
-          injuries: data.injuries || '',
-          limitations: data.limitations || '',
+          weight: data.weight?.toString() ?? '',
+          height: data.height?.toString() ?? '',
+          size: data.size ?? '',
+          blood_type: data.blood_type ?? '',
+          allergies: data.allergies ?? '',
+          surgeries: data.surgeries ?? '',
+          injuries: data.injuries ?? '',
+          limitations: data.limitations ?? '',
         });
       }
     } catch (error) {
-      console.error('Error fetching body data:', error);
     }
   };
 
@@ -109,7 +108,6 @@ export const BodyInfoForm: React.FC<BodyInfoFormProps> = ({ athleteId, onSave })
 
       if (onSave) onSave();
     } catch (error) {
-      console.error('Error saving body data:', error);
       toast({
         title: "Error",
         description: "No se pudo guardar la información médica. Inténtalo de nuevo.",

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile } from './useUserProfile';
 import { useCurrentAthlete } from './useCurrentAthlete';
@@ -53,18 +53,15 @@ export const useTrainingKPIs = (month?: string) => {
       let query = supabase
         .from('training_kpis')
         .select('*')
-        .eq('month', targetMonth);
+        .eq('period_month', targetMonth);
 
       if (profile.role === 'athlete' && athlete) {
         query = query.eq('athlete_id', athlete.id);
-      } else if (profile.role === 'coach') {
-        // Get coach's own KPIs (if they exist) or athletes under their coaching
-        query = query.or(`coach_id.eq.${profile.id},athlete_id.in.(select id from athletes where user_id = ${profile.id})`);
       }
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as TrainingKPIs[];
+      return (data ?? []).map(kpi => ({ ...kpi, month: (kpi as { period_month?: string }).period_month ?? '' })) as TrainingKPIs[];
     },
     enabled: !!profile,
   });
@@ -76,7 +73,9 @@ export const useTrainingKPIs = (month?: string) => {
       if (!profile || !['admin', 'coach', 'leader'].includes(profile.role)) return null;
 
       const startDate = month ? `${month}-01` : new Date().toISOString().slice(0, 7) + '-01';
-      const endDate = month ? `${month}-31` : new Date().toISOString().slice(0, 7) + '-31';
+      const endDate = month
+        ? new Date(Number(month.split('-')[0]), Number(month.split('-')[1]), 0).toISOString().split('T')[0]
+        : new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0];
 
       const { data, error } = await supabase
         .from('training_attendance')
@@ -85,23 +84,22 @@ export const useTrainingKPIs = (month?: string) => {
           attended,
           performance_rating,
           training_sessions!inner (
-            date,
-            start_time,
-            end_time
+            scheduled_at,
+            duration_minutes
           )
         `)
-        .gte('training_sessions.date', startDate)
-        .lte('training_sessions.date', endDate);
+        .gte('training_sessions.scheduled_at', startDate)
+        .lte('training_sessions.scheduled_at', endDate);
 
       if (error) throw error;
 
-      const total_sessions = data?.length || 0;
-      const total_attended = data?.filter(record => record.attended).length || 0;
+      const total_sessions = data?.length ?? 0;
+      const total_attended = data?.filter(record => record.attended).length ?? 0;
       const attendance_rate = total_sessions > 0 ? (total_attended / total_sessions) * 100 : 0;
       
-      const ratingsWithValues = data?.filter(record => record.performance_rating !== null) || [];
+      const ratingsWithValues = data?.filter(record => record.performance_rating !== null) ?? [];
       const avg_performance_rating = ratingsWithValues.length > 0
-        ? ratingsWithValues.reduce((sum, record) => sum + (record.performance_rating || 0), 0) / ratingsWithValues.length
+        ? ratingsWithValues.reduce((sum, record) => sum + (record.performance_rating ?? 0), 0) / ratingsWithValues.length
         : undefined;
 
       return {
@@ -132,17 +130,17 @@ export const useTrainingKPIs = (month?: string) => {
             last_name
           )
         `)
-        .eq('month', targetMonth);
+        .eq('period_month', targetMonth);
 
       if (error) throw error;
 
       return data?.map(kpi => ({
-        athlete_id: kpi.athlete_id || '',
+        athlete_id: kpi.athlete_id ?? '',
         athlete_name: `${kpi.athletes.first_name} ${kpi.athletes.last_name}`,
         total_hours: kpi.total_hours,
         attendance_percentage: kpi.attendance_percentage,
         recent_trend: 'stable' as const, // Would need historical data to calculate
-      })) as AthletePerformanceStats[] || [];
+      })) as AthletePerformanceStats[] ?? [];
     },
     enabled: !!profile && ['admin', 'coach', 'leader'].includes(profile.role),
   });
@@ -154,24 +152,32 @@ export const useTrainingKPIs = (month?: string) => {
       if (!profile) return [];
 
       const startDate = month ? `${month}-01` : new Date().toISOString().slice(0, 7) + '-01';
-      const endDate = month ? `${month}-31` : new Date().toISOString().slice(0, 7) + '-31';
+      const endDate = month
+        ? new Date(Number(month.split('-')[0]), Number(month.split('-')[1]), 0).toISOString().split('T')[0]
+        : new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0];
 
       const { data, error } = await supabase
         .from('training_sessions')
         .select(`
           training_type,
-          start_time,
-          end_time,
+          duration_minutes,
           training_attendance (
             attended
           )
         `)
-        .gte('date', startDate)
-        .lte('date', endDate);
+        .gte('scheduled_at', startDate)
+        .lte('scheduled_at', endDate);
 
       if (error) throw error;
 
-      // Group by training type and calculate statistics
+      interface TypeAccum {
+        training_type: string;
+        total_hours: number;
+        session_count: number;
+        total_attendances: number;
+        total_possible_attendances: number;
+      }
+
       const distribution = data?.reduce((acc, session) => {
         const type = session.training_type;
         if (!acc[type]) {
@@ -184,14 +190,11 @@ export const useTrainingKPIs = (month?: string) => {
           };
         }
 
-        // Calculate session duration in hours
-        const start = new Date(`1970-01-01T${session.start_time}`);
-        const end = new Date(`1970-01-01T${session.end_time}`);
-        const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+        const duration = (session.duration_minutes ?? 0) / 60;
 
         acc[type].total_hours += duration;
         acc[type].session_count += 1;
-        
+
         if (session.training_attendance) {
           session.training_attendance.forEach(attendance => {
             acc[type].total_possible_attendances += 1;
@@ -202,7 +205,7 @@ export const useTrainingKPIs = (month?: string) => {
         }
 
         return acc;
-      }, {} as Record<string, any>) || {};
+      }, {} as Record<string, TypeAccum>) || {};
 
       return Object.values(distribution).map(dist => ({
         training_type: dist.training_type,

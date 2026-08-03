@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,11 +21,11 @@ export const TrainingTab = () => {
     isRegisteredForSession,
   } = useAthleteTraining();
 
-  const upcomingSessions = availableSessions?.filter(session => 
-    new Date(session.date) >= new Date()
-  ) || [];
+  const upcomingSessions = availableSessions?.filter(session =>
+    new Date(session.scheduled_at) >= new Date()
+  ) ?? [];
 
-  const recentAttendance = attendanceRecords?.slice(0, 5) || [];
+  const recentAttendance = attendanceRecords?.slice(0, 5) ?? [];
 
   const handleRegisterClick = (sessionId: string) => {
     setSelectedSession(sessionId);
@@ -101,15 +101,15 @@ export const TrainingTab = () => {
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div>
-                        <CardTitle className="text-lg">{session.name}</CardTitle>
+                        <CardTitle className="text-lg">{session.title}</CardTitle>
                         <CardDescription className="flex items-center gap-4 mt-1">
                           <span className="flex items-center gap-1">
                             <Calendar className="h-4 w-4" />
-                            {format(new Date(session.date), 'PPP', { locale: es })}
+                            {format(new Date(session.scheduled_at), 'PPP', { locale: es })}
                           </span>
                           <span className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
-                            {session.start_time} - {session.end_time}
+                            {format(new Date(session.scheduled_at), 'HH:mm')} ({session.duration_minutes ?? 60} min)
                           </span>
                           {session.location && (
                             <span className="flex items-center gap-1">
@@ -123,10 +123,10 @@ export const TrainingTab = () => {
                         <Badge className={getTrainingTypeColor(session.training_type)}>
                           {session.training_type}
                         </Badge>
-                        {session.max_participants && (
+                        {session.max_athletes && (
                           <Badge variant="outline" className="flex items-center gap-1">
                             <Users className="h-3 w-3" />
-                            Max {session.max_participants}
+                            Max {session.max_athletes}
                           </Badge>
                         )}
                       </div>
@@ -178,10 +178,10 @@ export const TrainingTab = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <CardTitle className="text-lg">
-                          {record.training_sessions.name}
+                          {record.training_sessions.title}
                         </CardTitle>
                         <CardDescription>
-                          {format(new Date(record.training_sessions.date), 'PPP', { locale: es })}
+                          {format(new Date(record.training_sessions.scheduled_at), 'PPP', { locale: es })}
                         </CardDescription>
                       </div>
                       <div className="flex items-center gap-2">
@@ -223,7 +223,7 @@ export const TrainingTab = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {attendanceRecords?.length || 0}
+                  {attendanceRecords?.length ?? 0}
                 </div>
               </CardContent>
             </Card>
@@ -237,7 +237,7 @@ export const TrainingTab = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {attendanceRecords?.filter(r => r.attended).length || 0}
+                  {attendanceRecords?.filter(r => r.attended).length ?? 0}
                 </div>
               </CardContent>
             </Card>
@@ -255,7 +255,7 @@ export const TrainingTab = () => {
                     ? (
                         attendanceRecords
                           .filter(r => r.performance_rating)
-                          .reduce((sum, r) => sum + (r.performance_rating || 0), 0) /
+                          .reduce((sum, r) => sum + (r.performance_rating ?? 0), 0) /
                         attendanceRecords.filter(r => r.performance_rating).length
                       ).toFixed(1)
                     : '0.0'}

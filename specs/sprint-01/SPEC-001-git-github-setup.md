@@ -1,5 +1,5 @@
 # SPEC-001 — Git + GitHub Setup Limpio
-**Status:** `in-progress`  
+**Status:** `done`  
 **Agente:** AG-CLAUDE-DB  
 **Sprint:** 01  
 **Prioridad:** CRÍTICA  
@@ -10,11 +10,11 @@
 Establecer la base de control de versiones con historial limpio, rama `dev` de trabajo, y remote en GitHub.
 
 ## Acceptance Criteria
-- [ ] Repo en GitHub creado o conectado (remote `origin`)
-- [ ] Rama `dev` creada para trabajo diario
-- [ ] `.gitignore` correcto (excluye `node_modules`, `.env*`, `dist`)
-- [ ] CLAUDE.md, specs/ y WORK_PLAN.md commiteados en `master`
-- [ ] Schema inicial commiteado
+- [x] Repo en GitHub creado o conectado (remote `origin`)
+- [x] Rama `dev` creada para trabajo diario
+- [x] `.gitignore` correcto (excluye `node_modules`, `.env*`, `dist`)
+- [x] CLAUDE.md, specs/ y WORK_PLAN.md commiteados en `master`
+- [x] Schema inicial commiteado
 
 ## Archivos a Crear/Modificar
 - `.gitignore` (verificar)

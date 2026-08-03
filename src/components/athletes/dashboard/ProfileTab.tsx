@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,15 +37,15 @@ export const ProfileTab = ({ athlete }: ProfileTabProps) => {
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
-    first_name: athlete.first_name || '',
-    last_name: athlete.last_name || '',
-    email: athlete.email || '',
-    date_of_birth: athlete.date_of_birth || '',
-    athlete_number: athlete.athlete_number || '',
-    emergency_contact_name: athlete.emergency_contact_name || '',
-    emergency_contact_phone: athlete.emergency_contact_phone || '',
-    medical_notes: athlete.medical_notes || '',
-    achievements: athlete.achievements || '',
+    first_name: athlete.first_name ?? '',
+    last_name: athlete.last_name ?? '',
+    email: athlete.email ?? '',
+    date_of_birth: athlete.date_of_birth ?? '',
+    athlete_number: athlete.athlete_number ?? '',
+    emergency_contact_name: athlete.emergency_contact_name ?? '',
+    emergency_contact_phone: athlete.emergency_contact_phone ?? '',
+    medical_notes: athlete.medical_notes ?? '',
+    achievements: athlete.achievements ?? '',
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -69,7 +69,6 @@ export const ProfileTab = ({ athlete }: ProfileTabProps) => {
       
       setIsEditing(false);
     } catch (error) {
-      console.error('Error updating profile:', error);
       toast({
         title: "Error",
         description: "No se pudo actualizar el perfil. Inténtalo de nuevo.",
@@ -82,15 +81,15 @@ export const ProfileTab = ({ athlete }: ProfileTabProps) => {
 
   const handleCancel = () => {
     setFormData({
-      first_name: athlete.first_name || '',
-      last_name: athlete.last_name || '',
-      email: athlete.email || '',
-      date_of_birth: athlete.date_of_birth || '',
-      athlete_number: athlete.athlete_number || '',
-      emergency_contact_name: athlete.emergency_contact_name || '',
-      emergency_contact_phone: athlete.emergency_contact_phone || '',
-      medical_notes: athlete.medical_notes || '',
-      achievements: athlete.achievements || '',
+      first_name: athlete.first_name ?? '',
+      last_name: athlete.last_name ?? '',
+      email: athlete.email ?? '',
+      date_of_birth: athlete.date_of_birth ?? '',
+      athlete_number: athlete.athlete_number ?? '',
+      emergency_contact_name: athlete.emergency_contact_name ?? '',
+      emergency_contact_phone: athlete.emergency_contact_phone ?? '',
+      medical_notes: athlete.medical_notes ?? '',
+      achievements: athlete.achievements ?? '',
     });
     setIsEditing(false);
   };

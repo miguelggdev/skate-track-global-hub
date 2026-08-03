@@ -1,5 +1,5 @@
 # SPEC-004 — Storage Buckets y Policies
-**Status:** `draft`  
+**Status:** `done`  
 **Agente:** AG-CLAUDE-DB  
 **Sprint:** 01  
 **Prioridad:** ALTA  

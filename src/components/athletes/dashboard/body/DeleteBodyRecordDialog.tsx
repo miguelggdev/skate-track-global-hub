@@ -63,7 +63,6 @@ export const DeleteBodyRecordDialog: React.FC<DeleteBodyRecordDialogProps> = ({
       onDelete();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error deleting record:', error);
       toast({
         title: "Error",
         description: "No se pudo eliminar el registro. Inténtalo de nuevo.",

@@ -32,6 +32,15 @@ export interface AttendanceReport {
   category: string;
 }
 
+function escapeHtml(s: string): string {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 export const generateFinancialReportPDF = async (report: FinancialReport, currency: CurrencyCode = 'COP'): Promise<void> => {
   const formatCurrencyValue = (value: number) => formatCurrency(value, currency);
   
@@ -93,7 +102,7 @@ export const generateFinancialReportPDF = async (report: FinancialReport, curren
               const percentage = (amount / report.summary.totalIncome) * 100;
               return `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
-                  <span style="font-weight: 500;">${category}</span>
+                  <span style="font-weight: 500;">${escapeHtml(category)}</span>
                   <div>
                     <span style="font-weight: bold;">${formatCurrencyValue(amount)}</span>
                     <span style="color: #6b7280; font-size: 12px; margin-left: 8px;">(${percentage.toFixed(1)}%)</span>
@@ -113,7 +122,7 @@ export const generateFinancialReportPDF = async (report: FinancialReport, curren
               const percentage = (amount / report.summary.totalExpenses) * 100;
               return `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
-                  <span style="font-weight: 500;">${category}</span>
+                  <span style="font-weight: 500;">${escapeHtml(category)}</span>
                   <div>
                     <span style="font-weight: bold;">${formatCurrencyValue(amount)}</span>
                     <span style="color: #6b7280; font-size: 12px; margin-left: 8px;">(${percentage.toFixed(1)}%)</span>
@@ -141,8 +150,8 @@ export const generateFinancialReportPDF = async (report: FinancialReport, curren
             return `
               <div style="padding: 12px; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; border-bottom: 1px solid #f3f4f6; align-items: center;">
                 <div>
-                  <div style="font-weight: 500;">${transaction.description}</div>
-                  ${transaction.payer_name ? `<div style="font-size: 12px; color: #6b7280;">${transaction.payer_name}</div>` : ''}
+                  <div style="font-weight: 500;">${escapeHtml(transaction.description)}</div>
+                  ${transaction.payer_name ? `<div style="font-size: 12px; color: #6b7280;">${escapeHtml(transaction.payer_name)}</div>` : ''}
                 </div>
                 <span style="font-size: 14px;">${formatDate(new Date(transaction.transaction_date))}</span>
                 <span style="font-size: 12px; padding: 4px 8px; border-radius: 4px; background-color: ${
@@ -215,7 +224,6 @@ export const generateFinancialReportPDF = async (report: FinancialReport, curren
     pdf.save(filename);
     
   } catch (error) {
-    console.error('Error generating PDF:', error);
     throw new Error('Error al generar el PDF del informe');
   }
 };
@@ -267,7 +275,7 @@ export const generateAttendanceReportPDF = async (report: AttendanceReport): Pro
         </p>
         ${report.category !== 'all' ? `
           <p style="font-size: 12px; color: #6b7280; margin: 5px 0 0 0;">
-            Categoría: ${report.category}
+            Categoría: ${escapeHtml(report.category)}
           </p>
         ` : ''}
       </div>
@@ -304,9 +312,9 @@ export const generateAttendanceReportPDF = async (report: AttendanceReport): Pro
           </div>
           ${report.data.slice(0, 25).map(athlete => `
             <div style="padding: 10px 12px; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1.5fr; gap: 10px; border-bottom: 1px solid #f3f4f6; align-items: center; font-size: 11px;">
-              <div style="font-weight: 500; color: #1f2937;">${athlete.athlete_name}</div>
-              <span style="color: #6b7280;">${athlete.category}</span>
-              <span style="color: #6b7280;">${athlete.level}</span>
+              <div style="font-weight: 500; color: #1f2937;">${escapeHtml(athlete.athlete_name)}</div>
+              <span style="color: #6b7280;">${escapeHtml(athlete.category)}</span>
+              <span style="color: #6b7280;">${escapeHtml(athlete.level)}</span>
               <span style="color: #374151;">${athlete.attended_sessions}/${athlete.total_sessions}</span>
               <span style="font-weight: bold; padding: 3px 6px; border-radius: 4px; text-align: center; background-color: ${getAttendanceBgColor(athlete.attendance_rate)}; color: ${getAttendanceColor(athlete.attendance_rate)};">
                 ${formatPercent(athlete.attendance_rate)}
@@ -396,7 +404,6 @@ export const generateAttendanceReportPDF = async (report: AttendanceReport): Pro
     pdf.save(filename);
     
   } catch (error) {
-    console.error('Error generating attendance PDF:', error);
     throw new Error('Error al generar el PDF del informe de asistencia');
   }
 };

@@ -183,7 +183,6 @@ export const FinancialReportGenerator: React.FC<FinancialReportGeneratorProps> =
       const fileName = `informe-financiero-${report.type}-${formatDate(report.dateRange.startDate).replace(/\//g, '-')}.pdf`;
       pdf.save(fileName);
     } catch (error) {
-      console.error('Error generating PDF:', error);
     } finally {
       document.body.removeChild(container);
     }
@@ -427,8 +426,8 @@ export const FinancialReportGenerator: React.FC<FinancialReportGeneratorProps> =
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {report.monthlyTrends.map((month, index) => (
-              <div key={index} className="grid grid-cols-4 gap-4 p-3 border rounded-lg">
+            {report.monthlyTrends.map((month) => (
+              <div key={month.month} className="grid grid-cols-4 gap-4 p-3 border rounded-lg">
                 <div className="font-medium">{month.month}</div>
                 <div className="text-green-600 font-medium">
                   +{formatCurrency(month.income)}

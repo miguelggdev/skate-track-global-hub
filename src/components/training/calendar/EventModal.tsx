@@ -20,13 +20,12 @@ import { useToast } from '@/hooks/use-toast';
 
 interface TrainingSession {
   id: string;
-  name: string;
+  title: string;
   description?: string;
-  date: string;
-  start_time: string;
-  end_time: string;
+  scheduled_at: string;
+  duration_minutes?: number;
   location?: string;
-  max_participants?: number;
+  max_athletes?: number;
   training_type: 'technical' | 'physical' | 'mental' | 'recovery' | 'gym' | 'road_skating' | 'track_skating' | 'bicycle' | 'static_bicycle' | 'simulator';
   coach_id: string;
 }
@@ -99,7 +98,6 @@ export const EventModal: React.FC<EventModalProps> = ({
       onSessionUpdate();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error deleting session:', error);
       toast({
         title: "Error",
         description: "No se pudo eliminar la sesión de entrenamiento",
@@ -115,7 +113,7 @@ export const EventModal: React.FC<EventModalProps> = ({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            <span>{session.name}</span>
+            <span>{session.title}</span>
             <Badge 
               className={`${getTrainingTypeColor(session.training_type)} text-white`}
             >
@@ -135,7 +133,7 @@ export const EventModal: React.FC<EventModalProps> = ({
                     <div>
                       <p className="font-medium">Fecha</p>
                       <p className="text-sm text-muted-foreground">
-                        {format(new Date(session.date), 'EEEE, d MMMM yyyy', { locale: es })}
+                        {format(new Date(session.scheduled_at), 'EEEE, d MMMM yyyy', { locale: es })}
                       </p>
                     </div>
                   </div>
@@ -145,7 +143,8 @@ export const EventModal: React.FC<EventModalProps> = ({
                     <div>
                       <p className="font-medium">Horario</p>
                       <p className="text-sm text-muted-foreground">
-                        {session.start_time} - {session.end_time}
+                        {format(new Date(session.scheduled_at), 'HH:mm')}
+                        {session.duration_minutes ? ` — ${session.duration_minutes} min` : ''}
                       </p>
                     </div>
                   </div>
@@ -160,12 +159,12 @@ export const EventModal: React.FC<EventModalProps> = ({
                     </div>
                   )}
 
-                  {session.max_participants && (
+                  {session.max_athletes && (
                     <div className="flex items-center space-x-3">
                       <Users className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <p className="font-medium">Participantes máximos</p>
-                        <p className="text-sm text-muted-foreground">{session.max_participants}</p>
+                        <p className="text-sm text-muted-foreground">{session.max_athletes}</p>
                       </div>
                     </div>
                   )}

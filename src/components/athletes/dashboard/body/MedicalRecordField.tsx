@@ -113,7 +113,7 @@ export const MedicalRecordField: React.FC<MedicalRecordFieldProps> = ({
       {/* Items list */}
       <div className="space-y-2">
         {items.map((item, index) => (
-          <div key={index} className="flex items-center gap-2 p-2 border rounded-md bg-muted/10">
+          <div key={`${item}-${index}`} className="flex items-center gap-2 p-2 border rounded-md bg-muted/10">
             {editingIndex === index ? (
               <div className="flex-1 flex gap-2">
                 <Input

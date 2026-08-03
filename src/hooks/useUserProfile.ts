@@ -1,101 +1,68 @@
-import { useState, useEffect } from 'react';
+﻿import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
-interface UserProfile {
+export interface UserProfile {
   id: string;
-  role: 'admin' | 'coach' | 'athlete' | 'delegate' | 'leader' | 'finance';
+  role: 'admin' | 'coach' | 'athlete' | 'delegate' | 'leader' | 'finance' | 'parent';
   first_name: string;
   last_name: string;
   email: string;
   phone?: string | null;
-  city?: string | null;
-  country?: string | null;
   avatar_url?: string | null;
 }
 
+const ROLE_PRIORITY: UserProfile['role'][] = ['admin', 'leader', 'coach', 'delegate', 'finance', 'athlete', 'parent'];
+
 export const useUserProfile = () => {
   const { user } = useAuth();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user) {
-        setProfile(null);
-        setLoading(false);
-        return;
-      }
+  const { data: profile = null, isLoading: loading } = useQuery({
+    queryKey: ['user-profile', user?.id],
+    queryFn: async (): Promise<UserProfile | null> => {
+      if (!user) return null;
 
-      try {
-        // Query 1: Fetch profile data
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, email, first_name, last_name, role, phone, city, country, avatar_url')
-          .eq('id', user.id)
-          .maybeSingle();
+      const [{ data: profileData, error: profileError }, { data: rolesData, error: rolesError }] =
+        await Promise.all([
+          supabase
+            .from('profiles')
+            .select('id, email, first_name, last_name, phone, avatar_url')
+            .eq('id', user.id)
+            .maybeSingle(),
+          supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id),
+        ]);
 
-        if (profileError) throw profileError;
+      if (profileError) throw profileError;
+      if (rolesError) throw rolesError;
 
-        // Query 2: Fetch all roles for this user
-        const { data: rolesData, error: rolesError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id);
+      const roles = (rolesData ?? []).map(r => r.role as UserProfile['role']);
+      const userRole = ROLE_PRIORITY.find(r => roles.includes(r)) ?? 'athlete';
 
-        if (rolesError) throw rolesError;
-
-        // Extract roles and apply priority
-        const roles = (rolesData || []).map((r: any) => r.role);
-        
-        // Define role priority (highest to lowest)
-        const rolePriority: UserProfile['role'][] = ['admin', 'leader', 'coach', 'delegate', 'finance', 'athlete'];
-        
-        // Find the highest priority role from user_roles, fallback to profiles.role, then 'athlete'
-        const userRole = (rolePriority.find(role => roles.includes(role)) 
-          || profileData?.role 
-          || 'athlete') as UserProfile['role'];
-        
-        // Build profile object with safe defaults
-        const finalProfile: UserProfile = {
-          id: user.id,
-          email: profileData?.email || user.email || '',
-          first_name: profileData?.first_name || '',
-          last_name: profileData?.last_name || '',
-          role: userRole,
-          phone: profileData?.phone,
-          city: profileData?.city,
-          country: profileData?.country,
-          avatar_url: profileData?.avatar_url
-        };
-
-        setProfile(finalProfile);
-      } catch (error) {
-        console.error('useUserProfile: Error fetching user profile:', error);
-        setProfile(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, [user]);
-
-  const isAdmin = profile?.role === 'admin';
-  const isCoach = profile?.role === 'coach';
-  const isAthlete = profile?.role === 'athlete';
-  const isDelegate = profile?.role === 'delegate';
-  const isLeader = profile?.role === 'leader';
-  const isFinance = profile?.role === 'finance';
+      return {
+        id:         user.id,
+        email:      profileData?.email      || (user.email ?? ''),
+        first_name: profileData?.first_name ?? '',
+        last_name:  profileData?.last_name  ?? '',
+        role:       userRole,
+        phone:      profileData?.phone,
+        avatar_url: profileData?.avatar_url,
+      };
+    },
+    enabled: !!user,
+  });
 
   return {
     profile,
     loading,
-    isAdmin,
-    isCoach,
-    isAthlete,
-    isDelegate,
-    isLeader,
-    isFinance,
+    isAdmin:    profile?.role === 'admin',
+    isCoach:    profile?.role === 'coach',
+    isAthlete:  profile?.role === 'athlete',
+    isDelegate: profile?.role === 'delegate',
+    isLeader:   profile?.role === 'leader',
+    isFinance:  profile?.role === 'finance',
+    isParent:   profile?.role === 'parent',
   };
 };

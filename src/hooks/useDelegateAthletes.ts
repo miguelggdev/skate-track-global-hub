@@ -20,13 +20,10 @@ export interface DelegateAthlete {
   category: AthleteCategory;
   level: AthleteLevel;
   status: AthleteStatus;
-  profile_image_url: string | null;
-  athlete_number: string | null;
-  main_discipline: string | null;
-  payment_status: string | null;
+  photo_url: string | null;
   emergency_contact_name: string | null;
   emergency_contact_phone: string | null;
-  join_date: string;
+  created_at: string;
 }
 
 export const useDelegateAthletes = (filters?: {
@@ -50,13 +47,10 @@ export const useDelegateAthletes = (filters?: {
           category,
           level,
           status,
-          profile_image_url,
-          athlete_number,
-          main_discipline,
-          payment_status,
+          photo_url,
           emergency_contact_name,
           emergency_contact_phone,
-          join_date
+          created_at
         `)
         .order('first_name', { ascending: true });
 
@@ -108,7 +102,6 @@ export const useUpdateDelegateAthlete = () => {
         description: 'No se pudo actualizar la información del atleta.',
         variant: 'destructive',
       });
-      console.error('Error updating athlete:', error);
     },
   });
 };

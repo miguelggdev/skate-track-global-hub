@@ -87,7 +87,6 @@ const LogoUpload = ({ currentLogoUrl, onLogoUpdate }: LogoUploadProps) => {
         description: "Logo del club actualizado correctamente",
       });
     } catch (error: any) {
-      console.error('Error uploading logo:', error);
       toast({
         title: "Error",
         description: error.message?.includes('insufficient_privilege') || error.message?.includes('policy')

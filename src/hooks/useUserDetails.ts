@@ -1,19 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export interface UserMedicalInfo {
-  blood_type?: string;
-  rh_factor?: string;
-  diseases?: string;
-  allergies?: string;
-  disability?: string;
-  emergency_contact_name?: string;
-  emergency_contact_relationship?: string;
-  emergency_contact_phone?: string;
-  health_insurance?: string;
-  sports_insurance_policy?: string;
-  insurance_expiry_date?: string;
-  insurance_document_url?: string;
+export interface UserDocument {
+  id: string;
+  user_id: string;
+  document_type: string;
+  document_name: string;
+  document_url: string;
+  uploaded_by?: string;
+  created_at: string;
 }
 
 export interface CoachDetails {
@@ -22,65 +17,25 @@ export interface CoachDetails {
   certification_level?: string;
   specialization?: string;
   years_experience?: number;
-  hourly_rate?: number;
-  academic_level?: string;
-  degree_title?: string;
-  education_institution?: string;
-  training_certifications?: string;
-  experience_description?: string;
-  coach_category?: string;
-  federation_license_expiry?: string;
-  license_photo_url?: string;
-}
-
-export interface UserDocument {
-  id: string;
-  document_type: string;
-  document_name: string;
-  document_url: string;
-  uploaded_at: string;
+  bio?: string;
+  is_active?: boolean;
 }
 
 export interface UserDetails {
-  // Profile data
   id: string;
   first_name: string;
   last_name: string;
   email: string;
-  phone?: string;
-  date_of_birth?: string;
-  avatar_url?: string;
-  bio?: string;
-  role: string;
-  id_type?: string;
-  id_number?: string;
-  gender?: string;
-  nationality?: string;
-  address?: string;
-  city?: string;
-  department?: string;
-  country?: string;
-  landline_phone?: string;
-  id_document_photo_url?: string;
-  languages?: string[];
-  observations?: string;
-  status?: string;
-  registered_by?: string;
-  digital_signature_url?: string;
-  data_consent?: boolean;
-  accepts_regulations?: boolean;
+  phone?: string | null;
+  date_of_birth?: string | null;
+  avatar_url?: string | null;
   created_at: string;
   updated_at: string;
-  
-  // Medical info
-  medical_info?: UserMedicalInfo;
-  
-  // Coach details (if applicable)
+  role: string;
   coach_details?: CoachDetails;
-  
-  // Documents
-  documents?: UserDocument[];
 }
+
+const ROLE_PRIORITY = ['admin', 'leader', 'coach', 'delegate', 'finance', 'athlete'];
 
 export const useUserDetails = (userId: string | null) => {
   return useQuery({
@@ -88,47 +43,32 @@ export const useUserDetails = (userId: string | null) => {
     queryFn: async (): Promise<UserDetails | null> => {
       if (!userId) return null;
 
-      // Fetch profile data
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      const [
+        { data: profile, error: profileError },
+        { data: rolesData, error: rolesError },
+      ] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
+        supabase.from('user_roles').select('role').eq('user_id', userId),
+      ]);
 
       if (profileError) throw profileError;
       if (!profile) return null;
+      if (rolesError) throw rolesError;
 
-      // Fetch medical info
-      const { data: medicalInfo } = await supabase
-        .from('user_medical_info')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
+      const roles = (rolesData ?? []).map((r) => r.role);
+      const role = ROLE_PRIORITY.find((r) => roles.includes(r)) ?? 'athlete';
 
-      // Fetch coach details if role is coach
-      let coachDetails = null;
-      if (profile.role === 'coach') {
+      let coachDetails: CoachDetails | undefined;
+      if (role === 'coach') {
         const { data: coach } = await supabase
           .from('coaches')
-          .select('*')
+          .select('id, license_number, certification_level, specialization, years_experience, bio, is_active')
           .eq('user_id', userId)
           .maybeSingle();
-        coachDetails = coach;
+        if (coach) coachDetails = coach;
       }
 
-      // Fetch documents
-      const { data: documents } = await supabase
-        .from('user_documents')
-        .select('*')
-        .eq('user_id', userId)
-        .order('uploaded_at', { ascending: false });
-
-      return {
-        ...profile,
-        medical_info: medicalInfo || undefined,
-        coach_details: coachDetails || undefined,
-        documents: documents || [],
-      };
+      return { ...profile, role, coach_details: coachDetails };
     },
     enabled: !!userId,
   });

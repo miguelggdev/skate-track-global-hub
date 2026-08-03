@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -81,10 +81,10 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({ tr
       payment_status: transaction.payment_status,
       description: transaction.description,
       amount: transaction.amount.toString(),
-      payer_name: transaction.payer_name || '',
-      payer_identification: transaction.payer_identification || '',
-      payer_phone: transaction.payer_phone || '',
-      payer_email: transaction.payer_email || '',
+      payer_name: transaction.payer_name ?? '',
+      payer_identification: transaction.payer_identification ?? '',
+      payer_phone: transaction.payer_phone ?? '',
+      payer_email: transaction.payer_email ?? '',
     },
   });
 

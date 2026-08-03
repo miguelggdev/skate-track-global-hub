@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface AthleteReportData {
@@ -36,27 +36,22 @@ export const useAllAthletes = () => {
           *,
           profiles(
             avatar_url,
-            id_type,
-            id_number,
             date_of_birth,
             phone
           )
         `)
         .order('first_name', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching all athletes:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       // Flatten the profile data into the athlete object for easier access
-      const flattenedAthletes = (data || []).map(athlete => ({
+      const flattenedAthletes = (data ?? []).map(athlete => ({
         ...athlete,
-        avatar_url: athlete.profiles?.avatar_url,
-        id_type: athlete.profiles?.id_type,
-        id_number: athlete.profiles?.id_number,
-        date_of_birth: athlete.profiles?.date_of_birth,
-        phone: athlete.profiles?.phone,
+        avatar_url: athlete.profiles?.avatar_url ?? undefined,
+        id_type: undefined,
+        id_number: undefined,
+        date_of_birth: athlete.profiles?.date_of_birth ?? undefined,
+        phone: athlete.profiles?.phone ?? undefined,
       })) as AthleteReportData[];
 
       return flattenedAthletes;

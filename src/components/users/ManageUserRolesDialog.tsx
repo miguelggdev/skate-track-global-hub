@@ -6,6 +6,9 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import type { Database } from '@/integrations/supabase/types';
+
+type UserRole = Database['public']['Enums']['user_role'];
 
 interface ManageUserRolesDialogProps {
   user: {
@@ -58,15 +61,7 @@ export function ManageUserRolesDialog({ user, open, onOpenChange, onRoleChanged,
     setLoading(true);
 
     try {
-      // Update profiles table
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ role: selectedRole as any })
-        .eq('id', user.id);
-
-      if (profileError) throw profileError;
-
-      // Update user_roles table - first remove old role, then add new one
+      // Role lives exclusively in user_roles — delete existing and insert the new one
       const { error: deleteError } = await supabase
         .from('user_roles')
         .delete()
@@ -76,7 +71,7 @@ export function ManageUserRolesDialog({ user, open, onOpenChange, onRoleChanged,
 
       const { error: insertError } = await supabase
         .from('user_roles')
-        .insert([{ user_id: user.id, role: selectedRole as any }]);
+        .insert([{ user_id: user.id, role: selectedRole as UserRole }]);
 
       if (insertError) throw insertError;
 
@@ -88,7 +83,6 @@ export function ManageUserRolesDialog({ user, open, onOpenChange, onRoleChanged,
       onRoleChanged();
       onOpenChange(false);
     } catch (error: any) {
-      console.error('Error updating role:', error);
       toast({
         title: 'Error',
         description: error.message || 'No se pudo actualizar el rol',

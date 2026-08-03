@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 // Hook to validate if an athlete has paid for the current month
@@ -55,13 +55,14 @@ export const useCurrentMonthPayment = (athleteId?: string) => {
 
       // Athlete has paid if at least one paid mensualidad exists in current month
       const hasPaid = (currentMonthPayments?.length ?? 0) > 0;
+      const lastTx = currentMonthPayments?.[0] ?? null;
 
       return {
         hasPaid,
-        paymentStatus: athlete.payment_status || 'pending',
-        lastPaymentMonth: athlete.last_payment_month,
-        lastPaymentDate: athlete.last_payment_date,
-        transactions: currentMonthPayments || [],
+        paymentStatus: hasPaid ? 'paid' : 'pending',
+        lastPaymentMonth: lastTx?.transaction_date ?? null,
+        lastPaymentDate: lastTx?.transaction_date ?? null,
+        transactions: currentMonthPayments ?? [],
         athlete: athlete,
       };
     },
@@ -79,11 +80,9 @@ export const useClubSettings = () => {
         .from('club_settings')
         .select('*')
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
-        throw new Error(error.message);
-      }
+      if (error) throw new Error(error.message);
 
       return data;
     },

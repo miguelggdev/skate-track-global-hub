@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -56,13 +56,13 @@ export const EditHistoryRecordDialog: React.FC<EditHistoryRecordDialogProps> = (
   useEffect(() => {
     if (record) {
       setFormData({
-        previous_club: record.previous_club || '',
-        years_experience: record.years_experience || 0,
-        start_date: record.start_date || '',
-        league_date: record.league_date || '',
-        federation_date: record.federation_date || '',
-        is_league: record.is_league || false,
-        is_federated: record.is_federated || false,
+        previous_club: record.previous_club ?? '',
+        years_experience: record.years_experience ?? 0,
+        start_date: record.start_date ?? '',
+        league_date: record.league_date ?? '',
+        federation_date: record.federation_date ?? '',
+        is_league: record.is_league ?? false,
+        is_federated: record.is_federated ?? false,
       });
     }
   }, [record]);
@@ -101,7 +101,6 @@ export const EditHistoryRecordDialog: React.FC<EditHistoryRecordDialogProps> = (
       onSave();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error updating record:', error);
       toast({
         title: "Error",
         description: "No se pudo actualizar el registro. Inténtalo de nuevo.",
@@ -140,7 +139,7 @@ export const EditHistoryRecordDialog: React.FC<EditHistoryRecordDialogProps> = (
               type="number" 
               placeholder="Años"
               value={formData.years_experience}
-              onChange={(e) => handleInputChange('years_experience', parseInt(e.target.value) || 0)}
+              onChange={(e) => handleInputChange('years_experience', parseInt(e.target.value) ?? 0)}
             />
           </div>
 

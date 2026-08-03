@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import StatsCards from '@/components/athletes/StatsCards';
@@ -8,8 +9,18 @@ import AthletesTable from '@/components/athletes/AthletesTable';
 import RecentActivity from '@/components/athletes/RecentActivity';
 import UpcomingBirthdays from '@/components/athletes/UpcomingBirthdays';
 import AthletesHeader from '@/components/athletes/AthletesHeader';
-import { useToast } from '@/hooks/use-toast';
 import { Athlete } from '@/hooks/useAthletes';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { useAuth } from '@/hooks/useAuth';
+
+// Raw row from athletes table including columns added via ALTER TABLE migrations
+interface AthleteRow extends Athlete {
+  identification_type?: string;
+  identification_number?: string;
+  photo_url?: string;
+  personal_phone?: string;
+  profiles?: { avatar_url?: string; date_of_birth?: string; phone?: string } | null;
+}
 
 // Extended athlete interface with profile data
 interface AthleteWithProfile extends Athlete {
@@ -18,7 +29,6 @@ interface AthleteWithProfile extends Athlete {
   emergency_contact_phone?: string;
   medical_notes?: string;
   achievements?: string;
-  // Profile data
   avatar_url?: string;
   id_type?: string;
   id_number?: string;
@@ -33,97 +43,73 @@ interface PaginationData {
   itemsPerPage: number;
 }
 
-const Athletes = () => {
-  
-  const [athletes, setAthletes] = useState<AthleteWithProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState<PaginationData>({
-    currentPage: 1,
-    totalPages: 0,
-    totalCount: 0,
-    itemsPerPage: 25,
-  });
-  const { toast } = useToast();
+const ITEMS_PER_PAGE = 25;
 
-  const fetchAthletes = async (page = 1) => {
-    try {
-      setLoading(true);
-      
-      // Calculate offset for pagination
-      const offset = (page - 1) * pagination.itemsPerPage;
-      
-      // Build the query with pagination and search, joining with profiles table
-      // Using left join to ensure athletes show even if profile data isn't ready yet
+const Athletes = () => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const queryClient = useQueryClient();
+  const { profile } = useUserProfile();
+  const { user } = useAuth();
+
+  const isCoach = profile?.role === 'coach';
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['athletes', currentPage, isCoach ? user?.id : null],
+    queryFn: async () => {
+      const offset = (currentPage - 1) * ITEMS_PER_PAGE;
       let query = supabase
         .from('athletes')
         .select(`
-          *,
-          profiles(
-            avatar_url,
-            id_type,
-            id_number,
-            date_of_birth,
-            phone
-          )
-        `, { count: 'exact' })
-        .range(offset, offset + pagination.itemsPerPage - 1)
-        .order('created_at', { ascending: false });
-      
+          id, first_name, last_name, email, category, level, status,
+          performance_score, athlete_number, coach_id, created_at,
+          profiles(avatar_url, date_of_birth, phone)
+        `, { count: 'exact' });
 
-      const { data, error, count } = await query;
+      if (isCoach && user?.id) {
+        query = query.eq('coach_id', user.id);
+      }
+
+      const { data, error, count } = await query
+        .range(offset, offset + ITEMS_PER_PAGE - 1)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      const totalCount = count || 0;
-      const totalPages = Math.ceil(totalCount / pagination.itemsPerPage);
-      
-      // Flatten the profile data into the athlete object for easier access
-      const flattenedAthletes = (data || []).map(athlete => ({
-        ...athlete,
-        avatar_url: athlete.profiles?.avatar_url,
-        id_type: athlete.profiles?.id_type,
-        id_number: athlete.profiles?.id_number,
-        date_of_birth: athlete.profiles?.date_of_birth,
-        phone: athlete.profiles?.phone,
-      }));
-      
-      setAthletes(flattenedAthletes);
-      setPagination(prev => ({
-        ...prev,
-        currentPage: page,
-        totalPages,
-        totalCount,
-      }));
-    } catch (error) {
-      console.error('Error fetching athletes:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los atletas",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
+      const totalCount = count ?? 0;
+      const athletes: AthleteWithProfile[] = (data ?? []).map(raw => {
+        const a = raw as AthleteRow;
+        return {
+          ...a,
+          avatar_url:    a.profiles?.avatar_url ?? a.photo_url,
+          id_type:       a.identification_type,
+          id_number:     a.identification_number,
+          date_of_birth: a.profiles?.date_of_birth ?? a.date_of_birth,
+          phone:         a.profiles?.phone ?? a.personal_phone,
+        };
+      });
+
+      return {
+        athletes,
+        totalCount,
+        totalPages: Math.ceil(totalCount / ITEMS_PER_PAGE),
+      };
+    },
+  });
+
+  const athletes = data?.athletes ?? [];
+  const pagination: PaginationData = {
+    currentPage,
+    totalPages:  data?.totalPages  ?? 0,
+    totalCount:  data?.totalCount  ?? 0,
+    itemsPerPage: ITEMS_PER_PAGE,
+  };
 
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= pagination.totalPages) {
-      fetchAthletes(page);
-    }
+    if (page >= 1 && page <= pagination.totalPages) setCurrentPage(page);
   };
 
-  useEffect(() => {
-    fetchAthletes();
-  }, []);
-
   const handleAthleteAdded = () => {
-    // Refresh the athletes list immediately
-    fetchAthletes(pagination.currentPage);
-    toast({
-      title: "Éxito", 
-      description: "Atleta creado exitosamente",
-    });
+    queryClient.invalidateQueries({ queryKey: ['athletes'] });
   };
 
   return (
@@ -135,10 +121,10 @@ const Athletes = () => {
         
         {/* Main Content Grid */}
         <div className="space-y-6">
-          <AthletesTable 
-            athletes={athletes} 
-            loading={loading} 
-            onActionCompleted={() => fetchAthletes(pagination.currentPage)}
+          <AthletesTable
+            athletes={athletes}
+            loading={isLoading}
+            onActionCompleted={() => queryClient.invalidateQueries({ queryKey: ['athletes'] })}
             pagination={pagination}
             onPageChange={handlePageChange}
           />

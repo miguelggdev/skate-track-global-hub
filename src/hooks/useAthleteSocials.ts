@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -14,62 +14,43 @@ export interface AthleteSocials {
 }
 
 export const useAthleteSocials = (athleteId: string | null) => {
-  const [socials, setSocials] = useState<AthleteSocials | null>(null);
-  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const fetchSocials = async () => {
-    if (!athleteId) {
-      setLoading(false);
-      return;
-    }
-
-    try {
+  const { data: socials = null, isLoading: loading, refetch } = useQuery({
+    queryKey: ['athlete-socials', athleteId],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('athlete_socials')
         .select('*')
-        .eq('athlete_id', athleteId)
+        .eq('athlete_id', athleteId!)
         .maybeSingle();
 
       if (error) throw error;
-      setSocials(data);
-    } catch (error) {
-      console.error('Error fetching socials:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return data as AthleteSocials | null;
+    },
+    enabled: !!athleteId,
+  });
 
-  const updateSocials = async (updates: Partial<AthleteSocials>) => {
-    if (!athleteId) return;
-
-    try {
+  const updateMutation = useMutation({
+    mutationFn: async (updates: Partial<AthleteSocials>) => {
+      if (!athleteId) return;
       if (socials) {
-        const { error } = await supabase
-          .from('athlete_socials')
-          .update(updates)
-          .eq('athlete_id', athleteId);
-
+        const { error } = await supabase.from('athlete_socials').update(updates).eq('athlete_id', athleteId);
         if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from('athlete_socials')
-          .insert({ athlete_id: athleteId, ...updates });
-
+        const { error } = await supabase.from('athlete_socials').insert({ athlete_id: athleteId, ...updates });
         if (error) throw error;
       }
-
+    },
+    onSuccess: () => {
       toast({ title: 'Redes sociales actualizadas' });
-      await fetchSocials();
-    } catch (error) {
-      console.error('Error updating socials:', error);
+      queryClient.invalidateQueries({ queryKey: ['athlete-socials', athleteId] });
+    },
+    onError: () => {
       toast({ title: 'Error al actualizar', variant: 'destructive' });
-    }
-  };
+    },
+  });
 
-  useEffect(() => {
-    fetchSocials();
-  }, [athleteId]);
-
-  return { socials, loading, updateSocials, refetch: fetchSocials };
+  return { socials, loading, updateSocials: updateMutation.mutate, isUpdating: updateMutation.isPending, refetch };
 };

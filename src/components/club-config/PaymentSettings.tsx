@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,7 +36,7 @@ const PaymentSettings = ({ settings, onUpdate }: PaymentSettingsProps) => {
   const getSettingValue = (key: string): string => {
     if (localChanges[key] !== undefined) return localChanges[key];
     const setting = settings.find(s => s.setting_key === key);
-    return setting?.setting_value || '';
+    return setting?.setting_value ?? '';
   };
 
   const incrementEnabled = getSettingValue('enable_extraordinary_increment') === 'true';

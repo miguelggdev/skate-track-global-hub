@@ -1,4 +1,4 @@
-import DashboardLayout from '@/components/layout/DashboardLayout';
+﻿import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -52,7 +52,7 @@ const AthleteCompetitions = () => {
       'silver': 'text-gray-300',
       'bronze': 'text-amber-600'
     };
-    return <Medal className={`h-5 w-5 ${colors[medalType] || ''}`} />;
+    return <Medal className={`h-5 w-5 ${colors[medalType] ?? ''}`} />;
   };
 
   if (isLoading) {

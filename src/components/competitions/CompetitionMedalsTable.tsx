@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+﻿import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -34,10 +34,11 @@ export const CompetitionMedalsTable = ({ competitionId }: CompetitionMedalsTable
     );
   };
 
-  const formatTime = (interval: string | null) => {
-    if (!interval) return '-';
-    // Parse PostgreSQL interval format (e.g., "00:01:23.450000")
-    return interval.replace(/^00:/, '').substring(0, 8);
+  const formatTime = (seconds: number | null | undefined) => {
+    if (seconds == null) return '-';
+    const mins = Math.floor(seconds / 60);
+    const secs = (seconds % 60).toFixed(2).padStart(5, '0');
+    return mins > 0 ? `${mins}:${secs}` : `${secs}s`;
   };
 
   if (isLoading) {
@@ -60,7 +61,7 @@ export const CompetitionMedalsTable = ({ competitionId }: CompetitionMedalsTable
 
   const medalCounts = medals.reduce(
     (acc, medal) => {
-      acc[medal.medal_type as string] = (acc[medal.medal_type as string] || 0) + 1;
+      acc[medal.medal_type as string] = (acc[medal.medal_type as string] ?? 0) + 1;
       return acc;
     },
     {} as Record<string, number>
@@ -107,7 +108,6 @@ export const CompetitionMedalsTable = ({ competitionId }: CompetitionMedalsTable
               <TableHead>Medal</TableHead>
               <TableHead>Time</TableHead>
               <TableHead>Position</TableHead>
-              <TableHead>Location</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -120,23 +120,13 @@ export const CompetitionMedalsTable = ({ competitionId }: CompetitionMedalsTable
                     {medal.athletes?.category} - {medal.athletes?.gender}
                   </div>
                 </TableCell>
-                <TableCell>
-                  {medal.competition_events?.event_name || '-'}
-                  {medal.competition_events?.event_type && (
-                    <div className="text-xs text-muted-foreground">
-                      {medal.competition_events.event_type}
-                    </div>
-                  )}
-                </TableCell>
+                <TableCell>{medal.event_name || '-'}</TableCell>
                 <TableCell>{getMedalBadge(medal.medal_type)}</TableCell>
                 <TableCell className="font-mono text-sm">
-                  {formatTime(medal.time_achieved)}
+                  {formatTime(medal.time_seconds)}
                 </TableCell>
                 <TableCell>
                   {medal.position ? `#${medal.position}` : '-'}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {medal.event_location || '-'}
                 </TableCell>
                 <TableCell className="text-right">
                   <Button

@@ -35,14 +35,13 @@ type AttendanceFormData = z.infer<typeof attendanceSchema>;
 interface AttendanceRegistrationFormProps {
   trainingSession: {
     id: string;
-    name: string;
-    date: string;
-    start_time: string;
-    end_time: string;
+    title: string;
+    scheduled_at: string;
+    duration_minutes?: number;
     training_type: string;
     location?: string;
     description?: string;
-    max_participants?: number;
+    max_athletes?: number;
   };
   onSuccess?: () => void;
   onCancel?: () => void;
@@ -121,11 +120,9 @@ export const AttendanceRegistrationForm: React.FC<AttendanceRegistrationFormProp
   };
 
   const calculateDuration = () => {
-    const start = new Date(`2000-01-01T${trainingSession.start_time}`);
-    const end = new Date(`2000-01-01T${trainingSession.end_time}`);
-    const diffMs = end.getTime() - start.getTime();
-    const hours = Math.floor(diffMs / (1000 * 60 * 60));
-    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const total = trainingSession.duration_minutes ?? 0;
+    const hours = Math.floor(total / 60);
+    const minutes = total % 60;
     return `${hours}h ${minutes}m`;
   };
 
@@ -163,12 +160,11 @@ export const AttendanceRegistrationForm: React.FC<AttendanceRegistrationFormProp
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              <span className="font-medium">{trainingSession.name}</span>
+              <span className="font-medium">{trainingSession.title}</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
-              {format(new Date(trainingSession.date), 'dd/MM/yyyy', { locale: es })} - 
-              {trainingSession.start_time} a {trainingSession.end_time} ({calculateDuration()})
+              {format(new Date(trainingSession.scheduled_at), 'dd/MM/yyyy HH:mm', { locale: es })} ({calculateDuration()})
             </div>
           </div>
           

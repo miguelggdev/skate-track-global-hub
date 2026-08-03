@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,28 +10,28 @@ import { CalendarHeader } from '@/components/training/calendar/CalendarHeader';
 import { CalendarGrid } from '@/components/training/calendar/CalendarGrid';
 import { EventModal } from '@/components/training/calendar/EventModal';
 import CreateTrainingDialog from '@/components/training/CreateTrainingDialog';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Plus, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
   Calendar as CalendarIcon,
   Filter,
   Download
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { downloadICS } from '@/lib/generateICS';
+import { useToast } from '@/hooks/use-toast';
 
 interface TrainingSession {
   id: string;
-  name: string;
+  title: string;
   description?: string;
-  date: string;
-  start_time: string;
-  end_time: string;
+  scheduled_at: string;
+  duration_minutes?: number;
   location?: string;
-  max_participants?: number;
+  max_athletes?: number;
   training_type: 'technical' | 'physical' | 'mental' | 'recovery' | 'gym' | 'road_skating' | 'track_skating' | 'bicycle' | 'static_bicycle' | 'simulator';
   coach_id: string;
   created_at: string;
@@ -41,58 +42,47 @@ const TrainingCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [sessions, setSessions] = useState<TrainingSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<TrainingSession | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [filterType, setFilterType] = useState<string>('all');
-  const { toast } = useToast();
   const { isAdmin } = useUserProfile();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const weekStartsOn: 0 | 1 = 0;
 
-  // Load training sessions
-  useEffect(() => {
-    loadSessions();
-  }, [currentDate, viewMode]);
+  const dateKey = format(currentDate, 'yyyy-MM-dd');
 
-  const loadSessions = async () => {
-    setIsLoading(true);
-    try {
+  const { data: sessions = [], isLoading } = useQuery({
+    queryKey: ['training-calendar', viewMode, dateKey],
+    queryFn: async () => {
       let startDate: Date;
       let endDate: Date;
 
       if (viewMode === 'month') {
         startDate = startOfWeek(startOfMonth(currentDate), { weekStartsOn });
-        endDate = endOfWeek(endOfMonth(currentDate), { weekStartsOn });
+        endDate   = endOfWeek(endOfMonth(currentDate), { weekStartsOn });
       } else if (viewMode === 'week') {
         startDate = startOfWeek(currentDate, { weekStartsOn });
-        endDate = endOfWeek(currentDate, { weekStartsOn });
+        endDate   = endOfWeek(currentDate, { weekStartsOn });
       } else {
         startDate = new Date(currentDate);
-        endDate = new Date(currentDate);
+        startDate.setHours(0, 0, 0, 0);
+        endDate   = new Date(currentDate);
       }
 
       const { data, error } = await supabase
         .from('training_sessions')
         .select('*')
-        .gte('date', format(startDate, 'yyyy-MM-dd'))
-        .lte('date', format(endDate, 'yyyy-MM-dd'))
-        .order('date', { ascending: true })
-        .order('start_time', { ascending: true });
+        .gte('scheduled_at', format(startDate, 'yyyy-MM-dd'))
+        .lte('scheduled_at', format(endDate, 'yyyy-MM-dd') + 'T23:59:59')
+        .order('scheduled_at', { ascending: true });
 
       if (error) throw error;
-      setSessions(data || []);
-    } catch (error) {
-      console.error('Error loading sessions:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las sesiones de entrenamiento",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return (data ?? []) as TrainingSession[];
+    },
+  });
+
+  const refreshSessions = () => queryClient.invalidateQueries({ queryKey: ['training-calendar'] });
 
   const getTrainingTypeColor = (type: string) => {
     switch (type) {
@@ -132,10 +122,13 @@ const TrainingCalendar = () => {
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate);
-    if (direction === 'prev') {
-      newDate.setMonth(currentDate.getMonth() - 1);
+    const sign = direction === 'prev' ? -1 : 1;
+    if (viewMode === 'month') {
+      newDate.setMonth(currentDate.getMonth() + sign);
+    } else if (viewMode === 'week') {
+      newDate.setDate(currentDate.getDate() + sign * 7);
     } else {
-      newDate.setMonth(currentDate.getMonth() + 1);
+      newDate.setDate(currentDate.getDate() + sign);
     }
     setCurrentDate(newDate);
   };
@@ -145,8 +138,8 @@ const TrainingCalendar = () => {
     // Always anchor the calendar to the clicked date
     setCurrentDate(date);
 
-    const daySessionsExist = filteredSessions.some(session => 
-      format(new Date(session.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+    const daySessionsExist = filteredSessions.some(session =>
+      format(new Date(session.scheduled_at), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
     );
     
     // Preserve existing UX: if coming from month view and the day has sessions, go to day view
@@ -162,6 +155,28 @@ const TrainingCalendar = () => {
 
   const goToToday = () => {
     setCurrentDate(new Date());
+  };
+
+  const exportToCalendar = () => {
+    if (filteredSessions.length === 0) {
+      toast({ title: 'Sin sesiones en la vista actual', variant: 'destructive' });
+      return;
+    }
+    const events = filteredSessions.map(s => {
+      const startDt = new Date(s.scheduled_at);
+      const endDt   = new Date(startDt.getTime() + (s.duration_minutes || 120) * 60_000);
+      return {
+        uid: s.id,
+        summary: `${getTrainingTypeLabel(s.training_type)} — ${s.title}`,
+        description: s.description ?? '',
+        location: s.location ?? '',
+        dtstart: startDt.toISOString(),
+        dtend: endDt.toISOString(),
+      };
+    });
+    const monthLabel = format(currentDate, 'MMMM-yyyy', { locale: es });
+    downloadICS('SpeedSkateTrack Entrenamientos', events, `entrenamientos-${monthLabel}.ics`);
+    toast({ title: `${events.length} sesión${events.length !== 1 ? 'es' : ''} exportada${events.length !== 1 ? 's' : ''}` });
   };
 
   return (
@@ -206,7 +221,7 @@ const TrainingCalendar = () => {
                   key={mode}
                   variant={viewMode === mode ? 'default' : 'ghost'}
                   size="sm"
-                  onClick={() => setViewMode(mode as any)}
+                  onClick={() => setViewMode(mode as 'month' | 'week' | 'day')}
                   className="px-3"
                 >
                   {mode === 'month' ? 'Mes' : mode === 'week' ? 'Semana' : 'Día'}
@@ -232,6 +247,11 @@ const TrainingCalendar = () => {
               <option value="static_bicycle">Bicicleta Estática</option>
               <option value="simulator">Simulador</option>
             </select>
+
+            <Button variant="outline" size="sm" onClick={exportToCalendar} title="Exportar al calendario (.ics)">
+              <Download className="h-4 w-4 mr-2" />
+              Exportar .ics
+            </Button>
 
             {isAdmin && (
               <CreateTrainingDialog>
@@ -310,7 +330,7 @@ const TrainingCalendar = () => {
           session={selectedSession}
           open={showEventModal}
           onOpenChange={setShowEventModal}
-          onSessionUpdate={loadSessions}
+          onSessionUpdate={refreshSessions}
         />
       </div>
     </DashboardLayout>

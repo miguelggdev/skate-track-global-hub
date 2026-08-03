@@ -135,7 +135,6 @@ export const TransactionReceiptGenerator: React.FC<TransactionReceiptGeneratorPr
           });
 
         if (uploadError) {
-          console.error('Upload error:', uploadError);
           // Still download the file locally
           pdf.save(fileName);
           toast.success('Recibo generado y descargado localmente');
@@ -156,7 +155,6 @@ export const TransactionReceiptGenerator: React.FC<TransactionReceiptGeneratorPr
         }
       }
     } catch (error) {
-      console.error('Error generating receipt:', error);
       toast.error('Error al generar el recibo');
     } finally {
       setGenerating(false);

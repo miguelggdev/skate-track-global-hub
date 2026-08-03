@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -97,7 +97,7 @@ export const ContactTab = ({ form }: ContactTabProps) => {
               <Input 
                 placeholder="Español, Inglés (separados por comas)" 
                 {...field}
-                value={Array.isArray(field.value) ? field.value.join(', ') : field.value || ''}
+                value={Array.isArray(field.value) ? field.value.join(', ') : field.value ?? ''}
                 onChange={(e) => field.onChange(e.target.value.split(',').map(lang => lang.trim()).filter(Boolean))}
               />
             </FormControl>

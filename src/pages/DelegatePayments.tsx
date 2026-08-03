@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,7 @@ import { formatCurrency } from '@/utils/currency';
 import { useCurrency } from '@/hooks/useCurrency';
 import { Database } from '@/integrations/supabase/types';
 
-type PaymentStatus = Database['public']['Enums']['payment_status'];
+type PaymentStatus = Database['public']['Enums']['transaction_status'];
 type TransactionType = Database['public']['Enums']['transaction_type'];
 
 const statusLabels: Record<PaymentStatus, string> = {
@@ -46,8 +46,8 @@ const DelegatePayments = () => {
     status: statusFilter !== 'all' ? statusFilter : undefined,
   });
 
-  const pendingPayments = payments?.filter(p => p.payment_status === 'pending' || p.payment_status === 'overdue') || [];
-  const completedPayments = payments?.filter(p => p.payment_status === 'paid') || [];
+  const pendingPayments = payments?.filter(p => p.payment_status === 'pending' || p.payment_status === 'overdue') ?? [];
+  const completedPayments = payments?.filter(p => p.payment_status === 'paid') ?? [];
   const totalPending = pendingPayments.reduce((sum, p) => sum + Number(p.amount), 0);
   const totalCompleted = completedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
 
@@ -111,7 +111,7 @@ const DelegatePayments = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-destructive">
-                {payments?.filter(p => p.payment_status === 'overdue').length || 0}
+                {payments?.filter(p => p.payment_status === 'overdue').length ?? 0}
               </div>
             </CardContent>
           </Card>
@@ -185,7 +185,7 @@ const DelegatePayments = () => {
                       </TableCell>
                       <TableCell>
                         {payment.athletes ? 
-                          `${payment.athletes.first_name || ''} ${payment.athletes.last_name || ''}`.trim() || 'N/A' :
+                          `${payment.athletes.first_name ?? ''} ${payment.athletes.last_name ?? ''}`.trim() || 'N/A' :
                           'N/A'
                         }
                       </TableCell>

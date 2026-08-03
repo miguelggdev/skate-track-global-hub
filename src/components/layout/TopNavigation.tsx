@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Moon, Sun, Search, User, LogOut, Settings, ChevronDown, Menu } from 'lucide-react';
+﻿import React, { useState, useEffect, useRef } from 'react';
+import { Search, User, LogOut, Settings, ChevronDown, Menu, Globe } from 'lucide-react';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -12,16 +13,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { useTheme } from 'next-themes';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { useMarkNotificationRead } from '@/hooks/useNotifications';
+import { useTranslation, AVAILABLE_LANGUAGES, LanguageCode } from '@/hooks/useTranslation';
 
 interface SearchResult {
   id: string;
@@ -29,15 +28,6 @@ interface SearchResult {
   type: 'athlete' | 'competition' | 'training' | 'financial' | 'equipment' | 'coach' | 'award' | 'team' | 'notification' | 'user';
   subtitle?: string;
   metadata?: string;
-}
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: 'info' | 'warning' | 'success';
-  read: boolean;
-  timestamp: string;
 }
 
 interface TopNavigationProps {
@@ -48,18 +38,20 @@ interface TopNavigationProps {
 }
 
 const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle }: TopNavigationProps) => {
-  const { theme, setTheme } = useTheme();
+  // theme managed by ThemeToggle component
+  const _ = useTheme(); // keep provider warm
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t, currentLanguage, setLanguage } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [clubLogo, setClubLogo] = useState<string>('');
   const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const { profile } = useUserProfile();
+  const markNotificationRead = useMarkNotificationRead();
 
   // Fetch user avatar when profile changes
   useEffect(() => {
@@ -76,7 +68,6 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
             setUserAvatarUrl(data.avatar_url);
           }
         } catch (error) {
-          console.error('Error fetching user avatar:', error);
         }
       };
       
@@ -97,43 +88,10 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
           setClubLogo(data.club_logo_url);
         }
       } catch (error) {
-        console.error('Error fetching club logo:', error);
       }
     };
     
     fetchClubLogo();
-  }, []);
-
-  // Mock notifications data
-  useEffect(() => {
-    const mockNotifications: Notification[] = [
-      {
-        id: '1',
-        title: 'Nueva competencia',
-        message: 'Se ha añadido una nueva competencia: Campeonato Nacional',
-        type: 'info',
-        read: false,
-        timestamp: new Date().toISOString(),
-      },
-      {
-        id: '2',
-        title: 'Entrenamiento cancelado',
-        message: 'El entrenamiento de mañana ha sido cancelado por condiciones climáticas',
-        type: 'warning',
-        read: false,
-        timestamp: new Date(Date.now() - 86400000).toISOString(),
-      },
-      {
-        id: '3',
-        title: 'Pago recibido',
-        message: 'Se ha recibido el pago de la cuota mensual',
-        type: 'success',
-        read: true,
-        timestamp: new Date(Date.now() - 172800000).toISOString(),
-      },
-    ];
-    setNotifications(mockNotifications);
-    setUnreadCount(mockNotifications.filter(n => !n.read).length);
   }, []);
 
   // Enhanced search functionality (role-aware)
@@ -190,8 +148,8 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
           searchPromises.push(
             supabase
               .from('training_sessions')
-              .select('id, name, date, location')
-              .ilike('name', `%${searchQuery}%`)
+              .select('id, title, scheduled_at, location')
+              .ilike('title', `%${searchQuery}%`)
               .limit(5)
               .then(result => ({ type: 'training', data: result.data }))
           );
@@ -222,12 +180,20 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
         if (canSearchCoaches) {
           searchPromises.push(
             supabase
-              .from('profiles')
-              .select('id, first_name, last_name, email')
-              .eq('role', 'coach')
-              .or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+              .from('coaches')
+              .select('id, user_id, profiles(id, first_name, last_name)')
+              .eq('is_active', true)
               .limit(4)
-              .then(result => ({ type: 'coaches', data: result.data }))
+              .then(result => ({
+                type: 'coaches',
+                data: (result.data ?? [])
+                  .map((c: any) => ({ ...c.profiles, id: c.user_id }))
+                  .filter((p: any) => {
+                    const q = searchQuery.toLowerCase();
+                    return (p.first_name ?? '').toLowerCase().includes(q)
+                      || (p.last_name ?? '').toLowerCase().includes(q);
+                  }),
+              }))
           );
         }
 
@@ -245,9 +211,9 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
         if (canSearchTeams) {
           searchPromises.push(
             supabase
-              .from('teams')
-              .select('id, name, description, location')
-              .or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`)
+              .from('relay_teams')
+              .select('id, team_name, club_name')
+              .or(`team_name.ilike.%${searchQuery}%,club_name.ilike.%${searchQuery}%`)
               .limit(4)
               .then(result => ({ type: 'teams', data: result.data }))
           );
@@ -257,8 +223,8 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
           searchPromises.push(
             supabase
               .from('notifications')
-              .select('id, title, message, notification_type')
-              .eq('recipient_id', profile?.id)
+              .select('id, title, message, type')
+              .eq('user_id', profile?.id)
               .or(`title.ilike.%${searchQuery}%,message.ilike.%${searchQuery}%`)
               .limit(3)
               .then(result => ({ type: 'notifications', data: result.data }))
@@ -269,7 +235,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
           searchPromises.push(
             supabase
               .from('profiles')
-              .select('id, first_name, last_name, email, role')
+              .select('id, first_name, last_name, email')
               .or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
               .limit(5)
               .then(result => ({ type: 'users', data: result.data }))
@@ -287,7 +253,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
               result.data.forEach((athlete: any) => {
                 results.push({
                   id: athlete.id,
-                  title: `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim(),
+                  title: `${athlete.first_name ?? ''} ${athlete.last_name ?? ''}`.trim(),
                   type: 'athlete',
                   subtitle: athlete.athlete_number || athlete.category,
                 });
@@ -310,10 +276,10 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
               result.data.forEach((session: any) => {
                 results.push({
                   id: session.id,
-                  title: session.name,
+                  title: session.title,
                   type: 'training',
                   subtitle: session.location,
-                  metadata: new Date(session.date).toLocaleDateString(),
+                  metadata: session.scheduled_at ? new Date(session.scheduled_at).toLocaleDateString() : undefined,
                 });
               });
               break;
@@ -336,7 +302,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
                   id: equipment.id,
                   title: equipment.name,
                   type: 'equipment',
-                  subtitle: `${equipment.brand || ''} ${equipment.model || ''}`.trim(),
+                  subtitle: `${equipment.brand ?? ''} ${equipment.model ?? ''}`.trim(),
                   metadata: equipment.category,
                 });
               });
@@ -346,9 +312,8 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
               result.data.forEach((coach: any) => {
                 results.push({
                   id: coach.id,
-                  title: `${coach.first_name || ''} ${coach.last_name || ''}`.trim(),
+                  title: `${coach.first_name ?? ''} ${coach.last_name ?? ''}`.trim(),
                   type: 'coach',
-                  subtitle: coach.email,
                 });
               });
               break;
@@ -369,10 +334,9 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
               result.data.forEach((team: any) => {
                 results.push({
                   id: team.id,
-                  title: team.name,
+                  title: team.team_name || team.club_name || '—',
                   type: 'team',
-                  subtitle: team.location,
-                  metadata: team.description,
+                  subtitle: team.club_name,
                 });
               });
               break;
@@ -384,7 +348,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
                   title: notification.title,
                   type: 'notification',
                   subtitle: notification.message,
-                  metadata: notification.notification_type,
+                  metadata: notification.type,
                 });
               });
               break;
@@ -393,7 +357,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
               result.data.forEach((user: any) => {
                 results.push({
                   id: user.id,
-                  title: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+                  title: `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim(),
                   type: 'user',
                   subtitle: user.email,
                   metadata: user.role,
@@ -406,7 +370,6 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
         setSearchResults(results);
         setIsSearchOpen(results.length > 0);
       } catch (error) {
-        console.error('Search error:', error);
       }
     };
 
@@ -452,7 +415,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
         navigate(`/finance?highlight=${result.id}`);
         break;
       case 'equipment':
-        navigate(`/athletes?tab=equipment&highlight=${result.id}`);
+        navigate(`/equipamiento?highlight=${result.id}`);
         break;
       case 'coach':
         navigate(`/training?coach=${result.id}`);
@@ -464,8 +427,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
         navigate(`/athletes?team=${result.id}`);
         break;
       case 'notification':
-        // Keep notifications in the header, just mark as read
-        markNotificationAsRead(result.id);
+        markNotificationRead.mutate(result.id);
         break;
       case 'user':
         if (profile?.role === 'admin' || profile?.role === 'leader') {
@@ -475,30 +437,20 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
     }
   };
 
-  const markNotificationAsRead = (notificationId: string) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === notificationId ? { ...notif, read: true } : notif
-      )
-    );
-    setUnreadCount(prev => Math.max(0, prev - 1));
-  };
-
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
       localStorage.removeItem('userRole');
       localStorage.removeItem('userEmail');
       toast({
-        title: "Sesión cerrada",
-        description: "Has cerrado sesión correctamente",
+        title: t('message.session_closed'),
+        description: t('message.session_closed_desc'),
       });
       navigate('/login');
     } catch (error) {
-      console.error('Error during logout:', error);
       toast({
-        title: "Error",
-        description: "Error al cerrar sesión",
+        title: t('common.error'),
+        description: t('message.logout_error'),
         variant: "destructive",
       });
     }
@@ -513,21 +465,8 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
       .slice(0, 2);
   };
 
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffHours < 1) return 'Hace un momento';
-    if (diffHours < 24) return `Hace ${diffHours}h`;
-    if (diffDays < 7) return `Hace ${diffDays}d`;
-    return date.toLocaleDateString();
-  };
-
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 w-full bg-white dark:bg-gray-900 border-b border-border shadow-md transition-all duration-200">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full bg-background/95 backdrop-blur-xl border-b border-border shadow-sm transition-all duration-300">
       <div className="flex items-center px-4 lg:px-6 py-3">
         {/* Hamburger Menu - Always Visible */}
         <Button
@@ -558,26 +497,26 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
           )}
         </div>
 
-        {/* Search Bar */}
-        <div className="flex-1 max-w-[60%] mr-4" ref={searchRef}>
+        {/* Search Bar — desktop only */}
+        <div className="hidden sm:block flex-1 max-w-[60%] mr-4" ref={searchRef}>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Buscar atletas, competencias, entrenamientos, finanzas, equipos..."
+              placeholder={t('common.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="pl-10 pr-4 bg-muted/50 dark:bg-gray-800/50 border-border focus:bg-background dark:focus:bg-gray-800 transition-all"
+              className="pl-10 pr-4 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:bg-muted focus:border-orange-500/50 transition-all"
             />
-            
+
             {/* Search Results Dropdown */}
             {isSearchOpen && searchResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-background dark:bg-gray-800 border border-border dark:border-gray-700 rounded-md shadow-lg z-50 max-h-80 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-xl z-50 max-h-80 overflow-y-auto">
                 {searchResults.map((result) => (
                   <div
                     key={result.id}
-                    className="px-4 py-3 hover:bg-muted dark:hover:bg-gray-700 cursor-pointer transition-colors border-b border-border dark:border-gray-700 last:border-b-0"
+                    className="px-4 py-3 hover:bg-muted/50 cursor-pointer transition-colors border-b border-border last:border-b-0"
                     onClick={() => handleSearchResultClick(result)}
                   >
                     <div className="flex items-center space-x-3">
@@ -603,16 +542,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
                         )}
                       </div>
                       <Badge variant="secondary" className="text-xs">
-                        {result.type === 'athlete' ? 'Atleta' :
-                         result.type === 'competition' ? 'Competencia' :
-                         result.type === 'training' ? 'Entrenamiento' :
-                         result.type === 'financial' ? 'Finanzas' :
-                         result.type === 'equipment' ? 'Equipo' :
-                         result.type === 'coach' ? 'Entrenador' :
-                         result.type === 'award' ? 'Premio' :
-                         result.type === 'team' ? 'Equipo' :
-                         result.type === 'notification' ? 'Notificación' :
-                         result.type === 'user' ? 'Usuario' : 'Otro'}
+                        {t(`search.${result.type}`)}
                       </Badge>
                     </div>
                   </div>
@@ -624,74 +554,48 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
 
 
         {/* Right Side Actions */}
-        <div className="flex items-center space-x-2">
-          {/* Dark Mode Toggle */}
+        <div className="flex items-center space-x-1 sm:space-x-2 ml-auto">
+          {/* Mobile search toggle */}
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="transition-all hover:scale-110"
+            className="sm:hidden"
+            onClick={() => { setMobileSearchOpen(v => !v); setSearchQuery(''); setIsSearchOpen(false); }}
+            aria-label="Buscar"
           >
-            {theme === 'dark' ? (
-              <Sun className="h-5 w-5" />
-            ) : (
-              <Moon className="h-5 w-5" />
-            )}
+            <Search className="h-5 w-5" />
           </Button>
 
-          {/* Notifications */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="relative transition-all hover:scale-110">
-                <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
-                  <Badge 
-                    variant="destructive" 
-                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-xs p-0 min-w-[20px]"
-                  >
-                    {unreadCount}
-                  </Badge>
-                )}
+          {/* Language Switcher */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="px-2 gap-1 text-xs font-medium" aria-label="Language">
+                <Globe className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  {AVAILABLE_LANGUAGES.find(l => l.code === currentLanguage)?.flag}
+                  {' '}{currentLanguage.toUpperCase()}
+                </span>
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80 p-0 bg-background dark:bg-gray-800 border-border dark:border-gray-700" align="end">
-              <div className="p-4 border-b border-border dark:border-gray-700">
-                <h4 className="font-semibold text-foreground dark:text-gray-100">Notificaciones</h4>
-              </div>
-              <div className="max-h-80 overflow-y-auto">
-                {notifications.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-6">No hay notificaciones</p>
-                ) : (
-                  notifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className={`p-4 border-b border-border dark:border-gray-700 last:border-b-0 hover:bg-muted dark:hover:bg-gray-700 cursor-pointer transition-colors ${
-                        !notification.read ? 'bg-muted/50 dark:bg-gray-700/50' : ''
-                      }`}
-                      onClick={() => markNotificationAsRead(notification.id)}
-                    >
-                      <div className="flex items-start space-x-3">
-                        <div className={`w-2 h-2 rounded-full mt-2 ${
-                          notification.type === 'info' ? 'bg-blue-500' :
-                          notification.type === 'warning' ? 'bg-yellow-500' : 'bg-green-500'
-                        }`} />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm text-foreground dark:text-gray-100">{notification.title}</p>
-                          <p className="text-sm text-muted-foreground dark:text-gray-300 mt-1">{notification.message}</p>
-                          <p className="text-xs text-muted-foreground dark:text-gray-400 mt-2">
-                            {formatTimestamp(notification.timestamp)}
-                          </p>
-                        </div>
-                        {!notification.read && (
-                          <div className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </PopoverContent>
-          </Popover>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44 bg-popover border border-border shadow-xl rounded-xl">
+              {AVAILABLE_LANGUAGES.map(lang => (
+                <DropdownMenuItem
+                  key={lang.code}
+                  onClick={() => setLanguage(lang.code as LanguageCode)}
+                  className={currentLanguage === lang.code ? 'bg-muted font-semibold' : ''}
+                >
+                  <span className="mr-2">{lang.flag}</span>
+                  {lang.nativeName}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
+          {/* Notifications */}
+          <NotificationBell />
 
           {/* User Profile */}
           <DropdownMenu>
@@ -699,7 +603,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
               <Button variant="ghost" className="flex items-center space-x-2 px-2 transition-all hover:scale-105">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={userAvatarUrl || userAvatar} />
-                  <AvatarFallback className="bg-primary text-primary-foreground">
+                  <AvatarFallback className="bg-gradient-to-br from-orange-500 to-orange-700 text-white font-bold">
                     {profile ? getInitials(`${profile.first_name} ${profile.last_name}`) : getInitials(userRole)}
                   </AvatarFallback>
                 </Avatar>
@@ -714,26 +618,62 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-background dark:bg-gray-800 border-border dark:border-gray-700">
-              <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="w-56 bg-popover border border-border shadow-xl rounded-xl">
+              <DropdownMenuLabel>{t('common.my_account')}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate('/settings')}>
                 <User className="mr-2 h-4 w-4" />
-                Perfil
+                {t('common.profile')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/settings')}>
                 <Settings className="mr-2 h-4 w-4" />
-                Configuración
+                {t('common.config')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                Cerrar Sesión
+                {t('common.close_session')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Mobile search row */}
+      {mobileSearchOpen && (
+        <div className="sm:hidden px-3 pb-2 border-t border-border/40">
+          <div className="relative mt-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              autoFocus
+              placeholder={t('common.search')}
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Escape') { setMobileSearchOpen(false); setSearchQuery(''); }
+              }}
+              className="w-full pl-9 pr-4 py-2 text-sm bg-muted/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-orange-500/50"
+            />
+          </div>
+          {isSearchOpen && searchResults.length > 0 && (
+            <div className="mt-1 bg-popover border border-border rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto">
+              {searchResults.map((result) => (
+                <div
+                  key={result.id}
+                  className="px-3 py-2.5 hover:bg-muted/50 cursor-pointer transition-colors border-b border-border last:border-b-0"
+                  onClick={() => { handleSearchResultClick(result); setMobileSearchOpen(false); }}
+                >
+                  <p className="font-medium text-sm text-foreground truncate">{result.title}</p>
+                  {result.subtitle && (
+                    <p className="text-xs text-muted-foreground truncate">{result.subtitle}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </header>
   );
 };

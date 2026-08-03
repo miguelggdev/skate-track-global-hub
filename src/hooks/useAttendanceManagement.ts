@@ -40,16 +40,20 @@ export const useAttendanceManagement = () => {
     },
   });
 
-  // Register attendance using RPC function
+  // Register attendance via upsert (handles both insert and update)
   const registerAttendanceMutation = useMutation({
     mutationFn: async (attendanceData: AttendanceFormData) => {
-      const { data, error } = await supabase.rpc('register_attendance', {
-        p_training_session_id: attendanceData.training_session_id,
-        p_athlete_id: attendanceData.athlete_id,
-        p_attended: attendanceData.attended,
-        p_performance_rating: attendanceData.performance_rating || null,
-        p_notes: attendanceData.notes || null
-      });
+      const { data, error } = await supabase
+        .from('training_attendance')
+        .upsert({
+          training_session_id: attendanceData.training_session_id,
+          athlete_id: attendanceData.athlete_id,
+          attended: attendanceData.attended,
+          performance_rating: attendanceData.performance_rating ?? null,
+          notes: attendanceData.notes ?? null,
+        }, { onConflict: 'training_session_id,athlete_id' })
+        .select()
+        .single();
 
       if (error) throw error;
       return data;
@@ -59,26 +63,25 @@ export const useAttendanceManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['training-kpis'] });
       toast.success('Asistencia registrada correctamente');
     },
-    onError: (error: any) => {
-      console.error('Error registering attendance:', error);
+    onError: (error: Error) => {
       toast.error('Error al registrar la asistencia: ' + (error.message || 'Error desconocido'));
     },
   });
 
-  // Bulk register attendance using RPC function
+  // Bulk register attendance via upsert
   const registerBulkAttendanceMutation = useMutation({
     mutationFn: async (attendanceRows: AttendanceFormData[]) => {
-      const formattedRows = attendanceRows.map(row => ({
+      const rows = attendanceRows.map(row => ({
         training_session_id: row.training_session_id,
         athlete_id: row.athlete_id,
         attended: row.attended,
-        performance_rating: row.performance_rating?.toString() || '',
-        notes: row.notes || ''
+        performance_rating: row.performance_rating ?? null,
+        notes: row.notes ?? null,
       }));
 
-      const { data, error } = await supabase.rpc('register_bulk_attendance', {
-        rows: formattedRows
-      });
+      const { data, error } = await supabase
+        .from('training_attendance')
+        .upsert(rows, { onConflict: 'training_session_id,athlete_id' });
 
       if (error) throw error;
       return data;
@@ -88,8 +91,7 @@ export const useAttendanceManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['training-kpis'] });
       toast.success('Asistencia registrada correctamente');
     },
-    onError: (error: any) => {
-      console.error('Error registering bulk attendance:', error);
+    onError: (error: Error) => {
       toast.error('Error al registrar la asistencia: ' + (error.message || 'Error desconocido'));
     },
   });
@@ -112,8 +114,7 @@ export const useAttendanceManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['training-kpis'] });
       toast.success('Asistencia actualizada correctamente');
     },
-    onError: (error: any) => {
-      console.error('Error updating attendance:', error);
+    onError: (error: Error) => {
       if (error.message.includes('48 hours')) {
         toast.error('No se puede editar la asistencia después de 48 horas');
       } else {
@@ -137,8 +138,7 @@ export const useAttendanceManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['training-kpis'] });
       toast.success('Asistencia eliminada correctamente');
     },
-    onError: (error: any) => {
-      console.error('Error deleting attendance:', error);
+    onError: () => {
       toast.error('Error al eliminar la asistencia');
     },
   });

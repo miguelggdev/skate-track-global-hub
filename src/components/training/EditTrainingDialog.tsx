@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,16 +10,17 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTrainingSessions } from '@/hooks/useTrainingSessions';
 import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
 
 const editTrainingSchema = z.object({
-  name: z.string().min(1, 'El nombre es requerido'),
+  title: z.string().min(1, 'El nombre es requerido'),
   date: z.string().min(1, 'La fecha es requerida'),
   start_time: z.string().min(1, 'La hora de inicio es requerida'),
   end_time: z.string().min(1, 'La hora de fin es requerida'),
   training_type: z.enum(['technical', 'physical', 'mental', 'recovery', 'gym', 'road_skating', 'track_skating', 'bicycle', 'static_bicycle', 'simulator']),
   location: z.string().optional(),
   description: z.string().optional(),
-  max_participants: z.string().optional(),
+  max_athletes: z.string().optional(),
 });
 
 type EditTrainingFormData = z.infer<typeof editTrainingSchema>;
@@ -28,14 +29,13 @@ interface EditTrainingDialogProps {
   children: React.ReactNode;
   session: {
     id: string;
-    name: string;
-    date: string;
-    start_time: string;
-    end_time: string;
+    title: string;
+    scheduled_at: string;
+    duration_minutes?: number;
     training_type: string;
     location?: string;
     description?: string;
-    max_participants?: number;
+    max_athletes?: number;
   };
 }
 
@@ -43,6 +43,9 @@ export default function EditTrainingDialog({ children, session }: EditTrainingDi
   const [open, setOpen] = useState(false);
   const { updateSession, isUpdating } = useTrainingSessions();
   const { toast } = useToast();
+
+  const sessionDt = new Date(session.scheduled_at);
+  const sessionEndDt = new Date(sessionDt.getTime() + (session.duration_minutes || 60) * 60_000);
 
   const {
     register,
@@ -53,29 +56,32 @@ export default function EditTrainingDialog({ children, session }: EditTrainingDi
   } = useForm<EditTrainingFormData>({
     resolver: zodResolver(editTrainingSchema),
     defaultValues: {
-      name: session.name,
-      date: session.date,
-      start_time: session.start_time,
-      end_time: session.end_time,
-      training_type: session.training_type as any,
-      location: session.location || '',
-      description: session.description || '',
-      max_participants: session.max_participants?.toString() || '',
+      title: session.title,
+      date: format(sessionDt, 'yyyy-MM-dd'),
+      start_time: format(sessionDt, 'HH:mm'),
+      end_time: format(sessionEndDt, 'HH:mm'),
+      training_type: session.training_type as EditTrainingFormData['training_type'],
+      location: session.location ?? '',
+      description: session.description ?? '',
+      max_athletes: session.max_athletes?.toString() ?? '',
     }
   });
 
   const trainingType = watch('training_type');
 
   const onSubmit = (data: EditTrainingFormData) => {
+    const [startH, startM] = data.start_time.split(':').map(Number);
+    const [endH, endM] = data.end_time.split(':').map(Number);
+    const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
+
     const updates = {
-      name: data.name,
-      date: data.date,
-      start_time: data.start_time,
-      end_time: data.end_time,
+      title: data.title,
+      scheduled_at: `${data.date}T${data.start_time}:00`,
+      duration_minutes: durationMinutes > 0 ? durationMinutes : 60,
       training_type: data.training_type,
       location: data.location || null,
       description: data.description || null,
-      max_participants: data.max_participants ? parseInt(data.max_participants) : null,
+      max_athletes: data.max_athletes ? parseInt(data.max_athletes) : null,
     };
 
     updateSession({ sessionId: session.id, updates }, {
@@ -115,22 +121,22 @@ export default function EditTrainingDialog({ children, session }: EditTrainingDi
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nombre de la Sesión *</Label>
+              <Label htmlFor="title">Nombre de la Sesión *</Label>
               <Input
-                id="name"
-                {...register('name')}
+                id="title"
+                {...register('title')}
                 placeholder="Ej: Entrenamiento de Velocidad"
               />
-              {errors.name && (
-                <p className="text-sm text-red-600">{errors.name.message}</p>
+              {errors.title && (
+                <p className="text-sm text-red-600">{errors.title.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="training_type">Tipo de Entrenamiento *</Label>
-              <Select 
-                value={trainingType} 
-                onValueChange={(value) => setValue('training_type', value as any)}
+              <Select
+                value={trainingType}
+                onValueChange={(value) => setValue('training_type', value as EditTrainingFormData['training_type'])}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecciona el tipo" />
@@ -198,12 +204,12 @@ export default function EditTrainingDialog({ children, session }: EditTrainingDi
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="max_participants">Máximo de Participantes</Label>
+              <Label htmlFor="max_athletes">Máximo de Participantes</Label>
               <Input
-                id="max_participants"
+                id="max_athletes"
                 type="number"
                 min="1"
-                {...register('max_participants')}
+                {...register('max_athletes')}
                 placeholder="Ej: 20"
               />
             </div>

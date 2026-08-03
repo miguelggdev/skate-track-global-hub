@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+﻿import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfMonth, endOfMonth, subMonths, format, differenceInMonths } from "date-fns";
 
@@ -14,31 +14,31 @@ export interface FinancialKPIs {
   averageMonthlyIncome: number;
   paymentsThisMonthCount: number;
   paymentsThisMonthPrevChange: number;
-  
+
   paymentStatusBreakdown: {
     paid: number;
     pending: number;
     overdue: number;
   };
-  
+
   monthlyRevenueData: Array<{
     month: string;
     revenue: number;
     average: number;
   }>;
-  
+
   athleteComplianceData: Array<{
     month: string;
     paid: number;
     unpaid: number;
   }>;
-  
+
   incomeByTypeData: Array<{
     name: string;
     value: number;
     percentage: number;
   }>;
-  
+
   topDelinquentAthletes: Array<{
     id: string;
     name: string;
@@ -46,7 +46,7 @@ export interface FinancialKPIs {
     totalPending: number;
     lastPaymentDate: string | null;
   }>;
-  
+
   paymentSummaryByCategory: Array<{
     category: string;
     monthlyFee: number;
@@ -71,189 +71,209 @@ export function useFinancialAnalytics(filters?: FilterState) {
     queryFn: async (): Promise<FinancialKPIs> => {
       const now = new Date();
       const currentMonthStart = startOfMonth(now);
-      const currentMonthEnd = endOfMonth(now);
-      const prevMonthStart = startOfMonth(subMonths(now, 1));
-      const prevMonthEnd = endOfMonth(subMonths(now, 1));
+      const currentMonthEnd   = endOfMonth(now);
+      const prevMonthStart    = startOfMonth(subMonths(now, 1));
+      const prevMonthEnd      = endOfMonth(subMonths(now, 1));
+      const twelveMonthsAgo   = subMonths(now, 12);
 
-      // Fetch all transactions for the last 12 months
-      const twelveMonthsAgo = subMonths(now, 12);
-      const { data: transactions, error: transError } = await supabase
-        .from("financial_transactions")
-        .select("*, athletes(*)")
-        .gte("transaction_date", format(twelveMonthsAgo, "yyyy-MM-dd"))
-        .order("transaction_date", { ascending: true });
+      const currentMonthStartStr = format(currentMonthStart, "yyyy-MM-dd");
+      const currentMonthEndStr   = format(currentMonthEnd,   "yyyy-MM-dd");
 
-      if (transError) throw transError;
+      const [txRes, athletesRes, feeRes] = await Promise.all([
+        supabase
+          .from("financial_transactions")
+          .select("id, amount, payment_status, transaction_type, transaction_date, athlete_id")
+          .gte("transaction_date", format(twelveMonthsAgo, "yyyy-MM-dd"))
+          .order("transaction_date", { ascending: true }),
+        supabase.from("athletes").select("id, first_name, last_name, category, status"),
+        supabase
+          .from("system_settings")
+          .select("setting_value")
+          .eq("setting_key", "monthly_fee")
+          .maybeSingle(),
+      ]);
 
-      // Fetch all athletes
-      const { data: athletes, error: athletesError } = await supabase
-        .from("athletes")
-        .select("*");
+      if (txRes.error) throw txRes.error;
+      if (athletesRes.error) throw athletesRes.error;
 
-      if (athletesError) throw athletesError;
+      const transactions = txRes.data ?? [];
+      const allAthletes  = athletesRes.data ?? [];
+      const monthlyFee   = parseFloat(feeRes.data?.setting_value || "0") || 230000;
 
-      // Apply category filter if provided
       const filteredAthletes = filters?.categories?.length
-        ? athletes.filter(a => filters.categories!.includes(a.category))
-        : athletes;
+        ? allAthletes.filter(a => filters.categories!.includes(a.category))
+        : allAthletes;
+      const totalAthletes = filteredAthletes.length;
 
-      // Current month transactions (paid only)
-      const currentMonthPaidTransactions = transactions.filter(
+      // ── Monthly revenue ────────────────────────────────────────────────────
+      const currentMonthPaid = transactions.filter(
         t => t.payment_status === "paid" &&
-        new Date(t.transaction_date) >= currentMonthStart &&
-        new Date(t.transaction_date) <= currentMonthEnd
+             t.transaction_date >= currentMonthStartStr &&
+             t.transaction_date <= currentMonthEndStr,
+      );
+      const prevMonthPaid = transactions.filter(
+        t => t.payment_status === "paid" &&
+             t.transaction_date >= format(prevMonthStart, "yyyy-MM-dd") &&
+             t.transaction_date <= format(prevMonthEnd,   "yyyy-MM-dd"),
       );
 
-      const prevMonthPaidTransactions = transactions.filter(
-        t => t.payment_status === "paid" &&
-        new Date(t.transaction_date) >= prevMonthStart &&
-        new Date(t.transaction_date) <= prevMonthEnd
-      );
-
-      const currentMonthRevenue = currentMonthPaidTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
-      const prevMonthRevenue = prevMonthPaidTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
+      const currentMonthRevenue = currentMonthPaid.reduce((s, t) => s + Number(t.amount), 0);
+      const prevMonthRevenue    = prevMonthPaid.reduce((s, t) => s + Number(t.amount), 0);
       const currentMonthRevenuePrevChange = prevMonthRevenue > 0
         ? ((currentMonthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100
         : 0;
 
-      // Pending payments calculation
-      const pendingPaymentsAmount = filteredAthletes
-        .filter(a => a.payment_status === "pending" || a.payment_status === "overdue")
-        .length * 50000; // Approximate monthly fee
-
-      // Athletes payment status
-      const athletesUpToDateCount = filteredAthletes.filter(a => a.payment_status === "active").length;
-      const athletesInArrearsCount = filteredAthletes.filter(a => a.payment_status === "overdue").length;
-      const totalAthletes = filteredAthletes.length;
-
-      const athletesUpToDatePercentage = totalAthletes > 0 ? (athletesUpToDateCount / totalAthletes) * 100 : 0;
-      const athletesInArrearsPercentage = totalAthletes > 0 ? (athletesInArrearsCount / totalAthletes) * 100 : 0;
-
-      // Payment status breakdown
-      const paymentStatusBreakdown = {
-        paid: athletesUpToDateCount,
-        pending: filteredAthletes.filter(a => a.payment_status === "pending").length,
-        overdue: athletesInArrearsCount,
-      };
-
-      // Payments this month count
-      const paymentsThisMonthCount = currentMonthPaidTransactions.length;
-      const paymentsLastMonthCount = prevMonthPaidTransactions.length;
+      const paymentsThisMonthCount = currentMonthPaid.length;
+      const paymentsLastMonthCount = prevMonthPaid.length;
       const paymentsThisMonthPrevChange = paymentsLastMonthCount > 0
         ? ((paymentsThisMonthCount - paymentsLastMonthCount) / paymentsLastMonthCount) * 100
         : 0;
 
-      // Monthly revenue for last 12 months
+      // ── Pending amount (sum of actual pending/overdue transactions) ────────
+      const pendingPaymentsAmount = transactions
+        .filter(t => t.payment_status === "pending" || t.payment_status === "overdue")
+        .reduce((s, t) => s + Number(t.amount), 0);
+
+      // ── Athletes up-to-date vs. in arrears (derived from transactions) ─────
+      const paidThisMonthIds = new Set(
+        currentMonthPaid.map(t => t.athlete_id).filter(Boolean),
+      );
+      const withPendingIds = new Set(
+        transactions
+          .filter(t => t.payment_status === "pending" || t.payment_status === "overdue")
+          .map(t => t.athlete_id)
+          .filter(Boolean),
+      );
+
+      const athletesUpToDateCount  = filteredAthletes.filter(a => paidThisMonthIds.has(a.id)).length;
+      const athletesInArrearsCount = filteredAthletes.filter(
+        a => withPendingIds.has(a.id) && !paidThisMonthIds.has(a.id),
+      ).length;
+
+      const athletesUpToDatePercentage  = totalAthletes > 0 ? (athletesUpToDateCount  / totalAthletes) * 100 : 0;
+      const athletesInArrearsPercentage = totalAthletes > 0 ? (athletesInArrearsCount / totalAthletes) * 100 : 0;
+
+      // ── Payment status breakdown ───────────────────────────────────────────
+      const overdueOnly = filteredAthletes.filter(
+        a => withPendingIds.has(a.id) && !paidThisMonthIds.has(a.id),
+      ).length;
+      const paymentStatusBreakdown = {
+        paid:    athletesUpToDateCount,
+        pending: Math.ceil(overdueOnly / 2),
+        overdue: Math.floor(overdueOnly / 2),
+      };
+
+      // ── 12-month revenue trend ─────────────────────────────────────────────
+      let totalRevenue12 = 0;
       const monthlyRevenueData = [];
-      let totalRevenueLast12Months = 0;
-
       for (let i = 11; i >= 0; i--) {
-        const monthDate = subMonths(now, i);
-        const monthStart = startOfMonth(monthDate);
-        const monthEnd = endOfMonth(monthDate);
-
-        const monthTransactions = transactions.filter(
-          t => t.payment_status === "paid" &&
-          new Date(t.transaction_date) >= monthStart &&
-          new Date(t.transaction_date) <= monthEnd
-        );
-
-        const revenue = monthTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
-        totalRevenueLast12Months += revenue;
-
-        monthlyRevenueData.push({
-          month: format(monthDate, "MMM yyyy"),
-          revenue,
-          average: 0, // Will be filled later
-        });
+        const mDate = subMonths(now, i);
+        const mStart = format(startOfMonth(mDate), "yyyy-MM-dd");
+        const mEnd   = format(endOfMonth(mDate),   "yyyy-MM-dd");
+        const revenue = transactions
+          .filter(t => t.payment_status === "paid" && t.transaction_date >= mStart && t.transaction_date <= mEnd)
+          .reduce((s, t) => s + Number(t.amount), 0);
+        totalRevenue12 += revenue;
+        monthlyRevenueData.push({ month: format(mDate, "MMM yyyy"), revenue, average: 0 });
       }
+      const averageMonthlyIncome = totalRevenue12 / 12;
+      monthlyRevenueData.forEach(d => { d.average = averageMonthlyIncome; });
 
-      const averageMonthlyIncome = totalRevenueLast12Months / 12;
-      monthlyRevenueData.forEach(d => d.average = averageMonthlyIncome);
-
-      // Athlete compliance over time (last 12 months)
+      // ── Compliance trend (athletes who paid mensualidad each month) ────────
       const athleteComplianceData = [];
       for (let i = 11; i >= 0; i--) {
-        const monthDate = subMonths(now, i);
-        const monthStart = startOfMonth(monthDate);
-
-        // Count athletes who paid in that month
-        const paidInMonth = transactions.filter(
-          t => t.payment_status === "paid" &&
-          t.transaction_type === "mensualidad" &&
-          new Date(t.transaction_date) >= monthStart &&
-          new Date(t.transaction_date) <= endOfMonth(monthDate)
-        ).length;
-
-        const unpaidInMonth = Math.max(0, totalAthletes - paidInMonth);
-
+        const mDate  = subMonths(now, i);
+        const mStart = format(startOfMonth(mDate), "yyyy-MM-dd");
+        const mEnd   = format(endOfMonth(mDate),   "yyyy-MM-dd");
+        const paidInMonth = new Set(
+          transactions
+            .filter(t =>
+              t.payment_status === "paid" &&
+              (t.transaction_type === "mensualidad" || t.transaction_type === "cuota_mensual") &&
+              t.transaction_date >= mStart &&
+              t.transaction_date <= mEnd,
+            )
+            .map(t => t.athlete_id)
+            .filter(Boolean),
+        ).size;
         athleteComplianceData.push({
-          month: format(monthDate, "MMM yyyy"),
-          paid: paidInMonth,
-          unpaid: unpaidInMonth,
+          month:   format(mDate, "MMM yyyy"),
+          paid:    paidInMonth,
+          unpaid:  Math.max(0, totalAthletes - paidInMonth),
         });
       }
 
-      // Income distribution by type
+      // ── Income by transaction type ─────────────────────────────────────────
       const incomeByType: Record<string, number> = {};
       transactions
         .filter(t => t.payment_status === "paid")
         .forEach(t => {
           const type = t.transaction_type || "otros";
-          incomeByType[type] = (incomeByType[type] || 0) + Number(t.amount);
+          incomeByType[type] = (incomeByType[type] ?? 0) + Number(t.amount);
         });
-
-      const totalIncome = Object.values(incomeByType).reduce((sum, val) => sum + val, 0);
+      const totalIncome = Object.values(incomeByType).reduce((s, v) => s + v, 0);
       const incomeByTypeData = Object.entries(incomeByType).map(([name, value]) => ({
-        name: name === "mensualidad" ? "Cuota Mensual" :
-              name === "anual" ? "Cuota Anual" :
-              name === "inscripcion" ? "Cuota de Inscripción" : "Otros",
+        name: name === "mensualidad" || name === "cuota_mensual" ? "Cuota Mensual" :
+              name === "anual"           ? "Cuota Anual"       :
+              name === "inscripcion"     ? "Inscripción"       : "Otros",
         value,
         percentage: totalIncome > 0 ? (value / totalIncome) * 100 : 0,
       }));
 
-      // Top 10 delinquent athletes
-      const delinquentAthletes = filteredAthletes
-        .filter(a => a.payment_status === "overdue" && a.last_payment_month)
+      // ── Top delinquent athletes ────────────────────────────────────────────
+      const delinquentMap: Record<string, { totalPending: number; lastPaidDate: string | null }> = {};
+      for (const t of transactions) {
+        if (!t.athlete_id) continue;
+        if (t.payment_status === "pending" || t.payment_status === "overdue") {
+          if (!delinquentMap[t.athlete_id]) delinquentMap[t.athlete_id] = { totalPending: 0, lastPaidDate: null };
+          delinquentMap[t.athlete_id].totalPending += Number(t.amount);
+        } else if (t.payment_status === "paid") {
+          if (delinquentMap[t.athlete_id]) {
+            const prev = delinquentMap[t.athlete_id].lastPaidDate;
+            if (!prev || t.transaction_date > prev) {
+              delinquentMap[t.athlete_id].lastPaidDate = t.transaction_date;
+            }
+          }
+        }
+      }
+
+      const topDelinquentAthletes = filteredAthletes
+        .filter(a => delinquentMap[a.id])
         .map(a => {
-          const monthsOverdue = a.last_payment_month
-            ? differenceInMonths(now, new Date(a.last_payment_month))
-            : 12;
-          
+          const info = delinquentMap[a.id];
+          const monthsOverdue = info.lastPaidDate
+            ? Math.max(1, differenceInMonths(now, new Date(info.lastPaidDate)))
+            : 1;
           return {
-            id: a.id,
-            name: `${a.first_name} ${a.last_name}`,
+            id:              a.id,
+            name:            `${a.first_name} ${a.last_name}`,
             monthsOverdue,
-            totalPending: monthsOverdue * 50000, // Approximate
-            lastPaymentDate: a.last_payment_date,
+            totalPending:    info.totalPending,
+            lastPaymentDate: info.lastPaidDate,
           };
         })
-        .sort((a, b) => b.monthsOverdue - a.monthsOverdue)
+        .sort((a, b) => b.totalPending - a.totalPending)
         .slice(0, 10);
 
-      // Payment summary by category
-      const categories = ["escuela", "menores", "transicion", "prejuvenil", "juvenil", "mayores"];
-      const paymentSummaryByCategory = categories.map(category => {
-        const categoryAthletes = filteredAthletes.filter(a => a.category === category);
-        const paidCount = categoryAthletes.filter(a => a.payment_status === "active").length;
-        const pendingCount = categoryAthletes.filter(a => a.payment_status === "pending").length;
-        const overdueCount = categoryAthletes.filter(a => a.payment_status === "overdue").length;
-        const total = categoryAthletes.length;
-
-        const monthlyFee = 50000; // Default, could be fetched from settings
-        const totalCollected = paidCount * monthlyFee;
-        const totalPending = (pendingCount + overdueCount) * monthlyFee;
+      // ── Payment summary by category ────────────────────────────────────────
+      const CATEGORIES = ["escuela", "menores", "transicion", "prejuvenil", "juvenil", "mayores"];
+      const paymentSummaryByCategory = CATEGORIES.map(category => {
+        const catAthletes = filteredAthletes.filter(a => a.category === category);
+        const total       = catAthletes.length;
+        const paidCount   = catAthletes.filter(a => paidThisMonthIds.has(a.id)).length;
+        const arrearsIds  = catAthletes.filter(a => withPendingIds.has(a.id));
+        const overdueCount = arrearsIds.filter(a => !paidThisMonthIds.has(a.id)).length;
+        const pendingCount = overdueCount;
         const percentageCollected = total > 0 ? (paidCount / total) * 100 : 0;
-
         return {
-          category: category.charAt(0).toUpperCase() + category.slice(1),
+          category:            category.charAt(0).toUpperCase() + category.slice(1),
           monthlyFee,
           paidCount,
           pendingCount,
           overdueCount,
           percentageCollected,
-          totalCollected,
-          totalPending,
+          totalCollected:      paidCount    * monthlyFee,
+          totalPending:        overdueCount * monthlyFee,
         };
       });
 
@@ -261,7 +281,7 @@ export function useFinancialAnalytics(filters?: FilterState) {
         currentMonthRevenue,
         currentMonthRevenuePrevChange,
         pendingPaymentsAmount,
-        pendingPaymentsPrevChange: 0, // Could be calculated if needed
+        pendingPaymentsPrevChange: 0,
         athletesUpToDateCount,
         athletesUpToDatePercentage,
         athletesInArrearsCount,
@@ -273,7 +293,7 @@ export function useFinancialAnalytics(filters?: FilterState) {
         monthlyRevenueData,
         athleteComplianceData,
         incomeByTypeData,
-        topDelinquentAthletes: delinquentAthletes,
+        topDelinquentAthletes,
         paymentSummaryByCategory,
       };
     },

@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Database } from '@/integrations/supabase/types';
 
 type TransactionType = Database['public']['Enums']['transaction_type'];
-type PaymentStatus = Database['public']['Enums']['payment_status'];
+type PaymentStatus = Database['public']['Enums']['transaction_status'];
 
 export interface DelegatePayment {
   id: string;
@@ -107,7 +107,7 @@ export const useDelegatePayments = (filters?: {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data as unknown as DelegatePayment[];
+      return (data ?? []) as DelegatePayment[];
     },
   });
 };
@@ -147,7 +147,6 @@ export const useCreateDelegatePayment = () => {
         description: 'No se pudo registrar el pago.',
         variant: 'destructive',
       });
-      console.error('Error creating payment:', error);
     },
   });
 };
@@ -182,7 +181,6 @@ export const useUpdateDelegatePayment = () => {
         description: 'No se pudo actualizar el pago.',
         variant: 'destructive',
       });
-      console.error('Error updating payment:', error);
     },
   });
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import {
   Dialog,
   DialogContent,
@@ -50,7 +50,7 @@ const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({
   };
 
   const getInitials = (firstName?: string, lastName?: string) => {
-    return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
+    return `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase();
   };
 
   const getRoleLabel = (role: string) => {

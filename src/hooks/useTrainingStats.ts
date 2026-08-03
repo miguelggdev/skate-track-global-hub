@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile } from './useUserProfile';
 
@@ -48,30 +48,30 @@ export const useTrainingStats = () => {
 
       const { data: activeAthletesData, error: activeAthletesError } = await supabase
         .from('training_attendance')
-        .select('athlete_id, training_sessions!inner(date)')
-        .gte('training_sessions.date', thirtyDaysAgo.toISOString().split('T')[0])
+        .select('athlete_id, training_sessions!inner(scheduled_at)')
+        .gte('training_sessions.scheduled_at', thirtyDaysAgo.toISOString().split('T')[0])
         .eq('attended', true);
 
       if (activeAthletesError) throw activeAthletesError;
 
-      const uniqueActiveAthletes = new Set(activeAthletesData?.map(a => a.athlete_id) || []);
+      const uniqueActiveAthletes = new Set(activeAthletesData?.map(a => a.athlete_id) ?? []);
 
       // Get completion rate
       const { data: attendanceData, error: attendanceError } = await supabase
         .from('training_attendance')
-        .select('attended, training_sessions!inner(date)')
-        .gte('training_sessions.date', thirtyDaysAgo.toISOString().split('T')[0]);
+        .select('attended, training_sessions!inner(scheduled_at)')
+        .gte('training_sessions.scheduled_at', thirtyDaysAgo.toISOString().split('T')[0]);
 
       if (attendanceError) throw attendanceError;
 
-      const totalAttendanceRecords = attendanceData?.length || 0;
-      const attendedRecords = attendanceData?.filter(a => a.attended).length || 0;
+      const totalAttendanceRecords = attendanceData?.length ?? 0;
+      const attendedRecords = attendanceData?.filter(a => a.attended).length ?? 0;
       const completionRate = totalAttendanceRecords > 0 ? (attendedRecords / totalAttendanceRecords) * 100 : 0;
 
       // Get average session time
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('training_sessions')
-        .select('start_time, end_time');
+        .select('duration_minutes');
 
       if (sessionsError) throw sessionsError;
 
@@ -79,10 +79,7 @@ export const useTrainingStats = () => {
       let sessionCount = 0;
 
       sessionsData?.forEach(session => {
-        const start = new Date(`1970-01-01T${session.start_time}`);
-        const end = new Date(`1970-01-01T${session.end_time}`);
-        const duration = (end.getTime() - start.getTime()) / (1000 * 60);
-        totalMinutes += duration;
+        totalMinutes += session.duration_minutes ?? 0;
         sessionCount++;
       });
 
@@ -93,7 +90,7 @@ export const useTrainingStats = () => {
       const { data: activeSessionsData, error: activeSessionsError } = await supabase
         .from('training_sessions')
         .select('id')
-        .gte('date', today);
+        .gte('scheduled_at', today);
 
       if (activeSessionsError) throw activeSessionsError;
 
@@ -104,42 +101,38 @@ export const useTrainingStats = () => {
       const { data: upcomingSessionsData, error: upcomingSessionsError } = await supabase
         .from('training_sessions')
         .select('id')
-        .gte('date', today)
-        .lte('date', nextWeek.toISOString().split('T')[0]);
+        .gte('scheduled_at', today)
+        .lte('scheduled_at', nextWeek.toISOString().split('T')[0]);
 
       if (upcomingSessionsError) throw upcomingSessionsError;
 
       // Get monthly training hours
       const currentMonth = new Date();
       const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-      
+
       const { data: monthlySessionsData, error: monthlySessionsError } = await supabase
         .from('training_sessions')
-        .select('start_time, end_time')
-        .gte('date', firstDayOfMonth.toISOString().split('T')[0])
-        .lte('date', today);
+        .select('duration_minutes')
+        .gte('scheduled_at', firstDayOfMonth.toISOString().split('T')[0])
+        .lte('scheduled_at', today);
 
       if (monthlySessionsError) throw monthlySessionsError;
 
-      let monthlyHours = 0;
-      monthlySessionsData?.forEach(session => {
-        const start = new Date(`1970-01-01T${session.start_time}`);
-        const end = new Date(`1970-01-01T${session.end_time}`);
-        const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-        monthlyHours += duration;
-      });
+      const monthlyHours = (monthlySessionsData ?? []).reduce((sum, session) => {
+        return sum + (session.duration_minutes ?? 0) / 60;
+      }, 0);
 
       // Get training type distribution
       const { data: trainingTypesData, error: trainingTypesError } = await supabase
         .from('training_sessions')
         .select('training_type')
-        .gte('date', thirtyDaysAgo.toISOString().split('T')[0]);
+        .gte('scheduled_at', thirtyDaysAgo.toISOString().split('T')[0]);
 
       if (trainingTypesError) throw trainingTypesError;
 
       const typeDistribution = trainingTypesData?.reduce((acc, session) => {
         const type = session.training_type;
-        acc[type] = (acc[type] || 0) + 1;
+        acc[type] = (acc[type] ?? 0) + 1;
         return acc;
       }, {} as Record<string, number>) || {};
 
@@ -153,17 +146,17 @@ export const useTrainingStats = () => {
       // Get weekly intensity (sessions per week trend)
       const { data: weeklySessionsData, error: weeklySessionsError } = await supabase
         .from('training_sessions')
-        .select('date')
-        .gte('date', thirtyDaysAgo.toISOString().split('T')[0]);
+        .select('scheduled_at')
+        .gte('scheduled_at', thirtyDaysAgo.toISOString().split('T')[0]);
 
       if (weeklySessionsError) throw weeklySessionsError;
 
       const weeksData = weeklySessionsData?.reduce((acc, session) => {
-        const date = new Date(session.date);
+        const date = new Date(session.scheduled_at);
         const weekStart = new Date(date);
         weekStart.setDate(date.getDate() - date.getDay());
         const weekKey = weekStart.toISOString().split('T')[0];
-        acc[weekKey] = (acc[weekKey] || 0) + 1;
+        acc[weekKey] = (acc[weekKey] ?? 0) + 1;
         return acc;
       }, {} as Record<string, number>) || {};
 
@@ -173,49 +166,55 @@ export const useTrainingStats = () => {
       const { data: coachSessionsData, error: coachSessionsError } = await supabase
         .from('training_sessions')
         .select('coach_id')
-        .gte('date', thirtyDaysAgo.toISOString().split('T')[0]);
+        .gte('scheduled_at', thirtyDaysAgo.toISOString().split('T')[0]);
 
       if (coachSessionsError) throw coachSessionsError;
 
       const uniqueCoaches = new Set(coachSessionsData?.map(s => s.coach_id).filter(Boolean));
       const coachUtilization = uniqueCoaches.size;
 
-      // Get attendance trends (last 7 days)
-      const attendanceTrends: Array<{ date: string; attendanceRate: number }> = [];
-      for (let i = 6; i >= 0; i--) {
+      // Get attendance trends (last 7 days) — single query, grouped in JS
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+      const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+
+      const { data: weekAttendance = [] } = await supabase
+        .from('training_attendance')
+        .select('attended, training_sessions!inner(scheduled_at)')
+        .gte('training_sessions.scheduled_at', sevenDaysAgoStr);
+
+      const attendanceTrends = Array.from({ length: 7 }, (_, idx) => {
         const date = new Date();
-        date.setDate(date.getDate() - i);
+        date.setDate(date.getDate() - (6 - idx));
         const dateStr = date.toISOString().split('T')[0];
 
-        const { data: dayAttendance } = await supabase
-          .from('training_attendance')
-          .select('attended, training_sessions!inner(date)')
-          .eq('training_sessions.date', dateStr);
-
-        const totalForDay = dayAttendance?.length || 0;
-        const attendedForDay = dayAttendance?.filter(a => a.attended).length || 0;
-        const rate = totalForDay > 0 ? (attendedForDay / totalForDay) * 100 : 0;
-
-        attendanceTrends.push({
-          date: dateStr,
-          attendanceRate: rate,
+        const dayRecords = weekAttendance.filter(a => {
+          const s = a.training_sessions as { scheduled_at: string } | null;
+          return s?.scheduled_at?.startsWith(dateStr);
         });
-      }
+
+        const total = dayRecords.length;
+        const attended = dayRecords.filter(a => a.attended).length;
+        return {
+          date: dateStr,
+          attendanceRate: total > 0 ? (attended / total) * 100 : 0,
+        };
+      });
 
       // Get peak training times
       const { data: peakTimesData, error: peakTimesError } = await supabase
         .from('training_sessions')
-        .select('start_time, date')
-        .gte('date', thirtyDaysAgo.toISOString().split('T')[0]);
+        .select('scheduled_at')
+        .gte('scheduled_at', thirtyDaysAgo.toISOString().split('T')[0]);
 
       if (peakTimesError) throw peakTimesError;
 
       const peakTimes = peakTimesData?.reduce((acc, session) => {
-        const hour = parseInt(session.start_time.split(':')[0]);
-        const date = new Date(session.date);
-        const day = date.toLocaleDateString('en-US', { weekday: 'long' });
+        const dt = new Date(session.scheduled_at);
+        const hour = dt.getHours();
+        const day = dt.toLocaleDateString('en-US', { weekday: 'long' });
         const key = `${hour}-${day}`;
-        
+
         if (!acc[key]) {
           acc[key] = { hour, day, sessionCount: 0 };
         }
@@ -228,12 +227,12 @@ export const useTrainingStats = () => {
         .slice(0, 10);
 
       return {
-        totalAthletes: athletesData?.length || 0,
+        totalAthletes: athletesData?.length ?? 0,
         activeAthletes: uniqueActiveAthletes.size,
         completionRate: Math.round(completionRate * 10) / 10,
         avgSessionTime: Math.round(avgSessionTime * 10) / 10,
-        activeSessions: activeSessionsData?.length || 0,
-        upcomingSessions: upcomingSessionsData?.length || 0,
+        activeSessions: activeSessionsData?.length ?? 0,
+        upcomingSessions: upcomingSessionsData?.length ?? 0,
         monthlyTrainingHours: Math.round(monthlyHours * 10) / 10,
         weeklyIntensity: Math.round(weeklyIntensity * 10) / 10,
         coachUtilization,

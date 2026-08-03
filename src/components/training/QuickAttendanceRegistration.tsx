@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,28 +36,15 @@ export default function QuickAttendanceRegistration() {
   const { data: athletes = [], isLoading: athletesLoading } = useAthletes();
   const { registerAttendance, isRegistering, canRegisterAttendance } = useAttendanceManagement();
 
-  // Debug logging
-  useEffect(() => {
-    console.log('QuickAttendanceRegistration Debug:', {
-      profile,
-      profileLoading,
-      isAdmin,
-      isCoach,
-      isDelegate,
-      canRegisterAttendance: canRegisterAttendance()
-    });
-  }, [profile, profileLoading, isAdmin, isCoach, isDelegate]);
-
   // Auto-select first upcoming session
   useEffect(() => {
     if (!sessionsLoading && trainingSessions.length > 0 && !selectedSessionId) {
-      const upcomingSessions = trainingSessions.filter(session => 
-        new Date(session.date) >= new Date()
-      ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      const upcomingSessions = trainingSessions.filter(session =>
+        new Date(session.scheduled_at) >= new Date()
+      ).sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
       
       if (upcomingSessions.length > 0) {
         setSelectedSessionId(upcomingSessions[0].id);
-        console.log('Auto-selected first upcoming session:', upcomingSessions[0].name);
       }
     }
   }, [sessionsLoading, trainingSessions, selectedSessionId]);
@@ -89,7 +76,7 @@ export default function QuickAttendanceRegistration() {
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(athlete => 
-        `${athlete.first_name || ''} ${athlete.last_name || ''}`.toLowerCase().includes(searchLower)
+        `${athlete.first_name ?? ''} ${athlete.last_name ?? ''}`.toLowerCase().includes(searchLower)
       );
     }
     
@@ -209,7 +196,7 @@ export default function QuickAttendanceRegistration() {
                   ) : (
                     trainingSessions.map(session => (
                       <SelectItem key={session.id} value={session.id}>
-                        {format(new Date(session.date), 'MMM dd, yyyy')} - {session.name} ({session.start_time})
+                        {format(new Date(session.scheduled_at), 'MMM dd, yyyy HH:mm')} - {session.title}
                       </SelectItem>
                     ))
                   )}
@@ -221,7 +208,10 @@ export default function QuickAttendanceRegistration() {
               <div className="p-4 bg-muted rounded-lg space-y-2">
                 <div className="flex items-center gap-2 text-sm">
                   <Clock className="h-4 w-4" />
-                  <span>{selectedSession.start_time} - {selectedSession.end_time}</span>
+                  <span>
+                    {format(new Date(selectedSession.scheduled_at), 'HH:mm')}
+                    {' '}({selectedSession.duration_minutes ?? 60} min)
+                  </span>
                   <Badge variant="secondary">{selectedSession.training_type}</Badge>
                 </div>
                 {selectedSession.location && (

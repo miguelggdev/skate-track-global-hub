@@ -85,7 +85,7 @@ export const AthleteLetterGenerator: React.FC = () => {
 
       // Letter content
       const athleteFullName = `${selectedAthlete.first_name} ${selectedAthlete.last_name}`;
-      const athleteNumber = (selectedAthlete as any).athlete_number || 'Sin número';
+      const athleteNumber = (selectedAthlete as { athlete_number?: string | null }).athlete_number ?? 'Sin número';
 
       if (letterType === 'freedom') {
         yPosition = template.addText(
@@ -125,7 +125,6 @@ export const AthleteLetterGenerator: React.FC = () => {
           : 'Carta de Paz y Salvo generada exitosamente'
       );
     } catch (error) {
-      console.error('Error generating letter:', error);
       toast.error('Error al generar la carta');
     } finally {
       setGenerating(false);
@@ -156,7 +155,7 @@ export const AthleteLetterGenerator: React.FC = () => {
               {athletes.map((athlete) => (
                 <SelectItem key={athlete.id} value={athlete.id}>
                   {athlete.first_name} {athlete.last_name}
-                  {(athlete as any).athlete_number && ` - #${(athlete as any).athlete_number}`}
+                  {(athlete as AthleteData).athlete_number && ` - #${(athlete as AthleteData).athlete_number}`}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -186,7 +185,7 @@ export const AthleteLetterGenerator: React.FC = () => {
                         )}
                       </span>
                       <Badge variant="default" className="ml-2">
-                        {paymentData.paymentStatus === 'active' ? 'Al día' : paymentData.paymentStatus}
+                        {paymentData.paymentStatus === 'paid' ? 'Al día' : paymentData.paymentStatus}
                       </Badge>
                     </>
                   ) : (

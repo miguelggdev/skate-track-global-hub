@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -25,12 +25,12 @@ interface ClubInfoSettingsProps {
 }
 
 const ClubInfoSettings = ({ clubSettings, onUpdate }: ClubInfoSettingsProps) => {
-  const [logoUrl, setLogoUrl] = React.useState(clubSettings?.club_logo_url || '');
+  const [logoUrl, setLogoUrl] = React.useState(clubSettings?.club_logo_url ?? '');
   const { isAdmin, loading: profileLoading } = useUserProfile();
   const { toast } = useToast();
 
   React.useEffect(() => {
-    setLogoUrl(clubSettings?.club_logo_url || '');
+    setLogoUrl(clubSettings?.club_logo_url ?? '');
   }, [clubSettings?.club_logo_url]);
 
   const handleLogoUpdate = (newLogoUrl: string) => {
@@ -40,34 +40,34 @@ const ClubInfoSettings = ({ clubSettings, onUpdate }: ClubInfoSettingsProps) => 
 
   const form = useForm({
     defaultValues: {
-      club_name: clubSettings?.club_name || '',
-      club_description: clubSettings?.club_description || '',
-      contact_email: clubSettings?.contact_email || '',
-      contact_phone: clubSettings?.contact_phone || '',
-      address: clubSettings?.address || '',
-      website_url: clubSettings?.website_url || '',
-      social_facebook: clubSettings?.social_facebook || '',
-      social_instagram: clubSettings?.social_instagram || '',
-      social_twitter: clubSettings?.social_twitter || '',
+      club_name: clubSettings?.club_name ?? '',
+      club_description: clubSettings?.club_description ?? '',
+      contact_email: clubSettings?.contact_email ?? '',
+      contact_phone: clubSettings?.contact_phone ?? '',
+      address: clubSettings?.address ?? '',
+      website_url: clubSettings?.website_url ?? '',
+      social_facebook: clubSettings?.social_facebook ?? '',
+      social_instagram: clubSettings?.social_instagram ?? '',
+      social_twitter: clubSettings?.social_twitter ?? '',
       timezone: clubSettings?.timezone || 'Europe/Madrid',
       currency: clubSettings?.currency || 'EUR',
       language: clubSettings?.language || 'es',
-      delegate_name: clubSettings?.delegate_name || '',
-      delegate_phone: clubSettings?.delegate_phone || '',
-      delegate_email: clubSettings?.delegate_email || '',
-      president_name: clubSettings?.president_name || '',
-      president_phone: clubSettings?.president_phone || '',
-      president_email: clubSettings?.president_email || '',
-      president_id: clubSettings?.president_id || '',
-      doctor_name: clubSettings?.doctor_name || '',
-      doctor_phone: clubSettings?.doctor_phone || '',
-      physiotherapist_name: clubSettings?.physiotherapist_name || '',
-      physiotherapist_phone: clubSettings?.physiotherapist_phone || '',
-      league: clubSettings?.league || '',
-      country: clubSettings?.country || '',
-      coach_name: clubSettings?.coach_name || '',
-      coach_phone: clubSettings?.coach_phone || '',
-      coach_email: clubSettings?.coach_email || '',
+      delegate_name: clubSettings?.delegate_name ?? '',
+      delegate_phone: clubSettings?.delegate_phone ?? '',
+      delegate_email: clubSettings?.delegate_email ?? '',
+      president_name: clubSettings?.president_name ?? '',
+      president_phone: clubSettings?.president_phone ?? '',
+      president_email: clubSettings?.president_email ?? '',
+      president_id: clubSettings?.president_id ?? '',
+      doctor_name: clubSettings?.doctor_name ?? '',
+      doctor_phone: clubSettings?.doctor_phone ?? '',
+      physiotherapist_name: clubSettings?.physiotherapist_name ?? '',
+      physiotherapist_phone: clubSettings?.physiotherapist_phone ?? '',
+      league: clubSettings?.league ?? '',
+      country: clubSettings?.country ?? '',
+      coach_name: clubSettings?.coach_name ?? '',
+      coach_phone: clubSettings?.coach_phone ?? '',
+      coach_email: clubSettings?.coach_email ?? '',
       report_include_logo: clubSettings?.report_include_logo ?? true,
       report_include_address: clubSettings?.report_include_address ?? true,
       report_include_contact: clubSettings?.report_include_contact ?? true,
@@ -82,34 +82,34 @@ const ClubInfoSettings = ({ clubSettings, onUpdate }: ClubInfoSettingsProps) => 
   React.useEffect(() => {
     if (clubSettings) {
       form.reset({
-        club_name: clubSettings.club_name || '',
-        club_description: clubSettings.club_description || '',
-        contact_email: clubSettings.contact_email || '',
-        contact_phone: clubSettings.contact_phone || '',
-        address: clubSettings.address || '',
-        website_url: clubSettings.website_url || '',
-        social_facebook: clubSettings.social_facebook || '',
-        social_instagram: clubSettings.social_instagram || '',
-        social_twitter: clubSettings.social_twitter || '',
+        club_name: clubSettings.club_name ?? '',
+        club_description: clubSettings.club_description ?? '',
+        contact_email: clubSettings.contact_email ?? '',
+        contact_phone: clubSettings.contact_phone ?? '',
+        address: clubSettings.address ?? '',
+        website_url: clubSettings.website_url ?? '',
+        social_facebook: clubSettings.social_facebook ?? '',
+        social_instagram: clubSettings.social_instagram ?? '',
+        social_twitter: clubSettings.social_twitter ?? '',
         timezone: clubSettings.timezone || 'Europe/Madrid',
         currency: clubSettings.currency || 'EUR',
         language: clubSettings.language || 'es',
-        delegate_name: clubSettings.delegate_name || '',
-        delegate_phone: clubSettings.delegate_phone || '',
-        delegate_email: clubSettings.delegate_email || '',
-        president_name: clubSettings.president_name || '',
-        president_phone: clubSettings.president_phone || '',
-        president_email: clubSettings.president_email || '',
-        president_id: clubSettings.president_id || '',
-        doctor_name: clubSettings.doctor_name || '',
-        doctor_phone: clubSettings.doctor_phone || '',
-        physiotherapist_name: clubSettings.physiotherapist_name || '',
-        physiotherapist_phone: clubSettings.physiotherapist_phone || '',
-        league: clubSettings.league || '',
-        country: clubSettings.country || '',
-        coach_name: clubSettings.coach_name || '',
-        coach_phone: clubSettings.coach_phone || '',
-        coach_email: clubSettings.coach_email || '',
+        delegate_name: clubSettings.delegate_name ?? '',
+        delegate_phone: clubSettings.delegate_phone ?? '',
+        delegate_email: clubSettings.delegate_email ?? '',
+        president_name: clubSettings.president_name ?? '',
+        president_phone: clubSettings.president_phone ?? '',
+        president_email: clubSettings.president_email ?? '',
+        president_id: clubSettings.president_id ?? '',
+        doctor_name: clubSettings.doctor_name ?? '',
+        doctor_phone: clubSettings.doctor_phone ?? '',
+        physiotherapist_name: clubSettings.physiotherapist_name ?? '',
+        physiotherapist_phone: clubSettings.physiotherapist_phone ?? '',
+        league: clubSettings.league ?? '',
+        country: clubSettings.country ?? '',
+        coach_name: clubSettings.coach_name ?? '',
+        coach_phone: clubSettings.coach_phone ?? '',
+        coach_email: clubSettings.coach_email ?? '',
         report_include_logo: clubSettings.report_include_logo ?? true,
         report_include_address: clubSettings.report_include_address ?? true,
         report_include_contact: clubSettings.report_include_contact ?? true,
@@ -148,7 +148,6 @@ const ClubInfoSettings = ({ clubSettings, onUpdate }: ClubInfoSettingsProps) => 
       
       onUpdate();
     } catch (error: any) {
-      console.error('Error updating club settings:', error);
       toast({
         title: "Error",
         description: error.message?.includes('insufficient_privilege') || error.message?.includes('policy') 

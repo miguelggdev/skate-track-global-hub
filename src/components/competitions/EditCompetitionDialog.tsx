@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -42,23 +42,29 @@ export const EditCompetitionDialog: React.FC<EditCompetitionDialogProps> = ({ co
     resolver: zodResolver(competitionSchema),
     defaultValues: {
       name: competition.name,
-      description: competition.description || '',
+      description: competition.description ?? '',
       start_date: competition.start_date,
       end_date: competition.end_date,
       location: competition.location,
-      category: competition.category as any,
-      level: competition.level as any,
+      category: competition.category as CompetitionFormData['category'],
+      level: competition.level as CompetitionFormData['level'],
       status: competition.status,
       max_participants: competition.max_participants || undefined,
       entry_fee: competition.entry_fee || undefined,
       prize_pool: competition.prize_pool || undefined,
-      registration_deadline: competition.registration_deadline || '',
+      registration_deadline: competition.registration_deadline ?? '',
     },
   });
 
   const onSubmit = (data: CompetitionFormData) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { max_participants, entry_fee, prize_pool, ...validData } = data;
     updateCompetition.mutate(
-      { id: competition.id, ...data },
+      {
+        id: competition.id,
+        ...validData,
+        max_athletes_per_event: max_participants ?? null,
+      },
       {
         onSuccess: () => {
           setOpen(false);
@@ -77,7 +83,7 @@ export const EditCompetitionDialog: React.FC<EditCompetitionDialogProps> = ({ co
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Edit Competition</DialogTitle>
+          <DialogTitle>Editar Competencia</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

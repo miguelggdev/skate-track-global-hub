@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+﻿import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useMedalAnalytics } from '@/hooks/useMedalRecording';
 import { Trophy, TrendingUp, Medal, Award } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
@@ -30,7 +30,7 @@ export const MedalsAnalytics = () => {
   // Calculate statistics
   const medalCounts = medals.reduce(
     (acc, medal) => {
-      acc[medal.medal_type as string] = (acc[medal.medal_type as string] || 0) + 1;
+      acc[medal.medal_type as string] = (acc[medal.medal_type as string] ?? 0) + 1;
       acc.total += 1;
       return acc;
     },
@@ -190,7 +190,7 @@ export const MedalsAnalytics = () => {
         <CardContent>
           <div className="space-y-4">
             {topAthletes.map((athlete: any, index: number) => (
-              <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+              <div key={athlete.athlete_id ?? index} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                 <div className="flex items-center gap-3">
                   <div className="text-2xl font-bold text-muted-foreground">#{index + 1}</div>
                   <div>

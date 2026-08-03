@@ -42,44 +42,46 @@ CIERRE DEL DÍA
 ## SPRINT 1 — Fundamentos y Base de Datos (Semanas 1-2)
 **Objetivo:** App conectada al schema limpio, git funcionando, seguridad base
 
-### Día 1 (Hoy — completado en parte)
-| Tarea | Agente | Spec | Status |
-|-------|--------|------|--------|
-| CLAUDE.md + WORK_PLAN.md + estructura specs | AG-CLAUDE-DB | SPEC-001 | ✅ |
-| Schema inicial en Supabase | AG-CLAUDE-DB | — | ✅ 11 tablas |
-| Crear ramas dev + master | Tú | SPEC-001 | ⏳ |
+### Estado actual del Sprint 1 (julio 2026)
 
-### Día 2
-| Tarea | Agente | Spec | Status |
-|-------|--------|------|--------|
-| Regenerar Supabase types en frontend | AG-CLAUDE-FRONTEND | SPEC-002 | ⬜ |
-| Auditar y sanear `profiles.role` del frontend | AG-CLAUDE-FRONTEND | SPEC-002 | ⬜ |
-| Verificar login/signup funcionando | AG-CLAUDE-FRONTEND | SPEC-002 | ⬜ |
+| Spec | Título | Agente | Status |
+|------|--------|--------|--------|
+| SPEC-001 | Git + GitHub setup | AG-CLAUDE-DB | ✅ done |
+| SPEC-002 | Conectar frontend al schema nuevo | AG-CLAUDE-FRONTEND | ✅ done |
+| SPEC-003 | Audit Log + pgvector | AG-CLAUDE-DB | ✅ done |
+| SPEC-004 | Storage buckets y policies | AG-CLAUDE-DB | ✅ done |
+| SPEC-005 | Perfil completo del deportista | AG-CLAUDE-FRONTEND | ✅ done |
+| SPEC-006 | Generación de documentos (PDF/Excel) | AG-CLAUDE-FRONTEND | ✅ done |
+| SPEC-007 | Registro de tiempos y pruebas | AG-CLAUDE-FRONTEND | ✅ done |
+| SPEC-008 | Gestión de equipamiento del club | AG-CLAUDE-FRONTEND | ✅ done |
 
-### Día 3
-| Tarea | Agente | Spec | Status |
-|-------|--------|------|--------|
-| Crear buckets en Supabase Dashboard | Tú (manual) | SPEC-004 | ⬜ |
-| Migración storage policies | AG-CLAUDE-DB | SPEC-004 | ⬜ |
-| Activar pgvector en Supabase Dashboard | Tú (manual) | SPEC-003 | ⬜ |
+### Completados este sprint
+- Schema completo: 40+ tablas, RLS, triggers, migraciones en `supabase/migrations/`
+- Perfil atleta: 9 tabs (básico, personal, contacto, familia, médico, estudios, equipo, deportivo, historial)
+- Módulo tiempos: TimeRecordForm, TimeHistoryChart, ClubRanking, página `/tiempos`
+- Design system: dual-theme dark/light, dashboards animados para todos los roles
+- Seguridad: review de 4 agentes aplicado (MIME validation, UUID paths, CHECK constraints, RLS)
 
-### Día 4
-| Tarea | Agente | Spec | Status |
-|-------|--------|------|--------|
-| Migración audit_log + triggers | AG-CLAUDE-DB | SPEC-003 | ⬜ |
-| Migración knowledge_base + vector index | AG-CLAUDE-DB | SPEC-003 | ⬜ |
-
-### Día 5
-| Tarea | Agente | Spec | Status |
-|-------|--------|------|--------|
-| RLS review completo — todas las tablas | AG-CLAUDE-SECURITY | — | ⬜ |
-| Seed de club_settings (fila inicial) | AG-CLAUDE-DB | — | ⬜ |
-| Commit semanal + push | Tú | — | ⬜ |
+### Pendiente Sprint 1
+1. **SPEC-006** — Cartas de permiso PDF, carnets con QR, planilla Excel competencias
+2. **SPEC-008** — Inventario equipamiento club, asignaciones, mantenimiento
+3. **SPEC-002** — Auditar `profiles.role` vs `user_roles` en hooks del frontend
 
 ---
 
-## SPRINT 2 — Backend Python + Agentes IA (Semanas 3-4)
-**Objetivo:** FastAPI + LangGraph funcionando, AG-01 (Admin) y AG-02 (Coach) MVP
+## SPRINT 2 — Frontend Onboarding + Backend Python + Agentes IA (Semanas 3-4)
+
+### Specs de Onboarding y Features Frontend (completados)
+| Spec | Título | Status |
+|------|--------|--------|
+| SPEC-009 | Registro primer administrador (`/register` + trigger seguro) | ✅ done |
+| SPEC-010 | Wizard de onboarding del club (`/onboarding`, 4 pasos) | ✅ done |
+| SPEC-011 | Guard de onboarding (redirect si club no configurado) | ✅ done |
+| SPEC-012 | Portal de padres — rol `parent`, `parent_athletes`, dashboard | ✅ done |
+
+---
+
+**Objetivo backend:** FastAPI + LangGraph funcionando, AG-01 (Admin) y AG-02 (Coach) MVP
 
 ### Estructura a crear
 ```
@@ -102,19 +104,20 @@ backend/
 ```
 
 ### Días 6-8
-| Tarea | Agente | Status |
-|-------|--------|--------|
-| Setup FastAPI + estructura backend | AG-CLAUDE-BACKEND | ⬜ |
-| Conexión Supabase desde Python | AG-CLAUDE-BACKEND | ⬜ |
-| base_agent.py con RAG + DB access | AG-CLAUDE-BACKEND | ⬜ |
-| admin_agent.py (AG-01) MVP | AG-CLAUDE-BACKEND | ⬜ |
+| Tarea | Agente | Status | SPEC |
+|-------|--------|--------|------|
+| Setup FastAPI + estructura backend | AG-CLAUDE-BACKEND | ✅ done | SPEC-013 |
+| Conexión Supabase desde Python | AG-CLAUDE-BACKEND | ✅ done | SPEC-013 |
+| base_agent.py con DB access | AG-CLAUDE-BACKEND | ✅ done | SPEC-013 |
+| admin_agent.py (AG-01) MVP | AG-CLAUDE-BACKEND | ✅ done | SPEC-013 |
 
 ### Días 9-10
-| Tarea | Agente | Status |
-|-------|--------|--------|
-| skating_agent.py (AG-02) MVP | AG-CLAUDE-BACKEND | ⬜ |
-| Celery + Redis configuración | AG-CLAUDE-BACKEND | ⬜ |
-| WebSocket endpoint para streaming | AG-CLAUDE-BACKEND | ⬜ |
+| Tarea | Agente | Status | SPEC |
+|-------|--------|--------|------|
+| skating_agent.py (AG-02) MVP | AG-CLAUDE-BACKEND | ✅ done | SPEC-013 |
+| Celery + Redis configuración | AG-CLAUDE-BACKEND | ✅ done | SPEC-014 |
+| SSE streaming endpoint | AG-CLAUDE-BACKEND | ✅ done | SPEC-015 |
+| RAG con pgvector (LangGraph) | AG-CLAUDE-BACKEND | ✅ done | SPEC-025 |
 
 ---
 

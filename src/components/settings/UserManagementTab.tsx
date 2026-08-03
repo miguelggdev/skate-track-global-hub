@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,21 +13,9 @@ import UserStatsCards from '@/components/users/UserStatsCards';
 import AddUserDialog from '@/components/users/AddUserDialog';
 import { ManageUserRolesDialog } from '@/components/users/ManageUserRolesDialog';
 import ResetPasswordDialog from '@/components/users/ResetPasswordDialog';
+import { User } from '@/pages/UserManagement';
 
-interface User {
-  id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  phone?: string;
-  date_of_birth?: string;
-  avatar_url?: string;
-  bio?: string;
-  role: 'admin' | 'coach' | 'athlete' | 'delegate' | 'leader' | 'finance';
-  created_at: string;
-  updated_at: string;
-  blocked?: boolean;
-}
+const ROLE_PRIORITY = ['admin', 'leader', 'coach', 'delegate', 'finance', 'athlete'] as const;
 
 const UserManagementTab = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -44,15 +32,25 @@ const UserManagementTab = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const [{ data: profiles, error: profilesError }, { data: roles, error: rolesError }] =
+        await Promise.all([
+          supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+          supabase.from('user_roles').select('user_id, role'),
+        ]);
 
-      if (error) throw error;
-      setUsers(data || []);
-    } catch (error) {
-      console.error('Error fetching users:', error);
+      if (profilesError) throw profilesError;
+      if (rolesError) throw rolesError;
+
+      const roleMap = new Map<string, User['role']>();
+      for (const r of roles ?? []) {
+        const existing = roleMap.get(r.user_id);
+        if (!existing || ROLE_PRIORITY.indexOf(r.role as User['role']) < ROLE_PRIORITY.indexOf(existing)) {
+          roleMap.set(r.user_id, r.role as User['role']);
+        }
+      }
+
+      setUsers((profiles ?? []).map(p => ({ ...p, role: roleMap.get(p.id) ?? 'athlete' } as User)));
+    } catch {
       toast({
         title: "Error",
         description: "No se pudieron cargar los usuarios",
@@ -115,12 +113,10 @@ const UserManagementTab = () => {
       });
 
       if (error) {
-        console.error('Edge function error:', error);
         throw new Error(error.message || 'Error al conectar con el servidor');
       }
 
       if (data?.error) {
-        console.error('Delete user error:', data.error);
         throw new Error(data.error);
       }
       
@@ -130,7 +126,6 @@ const UserManagementTab = () => {
         description: "Usuario eliminado exitosamente",
       });
     } catch (error: any) {
-      console.error('Error deleting user:', error);
       toast({
         title: "Error",
         description: error.message || "No se pudo eliminar el usuario",
@@ -160,7 +155,6 @@ const UserManagementTab = () => {
         description: blocked ? "Usuario desbloqueado exitosamente" : "Usuario bloqueado exitosamente",
       });
     } catch (error) {
-      console.error('Error blocking/unblocking user:', error);
       toast({
         title: "Error",
         description: "No se pudo cambiar el estado del usuario",
@@ -212,12 +206,10 @@ const UserManagementTab = () => {
       });
 
       if (error) {
-        console.error('Edge function error:', error);
         throw new Error(error.message || 'Error al conectar con el servidor');
       }
 
       if (data?.error) {
-        console.error('Password reset error:', data.error);
         throw new Error(data.error);
       }
 
@@ -228,7 +220,6 @@ const UserManagementTab = () => {
 
       setResettingPasswordUser(null);
     } catch (error: any) {
-      console.error('Error resetting password:', error);
       toast({
         title: "Error",
         description: error.message || "No se pudo actualizar la contraseña",
@@ -347,7 +338,7 @@ const UserManagementTab = () => {
         open={resettingPasswordUser !== null}
         onOpenChange={(open) => !open && setResettingPasswordUser(null)}
         onConfirm={handlePasswordResetConfirm}
-        userEmail={resettingPasswordUser?.email || ''}
+        userEmail={resettingPasswordUser?.email ?? ''}
       />
     </div>
   );

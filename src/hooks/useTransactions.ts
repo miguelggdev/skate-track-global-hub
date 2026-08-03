@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
@@ -19,10 +19,6 @@ export const useTransactions = () => {
             first_name,
             last_name,
             email
-          ),
-          teams:team_id (
-            id,
-            name
           )
         `)
         .order('transaction_date', { ascending: false });
@@ -162,49 +158,6 @@ export const useDeleteTransaction = () => {
 
       if (deleteError) throw new Error(deleteError.message);
 
-      // If it was a paid mensualidad, recalculate athlete payment status
-      if (transaction.transaction_type === 'mensualidad' && transaction.payment_status === 'paid') {
-        // Find the most recent payment for this athlete
-        const { data: recentPayment } = await supabase
-          .from('financial_transactions')
-          .select('transaction_date, payment_status')
-          .eq('athlete_id', transaction.athlete_id)
-          .eq('transaction_type', 'mensualidad')
-          .eq('payment_status', 'paid')
-          .order('transaction_date', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        // Update athlete status
-        if (recentPayment) {
-          const paymentMonth = new Date(recentPayment.transaction_date);
-          const currentMonth = new Date();
-          currentMonth.setDate(1);
-          currentMonth.setHours(0, 0, 0, 0);
-
-          await supabase
-            .from('athletes')
-            .update({
-              payment_status: paymentMonth >= currentMonth ? 'active' : 'overdue',
-              last_payment_month: new Date(paymentMonth.getFullYear(), paymentMonth.getMonth(), 1).toISOString().split('T')[0],
-              last_payment_date: recentPayment.transaction_date,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', transaction.athlete_id);
-        } else {
-          // No other payments, set to pending
-          await supabase
-            .from('athletes')
-            .update({
-              payment_status: 'pending',
-              last_payment_month: null,
-              last_payment_date: null,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', transaction.athlete_id);
-        }
-      }
-
       return { deletedId: transactionId };
     },
     onSuccess: (data) => {
@@ -250,10 +203,6 @@ export const usePaginatedTransactions = (
             first_name,
             last_name,
             email
-          ),
-          teams:team_id (
-            id,
-            name
           )
         `, { count: 'exact' });
 
@@ -295,9 +244,9 @@ export const usePaginatedTransactions = (
       }
 
       return {
-        data: data || [],
-        count: count || 0,
-        totalPages: Math.ceil((count || 0) / pageSize),
+        data: data ?? [],
+        count: count ?? 0,
+        totalPages: Math.ceil((count ?? 0) / pageSize),
       };
     },
   });

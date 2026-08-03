@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -57,14 +57,14 @@ export const EditBodyRecordDialog: React.FC<EditBodyRecordDialogProps> = ({
   useEffect(() => {
     if (record) {
       setFormData({
-        weight: record.weight?.toString() || '',
-        height: record.height?.toString() || '',
-        size: record.size || '',
-        blood_type: record.blood_type || '',
-        allergies: record.allergies || '',
-        surgeries: record.surgeries || '',
-        injuries: record.injuries || '',
-        limitations: record.limitations || '',
+        weight: record.weight?.toString() ?? '',
+        height: record.height?.toString() ?? '',
+        size: record.size ?? '',
+        blood_type: record.blood_type ?? '',
+        allergies: record.allergies ?? '',
+        surgeries: record.surgeries ?? '',
+        injuries: record.injuries ?? '',
+        limitations: record.limitations ?? '',
       });
     }
   }, [record]);
@@ -104,7 +104,6 @@ export const EditBodyRecordDialog: React.FC<EditBodyRecordDialogProps> = ({
       onSave();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error updating record:', error);
       toast({
         title: "Error",
         description: "No se pudo actualizar el registro. Inténtalo de nuevo.",

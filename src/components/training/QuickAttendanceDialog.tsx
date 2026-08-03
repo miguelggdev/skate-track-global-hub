@@ -96,16 +96,22 @@ export default function QuickAttendanceDialog({ children }: QuickAttendanceDialo
     try {
       const endTime = computeEndTime();
 
+      const [startH, startM] = startTime.split(':').map(Number);
+      const durH = parseInt(durationHours || '0', 10);
+      const durM = parseInt(durationMinutes || '0', 10);
+      const totalDurationMinutes = durH * 60 + durM || 60;
+      const scheduledAt = `${todaysStr}T${startTime}:00`;
+      const label = workoutOptions.find(o => o.value === trainingType)?.label ?? trainingType;
+
       // Create training session
       const { data: session, error: sessionError } = await supabase
         .from('training_sessions')
         .insert({
-          name: `${workoutOptions.find(o => o.value === trainingType)?.label} Training`,
-          date: todaysStr,
-          start_time: startTime,
-          end_time: endTime,
-          training_type: trainingType as any,
-          description: `${workoutOptions.find(o => o.value === trainingType)?.label} Training`,
+          title: `${label} Training`,
+          scheduled_at: scheduledAt,
+          duration_minutes: totalDurationMinutes,
+          training_type: trainingType as 'gym' | 'road_skating' | 'track_skating' | 'bicycle' | 'static_bicycle' | 'technical' | 'physical' | 'mental' | 'recovery' | 'simulator',
+          description: `${label} Training`,
         })
         .select()
         .single();
@@ -125,7 +131,6 @@ export default function QuickAttendanceDialog({ children }: QuickAttendanceDialo
       setOpen(false);
       setSelected({});
     } catch (e: any) {
-      console.error('Error creating training session:', e);
       toast({ title: 'Error', description: 'Could not create training session: ' + (e.message || 'Unknown error'), variant: 'destructive' });
     }
   };

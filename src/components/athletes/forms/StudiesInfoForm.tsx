@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,16 +42,15 @@ export const StudiesInfoForm: React.FC<StudiesInfoFormProps> = ({ athleteId, onS
 
       if (data) {
         setFormData({
-          education_level: data.education_level || '',
-          current_grade: data.current_grade || '',
-          school_name: data.school_name || '',
-          school_address: data.school_address || '',
-          school_phone: data.school_phone || '',
-          school_email: data.school_email || '',
+          education_level: data.education_level ?? '',
+          current_grade: data.current_grade ?? '',
+          school_name: data.school_name ?? '',
+          school_address: data.school_address ?? '',
+          school_phone: data.school_phone ?? '',
+          school_email: data.school_email ?? '',
         });
       }
     } catch (error) {
-      console.error('Error fetching studies data:', error);
     }
   };
 
@@ -95,7 +94,6 @@ export const StudiesInfoForm: React.FC<StudiesInfoFormProps> = ({ athleteId, onS
 
       if (onSave) onSave();
     } catch (error) {
-      console.error('Error saving studies data:', error);
       toast({
         title: "Error",
         description: "No se pudo guardar la información académica. Inténtalo de nuevo.",

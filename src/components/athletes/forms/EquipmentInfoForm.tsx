@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,17 +43,16 @@ export const EquipmentInfoForm: React.FC<EquipmentInfoFormProps> = ({ athleteId,
 
       if (data) {
         setFormData({
-          boot_brand: data.boot_brand || '',
-          boot_size: data.boot_size?.toString() || '',
-          frame_brand: data.frame_brand || '',
-          frame_size: data.frame_size || '',
-          track_wheels_brand: data.track_wheels_brand || '',
-          wheel_diameter: data.wheel_diameter?.toString() || '',
-          helmet_brand: data.helmet_brand || '',
+          boot_brand: data.boot_brand ?? '',
+          boot_size: data.boot_size?.toString() ?? '',
+          frame_brand: data.frame_brand ?? '',
+          frame_size: data.frame_size ?? '',
+          track_wheels_brand: data.track_wheels_brand ?? '',
+          wheel_diameter: data.wheel_diameter?.toString() ?? '',
+          helmet_brand: data.helmet_brand ?? '',
         });
       }
     } catch (error) {
-      console.error('Error fetching equipment data:', error);
     }
   };
 
@@ -103,7 +102,6 @@ export const EquipmentInfoForm: React.FC<EquipmentInfoFormProps> = ({ athleteId,
 
       if (onSave) onSave();
     } catch (error) {
-      console.error('Error saving equipment data:', error);
       toast({
         title: "Error",
         description: "No se pudo guardar la información de equipo. Inténtalo de nuevo.",

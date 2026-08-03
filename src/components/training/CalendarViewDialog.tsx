@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,13 +18,12 @@ import { useToast } from '@/hooks/use-toast';
 
 interface TrainingSession {
   id: string;
-  name: string;
+  title: string;
   description?: string;
-  date: string;
-  start_time: string;
-  end_time: string;
+  scheduled_at: string;
+  duration_minutes?: number;
   location?: string;
-  max_participants?: number;
+  max_athletes?: number;
   training_type: 'technical' | 'physical' | 'mental' | 'recovery' | 'gym' | 'road_skating' | 'track_skating' | 'bicycle' | 'static_bicycle' | 'simulator';
   coach_id: string;
   created_at: string;
@@ -58,15 +57,13 @@ const CalendarViewDialog: React.FC<CalendarViewDialogProps> = ({ open, onOpenCha
       const { data, error } = await supabase
         .from('training_sessions')
         .select('*')
-        .gte('date', format(startDate, 'yyyy-MM-dd'))
-        .lte('date', format(endDate, 'yyyy-MM-dd'))
-        .order('date', { ascending: true })
-        .order('start_time', { ascending: true });
+        .gte('scheduled_at', format(startDate, 'yyyy-MM-dd'))
+        .lte('scheduled_at', format(endDate, 'yyyy-MM-dd') + 'T23:59:59')
+        .order('scheduled_at', { ascending: true });
 
       if (error) throw error;
-      setSessions(data || []);
+      setSessions(data ?? []);
     } catch (error) {
-      console.error('Error loading sessions:', error);
       toast({
         title: "Error",
         description: "No se pudieron cargar las sesiones de entrenamiento",
@@ -140,7 +137,7 @@ const CalendarViewDialog: React.FC<CalendarViewDialogProps> = ({ open, onOpenCha
 
   const getSessionsForDate = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    return sessions.filter(session => session.date === dateStr);
+    return sessions.filter(session => session.scheduled_at.startsWith(dateStr));
   };
 
   const isCurrentMonth = (date: Date) => {
@@ -244,9 +241,9 @@ const CalendarViewDialog: React.FC<CalendarViewDialogProps> = ({ open, onOpenCha
                                   px-1 py-0.5 rounded text-xs text-white truncate
                                   ${getTrainingTypeColor(session.training_type)}
                                 `}
-                                title={`${session.name} - ${session.start_time}`}
+                                title={`${session.title} - ${new Date(session.scheduled_at).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}`}
                               >
-                                {session.start_time} {session.name}
+                                {new Date(session.scheduled_at).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })} {session.title}
                               </div>
                             ))}
                             {daySessions.length > 2 && (

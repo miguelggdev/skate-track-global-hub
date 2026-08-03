@@ -34,7 +34,6 @@ export const LanguageSelector: React.FC = () => {
         description: t('message.language_updated'),
       });
     } catch (error) {
-      console.error('Error applying language:', error);
       toast({
         title: t('common.error'),
         description: t('message.error_occurred'),

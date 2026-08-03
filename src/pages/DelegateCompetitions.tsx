@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,8 +36,8 @@ const DelegateCompetitions = () => {
   const [selectedCompetition, setSelectedCompetition] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('upcoming');
 
-  const upcomingCompetitions = competitions?.filter(c => c.status === 'upcoming' || c.status === 'ongoing') || [];
-  const pastCompetitions = competitions?.filter(c => c.status === 'completed') || [];
+  const upcomingCompetitions = competitions?.filter(c => c.status === 'upcoming' || c.status === 'ongoing') ?? [];
+  const pastCompetitions = competitions?.filter(c => c.status === 'completed') ?? [];
 
   const handleEdit = (competition: any) => {
     setSelectedCompetition(competition);
@@ -124,7 +124,7 @@ const DelegateCompetitions = () => {
               <CardTitle className="text-sm font-medium">Total Competencias</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{competitions?.length || 0}</div>
+              <div className="text-2xl font-bold">{competitions?.length ?? 0}</div>
             </CardContent>
           </Card>
           <Card>
@@ -149,7 +149,7 @@ const DelegateCompetitions = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                {competitions?.filter(c => c.status === 'ongoing').length || 0}
+                {competitions?.filter(c => c.status === 'ongoing').length ?? 0}
               </div>
             </CardContent>
           </Card>

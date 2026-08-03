@@ -35,10 +35,7 @@ export const useClubSettings = () => {
         .limit(1)
         .maybeSingle();
       
-      if (error) {
-        console.error('Error fetching club settings:', error);
-        throw error;
-      }
+      if (error) throw error;
       
       return data;
     },

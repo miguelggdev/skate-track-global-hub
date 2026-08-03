@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import UserManagementHeader from '@/components/users/UserManagementHeader';
@@ -19,7 +20,7 @@ export interface User {
   date_of_birth?: string;
   avatar_url?: string;
   bio?: string;
-  role: 'admin' | 'coach' | 'athlete' | 'delegate' | 'leader' | 'finance';
+  role: 'admin' | 'coach' | 'athlete' | 'delegate' | 'leader' | 'finance' | 'parent';
   created_at: string;
   updated_at: string;
   blocked?: boolean;
@@ -27,56 +28,54 @@ export interface User {
   id_number?: string;
 }
 
+const ROLE_PRIORITY = ['admin', 'leader', 'coach', 'delegate', 'finance', 'athlete', 'parent'] as const;
+
 const UserManagement = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [managingRoleUserId, setManagingRoleUserId] = useState<string | null>(null);
   const [resettingPasswordUser, setResettingPasswordUser] = useState<User | null>(null);
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
   const { isAdmin } = useUserProfile();
+  const queryClient = useQueryClient();
 
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+  const { data: users = [], isLoading: loading } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const [{ data: profiles, error: profilesError }, { data: roles, error: rolesError }] =
+        await Promise.all([
+          supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+          supabase.from('user_roles').select('user_id, role'),
+        ]);
 
-      if (error) throw error;
-      setUsers(data || []);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los usuarios",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      if (profilesError) throw profilesError;
+      if (rolesError) throw rolesError;
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+      const roleMap = new Map<string, User['role']>();
+      for (const r of roles ?? []) {
+        const existing = roleMap.get(r.user_id);
+        if (!existing || ROLE_PRIORITY.indexOf(r.role as User['role']) < ROLE_PRIORITY.indexOf(existing)) {
+          roleMap.set(r.user_id, r.role as User['role']);
+        }
+      }
+
+      return (profiles ?? []).map<User>((p) => ({
+        ...p,
+        role: roleMap.get(p.id) ?? 'athlete',
+      }));
+    },
+  });
+
+  const refreshUsers = () => queryClient.invalidateQueries({ queryKey: ['users'] });
 
   const handleUserAdded = () => {
-    fetchUsers();
-    toast({
-      title: "Éxito",
-      description: "Usuario creado exitosamente",
-    });
+    refreshUsers();
+    toast({ title: "Éxito", description: "Usuario creado exitosamente" });
   };
 
   const handleUserUpdated = () => {
-    fetchUsers();
-    toast({
-      title: "Éxito",
-      description: "Usuario actualizado exitosamente",
-    });
+    refreshUsers();
+    toast({ title: "Éxito", description: "Usuario actualizado exitosamente" });
   };
 
   const handleUserDeleted = async (userId: string) => {
@@ -111,22 +110,19 @@ const UserManagement = () => {
       });
 
       if (error) {
-        console.error('Edge function error:', error);
-        throw new Error(error.message || 'Error al conectar con el servidor');
+                throw new Error(error.message || 'Error al conectar con el servidor');
       }
 
       if (data?.error) {
-        console.error('Delete user error:', data.error);
-        throw new Error(data.error);
+                throw new Error(data.error);
       }
       
-      fetchUsers();
+      refreshUsers();
       toast({
         title: "Éxito",
         description: "Usuario eliminado exitosamente",
       });
     } catch (error: any) {
-      console.error('Error deleting user:', error);
       toast({
         title: "Error",
         description: error.message || "No se pudo eliminar el usuario",
@@ -150,13 +146,12 @@ const UserManagement = () => {
         if (error) throw error;
       }
       
-      fetchUsers();
+      refreshUsers();
       toast({
         title: "Éxito",
         description: blocked ? "Usuario desbloqueado exitosamente" : "Usuario bloqueado exitosamente",
       });
     } catch (error) {
-      console.error('Error blocking/unblocking user:', error);
       toast({
         title: "Error",
         description: "No se pudo cambiar el estado del usuario",
@@ -208,12 +203,10 @@ const UserManagement = () => {
       });
 
       if (error) {
-        console.error('Edge function error:', error);
-        throw new Error(error.message || 'Error al conectar con el servidor');
+                throw new Error(error.message || 'Error al conectar con el servidor');
       }
 
       if (data?.error) {
-        console.error('Password reset error:', data.error);
         throw new Error(data.error);
       }
 
@@ -224,7 +217,6 @@ const UserManagement = () => {
 
       setResettingPasswordUser(null);
     } catch (error: any) {
-      console.error('Error resetting password:', error);
       toast({
         title: "Error",
         description: error.message || "No se pudo actualizar la contraseña",
@@ -283,7 +275,7 @@ const UserManagement = () => {
             user={managingUser}
             open={managingRoleUserId !== null}
             onOpenChange={(open) => !open && setManagingRoleUserId(null)}
-            onRoleChanged={fetchUsers}
+            onRoleChanged={refreshUsers}
             currentUserId={currentUser?.id}
           />
 
@@ -291,7 +283,7 @@ const UserManagement = () => {
             open={resettingPasswordUser !== null}
             onOpenChange={(open) => !open && setResettingPasswordUser(null)}
             onConfirm={handlePasswordResetConfirm}
-            userEmail={resettingPasswordUser?.email || ''}
+            userEmail={resettingPasswordUser?.email ?? ''}
           />
         </div>
       </div>

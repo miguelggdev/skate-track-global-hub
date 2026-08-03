@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -51,7 +51,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MoreHorizontal, Eye, Edit, Trash2, User, Phone, Mail, Calendar, Trophy, Activity, CreditCard } from 'lucide-react';
+import { MoreHorizontal, Eye, Edit, Trash2, User, Phone, Mail, Calendar, Trophy, Activity, CreditCard, Share2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Athlete } from '@/hooks/useAthletes';
 import { EditAthleteDialog } from './EditAthleteDialog';
@@ -92,7 +92,7 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
   };
 
   const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
+    return `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase();
   };
 
   const getStatusColor = (status: string) => {
@@ -166,7 +166,6 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
       setDeleteOpen(false);
       onActionCompleted?.();
     } catch (error: any) {
-      console.error('Error deleting athlete:', error);
       toast({
         title: "Error",
         description: error.message || 'No se pudo eliminar el atleta.',
@@ -222,7 +221,7 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${athlete.first_name} ${athlete.last_name}`} />
                         <AvatarFallback>
-                          {getInitials(athlete.first_name || '', athlete.last_name || '')}
+                          {getInitials(athlete.first_name ?? '', athlete.last_name ?? '')}
                         </AvatarFallback>
                       </Avatar>
                       <div>
@@ -271,6 +270,17 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
                         <DropdownMenuItem onClick={() => openCard(athlete)}>
                           <CreditCard className="mr-2 h-4 w-4" />
                           Ver carnet
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            const url = `${window.location.origin}/publico/atleta/${athlete.id}`;
+                            navigator.clipboard.writeText(url).then(() => {
+                              toast({ title: 'Enlace copiado', description: 'Comparte este link con los padres del atleta' });
+                            });
+                          }}
+                        >
+                          <Share2 className="mr-2 h-4 w-4" />
+                          Compartir con padres
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openEdit(athlete)}>
                           <Edit className="mr-2 h-4 w-4" />

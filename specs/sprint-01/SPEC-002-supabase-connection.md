@@ -1,5 +1,5 @@
 # SPEC-002 — Conectar App al Schema Nuevo
-**Status:** `draft`  
+**Status:** `done`  
 **Agente:** AG-CLAUDE-FRONTEND  
 **Sprint:** 01  
 **Prioridad:** CRÍTICA  
@@ -10,12 +10,20 @@
 El schema fue reiniciado con 11 tablas limpias. El frontend todavía puede tener referencias a columnas o tablas que ya no existen (ej: `profiles.role`). Hay que sanear las queries y types.
 
 ## Acceptance Criteria
-- [ ] `npm run build` sin errores TypeScript
-- [ ] Login/signup funciona (handle_new_user crea profile + user_role)
-- [ ] `src/integrations/supabase/types.ts` regenerado con el nuevo schema
-- [ ] Cualquier referencia a `profiles.role` eliminada del frontend
-- [ ] Cualquier referencia a `app_role` eliminada del frontend
-- [ ] `useAuth` hook devuelve el rol desde `user_roles` (no desde `profiles.role`)
+- [x] `npm run build` sin errores TypeScript
+- [x] Login/signup funciona (handle_new_user crea profile + user_role)
+- [x] `src/integrations/supabase/types.ts` regenerado con el nuevo schema
+- [x] Cualquier referencia a `profiles.role` eliminada del frontend
+- [x] Cualquier referencia a `app_role` eliminada del frontend
+- [x] `useAuth` hook devuelve el rol desde `user_roles` (no desde `profiles.role`)
+
+## Resultado Auditoría (jul 2026)
+- `useUserProfile` ya leía de `user_roles` correctamente — nunca tocó `profiles.role`
+- `profiles` DB no tiene columna `role` confirmado por types regenerados
+- Cero referencias a `app_role` en todo el frontend
+- `useAuth` solo maneja auth (user/session) — roles delegados a `useUserProfile`
+- Trigger `on_auth_user_created` → `handle_new_user` existe y crea profile + user_role en signup
+- `UserManagement` y `UserManagementTab` hacen join correcto profiles + user_roles
 
 ## Cambios de Frontend
 - Regenerar types de Supabase: `npx supabase gen types typescript --project-id [ID] > src/integrations/supabase/types.ts`

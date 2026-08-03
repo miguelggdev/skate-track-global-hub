@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,19 +31,20 @@ const DelegateTraining = () => {
   const { data: athletes } = useDelegateAthletes();
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
 
-  const todaySessions = sessions?.filter(s => isToday(parseISO(s.date))) || [];
-  const upcomingSessions = sessions?.filter(s => isFuture(parseISO(s.date))) || [];
-  const pastSessions = sessions?.filter(s => isPast(parseISO(s.date)) && !isToday(parseISO(s.date))).slice(0, 10) || [];
+  const todaySessions = sessions?.filter(s => isToday(new Date(s.scheduled_at))) ?? [];
+  const upcomingSessions = sessions?.filter(s => isFuture(new Date(s.scheduled_at))) ?? [];
+  const pastSessions = sessions?.filter(s => isPast(new Date(s.scheduled_at)) && !isToday(new Date(s.scheduled_at))).slice(0, 10) ?? [];
 
   const SessionCard = ({ session }: { session: any }) => (
     <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedSession(session.id)}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-lg">{session.name}</CardTitle>
+            <CardTitle className="text-lg">{session.title}</CardTitle>
             <CardDescription className="flex items-center gap-2 mt-1">
               <Clock className="h-3 w-3" />
-              {session.start_time?.slice(0, 5)} - {session.end_time?.slice(0, 5)}
+              {new Date(session.scheduled_at).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
+              {session.duration_minutes ? ` — ${session.duration_minutes} min` : ''}
             </CardDescription>
           </div>
           <Badge variant="outline">
@@ -53,7 +54,7 @@ const DelegateTraining = () => {
       </CardHeader>
       <CardContent>
         <div className="text-sm text-muted-foreground space-y-1">
-          <p><Calendar className="inline h-3 w-3 mr-1" /> {format(parseISO(session.date), 'EEEE, d MMMM', { locale: es })}</p>
+          <p><Calendar className="inline h-3 w-3 mr-1" /> {format(new Date(session.scheduled_at), 'EEEE, d MMMM', { locale: es })}</p>
           {session.location && <p>📍 {session.location}</p>}
         </div>
       </CardContent>
@@ -101,7 +102,7 @@ const DelegateTraining = () => {
               <CardTitle className="text-sm font-medium">Total Atletas</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{athletes?.length || 0}</div>
+              <div className="text-2xl font-bold">{athletes?.length ?? 0}</div>
               <p className="text-sm text-muted-foreground">atletas activos</p>
             </CardContent>
           </Card>
@@ -110,7 +111,7 @@ const DelegateTraining = () => {
               <CardTitle className="text-sm font-medium">Total Sesiones</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{sessions?.length || 0}</div>
+              <div className="text-2xl font-bold">{sessions?.length ?? 0}</div>
               <p className="text-sm text-muted-foreground">sesiones registradas</p>
             </CardContent>
           </Card>
@@ -190,16 +191,17 @@ const DelegateTraining = () => {
                       {pastSessions.map(session => (
                         <TableRow key={session.id}>
                           <TableCell>
-                            {format(parseISO(session.date), 'd MMM yyyy', { locale: es })}
+                            {format(new Date(session.scheduled_at), 'd MMM yyyy', { locale: es })}
                           </TableCell>
-                          <TableCell className="font-medium">{session.name}</TableCell>
+                          <TableCell className="font-medium">{session.title}</TableCell>
                           <TableCell>
                             <Badge variant="outline">
                               {trainingTypeLabels[session.training_type] || session.training_type}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            {session.start_time?.slice(0, 5)} - {session.end_time?.slice(0, 5)}
+                            {new Date(session.scheduled_at).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
+                            {session.duration_minutes ? ` — ${session.duration_minutes} min` : ''}
                           </TableCell>
                           <TableCell className="text-muted-foreground">
                             {session.location || '-'}

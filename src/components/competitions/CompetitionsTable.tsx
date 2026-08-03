@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,7 +24,6 @@ const CompetitionsTable = () => {
       await deleteCompetition.mutateAsync(competitionId);
       setDeletingCompetition(null);
     } catch (error) {
-      console.error('Error deleting competition:', error);
     }
   };
 
@@ -131,7 +130,7 @@ const CompetitionsTable = () => {
                       )}
                     </td>
                     <td className="py-3 px-4 text-gray-600">
-                      {registrationCounts[competition.id] || 0}
+                      {registrationCounts[competition.id] ?? 0}
                     </td>
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(competition.status)}`}>

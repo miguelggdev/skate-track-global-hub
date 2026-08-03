@@ -1,0 +1,17 @@
+from pydantic_settings import BaseSettings
+
+
+class Settings(BaseSettings):
+    anthropic_api_key: str
+    supabase_url: str
+    supabase_service_key: str
+    supabase_jwt_secret: str
+    openai_api_key: str = ""
+    frontend_url: str = "http://localhost:5173"
+    environment: str = "development"
+    redis_url: str = "redis://localhost:6379/0"
+
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+
+
+settings = Settings()

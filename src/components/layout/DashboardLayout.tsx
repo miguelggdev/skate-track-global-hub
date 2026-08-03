@@ -1,13 +1,20 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu, Home, Users, Calendar, Trophy, DollarSign, Settings, Cog, LogOut } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import {
+  Home, Users, Calendar, Trophy, DollarSign, Settings, Cog, LogOut, Timer, FileText, Package, ClipboardList, MessageSquare, HeartPulse, Bot,
+} from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useTranslation } from '@/hooks/useTranslation';
 import TopNavigation from './TopNavigation';
+import { BottomNav } from './BottomNav';
+import { CommandPalette } from '@/components/ui/CommandPalette';
+import { cn } from '@/lib/utils';
+import { useUnreadMessageCount } from '@/hooks/useMessages';
+import { RagChatWidget } from '@/components/agents/RagChatWidget';
+import { AgentChatWidget } from '@/components/agents/AgentChatWidget';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -15,144 +22,129 @@ interface DashboardLayoutProps {
   userRole?: string;
 }
 
+const SpeedSkateLogoMark = () => (
+  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-orange-700 flex items-center justify-center shadow-lg shadow-orange-500/30 flex-shrink-0">
+    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white" xmlns="http://www.w3.org/2000/svg">
+      <path d="M13.5 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM5 9l4-3 3 2 4-3 3 2-1 2-3-1.5-4 3-3-2-2 1.5L5 9Zm-1 5 2-1 12 5-1 2-13-6Z"/>
+    </svg>
+  </div>
+);
+
 const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayoutProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { signOut, user } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile();
   const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const [cmdOpen, setCmdOpen] = React.useState(false);
+  const { data: unreadCount = 0 } = useUnreadMessageCount();
 
-  console.log('DashboardLayout: Rendering with profile:', {
-    profile,
-    profileLoading,
-    userEmail: user?.email
-  });
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setCmdOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleLogout = async () => {
     await signOut();
-    toast({
-      title: t('menu.logout'),
-      description: t('message.saved_successfully'),
-    });
+    toast({ title: t('menu.logout'), description: t('message.saved_successfully') });
     navigate('/login');
   };
 
-  // Base navigation items - paths will be overridden for athlete role
   const getNavigationItems = (role?: string) => {
-    // Athlete-specific paths
     if (role === 'athlete') {
       return [
-        { title: t('menu.dashboard'), icon: Home, path: "/athlete-dashboard" },
-        { title: t('menu.training'), icon: Calendar, path: "/athlete/training" },
-        { title: t('menu.competitions'), icon: Trophy, path: "/athlete/competitions" },
-        { title: t('menu.settings'), icon: Settings, path: "/settings" },
+        { title: t('menu.dashboard'), icon: Home, path: '/athlete-dashboard' },
+        { title: t('menu.training'), icon: Calendar, path: '/athlete/training' },
+        { title: t('menu.competitions'), icon: Trophy, path: '/athlete/competitions' },
+        { title: t('menu.messages'), icon: MessageSquare, path: '/mensajes' },
+        { title: t('menu.settings'), icon: Settings, path: '/settings' },
       ];
     }
-    
-    // All other roles use standard paths
+    if (role === 'parent') {
+      return [
+        { title: t('menu.dashboard'), icon: Home, path: '/parent-dashboard' },
+        { title: t('menu.competitions'), icon: Trophy, path: '/competitions' },
+        { title: t('menu.messages'), icon: MessageSquare, path: '/mensajes' },
+        { title: t('menu.settings'), icon: Settings, path: '/settings' },
+      ];
+    }
     return [
-      { title: t('menu.dashboard'), icon: Home, path: "/" },
-      { title: t('menu.athletes'), icon: Users, path: "/athletes" },
-      { title: t('menu.training'), icon: Calendar, path: "/training" },
-      { title: t('menu.competitions'), icon: Trophy, path: "/competitions" },
-      { title: t('menu.finance'), icon: DollarSign, path: "/finance" },
-      { title: t('menu.club_config'), icon: Cog, path: "/club-config" },
-      { title: t('menu.settings'), icon: Settings, path: "/settings" },
+      { title: t('menu.dashboard'), icon: Home, path: '/' },
+      { title: t('menu.athletes'), icon: Users, path: '/athletes' },
+      { title: t('menu.training'), icon: Calendar, path: '/training' },
+      { title: t('menu.times'), icon: Timer, path: '/tiempos' },
+      { title: t('menu.documents'), icon: FileText, path: '/documentos' },
+      { title: t('menu.equipment'), icon: Package, path: '/equipamiento' },
+      { title: t('menu.evaluations'), icon: ClipboardList, path: '/evaluaciones' },
+      { title: t('menu.messages'), icon: MessageSquare, path: '/mensajes' },
+      { title: t('menu.medical'), icon: HeartPulse, path: '/medico' },
+      { title: t('menu.competitions'), icon: Trophy, path: '/competitions' },
+      { title: t('menu.finance'), icon: DollarSign, path: '/finance' },
+      { title: t('menu.club_config'), icon: Cog, path: '/club-config' },
+      { title: t('menu.agents'), icon: Bot, path: '/chat' },
+      { title: t('menu.settings'), icon: Settings, path: '/settings' },
     ];
   };
 
-  // Map role to dashboard path and role label
   const getDashboardPath = (role?: string) => {
-    switch (role) {
-      case 'admin':
-        return '/admin-dashboard';
-      case 'coach':
-        return '/coach-dashboard';
-      case 'athlete':
-        return '/athlete-dashboard';
-      case 'delegate':
-        return '/delegate-dashboard';
-      case 'leader':
-        return '/leader-dashboard';
-      case 'finance':
-        return '/finance-dashboard';
-      default:
-        return '/';
-    }
+    const paths: Record<string, string> = {
+      admin: '/admin-dashboard',
+      coach: '/coach-dashboard',
+      athlete: '/athlete-dashboard',
+      delegate: '/delegate-dashboard',
+      leader: '/leader-dashboard',
+      finance: '/finance-dashboard',
+      parent: '/parent-dashboard',
+    };
+    return paths[role ?? ''] ?? '/';
   };
 
   const getRoleLabel = (role?: string) => {
-    switch (role) {
-      case 'admin':
-        return t('role.admin');
-      case 'coach':
-        return t('role.coach');
-      case 'athlete':
-        return t('role.athlete');
-      case 'delegate':
-        return t('role.delegate');
-      case 'leader':
-        return t('role.leader');
-      case 'finance':
-        return t('role.finance');
-      default:
-        return t('role.user');
-    }
+    const labels: Record<string, string> = {
+      admin:    t('role.admin'),
+      coach:    t('role.coach'),
+      athlete:  t('role.athlete'),
+      delegate: t('role.delegate'),
+      leader:   t('role.leader'),
+      finance:  t('role.finance'),
+      parent:   t('role.parent'),
+    };
+    return labels[role ?? ''] ?? t('role.user');
   };
 
-  // Filter navigation items based on user role
   const getVisibleNavigationItems = () => {
     const role = profile?.role;
-
-    console.log('DashboardLayout: Getting navigation items for role:', role);
-
-    // Get role-specific navigation items
     const roleItems = getNavigationItems(role);
-    
-    // For athlete role, return items directly (already filtered)
-    if (role === 'athlete') {
-      console.log('DashboardLayout: Athlete navigation items:', roleItems);
-      return roleItems;
-    }
+    if (role === 'athlete' || role === 'parent') return roleItems;
 
-    // Determine which items are allowed per role (for non-athletes)
-    // Using translation keys for comparison
-    const dashboardTitle = t('menu.dashboard');
-    const athletesTitle = t('menu.athletes');
-    const trainingTitle = t('menu.training');
-    const competitionsTitle = t('menu.competitions');
-    const financeTitle = t('menu.finance');
-    const clubConfigTitle = t('menu.club_config');
-    const settingsTitle = t('menu.settings');
-
-    const allowedByRole: Record<string, string[]> = {
-      admin: [dashboardTitle, athletesTitle, trainingTitle, competitionsTitle, financeTitle, clubConfigTitle, settingsTitle],
-      coach: [dashboardTitle, athletesTitle, trainingTitle, competitionsTitle, settingsTitle],
-      delegate: [dashboardTitle, competitionsTitle, settingsTitle],
-      leader: [dashboardTitle, athletesTitle, trainingTitle, competitionsTitle, financeTitle, clubConfigTitle, settingsTitle],
-      finance: [dashboardTitle, financeTitle, settingsTitle],
-    } as const;
-
-    const titles = role ? allowedByRole[role as keyof typeof allowedByRole] : roleItems.map(i => i.title).filter(t => t !== clubConfigTitle);
-
-    console.log('DashboardLayout: Allowed titles for role:', { role, titles });
-
-    // Apply role-based dashboard path and filter by allowed titles
-    const items = roleItems
-      .map((item) => item.title === dashboardTitle ? { ...item, path: getDashboardPath(role) } : item)
-      .filter((item) => titles?.includes(item.title));
-
-    console.log('DashboardLayout: Final navigation items:', items);
-    return items;
+    // Filter by path — language-independent
+    const allowedPaths: Record<string, string[]> = {
+      admin:    ['/', '/athletes', '/training', '/tiempos', '/documentos', '/equipamiento', '/evaluaciones', '/mensajes', '/medico', '/competitions', '/finance', '/club-config', '/chat', '/settings'],
+      coach:    ['/', '/athletes', '/training', '/tiempos', '/documentos', '/equipamiento', '/evaluaciones', '/mensajes', '/medico', '/competitions', '/chat', '/settings'],
+      delegate: ['/', '/mensajes', '/competitions', '/chat', '/settings'],
+      leader:   ['/', '/athletes', '/training', '/tiempos', '/documentos', '/equipamiento', '/evaluaciones', '/mensajes', '/competitions', '/finance', '/club-config', '/chat', '/settings'],
+      finance:  ['/', '/mensajes', '/finance', '/chat', '/settings'],
+    };
+    const paths = role ? allowedPaths[role] : roleItems.map(i => i.path);
+    return roleItems
+      .map(item => item.path === '/' ? { ...item, path: getDashboardPath(role) } : item)
+      .filter(item => paths?.includes(item.path === getDashboardPath(role) ? '/' : item.path));
   };
 
-  // Show loading state if profile is still loading
   if (profileLoading) {
     return (
-      <div className="flex h-screen bg-background dark:bg-gray-900 overflow-hidden">
-        <div className="flex items-center justify-center w-full">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex h-screen bg-background overflow-hidden items-center justify-center">
+        <div className="space-y-3 text-center">
+          <div className="w-10 h-10 mx-auto rounded-xl bg-gradient-to-br from-orange-500 to-orange-700 flex items-center justify-center shadow-lg shadow-orange-500/30 animate-pulse" />
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-orange-500 mx-auto" />
         </div>
       </div>
     );
@@ -161,83 +153,111 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
   const navigationItems = getVisibleNavigationItems();
 
   return (
-    <div className="flex h-screen bg-background dark:bg-gray-900 overflow-hidden">
-      {/* Mobile Sidebar Overlay */}
+    <>
+    <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
+    <div className="flex h-screen bg-background overflow-hidden">
+      {/* Mobile overlay */}
       {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <div className={`fixed lg:static inset-y-0 left-0 z-40 w-64 pt-16 bg-white dark:bg-gray-800 border-r border-border dark:border-gray-700 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+      <aside className={cn(
+        'fixed lg:static inset-y-0 left-0 z-40 w-64 flex flex-col',
+        'border-r border-border',
+        'transform transition-transform duration-300 ease-in-out lg:translate-x-0',
+        'bg-sidebar backdrop-blur-xl',
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <div className="flex flex-col h-full">
-          <div className="p-6">
-            <div className="flex items-center space-x-3 mb-8">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">S</span>
-              </div>
-              <span className="text-xl font-bold text-foreground dark:text-gray-100">SpeedSkate Academy</span>
-            </div>
-            
-            <nav className="space-y-2">
-              {navigationItems.map((item) => (
-                <div 
-                  key={item.title}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 ${
-                    window.location.pathname === item.path 
-                      ? 'bg-primary text-primary-foreground shadow-md' 
-                      : 'text-foreground dark:text-gray-300 hover:bg-muted dark:hover:bg-gray-700 hover:text-foreground dark:hover:text-gray-100'
-                  }`}
-                  onClick={() => {
-                    navigate(item.path);
-                    setSidebarOpen(false);
-                  }}
-                >
-                  <item.icon className="h-5 w-5" />
-                  <span className={window.location.pathname === item.path ? 'font-medium' : ''}>{item.title}</span>
-                </div>
-              ))}
-            </nav>
-          </div>
-          
-          <div className="mt-auto p-6 border-t border-border dark:border-gray-700">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-              {user?.email}
-            </p>
-            <Button 
-              onClick={handleLogout} 
-              className="w-full justify-start"
-              variant="outline"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              {t('menu.logout')}
-            </Button>
+      )}>
+        {/* Ambient orb decorations */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-r-none">
+          <div className="absolute -top-20 -left-10 w-48 h-48 bg-orange-600/5 rounded-full blur-[80px] animate-orb-1" />
+          <div className="absolute bottom-20 -right-10 w-36 h-36 bg-blue-600/5 rounded-full blur-[60px] animate-orb-2" />
+        </div>
+
+        {/* Logo */}
+        <div className="relative flex items-center gap-3 px-5 h-16 border-b border-sidebar-border flex-shrink-0">
+          <SpeedSkateLogoMark />
+          <div className="leading-none">
+            <span className="text-foreground font-black text-base tracking-tight">
+              SpeedSkate<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-300">Track</span>
+            </span>
+            <div className="text-[9px] text-muted-foreground font-medium tracking-widest uppercase mt-0.5">Club Management</div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content Area */}
+        {/* Nav */}
+        <nav className="relative flex-1 overflow-y-auto p-3 space-y-0.5 mt-2">
+          {navigationItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <button
+                key={item.title}
+                onClick={() => { navigate(item.path); setSidebarOpen(false); }}
+                className={cn(
+                  'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                  isActive
+                    ? 'text-orange-500 dark:text-orange-400 bg-gradient-to-r from-orange-500/12 dark:from-orange-500/15 to-transparent border-l-2 border-orange-500 pl-[calc(1rem-2px)]'
+                    : 'text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent'
+                )}
+              >
+                <item.icon className={cn('h-4.5 w-4.5 flex-shrink-0', isActive ? 'text-orange-400' : '')} />
+                <span className="flex-1 text-left">{item.title}</span>
+                {item.path === '/mensajes' && unreadCount > 0 && (
+                  <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-blue-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Footer */}
+        <div className="relative border-t border-sidebar-border p-4 space-y-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-500 to-orange-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              {(user?.email?.[0] ?? 'U').toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-sidebar-foreground truncate">
+                {profile?.first_name ? `${profile.first_name} ${profile.last_name}` : user?.email}
+              </p>
+              <p className="text-[10px] text-muted-foreground truncate">{getRoleLabel(profile?.role)}</p>
+            </div>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/8 transition-all duration-200"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            {t('menu.logout')}
+          </button>
+        </div>
+      </aside>
+
+      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top Navigation - Fixed */}
-        <TopNavigation 
+        <TopNavigation
           userRole={getRoleLabel(profile?.role)}
-          userEmail={user?.email || undefined}
+          userEmail={user?.email ?? undefined}
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
         />
-
-
-        {/* Main Content with proper top padding for fixed header */}
-        <main className="flex-1 overflow-auto p-4 lg:p-6 pt-20 lg:pt-20">
-          <div className="h-full">
-            {children}
-          </div>
+        <main className="flex-1 overflow-auto p-4 lg:p-6 pt-20 lg:pt-20 pb-20 lg:pb-6">
+          {children}
         </main>
       </div>
+      <BottomNav role={profile?.role} />
     </div>
+    {profile?.role && !['athlete', 'parent'].includes(profile.role) && (
+      <RagChatWidget />
+    )}
+    {/* AgentChatWidget (Experto en Patinaje) disponible para todos los roles */}
+    {profile?.role && <AgentChatWidget />}
+    </>
   );
 };
 

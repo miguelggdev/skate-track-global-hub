@@ -36,7 +36,6 @@ const AthleteReportGenerator = () => {
         description: "Reporte Excel generado exitosamente",
       });
     } catch (error) {
-      console.error('Error generating Excel report:', error);
       toast({
         title: "Error",
         description: "No se pudo generar el reporte Excel",
@@ -65,7 +64,6 @@ const AthleteReportGenerator = () => {
         description: "Reporte PDF generado exitosamente",
       });
     } catch (error) {
-      console.error('Error generating PDF report:', error);
       toast({
         title: "Error",
         description: "No se pudo generar el reporte PDF",

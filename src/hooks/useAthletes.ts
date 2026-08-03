@@ -26,10 +26,7 @@ export const useAthletes = () => {
         .eq('status', 'active')
         .order('first_name', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching athletes:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       return data as Athlete[];
     },
@@ -48,19 +45,15 @@ export const useAthletesByCategory = (category?: string, levels?: string[]) => {
         .select('*')
         .eq('status', 'active');
 
-      // Use string literal for category comparison to avoid type issues
-      query = query.eq('category', category as any);
+      query = query.eq('category', category);
 
       if (levels && levels.length > 0) {
-        query = query.in('level', levels as any);
+        query = query.in('level', levels);
       }
 
       const { data, error } = await query.order('first_name', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching filtered athletes:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       return data as Athlete[];
     },

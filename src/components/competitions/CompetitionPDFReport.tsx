@@ -49,7 +49,6 @@ export const CompetitionPDFReport: React.FC<CompetitionPDFReportProps> = ({
                 damas: pdfData.damas,
                 varones: pdfData.varones,
                 medalResults: pdfData.medalResults,
-                events: pdfData.events,
                 allResults: pdfData.allResults,
                 medalStats: pdfData.medalStats,
                 clubInfo: {
@@ -122,7 +121,6 @@ export const CompetitionPDFReport: React.FC<CompetitionPDFReportProps> = ({
       
       toast.success('PDF report generated successfully!');
     } catch (error) {
-      console.error('Error generating PDF:', error);
       toast.error('Failed to generate PDF report');
     } finally {
       setGenerating(false);
