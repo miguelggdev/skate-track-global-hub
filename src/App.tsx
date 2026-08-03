@@ -113,6 +113,9 @@ const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode,
     return <Navigate to="/login" replace />;
   }
 
+  if (allowedRoles && !profile?.role) {
+    return <Navigate to="/login" replace />;
+  }
   if (allowedRoles && profile?.role && !allowedRoles.includes(profile.role)) {
     switch (profile.role) {
       case 'admin':    return <Navigate to="/admin-dashboard" replace />;
@@ -387,7 +390,7 @@ const App = () => (
                     <Route
                       path="/medico"
                       element={
-                        <ProtectedRoute allowedRoles={['admin', 'coach']}>
+                        <ProtectedRoute allowedRoles={['admin', 'coach', 'leader']}>
                           <MedicalPage />
                         </ProtectedRoute>
                       }
@@ -395,7 +398,7 @@ const App = () => (
                     <Route
                       path="/parent-dashboard"
                       element={
-                        <ProtectedRoute allowedRoles={['parent']}>
+                        <ProtectedRoute allowedRoles={['parent', 'admin', 'leader']}>
                           <ParentDashboard />
                         </ProtectedRoute>
                       }

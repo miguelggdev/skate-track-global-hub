@@ -1,7 +1,9 @@
 // ICS (iCalendar) export utilities — no external dependencies
 
 function icsDate(iso: string): string {
-  return iso.replace(/[-:]/g, '').replace('.000Z', 'Z').substring(0, 16) + '00Z';
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}T${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}Z`;
 }
 
 function icsDateOnly(date: string): string {

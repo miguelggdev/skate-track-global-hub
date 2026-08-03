@@ -25,13 +25,16 @@ def check_suspicious_access(user_id: str, ip_address: str, success: bool) -> dic
     ten_min_ago = (now - timedelta(minutes=10)).isoformat()
 
     # Log this attempt to security_audit_log
-    db.table("security_audit_log").insert({
-        "user_id": user_id or None,
-        "action": "login_attempt",
-        "ip_address": ip_address,
-        "success": success,
-        "created_at": now.isoformat(),
-    }).execute()
+    try:
+        db.table("security_audit_log").insert({
+            "user_id": user_id or None,
+            "event_type": "login_failed" if not success else "login",
+            "ip_address": ip_address,
+            "details": {"success": success, "action": "login_attempt"},
+            "created_at": now.isoformat(),
+        }).execute()
+    except Exception as exc:
+        logger.warning("No se pudo registrar intento de login en security_audit_log: %s", exc)
 
     if success:
         log_activity("AUTO-30", "AG-08", "success", records_found=1, actions_taken=0,
@@ -43,8 +46,7 @@ def check_suspicious_access(user_id: str, ip_address: str, success: bool) -> dic
         db.table("security_audit_log")
         .select("id")
         .eq("ip_address", ip_address)
-        .eq("success", False)
-        .eq("action", "login_attempt")
+        .eq("event_type", "login_failed")
         .gte("created_at", ten_min_ago)
         .execute()
     ).data or []

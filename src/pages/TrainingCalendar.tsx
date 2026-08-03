@@ -66,6 +66,7 @@ const TrainingCalendar = () => {
         endDate   = endOfWeek(currentDate, { weekStartsOn });
       } else {
         startDate = new Date(currentDate);
+        startDate.setHours(0, 0, 0, 0);
         endDate   = new Date(currentDate);
       }
 
@@ -121,10 +122,13 @@ const TrainingCalendar = () => {
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate);
-    if (direction === 'prev') {
-      newDate.setMonth(currentDate.getMonth() - 1);
+    const sign = direction === 'prev' ? -1 : 1;
+    if (viewMode === 'month') {
+      newDate.setMonth(currentDate.getMonth() + sign);
+    } else if (viewMode === 'week') {
+      newDate.setDate(currentDate.getDate() + sign * 7);
     } else {
-      newDate.setMonth(currentDate.getMonth() + 1);
+      newDate.setDate(currentDate.getDate() + sign);
     }
     setCurrentDate(newDate);
   };

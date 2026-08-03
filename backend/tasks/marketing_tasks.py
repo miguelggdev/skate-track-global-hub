@@ -96,26 +96,19 @@ def reactivate_inactive_athletes() -> dict:
     ).data or []
 
     # Also check active athletes with no recent attendance
+    recent_ids_result = (
+        db.table("training_attendance")
+        .select("athlete_id")
+        .gte("created_at", thirty_days_ago)
+        .execute()
+    ).data or []
+    attended_ids = [r["athlete_id"] for r in recent_ids_result] or ["00000000-0000-0000-0000-000000000000"]
+
     active_no_attendance = (
         db.table("athletes")
         .select("id, first_name, last_name, email, user_id")
         .eq("status", "active")
-        .not_.in_(
-            "id",
-            (
-                db.table("training_attendance")
-                .select("athlete_id")
-                .gte("created_at", thirty_days_ago)
-                .execute()
-            ).data
-            and [r["athlete_id"] for r in (
-                db.table("training_attendance")
-                .select("athlete_id")
-                .gte("created_at", thirty_days_ago)
-                .execute()
-            ).data]
-            or ["00000000-0000-0000-0000-000000000000"],
-        )
+        .not_.in_("id", attended_ids)
         .execute()
     ).data or []
 

@@ -38,13 +38,14 @@ export function useAgentChat(agentId: AgentId) {
     setError(null);
 
     const userMsg: ChatMessage = { id: crypto.randomUUID(), role: 'user', content: text };
+    const historySnapshot = messages.map(m => ({ role: m.role, content: m.content }));
     setMessages(prev => [...prev, userMsg]);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No autenticado');
 
-      const history = messages.map(m => ({ role: m.role, content: m.content }));
+      const history = historySnapshot;
 
       const res = await fetch(`${BACKEND_URL}/api/agents/${agentId}/chat`, {
         method: 'POST',

@@ -58,7 +58,8 @@ export function SignatureCanvas({ onSignatureChange, width = 500, height = 180, 
     const ctx = getCtx();
     if (!ctx) return;
     const current = getPos(e);
-    const prev = lastPoint.current!;
+    const prev = lastPoint.current;
+    if (!prev) return;
     ctx.beginPath();
     ctx.moveTo(prev.x, prev.y);
     ctx.lineTo(current.x, current.y);

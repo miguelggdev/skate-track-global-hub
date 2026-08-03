@@ -70,7 +70,7 @@ export function DocumentSignatureDialog({ open, onClose, documentTitle, document
     enabled: open,
   });
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormValues>({
+  const { register, handleSubmit, reset, getValues, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { signer_name: profile ? `${profile.first_name} ${profile.last_name}`.trim() : '' },
   });
@@ -106,12 +106,12 @@ export function DocumentSignatureDialog({ open, onClose, documentTitle, document
   });
 
   const downloadSignedConfirmation = () => {
-    const myName = (document.getElementById('signer-name-display') as HTMLElement)?.textContent ?? 'Firmante';
+    const signerName = getValues('signer_name') || 'Firmante';
     const text = [
       `CONSTANCIA DE FIRMA DIGITAL`,
       ``,
       `Documento: ${documentTitle}`,
-      `Firmado por: myName`,
+      `Firmado por: ${signerName}`,
       `Fecha: ${new Date().toLocaleString('es-CO')}`,
       ``,
       `Firmas registradas:`,

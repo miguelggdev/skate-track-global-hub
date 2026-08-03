@@ -169,23 +169,29 @@ def daily_cash_close() -> dict:
     )
     net = income - expense
 
-    # Training attendance stats
-    attendances = (
-        db.table("training_attendance")
-        .select("attended, training_sessions!inner(scheduled_at)")
+    # Training attendance stats — filter by today's sessions first to avoid full-table scan
+    today_sessions = (
+        db.table("training_sessions")
+        .select("id")
+        .gte("scheduled_at", f"{today}T00:00:00")
+        .lte("scheduled_at", f"{today}T23:59:59")
         .execute()
     ).data or []
+    today_session_ids = [s["id"] for s in today_sessions]
 
-    today_attendances = [
-        a for a in attendances
-        if (a.get("training_sessions") or {}).get("scheduled_at", "").startswith(today)
-    ]
-    sessions_count = len({
-        (a.get("training_sessions") or {}).get("scheduled_at", "")[:10]
-        for a in today_attendances
-    })
-    attended = sum(1 for a in today_attendances if a.get("attended"))
-    total_expected = len(today_attendances)
+    if today_session_ids:
+        attendances = (
+            db.table("training_attendance")
+            .select("attended, session_id")
+            .in_("session_id", today_session_ids)
+            .execute()
+        ).data or []
+    else:
+        attendances = []
+
+    sessions_count = len({a.get("session_id") for a in attendances if a.get("session_id")})
+    attended = sum(1 for a in attendances if a.get("attended"))
+    total_expected = len(attendances)
     att_rate = round((attended / total_expected * 100), 1) if total_expected else 0
 
     # Store daily report

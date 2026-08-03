@@ -19,18 +19,26 @@ from api.deps import get_current_user, require_roles, PRIVILEGED_ROLES
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
-_registry: dict = {
-    "admin":      AdminAgent(),
-    "skating":    SkatingAgent(),
-    "nutrition":  NutritionAgent(),
-    "gym":        GymAgent(),
-    "medical":    MedicalAgent(),
-    "cycling":    CyclingAgent(),
-    "psychology": PsychologyAgent(),
-    "finance":    FinanceAgent(),
-    "marketing":  MarketingAgent(),
-    "results":    ResultsAgent(),
+_registry: dict | None = None
+_AGENT_CLASSES = {
+    "admin":      AdminAgent,
+    "skating":    SkatingAgent,
+    "nutrition":  NutritionAgent,
+    "gym":        GymAgent,
+    "medical":    MedicalAgent,
+    "cycling":    CyclingAgent,
+    "psychology": PsychologyAgent,
+    "finance":    FinanceAgent,
+    "marketing":  MarketingAgent,
+    "results":    ResultsAgent,
 }
+
+
+def _get_registry() -> dict:
+    global _registry
+    if _registry is None:
+        _registry = {name: cls() for name, cls in _AGENT_CLASSES.items()}
+    return _registry
 
 # Agentes que requieren rol privilegiado (admin/coach/leader)
 _RESTRICTED_AGENTS = {"admin", "medical", "finance"}
@@ -142,11 +150,12 @@ async def chat_with_agent(
     request: ChatRequest,
     current_user: dict = Depends(get_current_user),
 ) -> ChatResponse:
-    agent = _registry.get(agent_id)
+    registry = _get_registry()
+    agent = registry.get(agent_id)
     if not agent:
         raise HTTPException(
             status_code=404,
-            detail=f"Agente '{agent_id}' no encontrado. Disponibles: {list(_registry.keys())}",
+            detail=f"Agente '{agent_id}' no encontrado. Disponibles: {list(registry.keys())}",
         )
 
     # Agentes restringidos requieren rol privilegiado
@@ -168,11 +177,12 @@ async def stream_chat_with_agent(
     current_user: dict = Depends(get_current_user),
 ) -> StreamingResponse:
     """SSE — devuelve tokens a medida que Claude los genera."""
-    agent = _registry.get(agent_id)
+    registry = _get_registry()
+    agent = registry.get(agent_id)
     if not agent:
         raise HTTPException(
             status_code=404,
-            detail=f"Agente '{agent_id}' no encontrado. Disponibles: {list(_registry.keys())}",
+            detail=f"Agente '{agent_id}' no encontrado. Disponibles: {list(registry.keys())}",
         )
 
     if agent_id in _RESTRICTED_AGENTS:

@@ -63,7 +63,7 @@ export const useAttendanceManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['training-kpis'] });
       toast.success('Asistencia registrada correctamente');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error('Error al registrar la asistencia: ' + (error.message || 'Error desconocido'));
     },
   });
@@ -91,7 +91,7 @@ export const useAttendanceManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['training-kpis'] });
       toast.success('Asistencia registrada correctamente');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error('Error al registrar la asistencia: ' + (error.message || 'Error desconocido'));
     },
   });
@@ -114,7 +114,7 @@ export const useAttendanceManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['training-kpis'] });
       toast.success('Asistencia actualizada correctamente');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       if (error.message.includes('48 hours')) {
         toast.error('No se puede editar la asistencia después de 48 horas');
       } else {

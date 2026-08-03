@@ -137,12 +137,16 @@ const ParentDashboard: React.FC = () => {
     queryKey: ['parent-athletes', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data: links, error: linksErr } = await supabase
-        .from('parent_athletes' as never)
+      type ParentAthleteRow = { athlete_id: string };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const linksRes = await (supabase as any)
+        .from('parent_athletes')
         .select('athlete_id')
-        .eq('parent_user_id', user.id) as unknown as { data: { athlete_id: string }[] | null; error: unknown };
+        .eq('parent_user_id', user.id) as { data: ParentAthleteRow[] | null; error: { message: string } | null };
 
-      if (linksErr || !links || links.length === 0) return [];
+      if (linksRes.error) throw new Error(linksRes.error.message);
+      const links = linksRes.data;
+      if (!links || links.length === 0) return [];
 
       const ids = links.map(l => l.athlete_id);
       const { data: athletes } = await supabase
