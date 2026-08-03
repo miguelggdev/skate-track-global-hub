@@ -7,13 +7,17 @@ from langchain_core.messages import SystemMessage
 from langchain_core.tools import tool
 from langgraph.prebuilt import create_react_agent
 
-from agents.base_agent import BaseAgent
+from agents.base_agent import BaseAgent, current_user_role
 from database.supabase_client import get_supabase
+
+_AUTHORIZED_ROLES = {"admin", "coach", "leader"}
 
 
 @tool
 def get_athlete_health_profile(athlete_id: str) -> str:
     """Obtiene el perfil de salud básico de un atleta: datos generales, lesiones conocidas y contacto de emergencia."""
+    if current_user_role.get() not in _AUTHORIZED_ROLES:
+        return json.dumps({"error": "Acceso no autorizado al perfil de salud del atleta"}, ensure_ascii=False)
     client = get_supabase()
     result = (
         client.table("athletes")

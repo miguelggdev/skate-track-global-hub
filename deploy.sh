@@ -38,14 +38,17 @@ build_frontend() {
     VITE_BACKEND_URL="https://${DOMAIN}" \
     npm run build
 
+    [[ -d dist ]] || error "El directorio dist/ no se generó. Revisa los errores de npm run build."
     info "Build completado en ./dist/"
 }
 
-# ── Sustituir dominio en configs de Nginx ─────────────────────────────────
+# ── Generar configs de Nginx desde templates (idempotente) ────────────────
 configure_nginx() {
-    info "Configurando Nginx para dominio: $DOMAIN"
-    sed -i "s/tudominio\.com/${DOMAIN}/g" nginx/http.conf
-    sed -i "s/tudominio\.com/${DOMAIN}/g" nginx/default.conf
+    info "Generando configuración Nginx para dominio: $DOMAIN"
+    [[ -f nginx/http.conf.template ]]    || error "nginx/http.conf.template no encontrado."
+    [[ -f nginx/default.conf.template ]] || error "nginx/default.conf.template no encontrado."
+    sed "s/tudominio\.com/${DOMAIN}/g" nginx/http.conf.template    > nginx/http.conf
+    sed "s/tudominio\.com/${DOMAIN}/g" nginx/default.conf.template > nginx/default.conf
 }
 
 # ── Primer despliegue ──────────────────────────────────────────────────────
@@ -57,11 +60,10 @@ cmd_init() {
     # Paso 1: Build frontend
     build_frontend
 
-    # Paso 2: Sustituir dominio en Nginx
+    # Paso 2: Generar configs Nginx con el dominio real
     configure_nginx
 
     # Paso 3: Usar config HTTP temporal para obtener el certificado
-    cp nginx/http.conf nginx/default.conf.ssl_backup 2>/dev/null || true
     cp nginx/http.conf nginx/default.conf
 
     # Paso 4: Levantar contenedores con config HTTP
@@ -77,8 +79,7 @@ cmd_init() {
 
     # Paso 7: Restaurar config HTTPS y reiniciar Nginx
     info "Activando configuración HTTPS..."
-    cp nginx/default.conf.ssl_backup nginx/default.conf 2>/dev/null || \
-        sed -i "s/tudominio\.com/${DOMAIN}/g" nginx/default.conf
+    sed "s/tudominio\.com/${DOMAIN}/g" nginx/default.conf.template > nginx/default.conf
     docker compose restart nginx
 
     info "=== Despliegue inicial completado ==="
@@ -93,6 +94,9 @@ cmd_update() {
 
     info "Actualizando código..."
     git pull origin master
+
+    # Regenerar configs Nginx (necesario por si git pull restauró los templates)
+    configure_nginx
 
     # Rebuild frontend
     build_frontend
@@ -112,11 +116,12 @@ cmd_update() {
 # ── Obtener/renovar certificado SSL ───────────────────────────────────────
 cmd_ssl() {
     load_env
+    CERT_EMAIL="${CERTBOT_EMAIL:-admin@${DOMAIN}}"
     info "Obteniendo certificado SSL para ${DOMAIN} y www.${DOMAIN}..."
     docker compose run --rm certbot certonly \
         --webroot \
         --webroot-path=/var/www/certbot \
-        --email "admin@${DOMAIN}" \
+        --email "${CERT_EMAIL}" \
         --agree-tos \
         --no-eff-email \
         -d "${DOMAIN}" \

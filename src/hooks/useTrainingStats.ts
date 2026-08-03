@@ -43,29 +43,41 @@ export const useTrainingStats = () => {
       if (athletesError) throw athletesError;
 
       // Get active athletes (those with recent attendance)
+      // PostgREST ignora filtros en tablas embebidas (.gte('training_sessions.scheduled_at',...))
+      // — filtramos en JS usando el campo embedded que sí viene en la respuesta.
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
       const { data: activeAthletesData, error: activeAthletesError } = await supabase
         .from('training_attendance')
         .select('athlete_id, training_sessions!inner(scheduled_at)')
-        .gte('training_sessions.scheduled_at', thirtyDaysAgo.toISOString().split('T')[0])
         .eq('attended', true);
 
       if (activeAthletesError) throw activeAthletesError;
 
-      const uniqueActiveAthletes = new Set(activeAthletesData?.map(a => a.athlete_id) ?? []);
+      const uniqueActiveAthletes = new Set(
+        (activeAthletesData ?? [])
+          .filter(a => {
+            const s = a.training_sessions as { scheduled_at: string } | null;
+            return (s?.scheduled_at ?? '').slice(0, 10) >= thirtyDaysAgoStr;
+          })
+          .map(a => a.athlete_id)
+      );
 
       // Get completion rate
       const { data: attendanceData, error: attendanceError } = await supabase
         .from('training_attendance')
-        .select('attended, training_sessions!inner(scheduled_at)')
-        .gte('training_sessions.scheduled_at', thirtyDaysAgo.toISOString().split('T')[0]);
+        .select('attended, training_sessions!inner(scheduled_at)');
 
       if (attendanceError) throw attendanceError;
 
-      const totalAttendanceRecords = attendanceData?.length ?? 0;
-      const attendedRecords = attendanceData?.filter(a => a.attended).length ?? 0;
+      const recentAttendance = (attendanceData ?? []).filter(a => {
+        const s = a.training_sessions as { scheduled_at: string } | null;
+        return (s?.scheduled_at ?? '').slice(0, 10) >= thirtyDaysAgoStr;
+      });
+      const totalAttendanceRecords = recentAttendance.length;
+      const attendedRecords = recentAttendance.filter(a => a.attended).length;
       const completionRate = totalAttendanceRecords > 0 ? (attendedRecords / totalAttendanceRecords) * 100 : 0;
 
       // Get average session time

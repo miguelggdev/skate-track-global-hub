@@ -218,14 +218,14 @@ def handle_absence(athlete_id: str, session_id: str) -> dict:
     alert_level = "critical" if consecutive >= 3 else "warning"
     msg = f"{name} lleva {consecutive} inasistencias consecutivas."
 
-    # Upsert attendance alert
-    db.table("attendance_alerts").insert({
+    # Upsert attendance alert (avoid duplicate rows per athlete)
+    db.table("attendance_alerts").upsert({
         "athlete_id": athlete_id,
         "consecutive_absences": consecutive,
         "alert_level": alert_level,
         "notified_coach": True,
         "notified_admin": consecutive >= 3,
-    }).execute()
+    }, on_conflict="athlete_id").execute()
 
     actions = 0
     # Notify coach

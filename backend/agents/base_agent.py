@@ -1,7 +1,13 @@
 from abc import ABC, abstractmethod
+from contextvars import ContextVar
+
 from langchain_core.messages import HumanMessage, AIMessage, BaseMessage, SystemMessage
 from langchain_anthropic import ChatAnthropic
 from config import settings
+
+# Thread-safe user context — set in request handlers, read inside LangGraph tools
+current_user_id: ContextVar[str | None] = ContextVar("current_user_id", default=None)
+current_user_role: ContextVar[str | None] = ContextVar("current_user_role", default=None)
 
 
 class BaseAgent(ABC):

@@ -15,7 +15,8 @@ from agents.psychology_agent import PsychologyAgent
 from agents.finance_agent import FinanceAgent
 from agents.marketing_agent import MarketingAgent
 from agents.results_agent import ResultsAgent
-from api.deps import get_current_user, require_roles, PRIVILEGED_ROLES
+from agents.base_agent import current_user_id as _user_id_ctx, current_user_role as _user_role_ctx
+from api.deps import get_current_user, require_roles, _fetch_app_role_async, PRIVILEGED_ROLES
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
@@ -158,12 +159,14 @@ async def chat_with_agent(
             detail=f"Agente '{agent_id}' no encontrado. Disponibles: {list(registry.keys())}",
         )
 
-    # Agentes restringidos requieren rol privilegiado
-    if agent_id in _RESTRICTED_AGENTS:
-        from api.deps import _fetch_app_role
-        app_role = _fetch_app_role(current_user.get("sub", ""))
-        if app_role not in PRIVILEGED_ROLES:
-            raise HTTPException(status_code=403, detail="Sin acceso al agente administrativo")
+    user_id = current_user.get("sub", "")
+    app_role = await _fetch_app_role_async(user_id)
+
+    if agent_id in _RESTRICTED_AGENTS and app_role not in PRIVILEGED_ROLES:
+        raise HTTPException(status_code=403, detail="Sin acceso al agente administrativo")
+
+    _user_id_ctx.set(user_id)
+    _user_role_ctx.set(app_role or "")
 
     history = [h.model_dump() for h in request.history]
     response = await agent.chat(request.message, history)
@@ -185,11 +188,14 @@ async def stream_chat_with_agent(
             detail=f"Agente '{agent_id}' no encontrado. Disponibles: {list(registry.keys())}",
         )
 
-    if agent_id in _RESTRICTED_AGENTS:
-        from api.deps import _fetch_app_role
-        app_role = _fetch_app_role(current_user.get("sub", ""))
-        if app_role not in PRIVILEGED_ROLES:
-            raise HTTPException(status_code=403, detail="Sin acceso al agente administrativo")
+    user_id = current_user.get("sub", "")
+    app_role = await _fetch_app_role_async(user_id)
+
+    if agent_id in _RESTRICTED_AGENTS and app_role not in PRIVILEGED_ROLES:
+        raise HTTPException(status_code=403, detail="Sin acceso al agente administrativo")
+
+    _user_id_ctx.set(user_id)
+    _user_role_ctx.set(app_role or "")
 
     history = [h.model_dump() for h in request.history]
 

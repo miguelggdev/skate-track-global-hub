@@ -111,10 +111,21 @@ def end_of_day_summary() -> dict:
     db = get_supabase()
     today = date.today().isoformat()
 
+    # Fetch today's session IDs to avoid full table scan
+    today_session_rows = (
+        db.table("training_sessions")
+        .select("id")
+        .gte("scheduled_at", f"{today}T00:00:00")
+        .lte("scheduled_at", f"{today}T23:59:59")
+        .execute()
+    ).data or []
+    today_session_ids = [s["id"] for s in today_session_rows] or ["00000000-0000-0000-0000-000000000000"]
+
     # Attendance for today
     attendances = (
         db.table("training_attendance")
         .select("attended, training_sessions!inner(scheduled_at)")
+        .in_("training_session_id", today_session_ids)
         .execute()
     ).data or []
 

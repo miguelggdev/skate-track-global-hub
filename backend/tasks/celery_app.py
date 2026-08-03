@@ -26,4 +26,6 @@ celery_app.conf.update(
     task_track_started=True,
     task_acks_late=True,
     worker_prefetch_multiplier=1,
+    task_max_retries=3,
+    task_default_retry_delay=60,
 )

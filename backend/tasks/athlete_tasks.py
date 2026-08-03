@@ -285,8 +285,14 @@ def weekly_progress_monitor() -> dict:
         if not this_week or not older:
             continue
 
-        best_now = min(r["time_seconds"] for r in this_week if r.get("time_seconds"))
-        best_before = min(r["time_seconds"] for r in older if r.get("time_seconds"))
+        best_now_values = [r["time_seconds"] for r in this_week if r.get("time_seconds")]
+        best_before_values = [r["time_seconds"] for r in older if r.get("time_seconds")]
+
+        if not best_now_values or not best_before_values:
+            continue
+
+        best_now = min(best_now_values)
+        best_before = min(best_before_values)
 
         if best_before > 0:
             improvement = (best_before - best_now) / best_before * 100

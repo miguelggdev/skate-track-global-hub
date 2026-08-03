@@ -1,5 +1,5 @@
-# Configuración HTTPS definitiva.
-# SUSTITUYE "tudominio.com" con tu dominio real.
+# Configuración HTTPS definitiva — TEMPLATE (no modificar directamente).
+# deploy.sh genera nginx/default.conf a partir de este archivo.
 
 # Rate limiting — protege la API de agentes IA contra abuso de costos
 limit_req_zone $binary_remote_addr zone=api_limit:10m rate=30r/m;

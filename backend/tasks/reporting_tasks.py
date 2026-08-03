@@ -26,10 +26,21 @@ def weekly_executive_report() -> dict:
     week_ago = (today - timedelta(weeks=1)).isoformat()
     two_weeks_ago = (today - timedelta(weeks=2)).isoformat()
 
-    # This week's attendance
+    # Fetch session IDs for the last 2 weeks to avoid full table scan
+    recent_session_rows = (
+        db.table("training_sessions")
+        .select("id")
+        .gte("scheduled_at", two_weeks_ago)
+        .lte("scheduled_at", today.isoformat())
+        .execute()
+    ).data or []
+    recent_session_ids = [s["id"] for s in recent_session_rows] or ["00000000-0000-0000-0000-000000000000"]
+
+    # This week's attendance (filtered by session IDs)
     attendance_this = (
         db.table("training_attendance")
         .select("attended, training_sessions!inner(scheduled_at)")
+        .in_("training_session_id", recent_session_ids)
         .execute()
     ).data or []
 
@@ -136,7 +147,7 @@ def monthly_performance_report() -> dict:
         f"━━━━━━━━━━━━━━━━━━━━━━\n"
         f"Competencias registradas: {len(results)} resultados\n"
         f"Medallas (top 3): {len(medals)} 🏅\n"
-        f"Mejor posición del mes: #{top_position if top_position else 'N/A'}\n"
+        f"Mejor posición del mes: #{top_position if top_position is not None else 'N/A'}\n"
         f"Registros de tiempo: {len(time_records)}\n"
         f"━━━━━━━━━━━━━━━━━━━━━━\n"
         f"Ver detalle completo en el dashboard del club."

@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import jwt
@@ -42,6 +44,11 @@ def _fetch_app_role(user_id: str) -> str | None:
         .execute()
     )
     return result.data[0].get("role") if result.data else None
+
+
+async def _fetch_app_role_async(user_id: str) -> str | None:
+    """Versión async de _fetch_app_role — usa asyncio.to_thread para no bloquear el event loop."""
+    return await asyncio.to_thread(_fetch_app_role, user_id)
 
 
 def require_roles(*allowed_roles: str):
