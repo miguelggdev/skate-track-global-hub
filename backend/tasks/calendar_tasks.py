@@ -12,7 +12,7 @@ from tasks.helpers import (
     log_activity,
     notify_role,
     notify_user,
-    send_email_placeholder,
+    send_email,
     task_wrapper,
 )
 
@@ -188,6 +188,7 @@ def handle_absence(athlete_id: str, session_id: str) -> dict:
         db.table("training_attendance")
         .select("attended, training_sessions(scheduled_at)")
         .eq("athlete_id", athlete_id)
+        .gte("created_at", thirty_days_ago)
         .order("id", desc=True)
         .limit(10)
         .execute()

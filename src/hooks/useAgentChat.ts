@@ -26,14 +26,18 @@ export function useAgentChat(agentId: AgentId) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // Ref-based guard prevents race conditions where stale isLoading state
+  // allows a second concurrent call before the first setState propagates.
+  const isLoadingRef = useRef(false);
 
   const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || isLoading) return;
+    if (!text.trim() || isLoadingRef.current) return;
 
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
 
+    isLoadingRef.current = true;
     setIsLoading(true);
     setError(null);
 
@@ -74,9 +78,10 @@ export function useAgentChat(agentId: AgentId) {
       }
       setError(msg);
     } finally {
+      isLoadingRef.current = false;
       setIsLoading(false);
     }
-  }, [agentId, isLoading, messages]);
+  }, [agentId, messages]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);

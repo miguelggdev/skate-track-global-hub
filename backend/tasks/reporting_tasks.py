@@ -11,7 +11,7 @@ from tasks.helpers import (
     get_coach_user_ids,
     log_activity,
     notify_user,
-    send_email_placeholder,
+    send_email,
 )
 
 logger = logging.getLogger(__name__)
@@ -184,14 +184,20 @@ def federation_inscription_report() -> dict:
     complete, incomplete = 0, 0
     incomplete_list: list[str] = []
 
+    athlete_ids = [a["id"] for a in active_athletes]
+    all_docs = (
+        db.table("federation_documents")
+        .select("athlete_id, doc_type, status")
+        .in_("athlete_id", athlete_ids or ["00000000-0000-0000-0000-000000000000"])
+        .eq("season", season)
+        .execute()
+    ).data or []
+    docs_by_athlete: dict[str, list] = {}
+    for doc in all_docs:
+        docs_by_athlete.setdefault(doc["athlete_id"], []).append(doc)
+
     for athlete in active_athletes:
-        existing_docs = (
-            db.table("federation_documents")
-            .select("doc_type, status")
-            .eq("athlete_id", athlete["id"])
-            .eq("season", season)
-            .execute()
-        ).data or []
+        existing_docs = docs_by_athlete.get(athlete["id"], [])
 
         complete_types = {d["doc_type"] for d in existing_docs if d.get("status") == "complete"}
         missing = [t for t in required_types if t not in complete_types]

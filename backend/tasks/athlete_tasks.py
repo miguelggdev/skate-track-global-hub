@@ -11,7 +11,7 @@ from tasks.helpers import (
     get_coach_user_ids,
     log_activity,
     notify_user,
-    send_email_placeholder,
+    send_email,
 )
 
 logger = logging.getLogger(__name__)
@@ -120,7 +120,7 @@ def evaluation_reminder() -> dict:
             )
             actions += 1
         if athlete.get("email"):
-            send_email_placeholder(athlete["email"], "Evaluación física semestral pendiente", msg, "AUTO-13")
+            send_email(athlete["email"], "Evaluación física semestral pendiente", msg)
 
     # Summary to coaches
     summary_msg = (

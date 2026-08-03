@@ -11,7 +11,7 @@ from tasks.helpers import (
     get_coach_user_ids,
     log_activity,
     notify_user,
-    send_email_placeholder,
+    send_email,
 )
 
 logger = logging.getLogger(__name__)
@@ -215,7 +215,7 @@ def expiring_documents_check() -> dict:
                 actions += 1
 
             if profile.get("email"):
-                send_email_placeholder(profile["email"], f"Documento por vencer: {doc_type}", msg, "AUTO-18")
+                send_email(profile["email"], f"Documento por vencer: {doc_type}", msg)
 
     # Summary to admin if any critical (5 days)
     critical = (
@@ -349,11 +349,10 @@ def new_athlete_documents(athlete_id: str) -> dict:
         actions += 1
 
     if athlete.get("email"):
-        send_email_placeholder(
+        send_email(
             athlete["email"],
             f"¡Bienvenido/a {name}! — Club de Patinaje",
             msg,
-            "AUTO-20",
         )
 
     # Notify admins of new registration

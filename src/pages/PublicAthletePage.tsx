@@ -23,8 +23,6 @@ function formatSeconds(s: number) {
   return `${m}:${sec.padStart(5, '0')}`;
 }
 
-const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function PublicAthletePage() {
@@ -64,11 +62,12 @@ export default function PublicAthletePage() {
     queryKey: ['public-attendance', athleteId],
     queryFn: async () => {
       if (!athleteId) return [];
+      const cutoff = new Date(Date.now() - 30 * 86400000).toISOString();
       const { data } = await supabase
         .from('training_attendance')
         .select('attended, created_at')
         .eq('athlete_id', athleteId)
-        .gte('created_at', thirtyDaysAgo);
+        .gte('created_at', cutoff);
       return (data ?? []) as { attended: boolean; created_at: string }[];
     },
     enabled: !!athleteId,

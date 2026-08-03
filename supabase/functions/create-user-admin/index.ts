@@ -111,15 +111,15 @@ serve(async (req) => {
       return json({ error: 'Invalid token' }, 401);
     }
 
-    const { data: roleData, error: roleError } = await supabaseAdmin
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
+    // Check caller permissions using the has_role RPC (correct multi-role check)
+    const { data: isAdmin } = await supabaseAdmin
+      .rpc('has_role', { _user_id: user.id, _role: 'admin' });
+    const { data: isCoach } = await supabaseAdmin
+      .rpc('has_role', { _user_id: user.id, _role: 'coach' });
+    const { data: isLeader } = await supabaseAdmin
+      .rpc('has_role', { _user_id: user.id, _role: 'leader' });
 
-    if (roleError || !roleData || !['admin', 'coach', 'leader'].includes(roleData.role)) {
+    if (!isAdmin && !isCoach && !isLeader) {
       return json({ error: 'Insufficient permissions' }, 403);
     }
 
@@ -163,7 +163,7 @@ serve(async (req) => {
     }
 
     // Coaches can only create athletes
-    if (roleData.role === 'coach' && role !== 'athlete') {
+    if (isCoach && !isAdmin && role !== 'athlete') {
       return json({ error: 'Los coaches solo pueden crear atletas' }, 403);
     }
 

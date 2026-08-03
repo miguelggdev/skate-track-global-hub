@@ -89,11 +89,22 @@ cmd_init() {
     info "La app está disponible en: https://${DOMAIN}"
 }
 
+# ── Rollback al commit anterior ───────────────────────────────────────────
+rollback() {
+    warn "Deployment failed — rolling back to $ROLLBACK_COMMIT"
+    git checkout "$ROLLBACK_COMMIT" -- .
+    docker compose up -d --build
+}
+
 # ── Actualización (git pull + rebuild) ────────────────────────────────────
 cmd_update() {
     info "=== ACTUALIZACIÓN ==="
     check_deps
     load_env
+
+    # Guardar commit actual para posible rollback
+    ROLLBACK_COMMIT=$(git rev-parse HEAD)
+    info "Commit de rollback registrado: $ROLLBACK_COMMIT"
 
     info "Actualizando código..."
     git pull origin master
@@ -110,7 +121,22 @@ cmd_update() {
 
     # Reiniciar todos los servicios
     info "Reiniciando servicios..."
-    docker compose up -d
+    if ! docker compose up -d; then
+        rollback
+        error "Deploy fallido: se restauró el commit $ROLLBACK_COMMIT."
+    fi
+
+    # Health check post-deploy: esperar hasta 60s a que el backend responda
+    info "Verificando health post-deploy..."
+    HEALTH_OK=0
+    for i in $(seq 1 12); do
+        docker compose exec -T backend curl -sf http://localhost:8000/health >/dev/null 2>&1 && HEALTH_OK=1 && break
+        sleep 5
+    done
+    if [[ "$HEALTH_OK" -ne 1 ]]; then
+        rollback
+        error "Health check fallido tras el deploy: se restauró el commit $ROLLBACK_COMMIT."
+    fi
 
     info "=== Actualización completada ==="
     docker compose ps

@@ -385,22 +385,22 @@ const Finance = () => {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
-                      <p className="font-medium">Cuotas Enero</p>
-                      <p className="text-sm text-muted-foreground">Vence: 31/01/2024</p>
+                      <p className="font-medium">Cuotas {new Date().toLocaleString('es-ES', { month: 'long' })}</p>
+                      <p className="text-sm text-muted-foreground">Vence: {new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toLocaleDateString('es-ES')}</p>
                     </div>
                     <span className="text-lg font-bold text-green-600">{formatCurrency(2450, currency)}</span>
                   </div>
                   <div className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium">Alquiler Instalaciones</p>
-                      <p className="text-sm text-muted-foreground">Vence: 15/01/2024</p>
+                      <p className="text-sm text-muted-foreground">Vence: {new Date(new Date().getFullYear(), new Date().getMonth(), 15).toLocaleDateString('es-ES')}</p>
                     </div>
                     <span className="text-lg font-bold text-orange-600">{formatCurrency(1200, currency)}</span>
                   </div>
                   <div className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium">Seguros</p>
-                      <p className="text-sm text-muted-foreground">Vence: 20/01/2024</p>
+                      <p className="text-sm text-muted-foreground">Vence: {new Date(new Date().getFullYear(), new Date().getMonth(), 20).toLocaleDateString('es-ES')}</p>
                     </div>
                     <span className="text-lg font-bold text-red-600">{formatCurrency(850, currency)}</span>
                   </div>

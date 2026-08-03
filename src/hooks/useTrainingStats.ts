@@ -34,30 +34,81 @@ export const useTrainingStats = () => {
   return useQuery({
     queryKey: ['training-stats'],
     queryFn: async (): Promise<TrainingStats> => {
-      // Get total athletes count
-      const { data: athletesData, error: athletesError } = await supabase
-        .from('athletes')
-        .select('id')
-        .eq('status', 'active');
-
-      if (athletesError) throw athletesError;
-
-      // Get active athletes (those with recent attendance)
-      // PostgREST ignora filtros en tablas embebidas (.gte('training_sessions.scheduled_at',...))
-      // — filtramos en JS usando el campo embedded que sí viene en la respuesta.
+      // Pre-compute date strings needed for query filters
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
-      const { data: activeAthletesData, error: activeAthletesError } = await supabase
-        .from('training_attendance')
-        .select('athlete_id, training_sessions!inner(scheduled_at)')
-        .eq('attended', true);
+      const today = new Date().toISOString().split('T')[0];
 
-      if (activeAthletesError) throw activeAthletesError;
+      const nextWeek = new Date();
+      nextWeek.setDate(nextWeek.getDate() + 7);
+      const nextWeekStr = nextWeek.toISOString().split('T')[0];
 
+      const now = new Date();
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+
+      // ── Round 1: all independent queries in parallel ───────────────────────
+      const [
+        athletesRes,
+        activeAthletesRes,
+        attendanceRes,
+        sessionsRes,
+        activeSessionsRes,
+        upcomingSessionsRes,
+        monthlySessionsRes,
+        weekAttendanceRes,
+      ] = await Promise.all([
+        supabase.from('athletes').select('id').eq('status', 'active'),
+        supabase
+          .from('training_attendance')
+          .select('athlete_id, training_sessions!inner(scheduled_at)')
+          .eq('attended', true),
+        supabase
+          .from('training_attendance')
+          .select('attended, training_sessions!inner(scheduled_at)'),
+        supabase.from('training_sessions').select('duration_minutes'),
+        supabase.from('training_sessions').select('id').gte('scheduled_at', today),
+        supabase
+          .from('training_sessions')
+          .select('id')
+          .gte('scheduled_at', today)
+          .lte('scheduled_at', nextWeekStr),
+        supabase
+          .from('training_sessions')
+          .select('duration_minutes')
+          .gte('scheduled_at', firstDayOfMonth)
+          .lte('scheduled_at', today),
+        supabase
+          .from('training_attendance')
+          .select('attended, training_sessions!inner(scheduled_at)'),
+      ]);
+
+      if (athletesRes.error)       throw athletesRes.error;
+      if (activeAthletesRes.error) throw activeAthletesRes.error;
+      if (attendanceRes.error)     throw attendanceRes.error;
+      if (sessionsRes.error)       throw sessionsRes.error;
+      if (activeSessionsRes.error) throw activeSessionsRes.error;
+      if (upcomingSessionsRes.error) throw upcomingSessionsRes.error;
+      if (monthlySessionsRes.error) throw monthlySessionsRes.error;
+
+      // ── Round 2: last 30-day session queries (share same filter) ──────────
+      // scheduledAtRes is reused for both weeklyIntensity and peakTrainingTimes.
+      const [trainingTypesRes, scheduledAtRes, coachSessionsRes] = await Promise.all([
+        supabase.from('training_sessions').select('training_type').gte('scheduled_at', thirtyDaysAgoStr),
+        supabase.from('training_sessions').select('scheduled_at').gte('scheduled_at', thirtyDaysAgoStr),
+        supabase.from('training_sessions').select('coach_id').gte('scheduled_at', thirtyDaysAgoStr),
+      ]);
+
+      if (trainingTypesRes.error)  throw trainingTypesRes.error;
+      if (scheduledAtRes.error)    throw scheduledAtRes.error;
+      if (coachSessionsRes.error)  throw coachSessionsRes.error;
+
+      // ── Derive values from fetched data ───────────────────────────────────
+
+      // Active athletes (attended in last 30 days)
       const uniqueActiveAthletes = new Set(
-        (activeAthletesData ?? [])
+        (activeAthletesRes.data ?? [])
           .filter(a => {
             const s = a.training_sessions as { scheduled_at: string } | null;
             return (s?.scheduled_at ?? '').slice(0, 10) >= thirtyDaysAgoStr;
@@ -65,14 +116,8 @@ export const useTrainingStats = () => {
           .map(a => a.athlete_id)
       );
 
-      // Get completion rate
-      const { data: attendanceData, error: attendanceError } = await supabase
-        .from('training_attendance')
-        .select('attended, training_sessions!inner(scheduled_at)');
-
-      if (attendanceError) throw attendanceError;
-
-      const recentAttendance = (attendanceData ?? []).filter(a => {
+      // Completion rate
+      const recentAttendance = (attendanceRes.data ?? []).filter(a => {
         const s = a.training_sessions as { scheduled_at: string } | null;
         return (s?.scheduled_at ?? '').slice(0, 10) >= thirtyDaysAgoStr;
       });
@@ -80,73 +125,26 @@ export const useTrainingStats = () => {
       const attendedRecords = recentAttendance.filter(a => a.attended).length;
       const completionRate = totalAttendanceRecords > 0 ? (attendedRecords / totalAttendanceRecords) * 100 : 0;
 
-      // Get average session time
-      const { data: sessionsData, error: sessionsError } = await supabase
-        .from('training_sessions')
-        .select('duration_minutes');
-
-      if (sessionsError) throw sessionsError;
-
+      // Average session time
       let totalMinutes = 0;
       let sessionCount = 0;
-
-      sessionsData?.forEach(session => {
+      sessionsRes.data?.forEach(session => {
         totalMinutes += session.duration_minutes ?? 0;
         sessionCount++;
       });
-
       const avgSessionTime = sessionCount > 0 ? totalMinutes / sessionCount / 60 : 0;
 
-      // Get active sessions (today and future)
-      const today = new Date().toISOString().split('T')[0];
-      const { data: activeSessionsData, error: activeSessionsError } = await supabase
-        .from('training_sessions')
-        .select('id')
-        .gte('scheduled_at', today);
-
-      if (activeSessionsError) throw activeSessionsError;
-
-      // Get upcoming sessions (next 7 days)
-      const nextWeek = new Date();
-      nextWeek.setDate(nextWeek.getDate() + 7);
-
-      const { data: upcomingSessionsData, error: upcomingSessionsError } = await supabase
-        .from('training_sessions')
-        .select('id')
-        .gte('scheduled_at', today)
-        .lte('scheduled_at', nextWeek.toISOString().split('T')[0]);
-
-      if (upcomingSessionsError) throw upcomingSessionsError;
-
-      // Get monthly training hours
-      const currentMonth = new Date();
-      const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-
-      const { data: monthlySessionsData, error: monthlySessionsError } = await supabase
-        .from('training_sessions')
-        .select('duration_minutes')
-        .gte('scheduled_at', firstDayOfMonth.toISOString().split('T')[0])
-        .lte('scheduled_at', today);
-
-      if (monthlySessionsError) throw monthlySessionsError;
-
-      const monthlyHours = (monthlySessionsData ?? []).reduce((sum, session) => {
+      // Monthly hours
+      const monthlyHours = (monthlySessionsRes.data ?? []).reduce((sum, session) => {
         return sum + (session.duration_minutes ?? 0) / 60;
       }, 0);
 
-      // Get training type distribution
-      const { data: trainingTypesData, error: trainingTypesError } = await supabase
-        .from('training_sessions')
-        .select('training_type')
-        .gte('scheduled_at', thirtyDaysAgo.toISOString().split('T')[0]);
-
-      if (trainingTypesError) throw trainingTypesError;
-
-      const typeDistribution = trainingTypesData?.reduce((acc, session) => {
+      // Training type distribution
+      const typeDistribution = (trainingTypesRes.data ?? []).reduce((acc, session) => {
         const type = session.training_type;
         acc[type] = (acc[type] ?? 0) + 1;
         return acc;
-      }, {} as Record<string, number>) || {};
+      }, {} as Record<string, number>);
 
       const totalSessions = Object.values(typeDistribution).reduce((sum, count) => sum + count, 0);
       const trainingTypeDistribution = Object.entries(typeDistribution).map(([type, count]) => ({
@@ -155,45 +153,24 @@ export const useTrainingStats = () => {
         percentage: totalSessions > 0 ? (count / totalSessions) * 100 : 0,
       }));
 
-      // Get weekly intensity (sessions per week trend)
-      const { data: weeklySessionsData, error: weeklySessionsError } = await supabase
-        .from('training_sessions')
-        .select('scheduled_at')
-        .gte('scheduled_at', thirtyDaysAgo.toISOString().split('T')[0]);
-
-      if (weeklySessionsError) throw weeklySessionsError;
-
-      const weeksData = weeklySessionsData?.reduce((acc, session) => {
+      // Weekly intensity
+      const weeksData = (scheduledAtRes.data ?? []).reduce((acc, session) => {
         const date = new Date(session.scheduled_at);
         const weekStart = new Date(date);
         weekStart.setDate(date.getDate() - date.getDay());
         const weekKey = weekStart.toISOString().split('T')[0];
         acc[weekKey] = (acc[weekKey] ?? 0) + 1;
         return acc;
-      }, {} as Record<string, number>) || {};
+      }, {} as Record<string, number>);
 
       const weeklyIntensity = Object.values(weeksData).reduce((sum, count) => sum + count, 0) / Math.max(Object.keys(weeksData).length, 1);
 
-      // Get coach utilization
-      const { data: coachSessionsData, error: coachSessionsError } = await supabase
-        .from('training_sessions')
-        .select('coach_id')
-        .gte('scheduled_at', thirtyDaysAgo.toISOString().split('T')[0]);
-
-      if (coachSessionsError) throw coachSessionsError;
-
-      const uniqueCoaches = new Set(coachSessionsData?.map(s => s.coach_id).filter(Boolean));
+      // Coach utilization
+      const uniqueCoaches = new Set((coachSessionsRes.data ?? []).map(s => s.coach_id).filter(Boolean));
       const coachUtilization = uniqueCoaches.size;
 
-      // Get attendance trends (last 7 days) — single query, grouped in JS
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-      const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
-
-      const { data: weekAttendance = [] } = await supabase
-        .from('training_attendance')
-        .select('attended, training_sessions!inner(scheduled_at)');
-
+      // Attendance trends (last 7 days)
+      const weekAttendance = weekAttendanceRes.data ?? [];
       const attendanceTrends = Array.from({ length: 7 }, (_, idx) => {
         const date = new Date();
         date.setDate(date.getDate() - (6 - idx));
@@ -212,15 +189,8 @@ export const useTrainingStats = () => {
         };
       });
 
-      // Get peak training times
-      const { data: peakTimesData, error: peakTimesError } = await supabase
-        .from('training_sessions')
-        .select('scheduled_at')
-        .gte('scheduled_at', thirtyDaysAgo.toISOString().split('T')[0]);
-
-      if (peakTimesError) throw peakTimesError;
-
-      const peakTimes = peakTimesData?.reduce((acc, session) => {
+      // Peak training times
+      const peakTimes = (scheduledAtRes.data ?? []).reduce((acc, session) => {
         const dt = new Date(session.scheduled_at);
         const hour = dt.getHours();
         const day = dt.toLocaleDateString('en-US', { weekday: 'long' });
@@ -231,19 +201,19 @@ export const useTrainingStats = () => {
         }
         acc[key].sessionCount++;
         return acc;
-      }, {} as Record<string, { hour: number; day: string; sessionCount: number }>) || {};
+      }, {} as Record<string, { hour: number; day: string; sessionCount: number }>);
 
       const peakTrainingTimes = Object.values(peakTimes)
         .sort((a, b) => b.sessionCount - a.sessionCount)
         .slice(0, 10);
 
       return {
-        totalAthletes: athletesData?.length ?? 0,
+        totalAthletes: athletesRes.data?.length ?? 0,
         activeAthletes: uniqueActiveAthletes.size,
         completionRate: Math.round(completionRate * 10) / 10,
         avgSessionTime: Math.round(avgSessionTime * 10) / 10,
-        activeSessions: activeSessionsData?.length ?? 0,
-        upcomingSessions: upcomingSessionsData?.length ?? 0,
+        activeSessions: activeSessionsRes.data?.length ?? 0,
+        upcomingSessions: upcomingSessionsRes.data?.length ?? 0,
         monthlyTrainingHours: Math.round(monthlyHours * 10) / 10,
         weeklyIntensity: Math.round(weeklyIntensity * 10) / 10,
         coachUtilization,

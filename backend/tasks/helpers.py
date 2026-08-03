@@ -2,12 +2,16 @@
 from __future__ import annotations
 
 import logging
+import os
 from datetime import datetime, timezone
 from typing import Any
 
 from database.supabase_client import get_supabase
 
 logger = logging.getLogger(__name__)
+
+_RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+_RESEND_FROM = os.getenv("RESEND_FROM_EMAIL", "noreply@skateclubhub.com")
 
 
 def now_utc() -> datetime:
@@ -145,22 +149,42 @@ def get_coach_user_ids() -> list[str]:
         return []
 
 
-def send_email_placeholder(
-    to_email: str,
-    subject: str,
-    body: str,
-    automation_id: str = "unknown",
-) -> None:
-    """Log intent to send email — wire up Resend/SMTP here when ready."""
-    logger.info("[EMAIL QUEUED] automation=%s to=%s subject=%s", automation_id, to_email, subject)
-    _log_notification(
-        automation_id=automation_id,
-        channel="email",
-        recipient_ref=to_email,
-        subject=subject,
-        body=body,
-        status="queued",
-    )
+def send_email(to: str, subject: str, html_body: str, text_body: str | None = None) -> bool:
+    """Send transactional email via Resend. Returns True on success.
+
+    Requires RESEND_API_KEY env var. Logs warning and returns False if not set.
+    """
+    if not _RESEND_API_KEY:
+        logger.warning("RESEND_API_KEY not configured — email not sent to %s", to)
+        return False
+
+    try:
+        import httpx
+        payload: dict = {
+            "from": _RESEND_FROM,
+            "to": [to],
+            "subject": subject,
+            "html": html_body,
+        }
+        if text_body:
+            payload["text"] = text_body
+
+        resp = httpx.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {_RESEND_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json=payload,
+            timeout=15.0,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        logger.info("Email sent to %s — id=%s", to, data.get("id"))
+        return True
+    except Exception as exc:
+        logger.error("Email send failed to %s: %s", to, exc)
+        return False
 
 
 def task_wrapper(automation_id: str, agent_id: str):

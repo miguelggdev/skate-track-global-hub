@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useUserProfile } from './useUserProfile';
@@ -42,44 +43,47 @@ export const useCurrentAthlete = () => {
         .from('athletes')
         .select('*')
         .eq('user_id', user!.id)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // No athlete record — create one automatically from profile
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('first_name, last_name, email, date_of_birth')
-            .eq('id', user!.id)
-            .single();
-
-          const { data: created, error: createError } = await supabase
-            .from('athletes')
-            .insert({
-              user_id:           user!.id,
-              first_name:        profileData?.first_name ?? '',
-              last_name:         profileData?.last_name  ?? '',
-              email:             profileData?.email      ?? '',
-              date_of_birth:     profileData?.date_of_birth,
-              category:          'juvenil',
-              level:             'juvenil_primer_ano',
-              status:            'active',
-              performance_score: 0,
-            })
-            .select()
-            .single();
-
-          if (createError) throw createError;
-          return created as AthleteData;
-        }
-        throw error;
-      }
-
-      return data as AthleteData;
+      if (error) throw error;
+      return data as AthleteData | null;
     },
     enabled: !!user && isAthlete,
     retry: false,
   });
+
+  // When a profile exists but no athlete record, create one (profile init, not data fetching).
+  useEffect(() => {
+    if (!user || !isAthlete || loading || athlete !== null) return;
+
+    const createAthleteRecord = async () => {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, email, date_of_birth')
+        .eq('id', user.id)
+        .single();
+
+      const { error: createError } = await supabase
+        .from('athletes')
+        .insert({
+          user_id:           user.id,
+          first_name:        profileData?.first_name ?? '',
+          last_name:         profileData?.last_name  ?? '',
+          email:             profileData?.email      ?? '',
+          date_of_birth:     profileData?.date_of_birth,
+          category:          'juvenil',
+          level:             'juvenil_primer_ano',
+          status:            'active',
+          performance_score: 0,
+        });
+
+      if (!createError) {
+        queryClient.invalidateQueries({ queryKey: ['current-athlete', user.id] });
+      }
+    };
+
+    createAthleteRecord();
+  }, [user, isAthlete, loading, athlete, queryClient]);
 
   const refreshAthlete = () => queryClient.invalidateQueries({ queryKey: ['current-athlete', user?.id] });
 

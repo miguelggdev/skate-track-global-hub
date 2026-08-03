@@ -10,7 +10,7 @@ from tasks.helpers import (
     get_admin_user_ids,
     log_activity,
     notify_user,
-    send_email_placeholder,
+    send_email,
 )
 
 logger = logging.getLogger(__name__)
@@ -192,12 +192,21 @@ def rotate_inactive_sessions() -> dict:
     # Here we report on profiles that haven't accessed in 30+ days.
     thirty_days_ago = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
 
-    inactive_profiles = (
-        db.table("profiles")
-        .select("id, first_name, last_name, updated_at")
-        .lte("updated_at", thirty_days_ago)
-        .execute()
-    ).data or []
+    PAGE_SIZE = 1000
+    offset = 0
+    inactive_profiles = []
+    while True:
+        page = (
+            db.table("profiles")
+            .select("id, first_name, last_name, updated_at")
+            .lte("updated_at", thirty_days_ago)
+            .range(offset, offset + PAGE_SIZE - 1)
+            .execute()
+        ).data or []
+        inactive_profiles.extend(page)
+        if len(page) < PAGE_SIZE:
+            break
+        offset += PAGE_SIZE
 
     # In Supabase, sessions expire per JWT TTL; we log the count for reporting.
     msg = (

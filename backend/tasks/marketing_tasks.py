@@ -10,7 +10,7 @@ from tasks.helpers import (
     get_admin_user_ids,
     log_activity,
     notify_user,
-    send_email_placeholder,
+    send_email,
 )
 
 logger = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ def birthday_greetings() -> dict:
             actions += 1
 
         if athlete.get("email"):
-            send_email_placeholder(athlete["email"], f"¡Feliz Cumpleaños {name}!", msg, "AUTO-21")
+            send_email(athlete["email"], f"¡Feliz Cumpleaños {name}!", msg)
 
         # Notify the coach to mention it in training
         if athlete.get("coach_id"):
@@ -102,15 +102,15 @@ def reactivate_inactive_athletes() -> dict:
         .gte("created_at", thirty_days_ago)
         .execute()
     ).data or []
-    attended_ids = [r["athlete_id"] for r in recent_ids_result] or ["00000000-0000-0000-0000-000000000000"]
+    attended_ids = {r["athlete_id"] for r in recent_ids_result}
 
-    active_no_attendance = (
+    all_active = (
         db.table("athletes")
         .select("id, first_name, last_name, email, user_id")
         .eq("status", "active")
-        .not_.in_("id", attended_ids)
         .execute()
     ).data or []
+    active_no_attendance = [a for a in all_active if a["id"] not in attended_ids]
 
     targets = {a["id"]: a for a in inactive + active_no_attendance}
 
@@ -140,7 +140,7 @@ def reactivate_inactive_athletes() -> dict:
             actions += 1
 
         if athlete.get("email"):
-            send_email_placeholder(athlete["email"], "¡Te esperamos en el club!", msg, "AUTO-22")
+            send_email(athlete["email"], "¡Te esperamos en el club!", msg)
 
     # Notify admin of campaign
     for uid in get_admin_user_ids():
@@ -209,7 +209,7 @@ def satisfaction_survey() -> dict:
         actions += 1
 
         if athlete.get("email"):
-            send_email_placeholder(athlete["email"], f"Encuesta NPS — {period}", msg, "AUTO-23")
+            send_email(athlete["email"], f"Encuesta NPS — {period}", msg)
 
     log_activity("AUTO-23", "AG-09", "success",
                  records_found=len(athletes), actions_taken=actions,
@@ -268,7 +268,7 @@ def request_testimonial(result_id: str) -> dict:
         actions += 1
 
     if athlete.get("email"):
-        send_email_placeholder(athlete["email"], f"Tu logro {medal} en la competencia", msg, "AUTO-24")
+        send_email(athlete["email"], f"Tu logro {medal} en la competencia", msg)
 
     log_activity("AUTO-24", "AG-09", "success",
                  records_found=1, actions_taken=actions,
@@ -327,11 +327,10 @@ def season_enrollment_campaign() -> dict:
             actions += 1
 
         if athlete.get("email"):
-            send_email_placeholder(
+            send_email(
                 athlete["email"],
                 f"Inscripción temporada {next_season} — Club Patinaje",
                 msg,
-                "AUTO-25",
             )
 
     # Summary to admin

@@ -33,7 +33,7 @@ export const useDuplicatePaymentCheck = (
         query = query.neq('id', excludeTransactionId);
       }
 
-      const { data, error } = await query.maybeSingle();
+      const { data, error } = await query.limit(1).maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         throw new Error(error.message);

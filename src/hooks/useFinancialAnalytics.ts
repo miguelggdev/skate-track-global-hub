@@ -154,13 +154,22 @@ export function useFinancialAnalytics(filters?: FilterState) {
       const athletesInArrearsPercentage = totalAthletes > 0 ? (athletesInArrearsCount / totalAthletes) * 100 : 0;
 
       // ── Payment status breakdown ───────────────────────────────────────────
-      const overdueOnly = filteredAthletes.filter(
-        a => withPendingIds.has(a.id) && !paidThisMonthIds.has(a.id),
-      ).length;
+      const athletesWithPendingIds = new Set(
+        transactions
+          .filter(t => t.payment_status === "pending")
+          .map(t => t.athlete_id)
+          .filter(Boolean),
+      );
+      const athletesWithOverdueIds = new Set(
+        transactions
+          .filter(t => t.payment_status === "overdue")
+          .map(t => t.athlete_id)
+          .filter(Boolean),
+      );
       const paymentStatusBreakdown = {
         paid:    athletesUpToDateCount,
-        pending: Math.ceil(overdueOnly / 2),
-        overdue: Math.floor(overdueOnly / 2),
+        pending: filteredAthletes.filter(a => athletesWithPendingIds.has(a.id) && !paidThisMonthIds.has(a.id)).length,
+        overdue: filteredAthletes.filter(a => athletesWithOverdueIds.has(a.id) && !paidThisMonthIds.has(a.id)).length,
       };
 
       // ── 12-month revenue trend ─────────────────────────────────────────────

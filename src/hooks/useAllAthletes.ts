@@ -33,7 +33,20 @@ export const useAllAthletes = () => {
       const { data, error } = await supabase
         .from('athletes')
         .select(`
-          *,
+          id,
+          user_id,
+          first_name,
+          last_name,
+          email,
+          category,
+          level,
+          status,
+          join_date,
+          athlete_number,
+          emergency_contact_name,
+          emergency_contact_phone,
+          achievements,
+          gender,
           profiles(
             avatar_url,
             date_of_birth,

@@ -10,7 +10,7 @@ from tasks.helpers import (
     get_admin_user_ids,
     log_activity,
     notify_user,
-    send_email_placeholder,
+    send_email,
 )
 
 logger = logging.getLogger(__name__)
@@ -60,11 +60,10 @@ def generate_payment_receipt(transaction_id: str) -> dict:
                 )
                 actions += 1
             if athlete.get("email"):
-                send_email_placeholder(
+                send_email(
                     athlete["email"],
                     "Recibo de pago — Club Patinaje",
                     msg,
-                    "AUTO-07",
                 )
                 actions += 1
 
@@ -230,8 +229,13 @@ def daily_cash_close() -> dict:
 @celery_app.task(name="tasks.finance.monthly_financial_projection")
 def monthly_financial_projection() -> dict:
     """Último día del mes 18:00 — proyección de flujo de caja 3 meses."""
-    db = get_supabase()
+    import calendar as _calendar
     today = date.today()
+    last_day = _calendar.monthrange(today.year, today.month)[1]
+    if today.day != last_day:
+        return {"skipped": "not last day of month"}
+
+    db = get_supabase()
     # Last 3 months of data
     three_months_ago = (today - timedelta(days=90)).isoformat()
 
@@ -324,11 +328,10 @@ def membership_renewal_reminder() -> dict:
                 actions += 1
 
             if athlete.get("email"):
-                send_email_placeholder(
+                send_email(
                     athlete["email"],
                     f"Renueva tu membresía — vence en {days} días",
                     msg,
-                    "AUTO-11",
                 )
                 actions += 1
 
