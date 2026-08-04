@@ -16,6 +16,8 @@ class BaseAgent(ABC):
             model="claude-sonnet-4-6",
             api_key=settings.anthropic_api_key,
             max_tokens=4096,
+            timeout=45.0,
+            max_retries=2,
         )
 
     @property

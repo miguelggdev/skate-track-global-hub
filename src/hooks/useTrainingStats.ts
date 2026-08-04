@@ -57,7 +57,6 @@ export const useTrainingStats = () => {
         activeSessionsRes,
         upcomingSessionsRes,
         monthlySessionsRes,
-        weekAttendanceRes,
       ] = await Promise.all([
         supabase.from('athletes').select('id').eq('status', 'active'),
         supabase
@@ -79,9 +78,6 @@ export const useTrainingStats = () => {
           .select('duration_minutes')
           .gte('scheduled_at', firstDayOfMonth)
           .lte('scheduled_at', today),
-        supabase
-          .from('training_attendance')
-          .select('attended, training_sessions!inner(scheduled_at)'),
       ]);
 
       if (athletesRes.error)       throw athletesRes.error;
@@ -169,8 +165,8 @@ export const useTrainingStats = () => {
       const uniqueCoaches = new Set((coachSessionsRes.data ?? []).map(s => s.coach_id).filter(Boolean));
       const coachUtilization = uniqueCoaches.size;
 
-      // Attendance trends (last 7 days)
-      const weekAttendance = weekAttendanceRes.data ?? [];
+      // Attendance trends (last 7 days) — reuse attendanceRes data
+      const weekAttendance = attendanceRes.data ?? [];
       const attendanceTrends = Array.from({ length: 7 }, (_, idx) => {
         const date = new Date();
         date.setDate(date.getDate() - (6 - idx));

@@ -31,15 +31,15 @@ interface LinkedAthlete {
 
 interface AttendanceRecord {
   id: string;
-  status: string;
+  attended: boolean;
   recorded_at: string;
   training_sessions: { title: string; scheduled_at: string } | null;
 }
 
 interface Transaction {
   id: string;
-  type: string;
-  status: string;
+  transaction_type: string;
+  payment_status: string;
   amount: number;
   due_date: string | null;
   notes: string | null;
@@ -138,9 +138,8 @@ const ParentDashboard: React.FC = () => {
     queryFn: async () => {
       if (!user) return [];
       type ParentAthleteRow = { athlete_id: string };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const linksRes = await (supabase as any)
-        .from('parent_athletes')
+      // TODO: regenerar tipos Supabase para incluir parent_athletes
+      const linksRes = await supabase.from('parent_athletes' as any)
         .select('athlete_id')
         .eq('parent_user_id', user.id) as { data: ParentAthleteRow[] | null; error: { message: string } | null };
 
@@ -149,10 +148,11 @@ const ParentDashboard: React.FC = () => {
       if (!links || links.length === 0) return [];
 
       const ids = links.map(l => l.athlete_id);
-      const { data: athletes } = await supabase
+      const { data: athletes, error: athletesError } = await supabase
         .from('athletes')
         .select('id, first_name, last_name, category, status, performance_score, photo_url, date_of_birth')
         .in('id', ids);
+      if (athletesError) throw athletesError;
 
       return (athletes ?? []) as LinkedAthlete[];
     },
@@ -168,12 +168,13 @@ const ParentDashboard: React.FC = () => {
     queryKey: ['parent-attendance', activeAthleteId],
     queryFn: async () => {
       if (!activeAthleteId) return [];
-      const { data } = await supabase
-        .from('attendance')
-        .select('id, status, recorded_at, training_sessions(title, scheduled_at)')
+      const { data, error } = await supabase
+        .from('training_attendance')
+        .select('id, attended, recorded_at, training_sessions(title, scheduled_at)')
         .eq('athlete_id', activeAthleteId)
         .order('recorded_at', { ascending: false })
         .limit(30);
+      if (error) throw error;
       return (data ?? []) as AttendanceRecord[];
     },
     enabled: !!activeAthleteId,
@@ -184,12 +185,13 @@ const ParentDashboard: React.FC = () => {
     queryKey: ['parent-transactions', activeAthleteId],
     queryFn: async () => {
       if (!activeAthleteId) return [];
-      const { data } = await supabase
-        .from('transactions')
-        .select('id, type, status, amount, due_date, notes')
+      const { data, error } = await supabase
+        .from('financial_transactions')
+        .select('id, transaction_type, payment_status, amount, due_date, notes')
         .eq('athlete_id', activeAthleteId)
-        .in('status', ['pending', 'overdue'])
+        .in('payment_status', ['pending', 'overdue'])
         .order('due_date', { ascending: true });
+      if (error) throw error;
       return (data ?? []) as Transaction[];
     },
     enabled: !!activeAthleteId,
@@ -201,13 +203,14 @@ const ParentDashboard: React.FC = () => {
     queryFn: async () => {
       if (!activeAthlete) return [];
       const today = new Date().toISOString().split('T')[0];
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('competitions')
         .select('id, name, location, start_date, end_date, category')
         .gte('start_date', today)
         .or(`category.is.null,category.eq.${activeAthlete.category}`)
         .order('start_date', { ascending: true })
         .limit(5);
+      if (error) throw error;
       return (data ?? []) as Competition[];
     },
     enabled: !!activeAthlete,
@@ -218,12 +221,13 @@ const ParentDashboard: React.FC = () => {
     queryKey: ['parent-awards', activeAthleteId],
     queryFn: async () => {
       if (!activeAthleteId) return [];
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('awards')
         .select('id, title, medal_type, award_date, competitions(name)')
         .eq('athlete_id', activeAthleteId)
         .order('award_date', { ascending: false })
         .limit(5);
+      if (error) throw error;
       return (data ?? []) as Award[];
     },
     enabled: !!activeAthleteId,
@@ -234,12 +238,13 @@ const ParentDashboard: React.FC = () => {
     queryKey: ['parent-medical', activeAthleteId],
     queryFn: async () => {
       if (!activeAthleteId) return [];
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('medical_sessions')
         .select('id, session_type, status, diagnosis, follow_up_date, session_date')
         .eq('athlete_id', activeAthleteId)
         .in('status', ['active_restriction', 'partial_restriction', 'scheduled'])
         .order('session_date', { ascending: false });
+      if (error) throw error;
       return (data ?? []) as MedicalRestriction[];
     },
     enabled: !!activeAthleteId,
@@ -247,7 +252,7 @@ const ParentDashboard: React.FC = () => {
 
   // Computed attendance stats
   const attendanceRate = attendance.length > 0
-    ? Math.round((attendance.filter(a => a.status === 'present').length / attendance.length) * 100)
+    ? Math.round((attendance.filter(a => a.attended).length / attendance.length) * 100)
     : null;
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -391,7 +396,7 @@ const ParentDashboard: React.FC = () => {
                         const session = rec.training_sessions as AttendanceRecord['training_sessions'];
                         return (
                           <div key={rec.id} className="flex items-center gap-3 py-1">
-                            {statusIcon(rec.status)}
+                            {statusIcon(rec.attended ? 'present' : 'absent')}
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-medium truncate">
                                 {session?.title ?? 'Sesión'}
@@ -402,8 +407,8 @@ const ParentDashboard: React.FC = () => {
                                   : format(new Date(rec.recorded_at), "d MMM", { locale: es })}
                               </p>
                             </div>
-                            <span className={`text-xs font-medium ${statusColor(rec.status)}`}>
-                              {statusLabel(rec.status)}
+                            <span className={`text-xs font-medium ${statusColor(rec.attended ? 'present' : 'absent')}`}>
+                              {statusLabel(rec.attended ? 'present' : 'absent')}
                             </span>
                           </div>
                         );
@@ -437,7 +442,7 @@ const ParentDashboard: React.FC = () => {
                         <div key={tx.id} className="flex items-center justify-between py-3">
                           <div className="space-y-0.5">
                             <p className="text-sm font-medium capitalize">
-                              {tx.type.replace(/_/g, ' ')}
+                              {tx.transaction_type.replace(/_/g, ' ')}
                             </p>
                             {tx.notes && (
                               <p className="text-xs text-muted-foreground">{tx.notes}</p>
@@ -449,7 +454,7 @@ const ParentDashboard: React.FC = () => {
                             )}
                           </div>
                           <div className="flex items-center gap-3 shrink-0">
-                            {txStatusBadge(tx.status)}
+                            {txStatusBadge(tx.payment_status)}
                             <span className="font-semibold text-sm">
                               ${tx.amount.toLocaleString('es-CO')}
                             </span>

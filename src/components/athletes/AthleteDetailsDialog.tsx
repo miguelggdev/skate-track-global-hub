@@ -177,7 +177,7 @@ const AthleteDetailsDialog: React.FC<AthleteDetailsDialogProps> = ({
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 h-auto gap-0.5">
             <TabsTrigger value="overview">General</TabsTrigger>
             <TabsTrigger value="personal">Personal</TabsTrigger>
             <TabsTrigger value="family">Familia</TabsTrigger>

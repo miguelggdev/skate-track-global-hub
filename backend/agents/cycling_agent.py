@@ -7,8 +7,22 @@ from langchain_core.messages import SystemMessage
 from langchain_core.tools import tool
 from langgraph.prebuilt import create_react_agent
 
-from agents.base_agent import BaseAgent
+from agents.base_agent import BaseAgent, current_user_id, current_user_role
 from database.supabase_client import get_supabase
+
+_STAFF_ROLES = {"admin", "coach", "leader"}
+
+
+def _can_access_athlete(client, athlete_id: str) -> bool:
+    """Retorna True si el usuario en contexto puede acceder a los datos de este atleta."""
+    role = current_user_role.get()
+    if role in _STAFF_ROLES:
+        return True
+    uid = current_user_id.get()
+    if not uid:
+        return False
+    own = client.table("athletes").select("user_id").eq("id", athlete_id).limit(1).execute()
+    return bool(own.data) and own.data[0].get("user_id") == uid
 
 
 @tool
@@ -33,6 +47,8 @@ def get_training_sessions_week() -> str:
 def get_athlete_training_history(athlete_id: str) -> str:
     """Obtiene el historial de entrenamientos recientes de un atleta (30 días) para ajustar la carga de ciclismo."""
     client = get_supabase()
+    if not _can_access_athlete(client, athlete_id):
+        return json.dumps({"error": "Acceso no autorizado a este atleta."}, ensure_ascii=False)
     thirty_days_ago = (datetime.now() - timedelta(days=30)).isoformat()
     result = (
         client.table("training_attendance")

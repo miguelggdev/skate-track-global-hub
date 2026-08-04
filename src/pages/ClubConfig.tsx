@@ -159,7 +159,7 @@ const ClubConfig = () => {
         </div>
 
         <Tabs defaultValue="club-info" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto gap-0.5">
             <TabsTrigger value="club-info" className="flex items-center gap-2">
               <Building2 className="h-4 w-4" />
               Club

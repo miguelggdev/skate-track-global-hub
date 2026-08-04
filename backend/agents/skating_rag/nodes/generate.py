@@ -1,6 +1,11 @@
+import asyncio
+import logging
+
 from anthropic import AsyncAnthropic
 from config import settings
 from agents.skating_rag.prompts import RAG_SYSTEM_PROMPT, RAG_USER_TEMPLATE
+
+logger = logging.getLogger(__name__)
 
 _client = AsyncAnthropic(api_key=settings.anthropic_api_key)
 _NO_CONTEXT_REPLY = "No encontré información sobre eso en los documentos disponibles."
@@ -39,12 +44,22 @@ async def generate_node(state: dict) -> dict:
     context_text = "\n\n---\n\n".join(context_parts)
     user_message = RAG_USER_TEMPLATE.format(context=context_text, question=question)
 
-    response = await _client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=1024,
-        system=RAG_SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_message}],
-    )
+    try:
+        response = await asyncio.wait_for(
+            _client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=1024,
+                system=RAG_SYSTEM_PROMPT,
+                messages=[{"role": "user", "content": user_message}],
+            ),
+            timeout=45.0,
+        )
+    except asyncio.TimeoutError:
+        logger.warning("generate_node: LLM call timed out after 45 s")
+        return {
+            "answer": "Lo siento, la respuesta tardó demasiado. Por favor intenta de nuevo.",
+            "sources": sources,
+        }
 
     first = response.content[0] if response.content else None
     answer = first.text if (first and hasattr(first, "text")) else _NO_CONTEXT_REPLY

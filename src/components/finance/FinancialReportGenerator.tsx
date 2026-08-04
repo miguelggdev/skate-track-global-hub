@@ -24,9 +24,19 @@ interface FinancialReportGeneratorProps {
   report: FinancialReport;
 }
 
+function escapeHtml(str: string | null | undefined): string {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export const FinancialReportGenerator: React.FC<FinancialReportGeneratorProps> = ({ report }) => {
   const { clubInfo, reportSettings } = useReportTemplate();
-  
+
   const formatDate = (date: Date) => date.toLocaleDateString('es-ES');
 
   const downloadPDF = async () => {
@@ -75,7 +85,7 @@ export const FinancialReportGenerator: React.FC<FinancialReportGeneratorProps> =
                   return `
                     <div style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
                       <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="font-weight: 500;">${category}</span>
+                        <span style="font-weight: 500;">${escapeHtml(category)}</span>
                         <span>${formatCurrency(amount)} (${percentage.toFixed(1)}%)</span>
                       </div>
                       <div style="background: #e5e5e5; height: 6px; border-radius: 3px;">
@@ -94,7 +104,7 @@ export const FinancialReportGenerator: React.FC<FinancialReportGeneratorProps> =
                   return `
                     <div style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
                       <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="font-weight: 500;">${category}</span>
+                        <span style="font-weight: 500;">${escapeHtml(category)}</span>
                         <span>${formatCurrency(amount)} (${percentage.toFixed(1)}%)</span>
                       </div>
                       <div style="background: #e5e5e5; height: 6px; border-radius: 3px;">
@@ -126,7 +136,7 @@ export const FinancialReportGenerator: React.FC<FinancialReportGeneratorProps> =
             <tbody>
               ${report.transactions.slice(0, 20).map(transaction => `
                 <tr>
-                  <td style="padding: 10px; border: 1px solid #e5e5e5;">${transaction.description}${transaction.payer_name ? ` - ${transaction.payer_name}` : ''}</td>
+                  <td style="padding: 10px; border: 1px solid #e5e5e5;">${escapeHtml(transaction.description)}${transaction.payer_name ? ` - ${escapeHtml(transaction.payer_name)}` : ''}</td>
                   <td style="padding: 10px; text-align: center; border: 1px solid #e5e5e5;">${formatDate(new Date(transaction.transaction_date))}</td>
                   <td style="padding: 10px; text-align: center; border: 1px solid #e5e5e5;">${getTransactionTypeLabel(transaction.transaction_type)}</td>
                   <td style="padding: 10px; text-align: center; border: 1px solid #e5e5e5;">${getStatusLabel(transaction.payment_status)}</td>

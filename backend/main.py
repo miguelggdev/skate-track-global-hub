@@ -8,6 +8,9 @@ app = FastAPI(
     title="Skate Club API",
     description="Backend de agentes IA para la plataforma de gestión del club de patinaje",
     version="1.0.0",
+    docs_url="/docs" if settings.environment != "production" else None,
+    redoc_url="/redoc" if settings.environment != "production" else None,
+    openapi_url="/openapi.json" if settings.environment != "production" else None,
 )
 
 _allowed_origins = [settings.frontend_url]

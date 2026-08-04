@@ -203,6 +203,7 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
       <CardContent>
         <div className="w-full overflow-x-auto">
           <Table className="min-w-[800px]">
+            <caption className="sr-only">Lista de atletas del club</caption>
             <TableHeader>
               <TableRow>
                 <TableHead>Atleta</TableHead>
@@ -258,7 +259,11 @@ const AthletesTable = ({ athletes, loading = false, onActionCompleted, paginatio
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
+                        <Button
+                          variant="ghost"
+                          className="h-8 w-8 p-0"
+                          aria-label={`Acciones para ${athlete.first_name} ${athlete.last_name}`}
+                        >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>

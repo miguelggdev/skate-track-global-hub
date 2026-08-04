@@ -32,13 +32,14 @@ export interface AttendanceReport {
   category: string;
 }
 
-function escapeHtml(s: string): string {
-  return String(s)
+function escapeHtml(str: string | null | undefined): string {
+  if (!str) return '';
+  return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/'/g, '&#39;');
 }
 
 export const generateFinancialReportPDF = async (report: FinancialReport, currency: CurrencyCode = 'COP'): Promise<void> => {

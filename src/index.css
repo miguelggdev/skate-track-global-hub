@@ -47,6 +47,9 @@
 
     --radius: 0.75rem;
 
+    /* Viewport height real en móvil (evita el bug del 100vh con barras del navegador) */
+    --vh: 1vh;
+
     /* Sidebar light */
     --sidebar-background: 222 35% 98%; /* very light blue-white */
     --sidebar-foreground: 222 30% 30%;
@@ -332,6 +335,15 @@ button:focus-visible, a:focus-visible, input:focus-visible {
     padding-right:  env(safe-area-inset-right);
     padding-bottom: env(safe-area-inset-bottom);
   }
+}
+
+/* Safe area support para dispositivos con notch (iPhone X+) */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-area-pt {
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* Prevent double-tap zoom on interactive elements */

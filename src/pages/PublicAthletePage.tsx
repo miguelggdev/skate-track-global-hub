@@ -150,7 +150,7 @@ export default function PublicAthletePage() {
           <div className="h-20 bg-gradient-to-r from-orange-500/20 via-amber-500/10 to-blue-500/20" />
           <CardContent className="px-5 pb-5 -mt-8">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-700 flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-orange-500/30 mb-3 border-4 border-background">
-              {athlete.first_name[0]}{athlete.last_name[0]}
+              {athlete.first_name?.[0] ?? '?'}{athlete.last_name?.[0] ?? '?'}
             </div>
             <h1 className="text-2xl font-black text-foreground">
               {athlete.first_name} {athlete.last_name}

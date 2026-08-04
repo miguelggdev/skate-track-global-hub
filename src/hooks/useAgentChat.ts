@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface ChatMessage {
@@ -29,6 +29,8 @@ export function useAgentChat(agentId: AgentId) {
   // Ref-based guard prevents race conditions where stale isLoading state
   // allows a second concurrent call before the first setState propagates.
   const isLoadingRef = useRef(false);
+
+  useEffect(() => () => { abortRef.current?.abort(); }, []);
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isLoadingRef.current) return;

@@ -1,5 +1,5 @@
 ﻿
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -80,7 +80,11 @@ const Finance = () => {
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
 
   const pageSize = 15;
-  
+
+  useEffect(() => {
+    setGeneratedReport(null);
+  }, [selectedPeriod, selectedReportType]);
+
   // Use paginated transactions hook
   const { data: paginatedData, isLoading: transactionsLoading } = usePaginatedTransactions(
     currentPage,
@@ -149,6 +153,7 @@ const Finance = () => {
     setSelectedTransactionType("all");
     setCurrentPage(1);
     setSearchParams({});
+    setSearchTerm('');
   };
 
   // Filter transactions by search term (client-side for current page)
@@ -327,7 +332,7 @@ const Finance = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="flex flex-wrap gap-1 h-auto p-1">
             <TabsTrigger value="overview">Resumen</TabsTrigger>
             <TabsTrigger value="transactions">Transacciones</TabsTrigger>
             <TabsTrigger value="budgets">Presupuestos</TabsTrigger>
@@ -447,7 +452,8 @@ const Finance = () => {
                   </div>
                 </div>
 
-                <div className="border rounded-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                <div className="border rounded-lg overflow-hidden" style={{ minWidth: '640px' }}>
                   <div className="grid grid-cols-7 gap-4 p-4 font-medium border-b bg-muted/50">
                     <span>Fecha</span>
                     <span>Concepto</span>
@@ -503,6 +509,7 @@ const Finance = () => {
                       </div>
                     ))
                   )}
+                </div>
                 </div>
 
                 {/* Pagination */}

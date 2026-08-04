@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface RagSource {
@@ -19,9 +19,17 @@ export function useRagChat() {
   const [messages, setMessages] = useState<RagMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isLoadingRef = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => () => { abortRef.current?.abort(); }, []);
 
   const sendMessage = useCallback(async (question: string) => {
-    if (!question.trim() || isLoading) return;
+    if (!question.trim() || isLoadingRef.current) return;
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    isLoadingRef.current = true;
     setIsLoading(true);
     setError(null);
 
@@ -38,6 +46,7 @@ export function useRagChat() {
           Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ question }),
+        signal: controller.signal,
       });
 
       if (!res.ok) {
@@ -59,9 +68,10 @@ export function useRagChat() {
       }
       setError(msg);
     } finally {
+      isLoadingRef.current = false;
       setIsLoading(false);
     }
-  }, [isLoading]);
+  }, []);
 
   const clearMessages = useCallback(() => {
     setMessages([]);

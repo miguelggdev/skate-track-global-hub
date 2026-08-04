@@ -7,13 +7,18 @@ from langchain_core.messages import SystemMessage
 from langchain_core.tools import tool
 from langgraph.prebuilt import create_react_agent
 
-from agents.base_agent import BaseAgent
+from agents.base_agent import BaseAgent, current_user_role
 from database.supabase_client import get_supabase
+
+_FINANCE_ROLES = {"admin", "finance"}
 
 
 @tool
 def get_monthly_summary(months_back: int = 0) -> str:
     """Obtiene ingresos, egresos y balance de un mes. months_back=0 es el mes actual."""
+    role = current_user_role.get()
+    if role not in _FINANCE_ROLES:
+        return json.dumps({"error": "Solo administradores y el área financiera pueden acceder a esta información."}, ensure_ascii=False)
     client = get_supabase()
     months_back = max(0, int(months_back))
     now = datetime.now()
@@ -50,6 +55,9 @@ def get_monthly_summary(months_back: int = 0) -> str:
 @tool
 def get_pending_payments() -> str:
     """Lista los pagos pendientes de cobro: inscripciones y cuotas sin pagar."""
+    role = current_user_role.get()
+    if role not in _FINANCE_ROLES:
+        return json.dumps({"error": "Solo administradores y el área financiera pueden acceder a esta información."}, ensure_ascii=False)
     client = get_supabase()
     result = (
         client.table("financial_transactions")
@@ -71,6 +79,9 @@ def get_pending_payments() -> str:
 @tool
 def get_annual_revenue() -> str:
     """Obtiene el resumen de ingresos y egresos del año en curso, mes a mes."""
+    role = current_user_role.get()
+    if role not in _FINANCE_ROLES:
+        return json.dumps({"error": "Solo administradores y el área financiera pueden acceder a esta información."}, ensure_ascii=False)
     client = get_supabase()
     year = datetime.now().year
     result = (
@@ -103,6 +114,9 @@ def get_annual_revenue() -> str:
 @tool
 def get_club_settings_targets() -> str:
     """Obtiene las metas financieras y de atletas configuradas en el club."""
+    role = current_user_role.get()
+    if role not in _FINANCE_ROLES:
+        return json.dumps({"error": "Solo administradores y el área financiera pueden acceder a esta información."}, ensure_ascii=False)
     client = get_supabase()
     result = client.table("club_settings").select("target_athletes, target_revenue, club_name").maybeSingle().execute()
     data = result.data or {}

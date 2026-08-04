@@ -271,7 +271,7 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
               <Tabs defaultValue="profile" className="flex-1 flex flex-col min-h-0">
-                <TabsList className="grid w-full grid-cols-6">
+                <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto gap-0.5">
                   <TabsTrigger value="profile">Perfil</TabsTrigger>
                   <TabsTrigger value="contact">Contacto</TabsTrigger>
                   <TabsTrigger value="medical">Médico</TabsTrigger>

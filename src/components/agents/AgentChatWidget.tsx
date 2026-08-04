@@ -61,6 +61,7 @@ export function AgentChatWidget() {
               )}
               <button
                 onClick={() => setIsOpen(false)}
+                aria-label="Cerrar chat"
                 className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded hover:bg-muted"
               >
                 <X className="h-4 w-4" />
@@ -131,13 +132,14 @@ export function AgentChatWidget() {
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
               placeholder="Pregunta al experto..."
               disabled={isLoading}
-              className="text-sm h-9"
+              className="text-sm h-11"
             />
             <Button
               size="sm"
               onClick={handleSend}
               disabled={isLoading || !input.trim()}
-              className="h-9 w-9 p-0 bg-blue-500 hover:bg-blue-600 text-white flex-shrink-0"
+              aria-label="Enviar mensaje"
+              className="h-11 w-11 p-0 bg-blue-500 hover:bg-blue-600 text-white flex-shrink-0"
             >
               <Send className="h-4 w-4" />
             </Button>

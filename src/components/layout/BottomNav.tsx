@@ -61,7 +61,7 @@ export function BottomNav({ role }: BottomNavProps) {
   const items = ITEMS_BY_ROLE[role ?? 'athlete'] ?? ITEMS_BY_ROLE.athlete;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-background/95 backdrop-blur-xl border-t border-border safe-area-pb">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-background/95 backdrop-blur-xl border-t border-border safe-area-pb" aria-label="Navegación principal móvil">
       <div className="flex items-center justify-around px-2 py-1">
         {items.map((item) => {
           const isActive = location.pathname === item.path ||
@@ -70,6 +70,8 @@ export function BottomNav({ role }: BottomNavProps) {
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
+              aria-current={isActive ? 'page' : undefined}
+              aria-label={item.title}
               className={cn(
                 'relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl min-w-[56px] transition-all duration-200',
                 isActive

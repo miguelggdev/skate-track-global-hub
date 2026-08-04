@@ -67,7 +67,7 @@ interface FilterState {
 
 export function useFinancialAnalytics(filters?: FilterState) {
   return useQuery({
-    queryKey: ["financial-analytics", filters],
+    queryKey: ["financial-analytics", filters?.month ?? null, filters?.year ?? null, filters?.categories?.join(',') ?? null],
     queryFn: async (): Promise<FinancialKPIs> => {
       const now = new Date();
       const currentMonthStart = startOfMonth(now);

@@ -51,8 +51,8 @@ async def check_hallucination_node(state: dict) -> dict:
         raw = response.content[0].text.strip().upper() if response.content else "YES"
         is_grounded = raw.startswith("YES")
     except Exception as exc:
-        logger.warning("Hallucination check failed: %s — assuming grounded", exc)
-        is_grounded = True
+        logger.warning("Hallucination check failed: %s — adding disclaimer as precaution", exc)
+        is_grounded = False
 
     if not is_grounded:
         disclaimer = _DISCLAIMER_ES if _is_spanish(answer) else _DISCLAIMER_EN

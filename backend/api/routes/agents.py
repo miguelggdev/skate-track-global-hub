@@ -49,6 +49,13 @@ class HistoryMessage(BaseModel):
     role: Literal["user", "assistant"]
     content: str
 
+    @field_validator("content")
+    @classmethod
+    def content_max_length(cls, v: str) -> str:
+        if len(v) > 2000:
+            raise ValueError("Mensaje demasiado largo (máximo 2000 caracteres)")
+        return v
+
 
 class ChatRequest(BaseModel):
     message: str

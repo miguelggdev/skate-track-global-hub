@@ -1,10 +1,13 @@
 import asyncio
+import logging
 
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import jwt
 
 from config import settings
+
+logger = logging.getLogger(__name__)
 
 security = HTTPBearer()
 
@@ -29,7 +32,8 @@ def get_current_user(
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expirado")
     except jwt.InvalidTokenError as e:
-        raise HTTPException(status_code=401, detail=f"Token inválido: {e}")
+        logger.warning("JWT validation failed: %s", e)
+        raise HTTPException(status_code=401, detail="Token inválido o expirado")
 
 
 def _fetch_app_role(user_id: str) -> str | None:

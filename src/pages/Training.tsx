@@ -1,4 +1,5 @@
 ﻿import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,7 @@ import {
 } from 'lucide-react';
 
 const Training = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showCalendarDialog, setShowCalendarDialog] = useState(false);
@@ -424,7 +426,7 @@ const Training = () => {
                     <Button
                       variant="outline"
                       className="w-full border-white text-white hover:bg-white hover:text-purple-600 text-sm"
-                      onClick={() => window.location.href = '/training/calendar'}
+                      onClick={() => navigate('/training/calendar')}
                     >
                       <Calendar className="h-4 w-4 mr-2" />
                       Ver Calendario

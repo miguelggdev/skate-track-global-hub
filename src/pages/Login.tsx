@@ -47,22 +47,27 @@ const Login = () => {
     }
 
     setIsLoading(true);
-    const { error } = await signIn(result.data.email, result.data.password);
+    try {
+      const { error } = await signIn(result.data.email, result.data.password);
 
-    if (error) {
-      toast({
-        title: t('login.error'),
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: t('common.success'),
-        description: t('login.welcome'),
-      });
-      navigate('/app', { replace: true });
+      if (error) {
+        toast({
+          title: t('login.error'),
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: t('common.success'),
+          description: t('login.welcome'),
+        });
+        navigate('/app', { replace: true });
+      }
+    } catch (e) {
+      toast({ title: "Error inesperado", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
 
@@ -76,23 +81,28 @@ const Login = () => {
     }
 
     setIsLoading(true);
-    const { error } = await resetPassword(result.data.email);
+    try {
+      const { error } = await resetPassword(result.data.email);
 
-    if (error) {
-      toast({
-        title: t('common.error'),
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: t('common.success'),
-        description: t('common.info'),
-      });
-      setShowForgotPassword(false);
-      setResetEmail('');
+      if (error) {
+        toast({
+          title: t('common.error'),
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: t('common.success'),
+          description: t('common.info'),
+        });
+        setShowForgotPassword(false);
+        setResetEmail('');
+      }
+    } catch (e) {
+      toast({ title: "Error inesperado", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (
@@ -153,7 +163,8 @@ const Login = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>

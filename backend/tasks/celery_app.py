@@ -28,4 +28,10 @@ celery_app.conf.update(
     worker_prefetch_multiplier=1,
     task_max_retries=3,
     task_default_retry_delay=60,
+    result_expires=3600,
+    task_ignore_result=False,
 )
+
+celery_app.conf.task_default_max_retries = 3
+celery_app.conf.task_retry_backoff = True
+celery_app.conf.task_retry_backoff_max = 300

@@ -474,6 +474,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
           size="sm"
           onClick={onMenuToggle}
           className="mr-3 transition-all duration-200 hover:scale-110"
+          aria-label="Abrir menú de navegación"
         >
           <Menu className="h-5 w-5" />
         </Button>
@@ -514,13 +515,14 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
             {isSearchOpen && searchResults.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-xl z-50 max-h-80 overflow-y-auto">
                 {searchResults.map((result) => (
-                  <div
+                  <button
+                    type="button"
                     key={result.id}
-                    className="px-4 py-3 hover:bg-muted/50 cursor-pointer transition-colors border-b border-border last:border-b-0"
+                    className="w-full text-left px-4 py-3 hover:bg-muted/50 cursor-pointer transition-colors border-b border-border last:border-b-0"
                     onClick={() => handleSearchResultClick(result)}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className={`w-2 h-2 rounded-full ${
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                         result.type === 'athlete' ? 'bg-blue-500' :
                         result.type === 'competition' ? 'bg-green-500' :
                         result.type === 'training' ? 'bg-orange-500' :
@@ -545,7 +547,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
                         {t(`search.${result.type}`)}
                       </Badge>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -659,16 +661,17 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
           {isSearchOpen && searchResults.length > 0 && (
             <div className="mt-1 bg-popover border border-border rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto">
               {searchResults.map((result) => (
-                <div
+                <button
+                  type="button"
                   key={result.id}
-                  className="px-3 py-2.5 hover:bg-muted/50 cursor-pointer transition-colors border-b border-border last:border-b-0"
+                  className="w-full text-left px-3 py-2.5 hover:bg-muted/50 cursor-pointer transition-colors border-b border-border last:border-b-0"
                   onClick={() => { handleSearchResultClick(result); setMobileSearchOpen(false); }}
                 >
                   <p className="font-medium text-sm text-foreground truncate">{result.title}</p>
                   {result.subtitle && (
                     <p className="text-xs text-muted-foreground truncate">{result.subtitle}</p>
                   )}
-                </div>
+                </button>
               ))}
             </div>
           )}
