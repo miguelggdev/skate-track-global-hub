@@ -51,7 +51,7 @@ def training_reminder_next_day() -> dict:
         athletes = (
             db.table("training_attendance")
             .select("athlete_id, athletes(user_id, first_name)")
-            .eq("session_id", session["id"])
+            .eq("training_session_id", session["id"])
             .execute()
         ).data or []
 
@@ -101,7 +101,7 @@ def training_reminder_2h() -> dict:
         athletes = (
             db.table("training_attendance")
             .select("athlete_id, athletes(user_id, first_name)")
-            .eq("session_id", session["id"])
+            .eq("training_session_id", session["id"])
             .execute()
         ).data or []
 
@@ -281,7 +281,7 @@ def process_waitlist(session_id: str, freed_slot_athlete_id: str) -> dict:
     waitlisted = (
         db.table("training_attendance")
         .select("athlete_id, athletes(user_id, first_name, email)")
-        .eq("session_id", session_id)
+        .eq("training_session_id", session_id)
         .eq("status", "waitlisted")
         .order("created_at")
         .limit(1)
@@ -337,7 +337,7 @@ def weekly_load_analysis() -> dict:
     attendance = (
         db.table("training_attendance")
         .select("athlete_id, attended, athletes(first_name, last_name, coach_id)")
-        .in_("session_id", session_ids)
+        .in_("training_session_id", session_ids)
         .eq("attended", True)
         .execute()
     ).data or []

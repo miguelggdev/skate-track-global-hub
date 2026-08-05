@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 
-type Transaction = Database['public']['Tables']['financial_transactions']['Row'];
+export type Transaction = Database['public']['Tables']['financial_transactions']['Row'];
 type TransactionInsert = Database['public']['Tables']['financial_transactions']['Insert'];
 
 export const useTransactions = () => {
@@ -28,6 +28,35 @@ export const useTransactions = () => {
       }
 
       return data;
+    },
+  });
+};
+
+export interface TransactionsPaginatedResult {
+  data: Transaction[];
+  count: number;
+  totalPages: number;
+  page: number;
+}
+
+export const useTransactionsPaginated = (page = 1, pageSize = 25) => {
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  return useQuery<TransactionsPaginatedResult>({
+    queryKey: ['transactions', 'paginated', page, pageSize],
+    queryFn: async () => {
+      const { data, error, count } = await supabase
+        .from('financial_transactions')
+        .select(`*, athletes:athlete_id(id, first_name, last_name, email)`, { count: 'exact' })
+        .order('transaction_date', { ascending: false })
+        .range(from, to);
+      if (error) throw new Error(error.message);
+      return {
+        data: (data ?? []) as Transaction[],
+        count: count ?? 0,
+        totalPages: Math.ceil((count ?? 0) / pageSize),
+        page,
+      };
     },
   });
 };

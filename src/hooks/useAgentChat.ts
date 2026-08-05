@@ -8,27 +8,46 @@ export interface ChatMessage {
 }
 
 export type AgentId =
-  | 'admin'
-  | 'skating'
-  | 'nutrition'
-  | 'gym'
-  | 'medical'
-  | 'cycling'
-  | 'psychology'
-  | 'finance'
-  | 'marketing'
-  | 'results';
+  | 'admin' | 'skating' | 'nutrition' | 'gym' | 'medical'
+  | 'cycling' | 'psychology' | 'finance' | 'marketing' | 'results';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:8000';
+const MAX_STORED = 50;
+
+function storageKey(id: AgentId) { return `agent-chat-${id}`; }
+
+function loadMessages(id: AgentId): ChatMessage[] {
+  try {
+    const raw = localStorage.getItem(storageKey(id));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch { return []; }
+}
+
+function saveMessages(id: AgentId, msgs: ChatMessage[]) {
+  try {
+    localStorage.setItem(storageKey(id), JSON.stringify(msgs.slice(-MAX_STORED)));
+  } catch { /* ignore quota */ }
+}
 
 export function useAgentChat(agentId: AgentId) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => loadMessages(agentId));
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  // Ref-based guard prevents race conditions where stale isLoading state
-  // allows a second concurrent call before the first setState propagates.
   const isLoadingRef = useRef(false);
+
+  // Switch agent: reload from storage
+  useEffect(() => {
+    setMessages(loadMessages(agentId));
+    setError(null);
+  }, [agentId]);
+
+  // Persist on change
+  useEffect(() => {
+    saveMessages(agentId, messages);
+  }, [agentId, messages]);
 
   useEffect(() => () => { abortRef.current?.abort(); }, []);
 
@@ -47,31 +66,53 @@ export function useAgentChat(agentId: AgentId) {
     const historySnapshot = messages.map(m => ({ role: m.role, content: m.content }));
     setMessages(prev => [...prev, userMsg]);
 
+    const assistantId = crypto.randomUUID();
+    setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: '' }]);
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No autenticado');
 
-      const history = historySnapshot;
-
-      const res = await fetch(`${BACKEND_URL}/api/agents/${agentId}/chat`, {
+      const res = await fetch(`${BACKEND_URL}/api/agents/${agentId}/chat/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ message: text, history }),
+        body: JSON.stringify({ message: text, history: historySnapshot }),
         signal: controller.signal,
       });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail ?? `Error ${res.status}`);
+        throw new Error((err as { detail?: string }).detail ?? `Error ${res.status}`);
       }
 
-      const data = await res.json();
-      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: data.response }]);
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const payload = line.slice(6).trim();
+          if (payload === '[DONE]') break;
+          try {
+            const { token } = JSON.parse(payload) as { token: string };
+            setMessages(prev =>
+              prev.map(m => m.id === assistantId ? { ...m, content: m.content + token } : m)
+            );
+          } catch { /* malformed line */ }
+        }
+      }
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
+      setMessages(prev => prev.filter(m => m.id !== assistantId));
       let msg = 'Error desconocido';
       if (err instanceof TypeError && err.message === 'Failed to fetch') {
         msg = 'No se puede conectar con el servidor de agentes. Verifica que el backend esté en línea.';
@@ -88,7 +129,8 @@ export function useAgentChat(agentId: AgentId) {
   const clearMessages = useCallback(() => {
     setMessages([]);
     setError(null);
-  }, []);
+    localStorage.removeItem(storageKey(agentId));
+  }, [agentId]);
 
   return { messages, sendMessage, isLoading, error, clearMessages };
 }

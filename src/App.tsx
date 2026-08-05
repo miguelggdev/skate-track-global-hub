@@ -50,6 +50,9 @@ const MessagesPage       = React.lazy(() => import('./pages/MessagesPage'));
 const MedicalPage        = React.lazy(() => import('./pages/MedicalPage'));
 const AgentChat          = React.lazy(() => import('./pages/AgentChat'));
 const PublicAthletePage  = React.lazy(() => import('./pages/PublicAthletePage'));
+const Checkin            = React.lazy(() => import('./pages/Checkin'));
+const TrainingCheckin    = React.lazy(() => import('./pages/TrainingCheckin'));
+const TrainingTimer      = React.lazy(() => import('./pages/TrainingTimer'));
 
 const queryClient = new QueryClient();
 
@@ -405,6 +408,25 @@ const App = () => (
                     />
                     {/* Public page — no auth required, for sharing with parents */}
                     <Route path="/publico/atleta/:athleteId" element={<PublicAthletePage />} />
+                    {/* Public check-in page — no auth required, opened from athlete QR code */}
+                    <Route path="/checkin/:token" element={<Checkin />} />
+                    {/* Protected training tools */}
+                    <Route
+                      path="/training/checkin"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'coach', 'leader']}>
+                          <TrainingCheckin />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/training/timer"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'coach', 'leader']}>
+                          <TrainingTimer />
+                        </ProtectedRoute>
+                      }
+                    />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
