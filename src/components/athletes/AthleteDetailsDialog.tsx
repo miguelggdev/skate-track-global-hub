@@ -17,12 +17,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { 
-  User, 
-  Phone, 
-  Mail, 
-  Calendar, 
-  Trophy, 
+import {
+  User,
+  Phone,
+  Mail,
+  Calendar,
+  Trophy,
   Activity,
   Users,
   Heart,
@@ -32,8 +32,10 @@ import {
   MapPin,
   CreditCard,
   Shield,
-  Zap
+  Zap,
+  Nfc
 } from 'lucide-react';
+import { NFCTagManager } from '@/components/athletes/NFCTagManager';
 import { format } from 'date-fns';
 import { useAthleteDetails, AthleteDetails } from '@/hooks/useAthleteDetails';
 import { BodyInfoForm } from '@/components/athletes/forms/BodyInfoForm';
@@ -177,7 +179,7 @@ const AthleteDetailsDialog: React.FC<AthleteDetailsDialogProps> = ({
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 h-auto gap-0.5">
+          <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 h-auto gap-0.5">
             <TabsTrigger value="overview">General</TabsTrigger>
             <TabsTrigger value="personal">Personal</TabsTrigger>
             <TabsTrigger value="family">Familia</TabsTrigger>
@@ -185,6 +187,9 @@ const AthleteDetailsDialog: React.FC<AthleteDetailsDialogProps> = ({
             <TabsTrigger value="studies">Estudios</TabsTrigger>
             <TabsTrigger value="equipment">Equipo</TabsTrigger>
             <TabsTrigger value="history">Historial</TabsTrigger>
+            <TabsTrigger value="nfc" className="gap-1">
+              <Nfc className="h-3.5 w-3.5" /> NFC
+            </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -375,6 +380,25 @@ const AthleteDetailsDialog: React.FC<AthleteDetailsDialogProps> = ({
               </CardHeader>
               <CardContent>
                 <EquipmentInfoForm athleteId={athlete.id} onSave={refetch} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* NFC Tab */}
+          <TabsContent value="nfc" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Nfc className="h-5 w-5" />
+                  <span>Tag NFC del Casco</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <NFCTagManager
+                  athleteId={athlete.id}
+                  athleteName={`${athlete.first_name} ${athlete.last_name}`}
+                  checkinToken={null}
+                />
               </CardContent>
             </Card>
           </TabsContent>

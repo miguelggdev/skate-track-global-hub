@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Circle, Loader2, Users, Calendar } from 'lucide-react';
+import { CheckCircle2, Circle, Loader2, Users, Calendar, Nfc } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { cn } from '@/lib/utils';
+import { useNFC } from '@/hooks/useNFC';
 
 interface Session {
   id: string;
@@ -35,6 +36,10 @@ export default function TrainingCheckin() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [nfcMode, setNfcMode] = useState(false);
+  const [lastScanned, setLastScanned] = useState<{ name: string; at: string } | null>(null);
+
+  const { startScan, stopScan, isSupported: nfcSupported } = useNFC();
 
   // Today's sessions
   const { data: sessions = [], isLoading: loadingSessions } = useQuery<Session[]>({
@@ -89,6 +94,57 @@ export default function TrainingCheckin() {
     },
     onError: () => toast({ title: 'Error al actualizar', variant: 'destructive' }),
   });
+
+  // Reset NFC mode when session changes
+  useEffect(() => {
+    setNfcMode(false);
+    setLastScanned(null);
+  }, [selectedSession?.id]);
+
+  // NFC scanning effect
+  useEffect(() => {
+    if (!nfcMode || !selectedSession) return;
+    let stopFn: (() => void) | undefined;
+
+    startScan(async (reading) => {
+      let result: { success: boolean; athlete_name?: string; error?: string };
+
+      try {
+        if (reading.url && reading.url.includes('/checkin/')) {
+          const token = reading.url.split('/checkin/')[1]?.split('?')[0];
+          if (!token) {
+            toast({ title: 'Token inválido en el tag', variant: 'destructive' });
+            return;
+          }
+          const { data } = await supabase.rpc('athlete_checkin', {
+            p_token: token,
+            p_session_id: selectedSession.id,
+          });
+          result = data as typeof result;
+        } else {
+          const { data } = await supabase.rpc('athlete_checkin_by_nfc', {
+            p_uid: reading.uid,
+            p_session_id: selectedSession.id,
+          });
+          result = data as typeof result;
+        }
+
+        if (result.success) {
+          const name = result.athlete_name ?? 'Atleta';
+          const at = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+          setLastScanned({ name, at });
+          qc.invalidateQueries({ queryKey: ['checkin-attendance', selectedSession.id] });
+          toast({ title: `✓ ${name} — Presente`, description: at });
+        } else {
+          toast({ title: result.error ?? 'Error al registrar', variant: 'destructive' });
+        }
+      } catch {
+        toast({ title: 'Error de conexión', variant: 'destructive' });
+      }
+    }).then(fn => { stopFn = fn; });
+
+    return () => { stopFn?.(); };
+  }, [nfcMode, selectedSession?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const presentCount = attendance.filter(a => a.attended).length;
 
@@ -153,6 +209,17 @@ export default function TrainingCheckin() {
                   <Users className="h-3.5 w-3.5 mr-1.5" />
                   {presentCount} / {attendance.length} presentes
                 </Badge>
+                {nfcSupported && (
+                  <Button
+                    variant={nfcMode ? 'default' : 'outline'}
+                    size="sm"
+                    className={cn('gap-2', nfcMode && 'bg-emerald-600 hover:bg-emerald-700 text-white')}
+                    onClick={() => setNfcMode(m => !m)}
+                  >
+                    <Nfc className="h-4 w-4" />
+                    {nfcMode ? 'NFC Activo' : 'Modo NFC'}
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" onClick={() => setSelectedSession(null)}>
                   Cambiar sesión
                 </Button>
@@ -171,40 +238,67 @@ export default function TrainingCheckin() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                {attendance.map(a => (
-                  <button
-                    key={a.athlete_id}
-                    onClick={() => toggleAttendance.mutate({ athleteId: a.athlete_id, attended: !a.attended })}
-                    disabled={toggleAttendance.isPending}
-                    className={cn(
-                      'rounded-xl border-2 p-4 text-center transition-all active:scale-95',
-                      a.attended
-                        ? 'border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-                        : 'border-border bg-card hover:border-muted-foreground'
-                    )}
-                  >
-                    <div className="flex justify-center mb-2">
-                      {a.attended
-                        ? <CheckCircle2 className="h-8 w-8 text-emerald-500" />
-                        : <Circle className="h-8 w-8 text-muted-foreground" />}
+              <div className="space-y-3">
+                {/* NFC active banner */}
+                {nfcMode && (
+                  <div className="rounded-xl border-2 border-emerald-500 bg-emerald-500/10 px-4 py-3 flex items-center gap-3">
+                    <div className="relative shrink-0">
+                      <div className="h-10 w-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                        <Nfc className="h-5 w-5 text-emerald-600" />
+                      </div>
+                      <div className="absolute inset-0 rounded-full border-2 border-emerald-500/40 animate-ping" />
                     </div>
-                    <p className="font-semibold text-sm leading-tight">
-                      {a.athletes.first_name}
-                    </p>
-                    <p className="text-xs text-muted-foreground leading-tight">
-                      {a.athletes.last_name}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      {a.athletes.category}
-                    </p>
-                    {a.attended && a.check_in_time && (
-                      <p className="text-[10px] text-emerald-600 mt-0.5">
-                        {new Date(a.check_in_time).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                        Modo NFC activo
                       </p>
-                    )}
-                  </button>
-                ))}
+                      <p className="text-xs text-emerald-600 dark:text-emerald-500">
+                        Acerca el teléfono al casco del deportista
+                      </p>
+                      {lastScanned && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Último: {lastScanned.name} · {lastScanned.at}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                  {attendance.map(a => (
+                    <button
+                      key={a.athlete_id}
+                      onClick={() => toggleAttendance.mutate({ athleteId: a.athlete_id, attended: !a.attended })}
+                      disabled={toggleAttendance.isPending}
+                      className={cn(
+                        'rounded-xl border-2 p-4 text-center transition-all active:scale-95',
+                        a.attended
+                          ? 'border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                          : 'border-border bg-card hover:border-muted-foreground'
+                      )}
+                    >
+                      <div className="flex justify-center mb-2">
+                        {a.attended
+                          ? <CheckCircle2 className="h-8 w-8 text-emerald-500" />
+                          : <Circle className="h-8 w-8 text-muted-foreground" />}
+                      </div>
+                      <p className="font-semibold text-sm leading-tight">
+                        {a.athletes.first_name}
+                      </p>
+                      <p className="text-xs text-muted-foreground leading-tight">
+                        {a.athletes.last_name}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        {a.athletes.category}
+                      </p>
+                      {a.attended && a.check_in_time && (
+                        <p className="text-[10px] text-emerald-600 mt-0.5">
+                          {new Date(a.check_in_time).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
