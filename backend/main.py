@@ -1,8 +1,23 @@
+import os
+
+import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sentry_sdk.integrations.celery import CeleryIntegration
+from sentry_sdk.integrations.fastapi import FastApiIntegration
 
-from api.routes import agents, health, rag
+from api.routes import agents, athletes, health, rag
 from config import settings
+
+_SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+if _SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=_SENTRY_DSN,
+        integrations=[FastApiIntegration(), CeleryIntegration()],
+        traces_sample_rate=0.2,
+        environment=settings.environment,
+        send_default_pii=False,
+    )
 
 app = FastAPI(
     title="Skate Club API",
@@ -28,3 +43,4 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(agents.router, prefix="/api")
 app.include_router(rag.router, prefix="/api")
+app.include_router(athletes.router)

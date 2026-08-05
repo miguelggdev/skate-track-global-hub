@@ -14,6 +14,7 @@ celery_app = Celery(
         "tasks.marketing_tasks",
         "tasks.reporting_tasks",
         "tasks.security_tasks",
+        "tasks.whatsapp_tasks",
     ],
 )
 

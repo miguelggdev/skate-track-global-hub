@@ -304,6 +304,33 @@ docker compose up -d --build # Reiniciar con la versión anterior
 
 ---
 
+## Cloudflare (opcional pero recomendado)
+
+Poner Cloudflare en frente del VPS toma 30 minutos y añade CDN, protección DDoS y geoblocking sin tocar el servidor.
+
+### Pasos
+
+1. **Crear cuenta gratuita** en [cloudflare.com](https://cloudflare.com) y añadir tu dominio.
+
+2. **Cambiar los nameservers** del dominio a los que Cloudflare te indique (en tu registrador: GoDaddy, Namecheap, etc.).
+
+3. **Configurar registros DNS** en Cloudflare (igual que tenías, pero ahora gestionados desde el panel de CF):
+   ```
+   A    tudominio.com     → IP del VPS     Proxy: ON (nube naranja)
+   A    www.tudominio.com → IP del VPS     Proxy: ON
+   ```
+
+4. **SSL/TLS → Full (Strict)** en el panel de Cloudflare (Cloudflare habla HTTPS con el VPS).
+
+5. **Reglas recomendadas:**
+   - Page Rule: `tudominio.com/assets/*` → Cache Level: Cache Everything, Edge Cache TTL: 1 month
+   - Security → Bot Fight Mode: ON
+   - Speed → Auto Minify: JS + CSS + HTML
+
+> **Nota:** Con Cloudflare como proxy, el certificado de Let's Encrypt sigue siendo necesario en el VPS para la conexión Cloudflare ↔ VPS. Certbot sigue funcionando igual.
+
+---
+
 ## Variables de entorno — referencia completa
 
 ### `.env.production` (backend + build)
@@ -325,3 +352,9 @@ docker compose up -d --build # Reiniciar con la versión anterior
 | `CERTBOT_EMAIL` | Sí | Email para notificaciones de expiración Let's Encrypt |
 | `RESEND_API_KEY` | Sí | API key de resend.com para envío de emails transaccionales |
 | `RESEND_FROM_EMAIL` | No | Remitente de emails (ej: `noreply@tudominio.com`). Debe estar verificado en Resend |
+| `SENTRY_DSN` | No | DSN de Sentry para error tracking del backend y Celery |
+| `FLOWER_USER` | No | Usuario de acceso a Flower (default: admin) |
+| `FLOWER_PASSWORD` | Sí (si usas Flower) | Contraseña de acceso a Flower |
+| `TWILIO_ACCOUNT_SID` | No | SID de cuenta Twilio para WhatsApp (AUTO-36) |
+| `TWILIO_AUTH_TOKEN` | No | Auth token Twilio |
+| `TWILIO_WHATSAPP_FROM` | No | Número WhatsApp aprobado en Twilio (E.164) |

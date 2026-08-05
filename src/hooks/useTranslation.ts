@@ -23,6 +23,18 @@ export const AVAILABLE_LANGUAGES: Language[] = [
 
 type TranslationRecord = Record<string, Record<LanguageCode, string>>;
 
+// Fallbacks for keys used on unauthenticated pages (Login) where the DB
+// query cannot run because the anon role lacks SELECT on ui_translations.
+const STATIC_FALLBACKS: Record<string, string> = {
+  'login.email':           'Correo electrónico',
+  'login.password':        'Contraseña',
+  'login.submit':          'Iniciar sesión',
+  'login.signing_in':      'Iniciando sesión...',
+  'login.forgot_password': '¿Olvidaste tu contraseña?',
+  'login.error':           'Error al iniciar sesión',
+  'login.welcome':         '¡Bienvenido de vuelta!',
+};
+
 interface TranslationContextType {
   t: (key: string) => string;
   currentLanguage: LanguageCode;
@@ -85,7 +97,7 @@ export const useTranslationState = () => {
     const translation = translations[key]?.[currentLanguage];
     if (translation) return translation;
     if (translations[key]?.es) return translations[key].es;
-    return key;
+    return STATIC_FALLBACKS[key] ?? key;
   }, [translations, currentLanguage]);
 
   const setLanguage = useCallback(async (code: LanguageCode) => {

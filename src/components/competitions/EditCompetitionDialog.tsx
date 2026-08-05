@@ -58,13 +58,13 @@ export const EditCompetitionDialog: React.FC<EditCompetitionDialogProps> = ({ co
 
   const onSubmit = (data: CompetitionFormData) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { max_participants, entry_fee, prize_pool, ...validData } = data;
+    const { max_participants, ...rest } = data;
     updateCompetition.mutate(
       {
         id: competition.id,
-        ...validData,
+        ...rest,
         max_athletes_per_event: max_participants ?? null,
-      },
+      } as CompetitionFormData & { id: string },
       {
         onSuccess: () => {
           setOpen(false);
@@ -93,9 +93,9 @@ export const EditCompetitionDialog: React.FC<EditCompetitionDialogProps> = ({ co
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Competition Name</FormLabel>
+                    <FormLabel>Nombre de la competencia</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter competition name" {...field} />
+                      <Input placeholder="Nombre de la competencia" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -107,9 +107,9 @@ export const EditCompetitionDialog: React.FC<EditCompetitionDialogProps> = ({ co
                 name="location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Location</FormLabel>
+                    <FormLabel>Lugar</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter location" {...field} />
+                      <Input placeholder="Ciudad, recinto o pista" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -122,9 +122,9 @@ export const EditCompetitionDialog: React.FC<EditCompetitionDialogProps> = ({ co
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Descripción</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Enter description" {...field} />
+                    <Textarea placeholder="Descripción de la competencia" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -137,7 +137,7 @@ export const EditCompetitionDialog: React.FC<EditCompetitionDialogProps> = ({ co
                 name="start_date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Start Date</FormLabel>
+                    <FormLabel>Fecha de inicio</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -151,7 +151,7 @@ export const EditCompetitionDialog: React.FC<EditCompetitionDialogProps> = ({ co
                             {field.value ? (
                               format(new Date(field.value), "PPP")
                             ) : (
-                              <span>Pick a date</span>
+                              <span>Seleccionar fecha</span>
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
@@ -177,7 +177,7 @@ export const EditCompetitionDialog: React.FC<EditCompetitionDialogProps> = ({ co
                 name="end_date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>End Date</FormLabel>
+                    <FormLabel>Fecha de fin</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -191,7 +191,7 @@ export const EditCompetitionDialog: React.FC<EditCompetitionDialogProps> = ({ co
                             {field.value ? (
                               format(new Date(field.value), "PPP")
                             ) : (
-                              <span>Pick a date</span>
+                              <span>Seleccionar fecha</span>
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
@@ -219,11 +219,11 @@ export const EditCompetitionDialog: React.FC<EditCompetitionDialogProps> = ({ co
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel>Categoría</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
+                          <SelectValue placeholder="Seleccionar categoría" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -245,11 +245,11 @@ export const EditCompetitionDialog: React.FC<EditCompetitionDialogProps> = ({ co
                 name="level"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Level</FormLabel>
+                    <FormLabel>Nivel</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select level" />
+                          <SelectValue placeholder="Seleccionar nivel" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -273,18 +273,18 @@ export const EditCompetitionDialog: React.FC<EditCompetitionDialogProps> = ({ co
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Status</FormLabel>
+                    <FormLabel>Estado</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
+                          <SelectValue placeholder="Seleccionar estado" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="upcoming">Upcoming</SelectItem>
-                        <SelectItem value="ongoing">Ongoing</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                        <SelectItem value="upcoming">Próxima</SelectItem>
+                        <SelectItem value="ongoing">En curso</SelectItem>
+                        <SelectItem value="completed">Finalizada</SelectItem>
+                        <SelectItem value="cancelled">Cancelada</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -299,11 +299,11 @@ export const EditCompetitionDialog: React.FC<EditCompetitionDialogProps> = ({ co
                 name="max_participants"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Max Participants</FormLabel>
+                    <FormLabel>Máx. participantes</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="Enter max participants" 
+                      <Input
+                        type="number"
+                        placeholder="Ej: 50"
                         {...field}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       />
@@ -318,7 +318,7 @@ export const EditCompetitionDialog: React.FC<EditCompetitionDialogProps> = ({ co
                 name="entry_fee"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Entry Fee (€)</FormLabel>
+                    <FormLabel>Cuota de inscripción (€)</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
@@ -338,7 +338,7 @@ export const EditCompetitionDialog: React.FC<EditCompetitionDialogProps> = ({ co
                 name="prize_pool"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Prize Pool (€)</FormLabel>
+                    <FormLabel>Premio total (€)</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
@@ -359,7 +359,7 @@ export const EditCompetitionDialog: React.FC<EditCompetitionDialogProps> = ({ co
               name="registration_deadline"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Registration Deadline</FormLabel>
+                  <FormLabel>Fecha límite de inscripción</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -373,7 +373,7 @@ export const EditCompetitionDialog: React.FC<EditCompetitionDialogProps> = ({ co
                           {field.value ? (
                             format(new Date(field.value), "PPP")
                           ) : (
-                            <span>Pick a date</span>
+                            <span>Seleccionar fecha</span>
                           )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
@@ -400,10 +400,10 @@ export const EditCompetitionDialog: React.FC<EditCompetitionDialogProps> = ({ co
                 variant="outline"
                 onClick={() => setOpen(false)}
               >
-                Cancel
+                Cancelar
               </Button>
               <Button type="submit" disabled={updateCompetition.isPending}>
-                {updateCompetition.isPending ? 'Updating...' : 'Update Competition'}
+                {updateCompetition.isPending ? 'Guardando...' : 'Guardar cambios'}
               </Button>
             </div>
           </form>

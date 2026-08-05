@@ -14,6 +14,7 @@ import tasks.admin_tasks      # noqa: F401  AUTO-16 to AUTO-20
 import tasks.marketing_tasks  # noqa: F401  AUTO-21 to AUTO-25
 import tasks.reporting_tasks  # noqa: F401  AUTO-26 to AUTO-29
 import tasks.security_tasks   # noqa: F401  AUTO-30 to AUTO-35
+import tasks.whatsapp_tasks  # noqa: F401  AUTO-36
 
 
 @celery_app.task(name="tasks.health_check")
@@ -228,5 +229,14 @@ celery_app.conf.beat_schedule = {
     "auto-35-daily-agent-activity-summary": {
         "task": "tasks.security.daily_agent_activity_summary",
         "schedule": crontab(hour=23, minute=30),
+    },
+
+    # ── WHATSAPP ─────────────────────────────────────────────────────────────
+
+    # AUTO-36: Frase motivadora diaria por WhatsApp — 08:30 todos los días
+    # Requiere TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_FROM
+    "auto-36-daily-whatsapp-motivation": {
+        "task": "tasks.whatsapp.send_daily_motivational",
+        "schedule": crontab(hour=8, minute=30),
     },
 }

@@ -246,69 +246,37 @@ export const useFinancialStats = () => {
   return useQuery({
     queryKey: ['financial-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('financial_transactions')
-        .select('amount, transaction_type, payment_status, transaction_date, payer_name, payer_email');
+      // Use DB-side aggregation (RPC) instead of fetching all rows — prevents full-table scan
+      const { data: summary, error: rpcError } = await supabase
+        .rpc('get_financial_summary');
 
-      if (error) {
-        throw new Error(error.message);
-      }
+      if (rpcError) throw new Error(rpcError.message);
 
-      const currentDate = new Date();
-      const currentMonth = currentDate.getMonth();
-      const currentYear = currentDate.getFullYear();
-      const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-      const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+      const s = summary as {
+        total_income: number;
+        total_expenses: number;
+        net_profit: number;
+        pending_amount: number;
+        pending_count: number;
+        current_month_income: number;
+        prev_month_income: number;
+        current_month_expenses: number;
+        prev_month_expenses: number;
+        pending_count_current: number;
+      };
 
-      // Calculate totals
-      const totalIncome = data
-        .filter(t => t.amount > 0)
-        .reduce((sum, t) => sum + t.amount, 0);
+      const totalIncome    = s.total_income    ?? 0;
+      const totalExpenses  = s.total_expenses  ?? 0;
+      const netProfit      = s.net_profit      ?? 0;
+      const pendingPayments = s.pending_amount ?? 0;
+      const pendingCount   = s.pending_count   ?? 0;
 
-      const totalExpenses = Math.abs(data
-        .filter(t => t.amount < 0)
-        .reduce((sum, t) => sum + t.amount, 0));
-
-      const pendingPayments = data
-        .filter(t => t.payment_status === 'pending')
-        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-
-      const netProfit = totalIncome - totalExpenses;
-
-      // Calculate monthly changes
-      const currentMonthData = data.filter(t => {
-        const date = new Date(t.transaction_date);
-        return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
-      });
-
-      const lastMonthData = data.filter(t => {
-        const date = new Date(t.transaction_date);
-        return date.getMonth() === lastMonth && date.getFullYear() === lastMonthYear;
-      });
-
-      const currentMonthIncome = currentMonthData
-        .filter(t => t.amount > 0)
-        .reduce((sum, t) => sum + t.amount, 0);
-
-      const lastMonthIncome = lastMonthData
-        .filter(t => t.amount > 0)
-        .reduce((sum, t) => sum + t.amount, 0);
-
-      const incomeChange = lastMonthIncome === 0 ? 0 : 
-        ((currentMonthIncome - lastMonthIncome) / lastMonthIncome) * 100;
-
-      const currentMonthExpenses = Math.abs(currentMonthData
-        .filter(t => t.amount < 0)
-        .reduce((sum, t) => sum + t.amount, 0));
-
-      const lastMonthExpenses = Math.abs(lastMonthData
-        .filter(t => t.amount < 0)
-        .reduce((sum, t) => sum + t.amount, 0));
-
-      const expensesChange = lastMonthExpenses === 0 ? 0 : 
-        ((currentMonthExpenses - lastMonthExpenses) / lastMonthExpenses) * 100;
-
-      const pendingCount = data.filter(t => t.payment_status === 'pending').length;
+      const incomeChange = s.prev_month_income > 0
+        ? ((s.current_month_income - s.prev_month_income) / s.prev_month_income) * 100
+        : 0;
+      const expensesChange = s.prev_month_expenses > 0
+        ? ((s.current_month_expenses - s.prev_month_expenses) / s.prev_month_expenses) * 100
+        : 0;
 
       return {
         totalIncome,
@@ -318,7 +286,6 @@ export const useFinancialStats = () => {
         incomeChange,
         expensesChange,
         pendingCount,
-        data,
       };
     },
   });

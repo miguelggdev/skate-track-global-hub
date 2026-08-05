@@ -60,44 +60,45 @@ const Register = () => {
     const validated = result.data;
     setIsLoading(true);
 
-    const { data, error } = await supabase.auth.signUp({
-      email: validated.email,
-      password: validated.password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/app`,
-        data: {
-          first_name: validated.firstName,
-          last_name: validated.lastName,
-          ...(isParent ? { role: 'parent' } : {}),
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: validated.email,
+        password: validated.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/app`,
+          data: {
+            first_name: validated.firstName,
+            last_name: validated.lastName,
+            ...(isParent ? { role: 'parent' } : {}),
+          },
         },
-      },
-    });
-
-    if (error) {
-      toast({
-        title: 'Error al crear cuenta',
-        description: error.message,
-        variant: 'destructive',
       });
+
+      if (error) {
+        toast({
+          title: 'Error al crear cuenta',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      setRegistered(true);
+
+      if (data.session) {
+        toast({
+          title: '¡Bienvenido!',
+          description: 'Tu cuenta fue creada. Redirigiendo al panel...',
+        });
+        navigate('/app', { replace: true });
+      } else {
+        setNeedsConfirmation(true);
+      }
+    } catch {
+      toast({ title: 'Error inesperado', description: 'Por favor intenta nuevamente.', variant: 'destructive' });
+    } finally {
       setIsLoading(false);
-      return;
     }
-
-    setRegistered(true);
-
-    if (data.session) {
-      // Auto-confirmed — redirect to role-based dashboard
-      toast({
-        title: '¡Bienvenido!',
-        description: 'Tu cuenta fue creada. Redirigiendo al panel...',
-      });
-      navigate('/app', { replace: true });
-    } else {
-      // Email confirmation required
-      setNeedsConfirmation(true);
-    }
-
-    setIsLoading(false);
   };
 
   return (

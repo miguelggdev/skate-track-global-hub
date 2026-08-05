@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useToast } from '@/hooks/use-toast';
 import * as z from 'zod';
 import {
   Dialog,
@@ -82,6 +83,7 @@ const SKATING_EVENTS = {
 
 export const MedalRecordingDialog = ({ competitionId, competitionName }: MedalRecordingDialogProps) => {
   const [open, setOpen] = useState(false);
+  const { toast } = useToast();
   const { recordMedal } = useMedalRecording();
   const { data: events } = useCompetitionEvents(competitionId);
   const { data: participants } = useCompetitionParticipants(competitionId);
@@ -99,18 +101,22 @@ export const MedalRecordingDialog = ({ competitionId, competitionName }: MedalRe
   });
 
   const onSubmit = async (data: MedalFormData) => {
-    await recordMedal.mutateAsync({
-      competition_id: competitionId,
-      athlete_id: data.athlete_id,
-      event_type: data.event_type,
-      medal_type: data.medal_type,
-      time_achieved: data.time_achieved,
-      event_location: data.event_location,
-      position: data.position,
-      notes: data.notes,
-    });
-    setOpen(false);
-    form.reset();
+    try {
+      await recordMedal.mutateAsync({
+        competition_id: competitionId,
+        athlete_id: data.athlete_id,
+        event_type: data.event_type,
+        medal_type: data.medal_type,
+        time_achieved: data.time_achieved,
+        event_location: data.event_location,
+        position: data.position,
+        notes: data.notes,
+      });
+      setOpen(false);
+      form.reset();
+    } catch {
+      toast({ title: 'Error al registrar medalla', description: 'Por favor intenta nuevamente.', variant: 'destructive' });
+    }
   };
 
   return (
@@ -118,17 +124,17 @@ export const MedalRecordingDialog = ({ competitionId, competitionName }: MedalRe
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Trophy className="mr-2 h-4 w-4" />
-          Record Medals
+          Registrar Medallas
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Medal className="h-5 w-5 text-primary" />
-            Record Medal - {competitionName}
+            Registrar Medalla — {competitionName}
           </DialogTitle>
           <DialogDescription>
-            Record medals won by athletes in this competition
+            Registra las medallas obtenidas por los deportistas en esta competencia
           </DialogDescription>
         </DialogHeader>
 
@@ -139,11 +145,11 @@ export const MedalRecordingDialog = ({ competitionId, competitionName }: MedalRe
               name="athlete_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Athlete</FormLabel>
+                  <FormLabel>Deportista</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select athlete" />
+                        <SelectValue placeholder="Selecciona el deportista" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -194,7 +200,7 @@ export const MedalRecordingDialog = ({ competitionId, competitionName }: MedalRe
               name="medal_type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Medal Type</FormLabel>
+                  <FormLabel>Tipo de Medalla</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -202,9 +208,9 @@ export const MedalRecordingDialog = ({ competitionId, competitionName }: MedalRe
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="gold">🥇 Gold</SelectItem>
-                      <SelectItem value="silver">🥈 Silver</SelectItem>
-                      <SelectItem value="bronze">🥉 Bronze</SelectItem>
+                      <SelectItem value="gold">🥇 Oro</SelectItem>
+                      <SelectItem value="silver">🥈 Plata</SelectItem>
+                      <SelectItem value="bronze">🥉 Bronce</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -218,7 +224,7 @@ export const MedalRecordingDialog = ({ competitionId, competitionName }: MedalRe
                 name="time_achieved"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Time (mm:ss.ms)</FormLabel>
+                    <FormLabel>Tiempo (mm:ss.ms)</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Timer className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -239,7 +245,7 @@ export const MedalRecordingDialog = ({ competitionId, competitionName }: MedalRe
                 name="position"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Position</FormLabel>
+                    <FormLabel>Posición</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
@@ -259,9 +265,9 @@ export const MedalRecordingDialog = ({ competitionId, competitionName }: MedalRe
               name="event_location"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Location (Optional)</FormLabel>
+                  <FormLabel>Lugar (Opcional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Track, venue, or area" {...field} />
+                    <Input placeholder="Pista, recinto o área" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -273,10 +279,10 @@ export const MedalRecordingDialog = ({ competitionId, competitionName }: MedalRe
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notes (Optional)</FormLabel>
+                  <FormLabel>Observaciones (Opcional)</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Additional details about the performance..."
+                      placeholder="Detalles adicionales sobre la actuación..."
                       {...field}
                     />
                   </FormControl>
@@ -287,10 +293,10 @@ export const MedalRecordingDialog = ({ competitionId, competitionName }: MedalRe
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                Cancel
+                Cancelar
               </Button>
               <Button type="submit" disabled={recordMedal.isPending}>
-                {recordMedal.isPending ? 'Recording...' : 'Record Medal'}
+                {recordMedal.isPending ? 'Guardando...' : 'Registrar Medalla'}
               </Button>
             </DialogFooter>
           </form>

@@ -57,9 +57,17 @@ $$;
 -- ── D-3: signature_data — límite de tamaño (máx 512 KB en base64) ──────────
 -- Sin límite, cualquier usuario autenticado podía saturar el almacenamiento.
 
-ALTER TABLE public.document_signatures
-  ADD CONSTRAINT IF NOT EXISTS chk_signature_data_size
-  CHECK (octet_length(signature_data) <= 524288);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'chk_signature_data_size'
+  ) THEN
+    ALTER TABLE public.document_signatures
+      ADD CONSTRAINT chk_signature_data_size
+      CHECK (octet_length(signature_data) <= 524288);
+  END IF;
+END;
+$$;
 
 
 -- ── D-4: athlete_international_competitions — trigger updated_at ────────────
@@ -108,9 +116,17 @@ CREATE POLICY "Staff or related view gallery" ON public.athlete_gallery
 -- ── D-7: athletes — identificación única por número + tipo ─────────────────
 -- Evita dos atletas con el mismo número de documento.
 
-ALTER TABLE public.athletes
-  ADD CONSTRAINT IF NOT EXISTS uq_athletes_identification
-  UNIQUE NULLS NOT DISTINCT (identification_number, identification_type);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'uq_athletes_identification'
+  ) THEN
+    ALTER TABLE public.athletes
+      ADD CONSTRAINT uq_athletes_identification
+      UNIQUE NULLS NOT DISTINCT (identification_number, identification_type);
+  END IF;
+END;
+$$;
 
 
 -- ── D-8: search_path en funciones vectoriales ───────────────────────────────
