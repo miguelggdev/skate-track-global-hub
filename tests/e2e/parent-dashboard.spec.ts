@@ -3,7 +3,8 @@ import { loginAsParent } from './helpers/auth';
 
 test.describe('Portal de Padres', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAsParent(page);
+    const ok = await loginAsParent(page);
+    if (!ok) test.skip();
   });
 
   test('redirecciona al dashboard de padres', async ({ page }) => {

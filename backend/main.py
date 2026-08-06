@@ -5,7 +5,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.fastapi import FastApiIntegration
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
+from api.limiter import limiter
 from api.routes import agents, athletes, health, rag
 from config import settings
 
@@ -27,6 +30,9 @@ app = FastAPI(
     redoc_url="/redoc" if settings.environment != "production" else None,
     openapi_url="/openapi.json" if settings.environment != "production" else None,
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 _allowed_origins = [settings.frontend_url]
 if settings.environment == "development":

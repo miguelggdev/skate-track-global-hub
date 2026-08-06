@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Circle, Loader2, Users, Calendar, Nfc } from 'lucide-react';
+import { CheckCircle2, Circle, Loader2, Users, Calendar, Nfc, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -212,7 +212,7 @@ export default function TrainingCheckin() {
                   <Users className="h-3.5 w-3.5 mr-1.5" />
                   {presentCount} / {attendance.length} presentes
                 </Badge>
-                {nfcSupported && (
+                {nfcSupported ? (
                   <Button
                     variant={nfcMode ? 'default' : 'outline'}
                     size="sm"
@@ -222,6 +222,14 @@ export default function TrainingCheckin() {
                     <Nfc className="h-4 w-4" />
                     {nfcMode ? 'NFC Activo' : 'Modo NFC'}
                   </Button>
+                ) : (
+                  <span
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                    title="Web NFC solo está disponible en Chrome para Android. En iOS o escritorio, marca la asistencia tocando cada atleta."
+                  >
+                    <Info className="h-3.5 w-3.5" />
+                    Toca cada atleta para marcar
+                  </span>
                 )}
                 <Button variant="outline" size="sm" onClick={() => setSelectedSession(null)}>
                   Cambiar sesión

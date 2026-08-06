@@ -3,7 +3,8 @@ import { loginAsAdmin } from './helpers/auth';
 
 test.describe('Admin — gestión de atletas', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
+    const ok = await loginAsAdmin(page);
+    if (!ok) test.skip();
   });
 
   test('admin dashboard carga con cards de estadísticas', async ({ page }) => {

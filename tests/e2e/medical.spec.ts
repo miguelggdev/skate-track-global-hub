@@ -3,7 +3,8 @@ import { loginAsAdmin, loginAsCoach } from './helpers/auth';
 
 test.describe('Módulo médico — admin', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
+    const ok = await loginAsAdmin(page);
+    if (!ok) test.skip();
   });
 
   test('puede navegar a la página de atletas', async ({ page }) => {
@@ -67,7 +68,8 @@ test.describe('Módulo médico — admin', () => {
 
 test.describe('Módulo médico — coach', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAsCoach(page);
+    const ok = await loginAsCoach(page);
+    if (!ok) test.skip();
   });
 
   test('coach puede navegar a atletas desde su dashboard', async ({ page }) => {

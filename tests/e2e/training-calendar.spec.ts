@@ -3,7 +3,8 @@ import { loginAsCoach } from './helpers/auth';
 
 test.describe('Calendario de Entrenamientos', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAsCoach(page);
+    const ok = await loginAsCoach(page);
+    if (!ok) { test.skip(); return; }
     await page.goto('/training');
     await page.waitForLoadState('networkidle');
   });

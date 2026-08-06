@@ -1,9 +1,11 @@
 import json
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, field_validator
+
+from api.limiter import limiter
 
 from agents.admin_agent import AdminAgent
 from agents.skating_agent import SkatingAgent
@@ -153,7 +155,9 @@ def list_agents(current_user: dict = Depends(get_current_user)) -> dict:
 
 
 @router.post("/{agent_id}/chat", response_model=ChatResponse)
+@limiter.limit("30/minute")
 async def chat_with_agent(
+    http_request: Request,
     agent_id: str,
     request: ChatRequest,
     current_user: dict = Depends(get_current_user),
@@ -181,7 +185,9 @@ async def chat_with_agent(
 
 
 @router.post("/{agent_id}/chat/stream")
+@limiter.limit("20/minute")
 async def stream_chat_with_agent(
+    http_request: Request,
     agent_id: str,
     request: ChatRequest,
     current_user: dict = Depends(get_current_user),

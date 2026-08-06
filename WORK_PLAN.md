@@ -273,12 +273,26 @@ Antes de marcar un spec como `done`:
 **Validación:**
 - Zod en 4 formularios: AddAthleteDialog, AddUserDialog, EditUserDialog (53 campos), ClubInfoSettings (37 campos)
 
-### Pendiente (Sprint 10 — futuro)
+---
+
+## SPRINT 10 — Rate Limiting + Tests E2E + Optimizaciones (Agosto 2026)
+
+**Objetivo:** Cerrar gaps de seguridad en el backend, corregir los tests E2E y aplicar optimizaciones de bundle.
+
+| Tarea | Status |
+|-------|--------|
+| Rate limiting FastAPI (slowapi) — 30/min chat, 20/min stream | ✅ done |
+| Tests E2E — 102 tests autenticados SKIP graciosamente sin credenciales | ✅ done |
+| `tests/e2e/helpers/auth.ts` — login retorna boolean, `HAS_E2E_CREDENTIALS` flag | ✅ done |
+| Dynamic import `xlsx`/`jspdf` en `Reports.tsx` — carga solo al hacer click | ✅ done |
+| NFC fallback indicator para iOS/desktop en `TrainingCheckin.tsx` | ✅ done |
+
+### Pendiente (Sprint 11)
 
 | Tarea | Prioridad |
 |-------|-----------|
-| Rate limiting en FastAPI (slowapi) | ALTA |
 | 3 agentes IA faltantes: AG-08 Seguridad, AG-11 Operaciones, AG-12 Legal | ALTA |
+| Crear usuarios de prueba E2E en Supabase + configurar vars `E2E_*` | ALTA |
 | PDF generación de facturas + adjunto en email | MEDIA |
 | RAG: subir documentos a Supabase Storage | MEDIA |
 | `CreateTrainingDialog` — migrar a Zod | BAJA |
@@ -286,4 +300,4 @@ Antes de marcar un spec como `done`:
 
 ---
 
-*Actualizado: Agosto 2026 — Sprint 9 completado, listo para primer deploy en VPS*
+*Actualizado: Agosto 2026 — Sprint 10 completado*

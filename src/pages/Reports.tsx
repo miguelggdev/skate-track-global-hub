@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -171,6 +169,10 @@ const Reports = () => {
   });
 
   const handleDownloadReport = async (reportCategory: string) => {
+    const [XLSX, { default: jsPDF }] = await Promise.all([
+      import('xlsx'),
+      import('jspdf'),
+    ]);
     const { start, end } = getPeriodRange(selectedPeriod);
     const now = format(new Date(), 'yyyy-MM-dd');
     const periodLabel = { week: 'semana', month: 'mes', quarter: 'trimestre', year: 'año' }[selectedPeriod] ?? selectedPeriod;

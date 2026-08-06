@@ -3,7 +3,8 @@ import { loginAsAdmin } from './helpers/auth';
 
 test.describe('Documentos y Firma Digital', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
+    const ok = await loginAsAdmin(page);
+    if (!ok) { test.skip(); return; }
     await page.goto('/documents');
     await page.waitForLoadState('networkidle');
   });
