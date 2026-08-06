@@ -1,4 +1,3 @@
-import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -63,9 +62,6 @@ interface AthleteFormData {
 
 const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDialogProps) => {
   const { createUser, loading } = useCreateUser();
-  const [calculatedAge, setCalculatedAge] = useState<number | null>(null);
-  const [calculatedCategory, setCalculatedCategory] = useState<string>('');
-  const [calculatedLevel, setCalculatedLevel] = useState<string>('');
 
   const form = useForm<AthleteFormData>({
     defaultValues: {
@@ -82,22 +78,12 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
 
   const dateOfBirth = form.watch('dateOfBirth');
 
-  // Calculate age, category, and level when date of birth changes
-  useEffect(() => {
-    if (dateOfBirth) {
-      const age = calculateAge(dateOfBirth);
-      const category = getCategoryFromAge(age);
-      const level = getLevelFromCategoryAndAge(category, age);
-      
-      setCalculatedAge(age);
-      setCalculatedCategory(category);
-      setCalculatedLevel(level);
-    } else {
-      setCalculatedAge(null);
-      setCalculatedCategory('');
-      setCalculatedLevel('');
-    }
-  }, [dateOfBirth]);
+  // Derived values computed inline — no extra render cycle compared to useEffect + setState
+  const calculatedAge = dateOfBirth ? calculateAge(dateOfBirth) : null;
+  const calculatedCategory = calculatedAge != null ? getCategoryFromAge(calculatedAge) : null;
+  const calculatedLevel = (calculatedAge != null && calculatedCategory)
+    ? getLevelFromCategoryAndAge(calculatedCategory, calculatedAge)
+    : null;
 
   const onSubmit = async (data: AthleteFormData) => {
     if (!data.dateOfBirth) {
@@ -123,9 +109,6 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
     if (result.success) {
       // Reset form and close dialog
       form.reset();
-      setCalculatedAge(null);
-      setCalculatedCategory('');
-      setCalculatedLevel('');
       onOpenChange(false);
       
       // Notify parent component to refresh data
@@ -334,11 +317,11 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
                   </div>
                   <div>
                     <span className="text-muted-foreground">Categoría:</span>
-                    <p className="font-medium">{getCategoryDisplayName(calculatedCategory)}</p>
+                    <p className="font-medium">{calculatedCategory ? getCategoryDisplayName(calculatedCategory) : '—'}</p>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Nivel:</span>
-                    <p className="font-medium">{getLevelDisplayName(calculatedLevel)}</p>
+                    <p className="font-medium">{calculatedLevel ? getLevelDisplayName(calculatedLevel) : '—'}</p>
                   </div>
                 </div>
               </div>

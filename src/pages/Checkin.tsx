@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CheckCircle2, Clock, Loader2, AlertCircle, Timer } from 'lucide-react';
+import { CheckCircle2, Clock, Loader2, AlertCircle } from 'lucide-react';
 
-interface TrainingSession {
+interface Session {
   id: string;
   title: string;
   scheduled_at: string;
@@ -13,7 +14,9 @@ interface TrainingSession {
   location: string | null;
 }
 
-interface AthleteInfo {
+interface AthleteData {
+  success: boolean;
+  error?: string;
   id: string;
   first_name: string;
   last_name: string;
@@ -23,45 +26,57 @@ interface AthleteInfo {
 
 export default function Checkin() {
   const { token } = useParams<{ token: string }>();
-  const [athlete, setAthlete] = useState<AthleteInfo | null>(null);
-  const [sessions, setSessions] = useState<TrainingSession[]>([]);
-  const [loadingInfo, setLoadingInfo] = useState(true);
   const [checking, setChecking] = useState(false);
-  const [checkedIn, setCheckedIn] = useState<string | null>(null); // session title
-  const [error, setError] = useState<string | null>(null);
+  const [checkedIn, setCheckedIn] = useState<string | null>(null);
+  const [checkError, setCheckError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!token) return;
-    (async () => {
-      try {
-        // Fetch athlete info
-        const { data: athleteData } = await supabase
-          .rpc('get_athlete_by_checkin_token', { p_token: token });
-        if (!athleteData) { setError('Token no válido'); return; }
-        setAthlete(athleteData as AthleteInfo);
+  const {
+    data: athleteInfo,
+    isLoading: loadingAthlete,
+    isError: athleteError,
+  } = useQuery({
+    queryKey: ['checkin-athlete', token],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_athlete_by_checkin_token', { p_token: token });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error ?? 'Atleta no encontrado');
+      return data as AthleteData;
+    },
+    enabled: !!token,
+    retry: 2,
+    staleTime: 30_000,
+  });
 
-        // Fetch today's sessions
-        const today = new Date().toISOString().split('T')[0];
-        const { data: sessData } = await supabase
-          .from('training_sessions')
-          .select('id, title, scheduled_at, training_type, location')
-          .gte('scheduled_at', `${today}T00:00:00`)
-          .lte('scheduled_at', `${today}T23:59:59`)
-          .eq('status', 'scheduled')
-          .order('scheduled_at');
-        setSessions(sessData ?? []);
-      } catch {
-        setError('Error cargando información');
-      } finally {
-        setLoadingInfo(false);
-      }
-    })();
-  }, [token]);
+  const {
+    data: sessions = [],
+    isLoading: loadingSessions,
+    isError: sessionsError,
+  } = useQuery({
+    queryKey: ['public-sessions-today', token],
+    queryFn: async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('training_sessions')
+        .select('id, title, scheduled_at, training_type, location')
+        .gte('scheduled_at', `${today}T00:00:00`)
+        .lte('scheduled_at', `${today}T23:59:59`)
+        .eq('status', 'scheduled')
+        .order('scheduled_at');
+      if (error) throw error;
+      return (data ?? []) as Session[];
+    },
+    enabled: !!token,
+    retry: 2,
+    staleTime: 60_000,
+  });
 
-  const handleCheckin = async (session: TrainingSession) => {
+  const isLoading = loadingAthlete || loadingSessions;
+  const isError = athleteError || sessionsError;
+
+  const handleCheckin = async (session: Session) => {
     if (!token) return;
     setChecking(true);
-    setError(null);
+    setCheckError(null);
     try {
       const { data } = await supabase.rpc('athlete_checkin', {
         p_token: token,
@@ -71,10 +86,10 @@ export default function Checkin() {
       if (result.success) {
         setCheckedIn(session.title || session.training_type);
       } else {
-        setError(result.error ?? 'Error al registrar asistencia');
+        setCheckError(result.error ?? 'Error al registrar asistencia');
       }
     } catch {
-      setError('Error de conexión');
+      setCheckError('Error de conexión');
     } finally {
       setChecking(false);
     }
@@ -86,7 +101,7 @@ export default function Checkin() {
   const formatType = (t: string) =>
     t.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
-  if (loadingInfo) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -94,14 +109,16 @@ export default function Checkin() {
     );
   }
 
-  if (error && !athlete) {
+  if (isError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-sm text-center">
           <CardContent className="pt-8 pb-6 space-y-3">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
             <p className="font-semibold">QR no válido</p>
-            <p className="text-sm text-muted-foreground">{error}</p>
+            <p className="text-sm text-muted-foreground">
+              No se pudo cargar la información. Intenta escanear el código QR nuevamente.
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -117,7 +134,7 @@ export default function Checkin() {
             <div>
               <p className="text-xl font-bold text-emerald-500">¡Asistencia registrada!</p>
               <p className="text-sm text-muted-foreground mt-1">
-                {athlete?.first_name} {athlete?.last_name}
+                {athleteInfo?.first_name} {athleteInfo?.last_name}
               </p>
               <p className="text-sm font-medium mt-2">{checkedIn}</p>
             </div>
@@ -136,9 +153,9 @@ export default function Checkin() {
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
               <span className="text-3xl">⛸️</span>
             </div>
-            <CardTitle>{athlete?.first_name} {athlete?.last_name}</CardTitle>
+            <CardTitle>{athleteInfo?.first_name} {athleteInfo?.last_name}</CardTitle>
             <CardDescription>
-              {athlete?.category} · {athlete?.level?.replace(/_/g, ' ')}
+              {athleteInfo?.category} · {athleteInfo?.level?.replace(/_/g, ' ')}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -174,8 +191,8 @@ export default function Checkin() {
                 </Button>
               ))
             )}
-            {error && (
-              <p className="text-xs text-destructive text-center">{error}</p>
+            {checkError && (
+              <p className="text-xs text-destructive text-center">{checkError}</p>
             )}
           </CardContent>
         </Card>

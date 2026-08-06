@@ -111,6 +111,7 @@ export function useNFC() {
     }
     return new Promise((resolve) => {
       const controller = new AbortController();
+      abortRef.current = controller;  // ← allow stopScan() to cancel readUID in flight
       setStatus('scanning');
       setError(null);
 

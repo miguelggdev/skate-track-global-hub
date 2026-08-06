@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -74,6 +74,10 @@ export default function TrainingCheckin() {
     refetchInterval: 10_000,
   });
 
+  // Ref so the NFC callback always reads the latest attendance array without re-running the effect
+  const attendanceRef = useRef(attendance);
+  useEffect(() => { attendanceRef.current = attendance; }, [attendance]);
+
   const toggleAttendance = useMutation({
     mutationFn: async ({ athleteId, attended }: { athleteId: string; attended: boolean }) => {
       const { error } = await supabase
@@ -88,7 +92,7 @@ export default function TrainingCheckin() {
     },
     onSuccess: (_, { attended, athleteId }) => {
       qc.invalidateQueries({ queryKey: ['checkin-attendance', selectedSession?.id] });
-      const athlete = attendance.find(a => a.athlete_id === athleteId);
+      const athlete = attendanceRef.current.find(a => a.athlete_id === athleteId);
       const name = athlete ? `${athlete.athletes.first_name} ${athlete.athletes.last_name}` : 'Atleta';
       toast({ title: attended ? `✓ ${name} — presente` : `${name} — marcado ausente` });
     },
@@ -104,7 +108,6 @@ export default function TrainingCheckin() {
   // NFC scanning effect
   useEffect(() => {
     if (!nfcMode || !selectedSession) return;
-    let stopFn: (() => void) | undefined;
 
     startScan(async (reading) => {
       let result: { success: boolean; athlete_name?: string; error?: string };
@@ -141,9 +144,9 @@ export default function TrainingCheckin() {
       } catch {
         toast({ title: 'Error de conexión', variant: 'destructive' });
       }
-    }).then(fn => { stopFn = fn; });
+    });
 
-    return () => { stopFn?.(); };
+    return () => stopScan();
   }, [nfcMode, selectedSession?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const presentCount = attendance.filter(a => a.attended).length;

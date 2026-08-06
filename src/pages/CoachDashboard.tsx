@@ -23,6 +23,7 @@ const CoachDashboard = () => {
 
   const { data: kpis } = useQuery({
     queryKey: ['coach-dashboard-kpis'],
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const monthStart   = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
       const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000).toISOString();

@@ -4,6 +4,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import StatsCards from '@/components/athletes/StatsCards';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
 import AthletesTable from '@/components/athletes/AthletesTable';
 import RecentActivity from '@/components/athletes/RecentActivity';
@@ -53,7 +55,7 @@ const Athletes = () => {
 
   const isCoach = profile?.role === 'coach';
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['athletes', currentPage, isCoach ? user?.id : null],
     queryFn: async () => {
       const offset = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -95,6 +97,20 @@ const Athletes = () => {
       };
     },
   });
+
+  if (isError) return (
+    <DashboardLayout title="Athletes Management">
+      <Alert variant="destructive">
+        <AlertTitle>Error al cargar atletas</AlertTitle>
+        <AlertDescription>
+          {error instanceof Error ? error.message : 'Error de conexión'}
+          <Button variant="outline" size="sm" className="mt-2 ml-2" onClick={() => refetch()}>
+            Reintentar
+          </Button>
+        </AlertDescription>
+      </Alert>
+    </DashboardLayout>
+  );
 
   const athletes = data?.athletes ?? [];
   const pagination: PaginationData = {

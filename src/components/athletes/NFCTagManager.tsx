@@ -19,9 +19,8 @@ interface TagStatus {
   checkin_token: string | null;
 }
 
-const APP_URL = window.location.origin;
-
 export function NFCTagManager({ athleteId, athleteName: _athleteName, checkinToken }: NFCTagManagerProps) {
+  const APP_URL = window.location.origin;
   const { toast } = useToast();
   const qc = useQueryClient();
   const { isSupported, status: nfcStatus, error: nfcError, readUID, writeURL, stopScan } = useNFC();

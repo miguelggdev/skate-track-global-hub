@@ -43,10 +43,8 @@ export const useTrainingSessions = (options?: {
     dateFilter = 'all'
   } = options || {};
 
-  // Build query based on options
-  const buildQuery = () => {
-    const today = new Date().toISOString().split('T')[0];
-    
+  // Build query based on options — today is passed in so it's computed at execution time
+  const buildQuery = (today: string) => {
     if (includeCoachInfo) {
       let query = supabase
         .from('training_sessions')
@@ -88,7 +86,8 @@ export const useTrainingSessions = (options?: {
   const { data: trainingSessions = [], isLoading, error, refetch } = useQuery({
     queryKey: ['training-sessions', { includeCoachInfo, dateFilter }],
     queryFn: async () => {
-      const query = buildQuery();
+      const today = new Date().toISOString().split('T')[0]; // computed here to stay fresh after midnight
+      const query = buildQuery(today);
       const { data, error } = await query;
 
       if (error) throw error;

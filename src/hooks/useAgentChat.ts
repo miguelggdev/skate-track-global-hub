@@ -33,6 +33,7 @@ function saveMessages(id: AgentId, msgs: ChatMessage[]) {
 
 export function useAgentChat(agentId: AgentId) {
   const [messages, setMessages] = useState<ChatMessage[]>(() => loadMessages(agentId));
+  const [messagesForAgent, setMessagesForAgent] = useState<AgentId>(agentId);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -40,14 +41,17 @@ export function useAgentChat(agentId: AgentId) {
 
   // Switch agent: reload from storage
   useEffect(() => {
-    setMessages(loadMessages(agentId));
+    const loaded = loadMessages(agentId);
+    setMessages(loaded);
+    setMessagesForAgent(agentId);  // batched with setMessages — same render
     setError(null);
   }, [agentId]);
 
-  // Persist on change
+  // Persist — only when messages belong to the current agent
   useEffect(() => {
+    if (messagesForAgent !== agentId) return;  // skip stale saves after agent switch
     saveMessages(agentId, messages);
-  }, [agentId, messages]);
+  }, [agentId, messages, messagesForAgent]);
 
   useEffect(() => () => { abortRef.current?.abort(); }, []);
 
@@ -92,7 +96,8 @@ export function useAgentChat(agentId: AgentId) {
       const decoder = new TextDecoder();
       let buffer = '';
 
-      while (true) {
+      let doneStreaming = false;
+      while (!doneStreaming) {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
@@ -101,7 +106,7 @@ export function useAgentChat(agentId: AgentId) {
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
           const payload = line.slice(6).trim();
-          if (payload === '[DONE]') break;
+          if (payload === '[DONE]') { doneStreaming = true; break; }
           try {
             const { token } = JSON.parse(payload) as { token: string };
             setMessages(prev =>
@@ -111,7 +116,10 @@ export function useAgentChat(agentId: AgentId) {
         }
       }
     } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') return;
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        setMessages(prev => prev.filter(m => m.id !== assistantId));
+        return;
+      }
       setMessages(prev => prev.filter(m => m.id !== assistantId));
       let msg = 'Error desconocido';
       if (err instanceof TypeError && err.message === 'Failed to fetch') {

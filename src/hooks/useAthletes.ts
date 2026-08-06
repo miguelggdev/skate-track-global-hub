@@ -53,8 +53,11 @@ export const useAthletesPaginated = (page = 1, pageSize = 20, search = '') => {
         .order('first_name', { ascending: true })
         .range(from, to);
       if (search.trim()) {
-        const s = `%${search.trim()}%`;
-        q = q.or(`first_name.ilike.${s},last_name.ilike.${s},email.ilike.${s}`);
+        const sanitized = search.trim().replace(/[%,]/g, ' ').trim();
+        if (sanitized) {
+          const s = `%${sanitized}%`;
+          q = q.or(`first_name.ilike.${s},last_name.ilike.${s},email.ilike.${s}`);
+        }
       }
       const { data, error, count } = await q;
       if (error) throw error;
