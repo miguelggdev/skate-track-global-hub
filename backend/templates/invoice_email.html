@@ -1,0 +1,17 @@
+{% extends "base_email.html" %}
+{% block content %}
+<h2 style="margin:0 0 8px;color:#1e3a5f;font-size:18px;">Factura de Membres&iacute;a &mdash; {{ month_name }} {{ year }}</h2>
+<p style="margin:0 0 24px;color:#64748b;font-size:14px;">Hola <strong>{{ athlete_name }}</strong>,</p>
+<p style="margin:0 0 16px;color:#374151;font-size:14px;">Te enviamos tu factura de membres&iacute;a correspondiente al mes de <strong>{{ month_name }} {{ year }}</strong>.</p>
+
+<table width="100%" cellpadding="12" cellspacing="0" style="background-color:#f8fafc;border-radius:8px;margin:0 0 24px;">
+  <tr><td style="color:#64748b;font-size:13px;border-bottom:1px solid #e2e8f0;">N&deg; Factura</td><td style="color:#1e3a5f;font-size:13px;font-weight:700;text-align:right;border-bottom:1px solid #e2e8f0;">{{ invoice_number }}</td></tr>
+  <tr><td style="color:#64748b;font-size:13px;border-bottom:1px solid #e2e8f0;">Concepto</td><td style="color:#374151;font-size:13px;text-align:right;border-bottom:1px solid #e2e8f0;">{{ concept }}</td></tr>
+  <tr><td style="color:#64748b;font-size:13px;border-bottom:1px solid #e2e8f0;">Per&iacute;odo</td><td style="color:#374151;font-size:13px;text-align:right;border-bottom:1px solid #e2e8f0;">{{ month_name }} {{ year }}</td></tr>
+  <tr><td style="color:#64748b;font-size:13px;border-bottom:1px solid #e2e8f0;">Fecha l&iacute;mite de pago</td><td style="color:#dc2626;font-size:13px;font-weight:700;text-align:right;border-bottom:1px solid #e2e8f0;">{{ due_date }}</td></tr>
+  <tr><td style="color:#1e3a5f;font-size:15px;font-weight:700;">Total a pagar</td><td style="color:#1e3a5f;font-size:18px;font-weight:700;text-align:right;">$ {{ amount }}</td></tr>
+</table>
+
+<p style="margin:0 0 16px;color:#374151;font-size:14px;"><strong>Datos bancarios para el pago:</strong><br>{{ payment_instructions }}</p>
+<p style="margin:0;color:#64748b;font-size:13px;">Si ya realizaste el pago, por favor comparte el comprobante con tu entrenador o el administrador del club.</p>
+{% endblock %}

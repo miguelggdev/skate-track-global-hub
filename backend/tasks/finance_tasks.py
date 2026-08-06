@@ -10,10 +10,18 @@ from tasks.helpers import (
     get_admin_user_ids,
     log_activity,
     notify_user,
+    render_email_template,
     send_email,
 )
 
 logger = logging.getLogger(__name__)
+
+PAYMENT_INSTRUCTIONS = (
+    "Banco: Bancolombia\n"
+    "Cuenta de ahorros: 000-000000-00\n"
+    "A nombre de: Club de Patinaje de Velocidad\n"
+    "Referencia: [Nombre del atleta + mes]"
+)
 
 
 # ── AUTO-07: Recibo automático de pago ─────────────────────────────────────
@@ -126,6 +134,31 @@ def overdue_payment_alerts() -> dict:
                 "AUTO-08",
             )
             actions += 1
+
+        # Send email reminder to the athlete
+        athlete_email = athlete.get("email") or ""
+        if athlete_email:
+            try:
+                days_overdue = (date.today() - date.fromisoformat(tx["transaction_date"])).days
+                tx_date = date.fromisoformat(tx["transaction_date"])
+                html = render_email_template("payment_reminder_email.html", {
+                    "athlete_name": name,
+                    "invoice_number": str(tx.get("id", ""))[:8].upper(),
+                    "month_name": tx_date.strftime("%B"),
+                    "year": tx_date.year,
+                    "amount": f"{float(amount):,.0f}",
+                    "days_overdue": days_overdue,
+                    "payment_instructions": PAYMENT_INSTRUCTIONS,
+                    "to_email": athlete_email,
+                })
+                send_email(
+                    to=athlete_email,
+                    subject="Pago pendiente — Club SpeedSkateTrack",
+                    html_body=html,
+                )
+                actions += 1
+            except Exception as exc:
+                logger.error("AUTO-08 email failed for %s: %s", athlete_email, exc)
 
     # Summary to admin
     summary_msg = (

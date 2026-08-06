@@ -15,6 +15,7 @@ import tasks.marketing_tasks  # noqa: F401  AUTO-21 to AUTO-25
 import tasks.reporting_tasks  # noqa: F401  AUTO-26 to AUTO-29
 import tasks.security_tasks   # noqa: F401  AUTO-30 to AUTO-35
 import tasks.whatsapp_tasks  # noqa: F401  AUTO-36
+import tasks.billing_tasks   # noqa: F401  AUTO-36 (billing) AUTO-37
 
 
 @celery_app.task(name="tasks.health_check")
@@ -238,5 +239,19 @@ celery_app.conf.beat_schedule = {
     "auto-36-daily-whatsapp-motivation": {
         "task": "tasks.whatsapp.send_daily_motivational",
         "schedule": crontab(hour=8, minute=30),
+    },
+
+    # ── BILLING ──────────────────────────────────────────────────────────────
+
+    # AUTO-36 (billing): Generación de cuotas mensuales — 1ro de cada mes 07:00
+    "auto-billing-generate-monthly-fees": {
+        "task": "tasks.billing.generate_monthly_fees",
+        "schedule": crontab(hour=7, minute=0, day_of_month="1"),
+    },
+
+    # AUTO-37: Recordatorios de pago diarios — 09:00
+    "auto-billing-invoice-reminder": {
+        "task": "tasks.billing.send_invoice_reminder",
+        "schedule": crontab(hour=9, minute=0),
     },
 }

@@ -10,7 +10,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
 
-from api.deps import get_current_user
+from api.deps import get_current_user, _fetch_app_role_async
 from database.supabase_client import get_supabase
 
 logger = logging.getLogger(__name__)
@@ -52,8 +52,12 @@ async def import_athletes_csv(
     file: Annotated[UploadFile, File(description="Archivo CSV (max 2 MB)")],
     current_user: Annotated[dict, Depends(get_current_user)],
 ) -> ImportResult:
-    # Solo admins pueden importar
-    if current_user.get("role") not in {"admin"}:
+    # Solo admins pueden importar — verificar rol real en BD (JWT role siempre es "authenticated")
+    user_id = current_user.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Token sin sub claim")
+    app_role = await _fetch_app_role_async(user_id)
+    if app_role != "admin":
         raise HTTPException(status_code=403, detail="Solo administradores pueden importar atletas.")
 
     if file.content_type not in {"text/csv", "application/csv", "text/plain"}:

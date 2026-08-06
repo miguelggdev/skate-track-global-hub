@@ -29,13 +29,15 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { toast } from '@/components/ui/sonner';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { 
-  calculateAge, 
-  getCategoryFromAge, 
+import {
+  calculateAge,
+  getCategoryFromAge,
   getLevelFromCategoryAndAge,
   getCategoryDisplayName,
   getLevelDisplayName
@@ -43,27 +45,30 @@ import {
 import DatePickerWithYearMonth from '@/components/ui/date-picker-with-year-month';
 import { useCreateUser, CreateUserData } from '@/hooks/useCreateUser';
 
+const addAthleteSchema = z.object({
+  firstName: z.string().min(1, 'El nombre es requerido'),
+  lastName: z.string().min(1, 'El apellido es requerido'),
+  idType: z.string().min(1, 'El tipo de identificación es requerido'),
+  idNumber: z.string().min(1, 'El número de identificación es requerido'),
+  email: z.string().min(1, 'El email es requerido').email('Dirección de email inválida'),
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  dateOfBirth: z.date({ required_error: 'La fecha de nacimiento es requerida' }),
+  gender: z.string().min(1, 'El género es requerido'),
+});
+
+type AthleteFormData = z.infer<typeof addAthleteSchema>;
+
 interface AddAthleteDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAthleteAdded: () => void;
 }
 
-interface AthleteFormData {
-  firstName: string;
-  lastName: string;
-  idType: string;
-  idNumber: string;
-  email: string;
-  password: string;
-  dateOfBirth: Date | undefined;
-  gender: string;
-}
-
 const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDialogProps) => {
   const { createUser, loading } = useCreateUser();
 
   const form = useForm<AthleteFormData>({
+    resolver: zodResolver(addAthleteSchema),
     defaultValues: {
       firstName: '',
       lastName: '',
@@ -71,14 +76,13 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
       idNumber: '',
       email: '',
       password: '',
-      dateOfBirth: undefined,
+      dateOfBirth: undefined as unknown as Date,
       gender: '',
     },
   });
 
   const dateOfBirth = form.watch('dateOfBirth');
 
-  // Derived values computed inline — no extra render cycle compared to useEffect + setState
   const calculatedAge = dateOfBirth ? calculateAge(dateOfBirth) : null;
   const calculatedCategory = calculatedAge != null ? getCategoryFromAge(calculatedAge) : null;
   const calculatedLevel = (calculatedAge != null && calculatedCategory)
@@ -86,12 +90,6 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
     : null;
 
   const onSubmit = async (data: AthleteFormData) => {
-    if (!data.dateOfBirth) {
-      toast.error('Date of birth is required');
-      return;
-    }
-
-    // Create a full user account with athlete role
     const createUserData: CreateUserData = {
       email: data.email,
       password: data.password,
@@ -105,15 +103,11 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
     };
 
     const result = await createUser(createUserData);
-    
+
     if (result.success) {
-      // Reset form and close dialog
       form.reset();
       onOpenChange(false);
-      
-      // Notify parent component to refresh data
       onAthleteAdded();
-      
       toast.success('Atleta creado exitosamente con cuenta de acceso');
     }
   };
@@ -127,13 +121,12 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
             Ingrese la información del atleta. La categoría y nivel se calcularán automáticamente según la fecha de nacimiento.
           </DialogDescription>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="firstName"
-              rules={{ required: 'El nombre es requerido' }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Nombre</FormLabel>
@@ -148,7 +141,6 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
             <FormField
               control={form.control}
               name="lastName"
-              rules={{ required: 'El apellido es requerido' }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Apellido</FormLabel>
@@ -163,7 +155,6 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
             <FormField
               control={form.control}
               name="idType"
-              rules={{ required: 'El tipo de identificación es requerido' }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Tipo de Identificación</FormLabel>
@@ -188,7 +179,6 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
             <FormField
               control={form.control}
               name="idNumber"
-              rules={{ required: 'El número de identificación es requerido' }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Número de Identificación</FormLabel>
@@ -203,13 +193,6 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
             <FormField
               control={form.control}
               name="email"
-              rules={{ 
-                required: 'El email es requerido',
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Dirección de email inválida'
-                }
-              }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Email</FormLabel>
@@ -224,13 +207,6 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
             <FormField
               control={form.control}
               name="password"
-              rules={{ 
-                required: 'La contraseña es requerida',
-                minLength: {
-                  value: 6,
-                  message: 'La contraseña debe tener al menos 6 caracteres'
-                }
-              }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Contraseña</FormLabel>
@@ -245,7 +221,6 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
             <FormField
               control={form.control}
               name="gender"
-              rules={{ required: 'El género es requerido' }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Género</FormLabel>
@@ -268,7 +243,6 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
             <FormField
               control={form.control}
               name="dateOfBirth"
-              rules={{ required: 'La fecha de nacimiento es requerida' }}
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Fecha de Nacimiento</FormLabel>
@@ -306,7 +280,6 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
               )}
             />
 
-            {/* Calculated Age, Category, and Level Display */}
             {calculatedAge !== null && (
               <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
                 <h4 className="text-sm font-medium">Información Calculada:</h4>
@@ -328,9 +301,9 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
             )}
 
             <DialogFooter>
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => onOpenChange(false)}
                 disabled={loading}
               >

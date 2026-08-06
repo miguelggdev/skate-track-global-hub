@@ -1,0 +1,17 @@
+{% extends "base_email.html" %}
+{% block content %}
+<div style="background-color:#fef3c7;border-left:4px solid #f59e0b;padding:16px;border-radius:4px;margin:0 0 24px;">
+  <p style="margin:0;color:#92400e;font-size:14px;font-weight:700;">&#x26A0;&#xFE0F; Recordatorio de pago pendiente</p>
+</div>
+<h2 style="margin:0 0 8px;color:#1e3a5f;font-size:18px;">Pago pendiente &mdash; {{ month_name }} {{ year }}</h2>
+<p style="margin:0 0 16px;color:#374151;font-size:14px;">Hola <strong>{{ athlete_name }}</strong>, registramos un pago pendiente de tu membres&iacute;a:</p>
+
+<table width="100%" cellpadding="12" cellspacing="0" style="background-color:#fef2f2;border-radius:8px;margin:0 0 24px;border:1px solid #fecaca;">
+  <tr><td style="color:#64748b;font-size:13px;">Factura N&deg;</td><td style="color:#1e3a5f;font-weight:700;text-align:right;font-size:13px;">{{ invoice_number }}</td></tr>
+  <tr><td style="color:#64748b;font-size:13px;">D&iacute;as de mora</td><td style="color:#dc2626;font-weight:700;text-align:right;font-size:13px;">{{ days_overdue }} d&iacute;as</td></tr>
+  <tr><td style="color:#1e3a5f;font-size:15px;font-weight:700;">Monto pendiente</td><td style="color:#dc2626;font-size:18px;font-weight:700;text-align:right;">$ {{ amount }}</td></tr>
+</table>
+
+<p style="margin:0 0 16px;color:#374151;font-size:14px;">Por favor realiza el pago a la brevedad posible para evitar restricciones en tu acceso a los entrenamientos.</p>
+<p style="margin:0;color:#374151;font-size:14px;"><strong>Datos bancarios:</strong><br>{{ payment_instructions }}</p>
+{% endblock %}

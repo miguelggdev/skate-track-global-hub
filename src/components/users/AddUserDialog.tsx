@@ -10,9 +10,24 @@ import {
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
-import { useCreateUser, CreateUserData } from '@/hooks/useCreateUser';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useCreateUser } from '@/hooks/useCreateUser';
 import { UserFormFields } from './UserFormFields';
 import { supabase } from '@/integrations/supabase/client';
+
+const addUserSchema = z.object({
+  email: z.string().min(1, 'El email es requerido').email('Email inválido'),
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  first_name: z.string().min(1, 'El nombre es requerido'),
+  last_name: z.string().min(1, 'El apellido es requerido'),
+  phone: z.string().optional().or(z.literal('')),
+  date_of_birth: z.string().optional().or(z.literal('')),
+  role: z.enum(['admin', 'coach', 'athlete', 'delegate', 'leader', 'finance']),
+  bio: z.string().optional().or(z.literal('')),
+});
+
+type AddUserFormData = z.infer<typeof addUserSchema>;
 
 interface AddUserDialogProps {
   open: boolean;
@@ -24,7 +39,8 @@ const AddUserDialog = ({ open, onOpenChange, onUserAdded }: AddUserDialogProps) 
   const { createUser, loading } = useCreateUser();
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   
-  const form = useForm<CreateUserData>({
+  const form = useForm<AddUserFormData>({
+    resolver: zodResolver(addUserSchema),
     defaultValues: {
       email: '',
       password: '',
@@ -37,7 +53,7 @@ const AddUserDialog = ({ open, onOpenChange, onUserAdded }: AddUserDialogProps) 
     },
   });
 
-  const onSubmit = async (data: CreateUserData) => {
+  const onSubmit = async (data: AddUserFormData) => {
     const result = await createUser(data);
     
     if (result.success) {

@@ -1,0 +1,17 @@
+{% extends "base_email.html" %}
+{% block content %}
+<div style="background-color:#dcfce7;border-left:4px solid #16a34a;padding:16px;border-radius:4px;margin:0 0 24px;">
+  <p style="margin:0;color:#14532d;font-size:14px;font-weight:700;">&#x2705; Pago recibido &mdash; &iexcl;Gracias!</p>
+</div>
+<h2 style="margin:0 0 8px;color:#1e3a5f;font-size:18px;">Comprobante de pago</h2>
+<p style="margin:0 0 16px;color:#374151;font-size:14px;">Hola <strong>{{ athlete_name }}</strong>, confirmamos la recepci&oacute;n de tu pago:</p>
+
+<table width="100%" cellpadding="12" cellspacing="0" style="background-color:#f0fdf4;border-radius:8px;margin:0 0 24px;border:1px solid #bbf7d0;">
+  <tr><td style="color:#64748b;font-size:13px;border-bottom:1px solid #d1fae5;">N&deg; Recibo</td><td style="color:#1e3a5f;font-weight:700;text-align:right;font-size:13px;border-bottom:1px solid #d1fae5;">{{ receipt_number }}</td></tr>
+  <tr><td style="color:#64748b;font-size:13px;border-bottom:1px solid #d1fae5;">Concepto</td><td style="color:#374151;text-align:right;font-size:13px;border-bottom:1px solid #d1fae5;">{{ concept }}</td></tr>
+  <tr><td style="color:#64748b;font-size:13px;border-bottom:1px solid #d1fae5;">Fecha de pago</td><td style="color:#374151;text-align:right;font-size:13px;border-bottom:1px solid #d1fae5;">{{ payment_date }}</td></tr>
+  <tr><td style="color:#1e3a5f;font-size:15px;font-weight:700;">Monto pagado</td><td style="color:#16a34a;font-size:18px;font-weight:700;text-align:right;">$ {{ amount }}</td></tr>
+</table>
+
+<p style="margin:0;color:#64748b;font-size:13px;">Guarda este correo como comprobante de tu pago. Si tienes dudas, cont&aacute;ctanos.</p>
+{% endblock %}

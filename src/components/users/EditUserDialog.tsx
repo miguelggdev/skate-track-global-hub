@@ -23,6 +23,59 @@ import { ProfessionalTab } from './tabs/ProfessionalTab';
 import { DocumentsTab } from './tabs/DocumentsTab';
 import { AdministrativeTab } from './tabs/AdministrativeTab';
 import { Loader2 } from 'lucide-react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+const editUserSchema = z.object({
+  first_name: z.string().min(1, 'El nombre es requerido'),
+  last_name: z.string().min(1, 'El apellido es requerido'),
+  email: z.string().min(1, 'El email es requerido').email('Email inválido'),
+  role: z.enum(['admin', 'coach', 'athlete', 'delegate', 'leader', 'finance']),
+  phone: z.string().optional().or(z.literal('')),
+  date_of_birth: z.string().optional().or(z.literal('')),
+  bio: z.string().optional().or(z.literal('')),
+  id_type: z.string().optional().or(z.literal('')),
+  id_number: z.string().optional().or(z.literal('')),
+  gender: z.string().optional().or(z.literal('')),
+  nationality: z.string().optional().or(z.literal('')),
+  address: z.string().optional().or(z.literal('')),
+  city: z.string().optional().or(z.literal('')),
+  department: z.string().optional().or(z.literal('')),
+  country: z.string().optional().or(z.literal('')),
+  landline_phone: z.string().optional().or(z.literal('')),
+  languages: z.array(z.string()).optional(),
+  blood_type: z.string().optional().or(z.literal('')),
+  rh_factor: z.string().optional().or(z.literal('')),
+  diseases: z.string().optional().or(z.literal('')),
+  allergies: z.string().optional().or(z.literal('')),
+  disability: z.string().optional().or(z.literal('')),
+  emergency_contact_name: z.string().optional().or(z.literal('')),
+  emergency_contact_relationship: z.string().optional().or(z.literal('')),
+  emergency_contact_phone: z.string().optional().or(z.literal('')),
+  health_insurance: z.string().optional().or(z.literal('')),
+  sports_insurance_policy: z.string().optional().or(z.literal('')),
+  insurance_expiry_date: z.string().optional().or(z.literal('')),
+  academic_level: z.string().optional().or(z.literal('')),
+  degree_title: z.string().optional().or(z.literal('')),
+  education_institution: z.string().optional().or(z.literal('')),
+  training_certifications: z.string().optional().or(z.literal('')),
+  years_experience: z.number().optional(),
+  experience_description: z.string().optional().or(z.literal('')),
+  coach_category: z.string().optional().or(z.literal('')),
+  license_number: z.string().optional().or(z.literal('')),
+  federation_license_expiry: z.string().optional().or(z.literal('')),
+  certification_level: z.string().optional().or(z.literal('')),
+  hourly_rate: z.number().optional(),
+  specialization: z.string().optional().or(z.literal('')),
+  status: z.string().optional().or(z.literal('')),
+  observations: z.string().optional().or(z.literal('')),
+  data_consent: z.boolean().optional(),
+  accepts_regulations: z.boolean().optional(),
+  created_at: z.string().optional().or(z.literal('')),
+  updated_at: z.string().optional().or(z.literal('')),
+});
+
+type EditUserFormData = z.infer<typeof editUserSchema>;
 
 interface EditUserDialogProps {
   user: User | null;
@@ -31,63 +84,6 @@ interface EditUserDialogProps {
   onUserUpdated: () => void;
 }
 
-interface EditUserFormData {
-  // Profile
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone?: string;
-  date_of_birth?: string;
-  role: 'admin' | 'coach' | 'athlete' | 'delegate' | 'leader' | 'finance';
-  bio?: string;
-  id_type?: string;
-  id_number?: string;
-  gender?: string;
-  
-  // Contact
-  nationality?: string;
-  address?: string;
-  city?: string;
-  department?: string;
-  country?: string;
-  landline_phone?: string;
-  languages?: string[];
-  
-  // Medical
-  blood_type?: string;
-  rh_factor?: string;
-  diseases?: string;
-  allergies?: string;
-  disability?: string;
-  emergency_contact_name?: string;
-  emergency_contact_relationship?: string;
-  emergency_contact_phone?: string;
-  health_insurance?: string;
-  sports_insurance_policy?: string;
-  insurance_expiry_date?: string;
-  
-  // Coach Professional (conditional)
-  academic_level?: string;
-  degree_title?: string;
-  education_institution?: string;
-  training_certifications?: string;
-  years_experience?: number;
-  experience_description?: string;
-  coach_category?: string;
-  license_number?: string;
-  federation_license_expiry?: string;
-  certification_level?: string;
-  hourly_rate?: number;
-  specialization?: string;
-  
-  // Administrative
-  status?: string;
-  observations?: string;
-  data_consent?: boolean;
-  accepts_regulations?: boolean;
-  created_at?: string;
-  updated_at?: string;
-}
 
 const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDialogProps) => {
   const [loading, setLoading] = useState(false);
@@ -102,6 +98,7 @@ const EditUserDialog = ({ user, open, onOpenChange, onUserUpdated }: EditUserDia
   const canEditRoles = isAdmin || isLeader;
   
   const form = useForm<EditUserFormData>({
+    resolver: zodResolver(editUserSchema),
     defaultValues: {
       first_name: '',
       last_name: '',

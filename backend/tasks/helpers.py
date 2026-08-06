@@ -3,15 +3,28 @@ from __future__ import annotations
 
 import logging
 import os
+import time
 from datetime import datetime, timezone
 from typing import Any
 
+from jinja2 import Environment, FileSystemLoader
+
+from config import settings
 from database.supabase_client import get_supabase
 
 logger = logging.getLogger(__name__)
 
-_RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-_RESEND_FROM = os.getenv("RESEND_FROM_EMAIL", "noreply@skateclubhub.com")
+_template_env = Environment(
+    loader=FileSystemLoader(os.path.join(os.path.dirname(__file__), '..', 'templates'))
+)
+
+
+def render_email_template(template_name: str, context: dict) -> str:
+    """Render a Jinja2 email template from backend/templates/."""
+    context.setdefault('year', datetime.now().year)
+    context.setdefault('recipient_email', context.get('to_email', ''))
+    template = _template_env.get_template(template_name)
+    return template.render(**context)
 
 
 def now_utc() -> datetime:
@@ -149,39 +162,81 @@ def get_coach_user_ids() -> list[str]:
         return []
 
 
-def send_email(to: str, subject: str, html_body: str, text_body: str | None = None) -> bool:
+def send_email(
+    to: str,
+    subject: str,
+    html_body: str,
+    text_body: str | None = None,
+    attachments: list[dict] | None = None,
+) -> bool:
     """Send transactional email via Resend. Returns True on success.
 
-    Requires RESEND_API_KEY env var. Logs warning and returns False if not set.
+    Reads API key and sender address from settings (config.py).
+    Retries up to 3 times on 429 or 5xx responses with a 2s delay.
+
+    Args:
+        to: Recipient email address.
+        subject: Email subject line.
+        html_body: HTML content of the email.
+        text_body: Optional plain-text fallback.
+        attachments: Optional list of dicts with keys ``filename`` (str) and
+            ``content`` (base64-encoded str), e.g.
+            ``[{"filename": "factura.pdf", "content": "<base64>"}]``.
     """
-    if not _RESEND_API_KEY:
-        logger.warning("RESEND_API_KEY not configured — email not sent to %s", to)
+    api_key = settings.resend_api_key
+    from_email = settings.resend_from_email
+
+    if not api_key:
+        logger.warning("resend_api_key not configured — email not sent to %s", to)
         return False
 
     try:
         import httpx
         payload: dict = {
-            "from": _RESEND_FROM,
+            "from": from_email,
             "to": [to],
             "subject": subject,
             "html": html_body,
         }
         if text_body:
             payload["text"] = text_body
+        if attachments:
+            payload["attachments"] = [
+                {"filename": a["filename"], "content": a["content"]}
+                for a in attachments
+            ]
 
-        resp = httpx.post(
-            "https://api.resend.com/emails",
-            headers={
-                "Authorization": f"Bearer {_RESEND_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json=payload,
-            timeout=15.0,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        logger.info("Email sent to %s — id=%s", to, data.get("id"))
-        return True
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+
+        last_exc: Exception | None = None
+        for attempt in range(1, 4):
+            try:
+                resp = httpx.post(
+                    "https://api.resend.com/emails",
+                    headers=headers,
+                    json=payload,
+                    timeout=15.0,
+                )
+                if resp.status_code in (429,) or resp.status_code >= 500:
+                    logger.warning(
+                        "Resend returned %s on attempt %d for %s — retrying in 2s",
+                        resp.status_code, attempt, to,
+                    )
+                    time.sleep(2)
+                    continue
+                resp.raise_for_status()
+                data = resp.json()
+                logger.info("Email sent to %s — id=%s", to, data.get("id"))
+                return True
+            except httpx.HTTPStatusError as exc:
+                last_exc = exc
+                if attempt < 3:
+                    time.sleep(2)
+        logger.error("Email send failed to %s after 3 attempts: %s", to, last_exc)
+        return False
     except Exception as exc:
         logger.error("Email send failed to %s: %s", to, exc)
         return False

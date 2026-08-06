@@ -18,6 +18,49 @@ import CoachInfo from './sections/CoachInfo';
 import SocialMediaLinks from './sections/SocialMediaLinks';
 import ReportTemplateSettings from './sections/ReportTemplateSettings';
 import LogoUpload from './LogoUpload';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+const clubInfoSchema = z.object({
+  club_name: z.string().min(1, 'El nombre del club es requerido'),
+  club_description: z.string().optional().or(z.literal('')),
+  contact_email: z.string().optional().or(z.literal('')),
+  contact_phone: z.string().optional().or(z.literal('')),
+  address: z.string().optional().or(z.literal('')),
+  website_url: z.string().optional().or(z.literal('')),
+  social_facebook: z.string().optional().or(z.literal('')),
+  social_instagram: z.string().optional().or(z.literal('')),
+  social_twitter: z.string().optional().or(z.literal('')),
+  timezone: z.string().optional().or(z.literal('')),
+  currency: z.string().optional().or(z.literal('')),
+  language: z.string().optional().or(z.literal('')),
+  delegate_name: z.string().optional().or(z.literal('')),
+  delegate_phone: z.string().optional().or(z.literal('')),
+  delegate_email: z.string().optional().or(z.literal('')),
+  president_name: z.string().optional().or(z.literal('')),
+  president_phone: z.string().optional().or(z.literal('')),
+  president_email: z.string().optional().or(z.literal('')),
+  president_id: z.string().optional().or(z.literal('')),
+  doctor_name: z.string().optional().or(z.literal('')),
+  doctor_phone: z.string().optional().or(z.literal('')),
+  physiotherapist_name: z.string().optional().or(z.literal('')),
+  physiotherapist_phone: z.string().optional().or(z.literal('')),
+  league: z.string().optional().or(z.literal('')),
+  country: z.string().optional().or(z.literal('')),
+  coach_name: z.string().optional().or(z.literal('')),
+  coach_phone: z.string().optional().or(z.literal('')),
+  coach_email: z.string().optional().or(z.literal('')),
+  report_include_logo: z.boolean().optional(),
+  report_include_address: z.boolean().optional(),
+  report_include_contact: z.boolean().optional(),
+  report_include_social: z.boolean().optional(),
+  report_include_president: z.boolean().optional(),
+  report_include_delegate: z.boolean().optional(),
+  report_include_league: z.boolean().optional(),
+  report_header_style: z.string().optional().or(z.literal('')),
+});
+
+type ClubInfoFormData = z.infer<typeof clubInfoSchema>;
 
 interface ClubInfoSettingsProps {
   clubSettings: ClubSettings | null;
@@ -38,7 +81,8 @@ const ClubInfoSettings = ({ clubSettings, onUpdate }: ClubInfoSettingsProps) => 
     onUpdate();
   };
 
-  const form = useForm({
+  const form = useForm<ClubInfoFormData>({
+    resolver: zodResolver(clubInfoSchema),
     defaultValues: {
       club_name: clubSettings?.club_name ?? '',
       club_description: clubSettings?.club_description ?? '',
@@ -122,7 +166,7 @@ const ClubInfoSettings = ({ clubSettings, onUpdate }: ClubInfoSettingsProps) => 
     }
   }, [clubSettings, form]);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: ClubInfoFormData) => {
     try {
       if (!clubSettings?.id) {
         // Create new club settings

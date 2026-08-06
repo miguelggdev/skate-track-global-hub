@@ -65,7 +65,7 @@ export default function Checkin() {
       if (error) throw error;
       return (data ?? []) as Session[];
     },
-    enabled: !!token,
+    enabled: !!athleteInfo && !athleteError,
     retry: 2,
     staleTime: 60_000,
   });

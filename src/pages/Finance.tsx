@@ -23,6 +23,7 @@ import { FeePreviewCard } from '@/components/finance/FeePreviewCard';
 import { TransactionFilters } from '@/components/finance/TransactionFilters';
 import { TransactionPagination } from '@/components/finance/TransactionPagination';
 import { usePaginatedTransactions, useFinancialStats, useUpdateTransaction } from '@/hooks/useTransactions';
+import { useInvoices, useInvoiceSummary, useMarkInvoicePaid } from '@/hooks/useInvoices';
 import { useFinancialReports, type ReportType, type ReportPeriod } from '@/hooks/useFinancialReports';
 import { generateFinancialReportPDF } from '@/utils/pdfGenerator';
 import { formatCurrency } from '@/utils/currency';
@@ -78,6 +79,8 @@ const Finance = () => {
   const [selectedReportType, setSelectedReportType] = useState<ReportType>('complete');
   const [generatedReport, setGeneratedReport] = useState<object | null>(null);
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+  const [billingYear, setBillingYear] = useState(currentYear);
+  const [billingMonth, setBillingMonth] = useState(currentMonth + 1);
 
   const pageSize = 15;
 
@@ -101,6 +104,9 @@ const Finance = () => {
   const { data: financialStats, isLoading: statsLoading } = useFinancialStats();
   const updateTransactionMutation = useUpdateTransaction();
   const { data: reportData, isLoading: reportLoading } = useFinancialReports(selectedReportType, selectedPeriod);
+  const { data: invoices = [], isLoading: invoicesLoading } = useInvoices(billingYear, billingMonth);
+  const { data: invoiceSummary } = useInvoiceSummary(billingYear, billingMonth);
+  const markPaidMutation = useMarkInvoicePaid();
 
   // Update URL params when filters change
   const updateUrlParams = (newFilters: {
@@ -339,6 +345,7 @@ const Finance = () => {
             <TabsTrigger value="reports">Informes</TabsTrigger>
             <TabsTrigger value="payments">Pagos</TabsTrigger>
             <TabsTrigger value="letters">Cartas</TabsTrigger>
+            <TabsTrigger value="invoices">Facturación</TabsTrigger>
             <TabsTrigger value="settings">Configuración</TabsTrigger>
           </TabsList>
 
@@ -748,6 +755,156 @@ const Finance = () => {
           {/* Letters Tab */}
           <TabsContent value="letters" className="space-y-6">
             <AthleteLetterGenerator />
+          </TabsContent>
+
+          {/* Invoices / Billing Tab */}
+          <TabsContent value="invoices" className="space-y-6">
+            {/* Period selector */}
+            <div className="flex flex-wrap items-center gap-3">
+              <Select
+                value={String(billingMonth)}
+                onValueChange={(v) => setBillingMonth(Number(v))}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Mes" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[
+                    'Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                    'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'
+                  ].map((name, i) => (
+                    <SelectItem key={i + 1} value={String(i + 1)}>{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={String(billingYear)}
+                onValueChange={(v) => setBillingYear(Number(v))}
+              >
+                <SelectTrigger className="w-28">
+                  <SelectValue placeholder="Año" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
+                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Summary KPI cards */}
+            {invoiceSummary && (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="pt-5 pb-4">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider">Total facturas</p>
+                    <p className="text-2xl font-bold">{invoiceSummary.total_invoices}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-5 pb-4">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider">Pagadas</p>
+                    <p className="text-2xl font-bold text-green-600">{invoiceSummary.paid}</p>
+                    <p className="text-xs text-muted-foreground">{formatCurrency(invoiceSummary.paid_amount, currency)}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-5 pb-4">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider">Pendientes</p>
+                    <p className="text-2xl font-bold text-amber-600">{invoiceSummary.pending}</p>
+                    <p className="text-xs text-muted-foreground">{formatCurrency(invoiceSummary.pending_amount, currency)}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-5 pb-4">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider">Recaudación</p>
+                    <p className="text-2xl font-bold text-primary">{invoiceSummary.collection_rate.toFixed(1)}%</p>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Invoices table */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Facturas del período
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {invoicesLoading ? (
+                  <p className="text-sm text-muted-foreground py-4 text-center">Cargando facturas…</p>
+                ) : invoices.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4 text-center">
+                    No hay facturas para este período. Las facturas se generan automáticamente el 1 de cada mes.
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Factura</th>
+                          <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Atleta</th>
+                          <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Concepto</th>
+                          <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Importe</th>
+                          <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Estado</th>
+                          <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Vence</th>
+                          <th className="py-2" />
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {invoices.map((inv) => (
+                          <tr key={inv.id} className="border-b last:border-0 hover:bg-muted/30">
+                            <td className="py-2 pr-4 font-mono text-xs">{inv.invoice_number}</td>
+                            <td className="py-2 pr-4">
+                              {inv.athletes
+                                ? `${inv.athletes.first_name} ${inv.athletes.last_name}`
+                                : '—'}
+                            </td>
+                            <td className="py-2 pr-4 text-muted-foreground">{inv.concept}</td>
+                            <td className="py-2 pr-4 text-right font-medium">{formatCurrency(inv.amount, currency)}</td>
+                            <td className="py-2 pr-4">
+                              <Badge
+                                variant={
+                                  inv.status === 'paid' ? 'default' :
+                                  inv.status === 'sent' ? 'secondary' :
+                                  inv.status === 'cancelled' ? 'outline' : 'destructive'
+                                }
+                                className={
+                                  inv.status === 'paid' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+                                  inv.status === 'sent' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' : ''
+                                }
+                              >
+                                {inv.status === 'paid' ? 'Pagada' :
+                                 inv.status === 'sent' ? 'Enviada' :
+                                 inv.status === 'draft' ? 'Borrador' : 'Cancelada'}
+                              </Badge>
+                            </td>
+                            <td className="py-2 pr-4 text-muted-foreground">
+                              {new Date(inv.due_date).toLocaleDateString('es-ES')}
+                            </td>
+                            <td className="py-2">
+                              {inv.status !== 'paid' && inv.status !== 'cancelled' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={markPaidMutation.isPending}
+                                  onClick={() => markPaidMutation.mutate({ invoiceId: inv.id })}
+                                >
+                                  <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                                  Marcar pagada
+                                </Button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Settings Tab */}
