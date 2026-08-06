@@ -204,6 +204,8 @@ backend/
 | Deploy backend en Railway | 1 |
 | Monitoreo post-deploy | Continuo |
 
+> **Nota:** Deploy en Vercel/Railway descartado. Se usa VPS Ubuntu + Traefik (ver SPEC-035 y `docs/DEPLOY_VPS.md`).
+
 ---
 
 ## Checklist de Calidad (cada feature)
@@ -231,4 +233,57 @@ Antes de marcar un spec como `done`:
 
 ---
 
-*Actualizado: Julio 2026 — Sprint 1 en curso*
+---
+
+## SPRINT 9 — Auditoría de Seguridad + Deploy VPS + Facturación (Agosto 2026)
+
+**Objetivo:** Cerrar vulnerabilidades críticas, configurar deploy en VPS propio con Traefik, implementar sistema completo de facturación mensual y cubrir formularios con Zod.
+
+| Spec | Título | Status |
+|------|--------|--------|
+| SPEC-034 | Auditoría de seguridad + 11 bug fixes (code review + audit round 2) | ✅ done |
+| SPEC-035 | Deploy VPS + Traefik (docker-compose, Dockerfile, nginx, deploy.sh) | ✅ done |
+| SPEC-036 | Sistema de facturación mensual (invoices, Celery AUTO-36/37, email templates) | ✅ done |
+| SPEC-037 | Zod en 4 formularios + fixes de seguridad residuales | ✅ done |
+
+### Completado en Sprint 9
+
+**Seguridad:**
+- 11 bug fixes críticos del code review: stale closures, race conditions, PostgREST injection, JWT role bypass
+- Migración `20260805100000_checkin_temporal_guard.sql`: validación temporal ±4h en checkin
+- Migración `20260805200000_audit_round2_fixes.sql`: 12 fixes (handle_new_user, CV view, NFC UID, FK, coach policies, parent column, created_at, índices)
+- Import CSV ahora usa `_fetch_app_role_async` — eliminado bypass de autorización
+
+**Deploy:**
+- `Dockerfile` multi-stage: Node 20 → nginx:1.27-alpine
+- `docker-compose.yml` para Traefik (red `supabase2_net`) + red interna `app_net`
+- `nginx/default.conf` con SSE support (`proxy_buffering off`) y cache de assets
+- `deploy.sh` reescrito para Traefik (sin certbot, sin node en VPS)
+- `docs/DEPLOY_VPS.md` — guía completa para el operador
+
+**Facturación:**
+- Tabla `invoices` con sequence `invoice_number_seq` (FAC-YYYY-NNNNN)
+- 2 RPCs: `get_invoice_summary_by_month`, `mark_invoice_paid`
+- 5 RLS policies en `invoices`
+- Celery AUTO-36 (generación 1° mes) + AUTO-37 (recordatorios D-5 y overdue)
+- 4 templates Jinja2 HTML responsivos para emails
+- `helpers.py`: retry Resend, Jinja2 renderer, parámetro adjuntos
+- Tab "Facturación" en Finance.tsx con KPI cards + tabla + Mark Paid
+
+**Validación:**
+- Zod en 4 formularios: AddAthleteDialog, AddUserDialog, EditUserDialog (53 campos), ClubInfoSettings (37 campos)
+
+### Pendiente (Sprint 10 — futuro)
+
+| Tarea | Prioridad |
+|-------|-----------|
+| Rate limiting en FastAPI (slowapi) | ALTA |
+| 3 agentes IA faltantes: AG-08 Seguridad, AG-11 Operaciones, AG-12 Legal | ALTA |
+| PDF generación de facturas + adjunto en email | MEDIA |
+| RAG: subir documentos a Supabase Storage | MEDIA |
+| `CreateTrainingDialog` — migrar a Zod | BAJA |
+| CORS assertion en startup para producción | BAJA |
+
+---
+
+*Actualizado: Agosto 2026 — Sprint 9 completado, listo para primer deploy en VPS*
