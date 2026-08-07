@@ -401,4 +401,25 @@ Ir a **Database → Webhooks** y crear un webhook por tabla con:
 
 ---
 
-*Actualizado: Agosto 2026 — Sprint 13 completado*
+## SPRINT 14 — Cobertura completa de agentes IA en el frontend (Agosto 2026)
+
+**Objetivo:** Exponer en la UI los 13 agentes del backend. Los 3 nuevos del Sprint 13 (Seguridad AG-08, Operaciones AG-11, Legal AG-12) no tenían panel de chat, y varios agentes existentes (medicina, gym, ciclismo, marketing, resultados) no estaban colocados en ningún dashboard.
+
+| Spec | Título | Status |
+|------|--------|--------|
+| SPEC-060 | Cobertura completa de agentes IA en el frontend | ✅ done |
+
+### Completado en Sprint 14
+
+- `src/hooks/useAgentChat.ts` — tipo `AgentId` ampliado con `security`, `operations`, `legal` (ahora 1:1 con el registry del backend)
+- `src/components/agents/agentCatalog.ts` — catálogo central `AGENT_PRESETS` con título, subtítulo, color y preguntas sugeridas de los 13 agentes
+- `src/components/agents/AgentPanelsSection.tsx` — sección reutilizable que renderiza una grilla de `DashboardAgentPanel` desde el catálogo
+- Paneles colocados por rol (agentes restringidos solo en dashboards admin/coach/leader):
+  - **Admin / Leader:** operations, marketing, results, medical, security, legal
+  - **Coach:** operations, results, medical, gym, cycling
+  - **Athlete:** gym, cycling
+- Verificación: `npx tsc --noEmit` (0 errores) + `npm run build` exitoso
+
+---
+
+*Actualizado: Agosto 2026 — Sprint 14 completado*

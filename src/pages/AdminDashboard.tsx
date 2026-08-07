@@ -20,6 +20,7 @@ import {
   AdminMemberGrowth, AdminAuditFeed
 } from '@/components/dashboard/AdminHealthChart';
 import { DashboardAgentPanel } from '@/components/agents/DashboardAgentPanel';
+import { AgentPanelsSection } from '@/components/agents/AgentPanelsSection';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile } from '@/hooks/useUserProfile';
 
@@ -284,6 +285,13 @@ const AdminDashboard = () => {
             '¿Cuál es la asistencia promedio de esta semana?',
             'Genera un resumen del estado actual del club',
           ]}
+        />
+
+        {/* Asistentes IA especializados — AG-06/08/09/10/11/12 */}
+        <AgentPanelsSection
+          title="Más asistentes IA"
+          description="Operaciones, marketing, resultados, medicina, seguridad y cumplimiento legal"
+          agents={['operations', 'marketing', 'results', 'medical', 'security', 'legal']}
         />
 
         <Card className="animate-slide-up">

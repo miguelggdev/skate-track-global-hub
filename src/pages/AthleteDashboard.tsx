@@ -26,6 +26,7 @@ import AthleteProfileEditDialog from '@/components/athletes/dashboard/cv/Athlete
 import { AthleteSkillsRadar, AthleteNextCompetition, AthleteAchievements } from '@/components/dashboard/AthleteCharts';
 import { AthleteCVDownloadButton } from '@/lib/pdf/AthleteCVDocument';
 import { DashboardAgentPanel } from '@/components/agents/DashboardAgentPanel';
+import { AgentPanelsSection } from '@/components/agents/AgentPanelsSection';
 
 // Navigation Component
 import { AthleteTabNavigation } from '@/components/athletes/dashboard/AthleteTabNavigation';
@@ -355,6 +356,14 @@ const AthleteDashboard = () => {
               ]}
             />
           </div>
+
+          {/* Asistentes IA de entrenamiento complementario — AG-05/03 */}
+          <AgentPanelsSection
+            title="Más asistentes IA"
+            description="Preparación física en gimnasio y ciclismo como cross-training"
+            agents={['gym', 'cycling']}
+            className="mt-4"
+          />
         </div>
 
         {/* Existing Tabs */}

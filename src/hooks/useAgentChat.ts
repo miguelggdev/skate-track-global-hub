@@ -9,7 +9,8 @@ export interface ChatMessage {
 
 export type AgentId =
   | 'admin' | 'skating' | 'nutrition' | 'gym' | 'medical'
-  | 'cycling' | 'psychology' | 'finance' | 'marketing' | 'results';
+  | 'cycling' | 'psychology' | 'finance' | 'marketing' | 'results'
+  | 'security' | 'operations' | 'legal';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:8000';
 const MAX_STORED = 50;

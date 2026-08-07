@@ -15,6 +15,7 @@ import {
   CoachCategoryPie, CoachAthleteStatusTable, CoachTodaySession
 } from '@/components/dashboard/CoachCharts';
 import { DashboardAgentPanel } from '@/components/agents/DashboardAgentPanel';
+import { AgentPanelsSection } from '@/components/agents/AgentPanelsSection';
 import { supabase } from '@/integrations/supabase/client';
 
 const CoachDashboard = () => {
@@ -218,6 +219,13 @@ const CoachDashboard = () => {
             ]}
           />
         </div>
+
+        {/* Asistentes IA de apoyo al entrenador — AG-03/05/06/10/11 */}
+        <AgentPanelsSection
+          title="Más asistentes IA"
+          description="Operaciones, resultados, medicina, preparación física y ciclismo"
+          agents={['operations', 'results', 'medical', 'gym', 'cycling']}
+        />
 
         {/* Tools */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -14,6 +14,7 @@ import {
   LeaderStrategicAlerts, LeaderExecutiveKPIs
 } from '@/components/dashboard/LeaderCharts';
 import { DashboardAgentPanel } from '@/components/agents/DashboardAgentPanel';
+import { AgentPanelsSection } from '@/components/agents/AgentPanelsSection';
 import { supabase } from '@/integrations/supabase/client';
 
 const TARGET_ATTENDANCE = 92;
@@ -227,6 +228,13 @@ const LeaderDashboard = () => {
             '¿Qué acciones recomiendas para aumentar la asistencia?',
             'Resume los principales logros del club este trimestre',
           ]}
+        />
+
+        {/* Asistentes IA especializados — AG-06/08/09/10/11/12 */}
+        <AgentPanelsSection
+          title="Más asistentes IA"
+          description="Operaciones, marketing, resultados, medicina, seguridad y cumplimiento legal"
+          agents={['operations', 'marketing', 'results', 'medical', 'security', 'legal']}
         />
 
         {/* Alerts + Quick Actions */}
