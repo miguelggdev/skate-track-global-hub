@@ -422,4 +422,30 @@ Ir a **Database → Webhooks** y crear un webhook por tabla con:
 
 ---
 
-*Actualizado: Agosto 2026 — Sprint 14 completado*
+## SPRINT 15 — PWA completa con vite-plugin-pwa (Agosto 2026)
+
+**Objetivo:** Reemplazar el service worker artesanal del Sprint 6 por una PWA robusta basada en Workbox (`vite-plugin-pwa`): app-shell offline real, cache-busting automático, respeto del `base` y aviso de nueva versión.
+
+| Spec | Título | Status |
+|------|--------|--------|
+| SPEC-061 | PWA completa con vite-plugin-pwa | ✅ done |
+
+### Completado en Sprint 15
+
+- `vite.config.ts` — plugin `VitePWA` (modo `generateSW`, `registerType: 'prompt'`, manifest, runtimeCaching de imágenes, `navigateFallback` con denylist de `/api|/rest|/auth`, límite de 3 MB)
+- `src/components/pwa/PwaReloadPrompt.tsx` — `useRegisterSW`: toast "listo offline" + toast persistente de nueva versión con acción "Actualizar" (sin recarga automática)
+- `src/vite-env.d.ts` — refs de tipos `vite-plugin-pwa/react` y `/client`
+- `src/App.tsx` — monta `<PwaReloadPrompt />`
+- `src/main.tsx` / `index.html` — eliminado el doble registro manual del SW
+- Eliminados `public/sw.js` y `public/manifest.json` (ahora generados por el plugin)
+- Verificado: build precachea 188 entradas; `manifest.webmanifest` con `start_url`/`scope` = `/speedskatetrack/`; `tsc --noEmit` + `npm run build` OK
+
+### Pendiente (mejora opcional)
+
+| Tarea | Prioridad |
+|-------|-----------|
+| Añadir íconos PNG 192×192 y 512×512 para máxima "installability" en Chrome (hoy solo `logo.svg` + favicon) | BAJA |
+
+---
+
+*Actualizado: Agosto 2026 — Sprint 15 completado*

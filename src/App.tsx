@@ -10,6 +10,7 @@ import { TranslationProvider } from "@/providers/TranslationProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useOnboardingGuard } from "@/hooks/useOnboardingGuard";
+import { PwaReloadPrompt } from "@/components/pwa/PwaReloadPrompt";
 
 // Static imports — always needed immediately (tiny files, auth critical path)
 import Login from "./pages/Login";
@@ -152,6 +153,7 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <Sonner />
+            <PwaReloadPrompt />
             <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
               <BrowserRouter>
                 <Suspense fallback={<PageLoader />}>
