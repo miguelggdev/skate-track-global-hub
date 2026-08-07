@@ -42,7 +42,7 @@ Convertir la PWA artesanal del Sprint 6 (service worker escrito a mano en `publi
 ## Notas de Implementación
 - `registerType: 'prompt'` en lugar de `autoUpdate` para no recargar mientras el usuario llena un formulario.
 - Peer-deps del proyecto: instalar con `npm install --legacy-peer-deps` (conflicto preexistente date-fns/react-day-picker).
-- **Pendiente / limitación:** solo hay `logo.svg` (`sizes: any, purpose: any maskable`) y `favicon.ico`; para máxima "installability" en Chrome conviene añadir íconos PNG 192×192 y 512×512.
+- **Íconos:** generados con ImageMagick desde `logo.svg` sobre fondo cuadrado `#0b1220`: `icon-192.png`, `icon-512.png` (purpose `any`) y `icon-maskable-512.png` (purpose `maskable`, con padding de safe-zone). Registrados en el manifest.
 
 ## Archivos a Crear/Modificar
 - `vite.config.ts`

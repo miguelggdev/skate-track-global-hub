@@ -440,11 +440,12 @@ Ir a **Database → Webhooks** y crear un webhook por tabla con:
 - Eliminados `public/sw.js` y `public/manifest.json` (ahora generados por el plugin)
 - Verificado: build precachea 188 entradas; `manifest.webmanifest` con `start_url`/`scope` = `/speedskatetrack/`; `tsc --noEmit` + `npm run build` OK
 
-### Pendiente (mejora opcional)
+### Íconos PWA (completado)
 
-| Tarea | Prioridad |
-|-------|-----------|
-| Añadir íconos PNG 192×192 y 512×512 para máxima "installability" en Chrome (hoy solo `logo.svg` + favicon) | BAJA |
+- Generados con ImageMagick desde `public/logo.svg` sobre fondo cuadrado oscuro `#0b1220`:
+  - `public/icon-192.png` (192×192), `public/icon-512.png` (512×512, purpose `any`)
+  - `public/icon-maskable-512.png` (512×512, purpose `maskable`, con safe-zone de padding)
+- Registrados en el `manifest` de `vite.config.ts`; precache verificado (194 entradas)
 
 ---
 

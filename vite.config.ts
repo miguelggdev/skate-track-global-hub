@@ -20,7 +20,10 @@ export default defineConfig(({ mode }) => ({
       // 'prompt' evita recargar mientras el usuario llena un formulario:
       // PwaReloadPrompt muestra un aviso y el usuario decide cuándo actualizar.
       registerType: 'prompt',
-      includeAssets: ['favicon.ico', 'logo.svg', 'robots.txt', 'placeholder.svg'],
+      includeAssets: [
+        'favicon.ico', 'logo.svg', 'robots.txt', 'placeholder.svg',
+        'icon-192.png', 'icon-512.png', 'icon-maskable-512.png',
+      ],
       manifest: {
         name: 'SpeedSkateTrack Hub',
         short_name: 'SkateTrack',
@@ -33,7 +36,10 @@ export default defineConfig(({ mode }) => ({
         categories: ['sports', 'productivity', 'utilities'],
         icons: [
           { src: 'favicon.ico', sizes: '48x48', type: 'image/x-icon' },
-          { src: 'logo.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' },
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: 'logo.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
         ],
         shortcuts: [
           { name: 'Atletas', url: 'athletes', description: 'Gestionar atletas del club' },
