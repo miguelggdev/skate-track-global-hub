@@ -36,6 +36,33 @@ celery_worker + celery_beat → redis:6379 (app_net)
 
 ---
 
+## Resumen — Todas las tareas manuales ⚠️
+
+Checklist maestro de **todo lo que debes hacer a mano** (Claude no puede: requieren credenciales, el dashboard de Supabase, cuentas externas o el VPS). Cada ítem enlaza al paso detallado más abajo.
+
+### Antes / durante el despliegue (una sola vez)
+- [ ] **Registros DNS en Hostinger** — `skate.`, `api.`, `flower.arkanatech.tech` → IP del VPS. → *Paso 0*
+- [ ] **Verificar dominio en Resend** — `arkanatech.tech` con sus registros DNS, o los emails rebotan/van a spam.
+- [ ] **Rellenar `.env.production`** — con todas las variables. → *Paso 2 y referencia completa al final*. Claves que debes generar/obtener tú:
+  - [ ] `WEBHOOK_SECRET` → generar con `openssl rand -hex 32`
+  - [ ] `ANTHROPIC_API_KEY` (agentes IA)
+  - [ ] `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+  - [ ] `RESEND_API_KEY` (emails)
+  - [ ] `FLOWER_USER`, `FLOWER_PASSWORD`
+- [ ] **Aplicar migraciones de Supabase** — desde tu PC con Supabase CLI. → *Paso 4*
+- [ ] **Primer despliegue** — `./deploy.sh` en el VPS. El `docker compose build` instala solas las dependencias del backend (incluidas `reportlab` y `jinja2`); no hay `pip install` manual. → *Paso 5*
+- [ ] **Crear los 6 Database Webhooks en Supabase** — con el header `X-Webhook-Secret`. → *Paso 6*
+- [ ] **Verificar el despliegue** — `curl` de health + webhook + panel Flower. → *Paso 7 y checklist post-deploy*
+
+### Opcionales (cuando corresponda)
+- [ ] **Twilio (WhatsApp / AUTO-36)** — añadir `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM` al `.env`. Si se deja vacío, el worker no crashea y WhatsApp queda inactivo.
+- [ ] **Sentry** — `SENTRY_DSN` / `VITE_SENTRY_DSN` para tracking de errores en producción.
+
+### Solo para tests E2E autenticados (entorno dev/CI, no producción)
+- [ ] **Seed de usuarios E2E** — `node scripts/seed-e2e-users.mjs` desde tu PC (necesita `SUPABASE_SERVICE_KEY` en `.env.local`). Crea admin/coach/parent e imprime las vars `E2E_*` para añadir a `.env.test`. Sin esto, ~102 tests E2E autenticados hacen SKIP (no fallan).
+
+---
+
 ## Paso 0 — Crear registros DNS en Hostinger ⚠️ MANUAL
 
 Entra a Hostinger → Domains → arkanatech.tech → DNS / Nameservers → Manage DNS.
@@ -165,6 +192,7 @@ Para cada fila de la tabla siguiente, crea un webhook:
 | `hook_competition_result` | `competition_results` | INSERT | `https://api.arkanatech.tech/api/webhooks/competition-result` |
 | `hook_medical_session` | `medical_sessions` | INSERT | `https://api.arkanatech.tech/api/webhooks/medical-session` |
 | `hook_new_athlete` | `athletes` | INSERT | `https://api.arkanatech.tech/api/webhooks/new-athlete` |
+| `hook_suspicious_access` | `audit_log` | INSERT | `https://api.arkanatech.tech/api/webhooks/suspicious-access` |
 
 **En cada webhook, añadir el header HTTP:**
 
@@ -183,6 +211,7 @@ Header value: <el valor de WEBHOOK_SECRET que pusiste en .env.production>
 | `competition-result` (pos ≤ 3) | AUTO-24 `request_testimonial` (+24 h) | Solicita testimonio al top-3 |
 | `medical-session` (lesión) | AUTO-14 `injury_protocol` | Activa protocolo de lesión |
 | `new-athlete` | AUTO-20 `new_athlete_documents` | Genera docs de bienvenida |
+| `suspicious-access` | AUTO-30 `check_suspicious_access` | Analiza accesos sospechosos en el audit log |
 
 ---
 
@@ -382,7 +411,7 @@ Las variables `VITE_*` se bakearon incorrectamente. Verifica `.env.production` y
 - [ ] Supabase Dashboard → Logs → sin errores `PGRST301` (RLS bloqueando algo inesperado)
 
 ### Automatizaciones
-- [ ] 5 webhooks creados en Supabase Dashboard → Database → Webhooks (ver Paso 6)
+- [ ] 6 webhooks creados en Supabase Dashboard → Database → Webhooks (ver Paso 6)
 - [ ] Prueba de webhook con `curl` devuelve `{"queued":true}` (ver Paso 7)
 - [ ] En Flower: la tarea `tasks.health_check` aparece en el historial (Beat funcionando)
 - [ ] Esperar el día 1 del mes para verificar AUTO-36 (generación de facturas)
@@ -406,24 +435,24 @@ echo | openssl s_client -connect skate.arkanatech.tech:443 \
 ## Qué falta antes de considerar el proyecto completamente terminado
 
 ### Alta prioridad — acción manual requerida
-| Tarea | Cómo hacerlo |
-|-------|-------------|
-| **Crear usuarios E2E** | Ejecutar `node scripts/seed-e2e-users.mjs` desde tu PC (necesita `SUPABASE_SERVICE_KEY` en `.env.local`). El script crea admin/coach/parent y te imprime las vars `E2E_*` para el CI. |
-| **Verificar dominio en Resend** | Ir a resend.com → Domains → añadir `arkanatech.tech` y seguir los pasos DNS. Sin esto los emails de facturas van a spam o rebotan. |
+Ver el checklist maestro **"Resumen — Todas las tareas manuales"** al inicio de esta guía. En resumen: DNS, `.env.production`, dominio en Resend, migraciones, primer deploy, los 6 webhooks y (para CI) el seed de usuarios E2E.
 
-### Implementado recientemente (Sprint 12)
+### Implementado recientemente (Sprints 12-15)
 | Tarea | Estado |
 |-------|--------|
 | PDF adjunto en facturas — `reportlab` genera PDF profesional y va adjunto en el email | ✅ |
 | RAG UI — `/knowledge-base` para subir PDF/TXT y que los agentes los consulten | ✅ |
 | RAG backend — `POST /api/rag/upload` + `DELETE /api/rag/documents/{id}` | ✅ |
 | Twilio gracioso — el worker no crashea si no hay credenciales | ✅ |
-| Webhooks event-driven — 5 endpoints Supabase → Celery | ✅ |
+| Webhooks event-driven — 6 endpoints Supabase → Celery | ✅ |
+| 3 agentes IA restantes — AG-08 Seguridad, AG-11 Operaciones, AG-12 Legal (13/13) | ✅ |
+| Panel de automatizaciones — `/automatizaciones` (toggle + params por categoría) | ✅ |
+| Cobertura de los 13 agentes IA en el frontend (Sprint 14) | ✅ |
+| `CreateTrainingDialog` → Zod (Sprint 12) | ✅ |
+| PWA completa — `vite-plugin-pwa`/Workbox, offline real, íconos (Sprint 15) | ✅ |
 
-### Pendiente
+### Pendiente (opcional)
 | Tarea | Descripción |
 |-------|-------------|
-| 3 agentes IA | AG-08 Seguridad, AG-11 Operaciones, AG-12 Legal (10 de 13 implementados) |
 | Twilio | Cuando tengas cuenta añadir `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM` — el código ya está listo |
-| `CreateTrainingDialog` → Zod | Único formulario sin validación Zod |
 | Sentry | Opcional — tracking de errores en producción |
