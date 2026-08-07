@@ -6,15 +6,15 @@ AUTO-37: send_invoice_reminder   — daily at 09:00
 """
 from __future__ import annotations
 
+import base64
+import io
 import logging
 from calendar import monthrange
 from datetime import date, datetime, timedelta
 
-from celery import shared_task
-from supabase import create_client
-
-from config import settings
-from tasks.helpers import notify_user, render_email_template, send_email
+from database.supabase_client import get_supabase
+from tasks.celery_app import celery_app
+from tasks.helpers import get_automation_config, log_activity, notify_user, render_email_template, send_email
 
 logger = logging.getLogger(__name__)
 
@@ -32,14 +32,117 @@ PAYMENT_INSTRUCTIONS = (
 )
 
 
-def _supabase():
-    return create_client(settings.supabase_url, settings.supabase_service_key)
+def _generate_invoice_pdf(
+    invoice_number: str,
+    athlete_name: str,
+    concept: str,
+    month_name: str,
+    year: int,
+    amount: float,
+    due_date_str: str,
+    payment_instructions: str,
+    club_name: str = "SpeedSkateTrack Hub",
+) -> bytes:
+    try:
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+        from reportlab.lib.units import cm
+        from reportlab.platypus import (
+            HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle,
+        )
+    except ImportError:
+        logger.warning("reportlab not installed — invoice sent without PDF attachment")
+        return b""
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buf, pagesize=A4,
+        leftMargin=2.5 * cm, rightMargin=2.5 * cm,
+        topMargin=2 * cm, bottomMargin=2 * cm,
+    )
+
+    styles = getSampleStyleSheet()
+    orange = colors.HexColor("#F97316")
+    dark = colors.HexColor("#1F2937")
+    gray = colors.HexColor("#6B7280")
+
+    title_style = ParagraphStyle("InvTitle", parent=styles["Heading1"],
+        textColor=orange, fontSize=22, spaceAfter=4)
+    sub_style = ParagraphStyle("InvSub", parent=styles["Normal"],
+        textColor=gray, fontSize=10)
+    body_style = ParagraphStyle("InvBody", parent=styles["Normal"],
+        textColor=dark, fontSize=11, leading=16)
+    small_style = ParagraphStyle("InvSmall", parent=styles["Normal"],
+        textColor=gray, fontSize=9, leading=13)
+
+    story = []
+    story.append(Paragraph(club_name, title_style))
+    story.append(Paragraph("Sistema de gestión de patinaje de velocidad", sub_style))
+    story.append(Spacer(1, 0.4 * cm))
+    story.append(HRFlowable(width="100%", thickness=2, color=orange))
+    story.append(Spacer(1, 0.5 * cm))
+    story.append(Paragraph(f"<b>FACTURA</b> {invoice_number}", body_style))
+    story.append(Spacer(1, 0.3 * cm))
+
+    data = [
+        ["FACTURADO A", "DETALLES DE LA FACTURA"],
+        [athlete_name, f"Período: {month_name} {year}"],
+        ["", f"Concepto: {concept}"],
+        ["", f"Vencimiento: {due_date_str}"],
+    ]
+    col_w = [8.5 * cm, 9 * cm]
+    t = Table(data, colWidths=col_w)
+    t.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (1, 0), orange),
+        ("TEXTCOLOR", (0, 0), (1, 0), colors.white),
+        ("FONTNAME", (0, 0), (1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (1, 0), 10),
+        ("PADDING", (0, 0), (-1, -1), 8),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#E5E7EB")),
+        ("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 1), (-1, -1), 10),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+    ]))
+    story.append(t)
+    story.append(Spacer(1, 0.6 * cm))
+
+    total_data = [["", "TOTAL A PAGAR"], ["", f"$ {amount:,.0f} COP"]]
+    tt = Table(total_data, colWidths=col_w)
+    tt.setStyle(TableStyle([
+        ("BACKGROUND", (1, 0), (1, 0), colors.HexColor("#FFF7ED")),
+        ("BACKGROUND", (1, 1), (1, 1), orange),
+        ("TEXTCOLOR", (1, 1), (1, 1), colors.white),
+        ("FONTNAME", (0, 0), (-1, -1), "Helvetica-Bold"),
+        ("FONTSIZE", (1, 1), (1, 1), 18),
+        ("FONTSIZE", (1, 0), (1, 0), 9),
+        ("PADDING", (0, 0), (-1, -1), 8),
+        ("GRID", (1, 0), (1, -1), 0.5, colors.HexColor("#E5E7EB")),
+        ("ALIGN", (1, 0), (1, -1), "CENTER"),
+    ]))
+    story.append(tt)
+    story.append(Spacer(1, 0.6 * cm))
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#E5E7EB")))
+    story.append(Spacer(1, 0.4 * cm))
+    story.append(Paragraph("<b>Instrucciones de pago</b>", body_style))
+    story.append(Spacer(1, 0.2 * cm))
+    for line in payment_instructions.split("\n"):
+        if line.strip():
+            story.append(Paragraph(line.strip(), small_style))
+    story.append(Spacer(1, 0.6 * cm))
+    story.append(Paragraph(
+        "Documento generado automáticamente — SpeedSkateTrack Hub", small_style,
+    ))
+
+    doc.build(story)
+    buf.seek(0)
+    return buf.read()
 
 
 # ── AUTO-36: Generación de cuotas mensuales ────────────────────────────────
 
 
-@shared_task(name="tasks.billing.generate_monthly_fees", bind=True, max_retries=3)
+@celery_app.task(name="tasks.billing.generate_monthly_fees", bind=True, max_retries=3)
 def generate_monthly_fees(self, year: int = None, month: int = None) -> dict:
     """
     AUTO-36: Run on the 1st of each month at 07:00.
@@ -48,13 +151,18 @@ def generate_monthly_fees(self, year: int = None, month: int = None) -> dict:
     Skips athletes who already have an invoice for this period.
     Sends a billing email to each athlete that has an email address.
     """
+    cfg = get_automation_config("AUTO-36-BIL")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
+    p = cfg["custom_params"]
     today = date.today()
     year = year or today.year
     month = month or today.month
     month_name = MONTH_NAMES_ES[month]
-    due_date = date(year, month, 5)  # Due on the 5th of the month
+    due_day = int(p.get("due_day_of_month", 5))
+    due_date = date(year, month, due_day)
 
-    db = _supabase()
+    db = get_supabase()
 
     # Get default monthly fee from system_settings
     settings_row = db.table("system_settings").select("monthly_fee").single().execute()
@@ -124,21 +232,40 @@ def generate_monthly_fees(self, year: int = None, month: int = None) -> dict:
 
             # Send invoice email
             if athlete_email:
+                inv_number = invoice.get("invoice_number", "")
+                due_str = due_date.strftime("%d/%m/%Y")
                 html = render_email_template("invoice_email.html", {
                     "athlete_name": athlete_name,
-                    "invoice_number": invoice.get("invoice_number", ""),
+                    "invoice_number": inv_number,
                     "concept": "Cuota mensual de membresía",
                     "month_name": month_name,
                     "year": year,
-                    "due_date": due_date.strftime("%d/%m/%Y"),
+                    "due_date": due_str,
                     "amount": f"{fee:,.0f}",
                     "payment_instructions": PAYMENT_INSTRUCTIONS,
                     "to_email": athlete_email,
                 })
+                pdf_bytes = _generate_invoice_pdf(
+                    invoice_number=inv_number,
+                    athlete_name=athlete_name,
+                    concept="Cuota mensual de membresía",
+                    month_name=month_name,
+                    year=year,
+                    amount=fee,
+                    due_date_str=due_str,
+                    payment_instructions=PAYMENT_INSTRUCTIONS,
+                )
+                attachments = None
+                if pdf_bytes:
+                    attachments = [{
+                        "filename": f"Factura_{inv_number}_{month_name}{year}.pdf",
+                        "content": base64.b64encode(pdf_bytes).decode(),
+                    }]
                 send_email(
                     to=athlete_email,
                     subject=f"Factura membresía {month_name} {year} — SpeedSkateTrack",
                     html_body=html,
+                    attachments=attachments,
                 )
 
             # In-app notification
@@ -151,7 +278,7 @@ def generate_monthly_fees(self, year: int = None, month: int = None) -> dict:
                         f"Vence el {due_date.strftime('%d/%m')}"
                     ),
                     notification_type="info",
-                    automation_id="AUTO-36",
+                    automation_id="AUTO-36-BIL",
                 )
 
             created += 1
@@ -188,7 +315,7 @@ def generate_monthly_fees(self, year: int = None, month: int = None) -> dict:
 # ── AUTO-37: Recordatorios de pago ────────────────────────────────────────
 
 
-@shared_task(name="tasks.billing.send_invoice_reminder", bind=True, max_retries=3)
+@celery_app.task(name="tasks.billing.send_invoice_reminder", bind=True, max_retries=3)
 def send_invoice_reminder(self) -> dict:
     """
     AUTO-37: Run daily at 09:00.
@@ -198,9 +325,13 @@ def send_invoice_reminder(self) -> dict:
     - Overdue invoices, repeating every 7 days after the due date
       (1st, 8th, 15th, 22nd overdue day, etc.).
     """
-    db = _supabase()
+    cfg = get_automation_config("AUTO-37")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
+    p = cfg["custom_params"]
+    db = get_supabase()
     today = date.today()
-    reminder_date = today + timedelta(days=5)
+    reminder_date = today + timedelta(days=int(p.get("pre_due_days", 5)))
     sent = 0
 
     # ── Pre-due reminder (5 days before due date) ──────────────────────────

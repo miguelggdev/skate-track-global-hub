@@ -49,8 +49,8 @@ export function useInbox() {
     const channel = supabase
       .channel(`messages-inbox:${user.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
-        qc.invalidateQueries({ queryKey: ['messages-inbox', user.id] });
-        qc.invalidateQueries({ queryKey: ['messages-unread-count', user.id] });
+        qc.invalidateQueries({ queryKey: ['messages-inbox', user.id, profile?.role] });
+        qc.invalidateQueries({ queryKey: ['messages-unread-count', user.id, profile?.role] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };

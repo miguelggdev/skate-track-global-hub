@@ -8,6 +8,7 @@ from database.supabase_client import get_supabase
 from tasks.celery_app import celery_app
 from tasks.helpers import (
     get_admin_user_ids,
+    get_automation_config,
     log_activity,
     notify_user,
     send_email,
@@ -20,6 +21,9 @@ logger = logging.getLogger(__name__)
 @celery_app.task(name="tasks.security.check_suspicious_access")
 def check_suspicious_access(user_id: str, ip_address: str, success: bool) -> dict:
     """Triggered per login attempt — detecta IPs sospechosas y bloquea."""
+    cfg = get_automation_config("AUTO-30")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
     now = datetime.now(timezone.utc)
     ten_min_ago = (now - timedelta(minutes=10)).isoformat()
@@ -89,6 +93,9 @@ def check_suspicious_access(user_id: str, ip_address: str, success: bool) -> dic
 @celery_app.task(name="tasks.security.verify_backup")
 def verify_backup() -> dict:
     """Diario 03:00 — verifica que el backup de Supabase esté al día."""
+    cfg = get_automation_config("AUTO-31")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
     now = datetime.now(timezone.utc)
 
@@ -140,6 +147,9 @@ def verify_backup() -> dict:
 @celery_app.task(name="tasks.security.sensitive_data_audit")
 def sensitive_data_audit() -> dict:
     """Semanal — revisa accesos anómalos a tablas sensibles."""
+    cfg = get_automation_config("AUTO-32")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
     week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
 
@@ -187,6 +197,9 @@ def sensitive_data_audit() -> dict:
 @celery_app.task(name="tasks.security.rotate_inactive_sessions")
 def rotate_inactive_sessions() -> dict:
     """Diario 02:00 — invalida tokens con >30 días de inactividad (info report)."""
+    cfg = get_automation_config("AUTO-33")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
     # Supabase handles JWT expiration internally.
     # Here we report on profiles that haven't accessed in 30+ days.
@@ -232,6 +245,9 @@ def rotate_inactive_sessions() -> dict:
 @celery_app.task(name="tasks.security.realtime_event_dispatcher")
 def realtime_event_dispatcher(event_type: str, payload: dict) -> dict:
     """Routes real-time events to the correct notification recipients."""
+    cfg = get_automation_config("AUTO-34")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
     actions = 0
 
@@ -292,6 +308,9 @@ def realtime_event_dispatcher(event_type: str, payload: dict) -> dict:
 @celery_app.task(name="tasks.security.daily_agent_activity_summary")
 def daily_agent_activity_summary() -> dict:
     """Diario 23:30 — consolida actividad de todas las automatizaciones del día."""
+    cfg = get_automation_config("AUTO-35")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
     from datetime import date
     today = date.today().isoformat()

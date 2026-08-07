@@ -9,7 +9,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from api.limiter import limiter
-from api.routes import agents, athletes, health, rag
+from api.routes import agents, athletes, automations, health, rag, webhooks
 from config import settings
 
 _SENTRY_DSN = os.getenv("SENTRY_DSN", "")
@@ -50,3 +50,20 @@ app.include_router(health.router)
 app.include_router(agents.router, prefix="/api")
 app.include_router(rag.router, prefix="/api")
 app.include_router(athletes.router)
+app.include_router(webhooks.router, prefix="/api")
+app.include_router(automations.router, prefix="/api")
+
+
+@app.on_event("startup")
+async def _startup_checks() -> None:
+    import logging as _logging
+    _log = _logging.getLogger("startup")
+    if settings.environment == "production":
+        if not settings.frontend_url.startswith("https://"):
+            _log.warning(
+                "CORS_INSECURE: FRONTEND_URL=%s does not use HTTPS. "
+                "Set FRONTEND_URL to your production https:// domain.",
+                settings.frontend_url,
+            )
+        if not settings.webhook_secret:
+            _log.warning("WEBHOOK_SECRET is not set — webhook endpoints are unprotected")

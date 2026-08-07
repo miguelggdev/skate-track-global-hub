@@ -53,6 +53,9 @@ const PublicAthletePage  = React.lazy(() => import('./pages/PublicAthletePage'))
 const Checkin            = React.lazy(() => import('./pages/Checkin'));
 const TrainingCheckin    = React.lazy(() => import('./pages/TrainingCheckin'));
 const TrainingTimer      = React.lazy(() => import('./pages/TrainingTimer'));
+const KnowledgeBase      = React.lazy(() => import('./pages/KnowledgeBase'));
+const AutomationsPage    = React.lazy(() => import('./pages/AutomationsPage'));
+const AthleteCardPublic  = React.lazy(() => import('./pages/AthleteCardPublic'));
 
 const queryClient = new QueryClient();
 
@@ -233,7 +236,7 @@ const App = () => (
                     <Route
                       path="/competitions"
                       element={
-                        <ProtectedRoute allowedRoles={['admin', 'delegate', 'coach', 'athlete', 'leader']}>
+                        <ProtectedRoute allowedRoles={['admin', 'delegate', 'coach', 'athlete', 'leader', 'parent']}>
                           <Competitions />
                         </ProtectedRoute>
                       }
@@ -406,8 +409,9 @@ const App = () => (
                         </ProtectedRoute>
                       }
                     />
-                    {/* Public page — no auth required, for sharing with parents */}
+                    {/* Public pages — no auth required */}
                     <Route path="/publico/atleta/:athleteId" element={<PublicAthletePage />} />
+                    <Route path="/carnet/:athleteId" element={<AthleteCardPublic />} />
                     {/* Public check-in page — no auth required, opened from athlete QR code */}
                     <Route path="/checkin/:token" element={<Checkin />} />
                     {/* Protected training tools */}
@@ -424,6 +428,22 @@ const App = () => (
                       element={
                         <ProtectedRoute allowedRoles={['admin', 'coach', 'leader']}>
                           <TrainingTimer />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/knowledge-base"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'leader']}>
+                          <KnowledgeBase />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/automatizaciones"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'leader']}>
+                          <AutomationsPage />
                         </ProtectedRoute>
                       }
                     />

@@ -10,13 +10,14 @@ Flujo:
 from __future__ import annotations
 
 import logging
+import os
 from datetime import date
 
 from database.supabase_client import get_supabase
 from services.image_service import get_motivational_image
 from services.twilio_service import send_whatsapp_bulk
 from tasks.celery_app import celery_app
-from tasks.helpers import log_activity
+from tasks.helpers import get_automation_config, log_activity
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,16 @@ def _build_message(phrase: str, author: str | None, category: str, club_name: st
 )
 def send_daily_motivational_phrase() -> dict:
     """AUTO-36 — Diario 08:30 (horario Bogotá)."""
+    cfg = get_automation_config("AUTO-36-WA")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
+    if not os.getenv("TWILIO_ACCOUNT_SID"):
+        logger.warning(
+            "AUTO-36: Twilio no configurado — tarea omitida. "
+            "Configura TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN y TWILIO_WHATSAPP_FROM."
+        )
+        return {"records_found": 0, "actions_taken": 0, "summary": "Twilio no configurado"}
+
     db = get_supabase()
 
     # ── 1. Frase menos usada (FIFO) ──────────────────────────────────────────
@@ -83,14 +94,14 @@ def send_daily_motivational_phrase() -> dict:
     image_url, image_source = get_motivational_image(db, phrase_data.get("category", "motivacion"))
 
     # ── 4. Nombre del club ────────────────────────────────────────────────────
-    cfg = (
+    settings_row = (
         db.table("settings")
         .select("value")
         .eq("key", "club_name")
         .maybe_single()
         .execute()
     )
-    club_name = (cfg.data or {}).get("value", "SpeedSkateTrack Hub")
+    club_name = (settings_row.data or {}).get("value", "SpeedSkateTrack Hub")
 
     # ── 5. Envío ──────────────────────────────────────────────────────────────
     message = _build_message(

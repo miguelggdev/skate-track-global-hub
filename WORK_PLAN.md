@@ -287,17 +287,118 @@ Antes de marcar un spec como `done`:
 | Dynamic import `xlsx`/`jspdf` en `Reports.tsx` — carga solo al hacer click | ✅ done |
 | NFC fallback indicator para iOS/desktop en `TrainingCheckin.tsx` | ✅ done |
 
-### Pendiente (Sprint 11)
+---
 
-| Tarea | Prioridad |
-|-------|-----------|
-| 3 agentes IA faltantes: AG-08 Seguridad, AG-11 Operaciones, AG-12 Legal | ALTA |
-| Crear usuarios de prueba E2E en Supabase + configurar vars `E2E_*` | ALTA |
-| PDF generación de facturas + adjunto en email | MEDIA |
-| RAG: subir documentos a Supabase Storage | MEDIA |
-| `CreateTrainingDialog` — migrar a Zod | BAJA |
-| CORS assertion en startup para producción | BAJA |
+## SPRINT 11 — Event-Driven Automations + Billing Fix (Agosto 2026)
+
+**Objetivo:** Conectar las 8 automatizaciones event-driven con triggers reales, corregir billing_tasks y manejar Twilio graciosamente.
+
+| Tarea | Status |
+|-------|--------|
+| `billing_tasks.py` — refactor a `celery_app.task` + `get_supabase()` (elimina `shared_task` y `create_client`) | ✅ done |
+| `whatsapp_tasks.py` — early-exit gracioso si Twilio no configurado (no crasha el worker) | ✅ done |
+| `api/routes/webhooks.py` — 5 endpoints POST para Supabase Database Webhooks | ✅ done |
+| `config.py` — campo `webhook_secret` para validar `X-Webhook-Secret` header | ✅ done |
+| `main.py` — router `/api/webhooks` incluido | ✅ done |
+| `backend/.env.example` — documentada variable `WEBHOOK_SECRET` | ✅ done |
+| Redis en docker-compose verificado ✅ (`redis:7-alpine`, password, volumen, healthcheck) | ✅ confirmado |
+
+### Automatizaciones event-driven ahora con trigger real
+
+| AUTO | Tarea | Endpoint webhook | Tabla Supabase |
+|------|-------|-----------------|---------------|
+| AUTO-04 | `handle_absence` | `POST /api/webhooks/attendance-change` | `training_attendance` INSERT/UPDATE |
+| AUTO-07 | `generate_payment_receipt` | `POST /api/webhooks/payment-received` | `financial_transactions` INSERT |
+| AUTO-12 | `post_competition_followup` | `POST /api/webhooks/competition-result` | `competition_results` INSERT |
+| AUTO-14 | `injury_protocol` | `POST /api/webhooks/medical-session` | `medical_sessions` INSERT |
+| AUTO-20 | `new_athlete_documents` | `POST /api/webhooks/new-athlete` | `athletes` INSERT |
+| AUTO-24 | `request_testimonial` | (combinado con AUTO-12, +24h) | `competition_results` INSERT pos≤3 |
+| AUTO-30 | `check_suspicious_access` | `POST /api/webhooks/suspicious-access` | `audit_log` INSERT |
+
+### Configuración manual requerida en Supabase Dashboard
+
+Ir a **Database → Webhooks** y crear un webhook por tabla con:
+- HTTP Header: `X-Webhook-Secret: <valor de WEBHOOK_SECRET en .env>`
+- URL: `https://api.arkanatech.tech/api/webhooks/<endpoint>`
 
 ---
 
-*Actualizado: Agosto 2026 — Sprint 10 completado*
+## SPRINT 12 — RAG UI + PDF Facturas + E2E + Deploy Guide (Agosto 2026)
+
+| Tarea | Status |
+|-------|--------|
+| `backend/api/routes/rag.py` — `POST /api/rag/upload` (PDF/TXT → pgvector, 10 MB, admin only) | ✅ done |
+| `backend/api/routes/rag.py` — `DELETE /api/rag/documents/{id}` (CASCADE chunks) | ✅ done |
+| `src/pages/KnowledgeBase.tsx` — UI drag & drop + lista documentos + confirmación borrado | ✅ done |
+| `src/App.tsx` — ruta `/knowledge-base` protegida admin/leader | ✅ done |
+| `DashboardLayout.tsx` — nav item "Base de Conocimiento" para admin y leader | ✅ done |
+| `billing_tasks.py` — PDF adjunto en facturas (`reportlab`, `_generate_invoice_pdf`) | ✅ done |
+| `backend/requirements.txt` — añadido `reportlab>=4.2.0` | ✅ done |
+| `scripts/seed-e2e-users.mjs` — script Node.js para crear 3 usuarios E2E vía Supabase Admin API | ✅ done |
+| `docs/DEPLOY_VPS.md` — guía completa actualizada con pasos manuales, webhooks, DNS, pendientes | ✅ done |
+
+### Pendiente post-Sprint 12 (manual)
+
+| Tarea | Prioridad |
+|-------|-----------|
+| **Ejecutar** `node scripts/seed-e2e-users.mjs` y añadir vars `E2E_*` al `.env.test` | ALTA (manual) |
+| `CreateTrainingDialog` — migrar a Zod | BAJA |
+
+---
+
+## SPRINT 13 — Panel de Automatizaciones + 3 Agentes IA + Rate Limiting + Tests Python (Agosto 2026)
+
+**Objetivo:** Panel de control de automatizaciones, 3 agentes faltantes (AG-08/11/12), rate limiting RAG, CORS assertion startup, tests unitarios Python.
+
+### Completado en Sprint 13
+
+#### Agentes IA
+
+| Archivo | Agente | Herramientas |
+|---------|--------|-------------|
+| `backend/agents/security_agent.py` | AG-08 Seguridad | `get_recent_security_alerts`, `get_user_roles_summary`, `get_automation_security_activity`, `get_failed_automations_24h` |
+| `backend/agents/operations_agent.py` | AG-11 Operaciones | `get_training_sessions_overview`, `get_equipment_status`, `get_capacity_analysis`, `get_today_operations_summary` |
+| `backend/agents/legal_agent.py` | AG-12 Legal | `get_parental_consent_status`, `get_expiring_documents`, `get_insurance_coverage_summary`, `get_regulatory_compliance_checklist` |
+
+- `backend/api/routes/agents.py` — AG-08, AG-11, AG-12 registrados; AG-08 y AG-12 en `_RESTRICTED_AGENTS` (admin/leader)
+
+#### Base de datos
+
+- `supabase/migrations/20260806000000_automation_config.sql` — tabla `automation_config` con RLS admin/leader; seeded con 38 filas (AUTO-01 a AUTO-37)
+
+#### Backend — helpers + tasks refactor
+
+- `backend/tasks/helpers.py` — `get_automation_config()` con caché 5 min + `invalidate_automation_config_cache()`; `_DEFAULT_AUTOMATION_PARAMS` con 38 entradas; `task_wrapper` check `cfg["enabled"]` early-exit
+- **38 funciones de tarea** en 9 archivos refactorizadas con check enabled + parámetros desde `custom_params`:
+  - `calendar_tasks.py` (6 tasks) — AUTO-01 a AUTO-06
+  - `finance_tasks.py` (5 tasks) — AUTO-07 a AUTO-11
+  - `athlete_tasks.py` (4 tasks) — AUTO-12 a AUTO-15
+  - `admin_tasks.py` (5 tasks) — AUTO-16 a AUTO-20
+  - `marketing_tasks.py` (5 tasks) — AUTO-21 a AUTO-25
+  - `reporting_tasks.py` (4 tasks) — AUTO-26 a AUTO-29
+  - `security_tasks.py` (6 tasks) — AUTO-30 a AUTO-35
+  - `whatsapp_tasks.py` (1 task) — AUTO-36-WA
+  - `billing_tasks.py` (2 tasks) — AUTO-36-BIL, AUTO-37
+
+#### Backend — API
+
+- `backend/api/routes/automations.py` — `GET /api/automations` (lista configs), `PATCH /api/automations/{id}` (upsert, invalida caché), `GET /api/automations/logs` (activity log con filtros)
+- `backend/main.py` — router `/api/automations` incluido; startup event CORS/webhook_secret assertion para producción
+- `backend/api/routes/rag.py` — rate limiting: `POST /api/rag/upload` → 5/min, `POST /api/rag/query` → 20/min (slowapi)
+
+#### Frontend
+
+- `src/pages/AutomationsPage.tsx` — página `/automatizaciones` con tabs: Automatizaciones (filtro por categoría, tabla con Switch + Sheet config) + Historial de Actividad (log table). Catálogo CATALOG con 37 entradas, ParamDef interfaces, TanStack Query + useMutation
+- `src/App.tsx` — ruta `/automatizaciones` protegida admin/leader
+- `src/components/layout/DashboardLayout.tsx` — nav item "Automatizaciones" (icono Zap) para admin y leader
+
+#### Tests Python
+
+- `backend/tests/conftest.py` — fixtures `mock_env_vars` (autouse), `mock_supabase`, `mock_supabase_ctx`
+- `backend/tests/test_helpers.py` — 9 tests: cobertura 38 IDs, DB error fallback, enabled default, DB override, merge params, cache hit, invalidación single/all, unknown ID
+- `backend/tests/test_webhooks.py` — 4 tests: missing header 401, wrong secret 401, correct secret ok, unconfigured 503
+- `backend/pytest.ini` — configurado con `testpaths = tests`, `asyncio_mode = auto`
+
+---
+
+*Actualizado: Agosto 2026 — Sprint 13 completado*

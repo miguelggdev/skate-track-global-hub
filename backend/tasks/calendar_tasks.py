@@ -8,6 +8,7 @@ from database.supabase_client import get_supabase
 from tasks.celery_app import celery_app
 from tasks.helpers import (
     get_admin_user_ids,
+    get_automation_config,
     get_coach_user_ids,
     log_activity,
     notify_role,
@@ -25,8 +26,12 @@ AUTO = "AUTO-01"
 @celery_app.task(name="tasks.calendar.training_reminder_next_day")
 def training_reminder_next_day() -> dict:
     """19:00 diario — notifica atletas sobre entrenamientos del día siguiente."""
+    cfg = get_automation_config("AUTO-01")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
+    days_ahead = cfg["custom_params"].get("days_ahead", 1)
     db = get_supabase()
-    tomorrow = (date.today() + timedelta(days=1)).isoformat()
+    tomorrow = (date.today() + timedelta(days=int(days_ahead))).isoformat()
 
     sessions = (
         db.table("training_sessions")
@@ -78,10 +83,14 @@ def training_reminder_next_day() -> dict:
 @celery_app.task(name="tasks.calendar.training_reminder_2h")
 def training_reminder_2h() -> dict:
     """Cada 30 min — detecta sesiones que empiezan en 2 horas exactas."""
+    cfg = get_automation_config("AUTO-02")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
+    p = cfg["custom_params"]
     db = get_supabase()
     now = datetime.now(timezone.utc)
-    window_start = (now + timedelta(hours=2)).replace(second=0, microsecond=0)
-    window_end = window_start + timedelta(minutes=30)
+    window_start = (now + timedelta(hours=int(p.get("hours_ahead", 2)))).replace(second=0, microsecond=0)
+    window_end = window_start + timedelta(minutes=int(p.get("window_minutes", 30)))
 
     sessions = (
         db.table("training_sessions")
@@ -129,9 +138,13 @@ def training_reminder_2h() -> dict:
 @celery_app.task(name="tasks.calendar.detect_schedule_gaps")
 def detect_schedule_gaps() -> dict:
     """Lunes 08:00 — detecta días sin sesión en las próximas 4 semanas."""
+    cfg = get_automation_config("AUTO-03")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
+    p = cfg["custom_params"]
     db = get_supabase()
     today = date.today()
-    end_date = today + timedelta(weeks=4)
+    end_date = today + timedelta(weeks=int(p.get("lookahead_weeks", 4)))
 
     sessions = (
         db.table("training_sessions")
@@ -180,6 +193,9 @@ def detect_schedule_gaps() -> dict:
 @celery_app.task(name="tasks.calendar.handle_absence")
 def handle_absence(athlete_id: str, session_id: str) -> dict:
     """Triggered via DB hook — analiza inasistencias consecutivas del atleta."""
+    cfg = get_automation_config("AUTO-04")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
 
     # Count recent consecutive absences (last 30 days)
@@ -264,6 +280,9 @@ def handle_absence(athlete_id: str, session_id: str) -> dict:
 @celery_app.task(name="tasks.calendar.process_waitlist")
 def process_waitlist(session_id: str, freed_slot_athlete_id: str) -> dict:
     """Triggered when an athlete cancels — notifies next in waitlist."""
+    cfg = get_automation_config("AUTO-05")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
 
     session = (
@@ -318,6 +337,9 @@ def process_waitlist(session_id: str, freed_slot_athlete_id: str) -> dict:
 @celery_app.task(name="tasks.calendar.weekly_load_analysis")
 def weekly_load_analysis() -> dict:
     """Viernes 20:00 — semáforo verde/amarillo/rojo de carga por atleta."""
+    cfg = get_automation_config("AUTO-06")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
     week_ago = (date.today() - timedelta(days=7)).isoformat()
 

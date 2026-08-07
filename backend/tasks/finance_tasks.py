@@ -8,6 +8,7 @@ from database.supabase_client import get_supabase
 from tasks.celery_app import celery_app
 from tasks.helpers import (
     get_admin_user_ids,
+    get_automation_config,
     log_activity,
     notify_user,
     render_email_template,
@@ -28,6 +29,9 @@ PAYMENT_INSTRUCTIONS = (
 @celery_app.task(name="tasks.finance.generate_payment_receipt")
 def generate_payment_receipt(transaction_id: str) -> dict:
     """Triggered on new income transaction — notifies payer and logs receipt."""
+    cfg = get_automation_config("AUTO-07")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
 
     tx = (
@@ -85,11 +89,15 @@ def generate_payment_receipt(transaction_id: str) -> dict:
 @celery_app.task(name="tasks.finance.overdue_payment_alerts")
 def overdue_payment_alerts() -> dict:
     """1ro y 15 de cada mes 09:00 — alerta sobre atletas con pagos vencidos."""
+    cfg = get_automation_config("AUTO-08")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
+    p = cfg["custom_params"]
     db = get_supabase()
     today = date.today()
-    thirty_days_ago = (today - timedelta(days=30)).isoformat()
-    sixty_days_ago = (today - timedelta(days=60)).isoformat()
-    ninety_days_ago = (today - timedelta(days=90)).isoformat()
+    thirty_days_ago = (today - timedelta(days=int(p.get("days_warning", 30)))).isoformat()
+    sixty_days_ago = (today - timedelta(days=int(p.get("days_critical", 60)))).isoformat()
+    ninety_days_ago = (today - timedelta(days=int(p.get("days_urgent", 90)))).isoformat()
 
     overdue = (
         db.table("financial_transactions")
@@ -179,6 +187,9 @@ def overdue_payment_alerts() -> dict:
 @celery_app.task(name="tasks.finance.daily_cash_close")
 def daily_cash_close() -> dict:
     """22:00 diario — resume ingresos y egresos del día."""
+    cfg = get_automation_config("AUTO-09")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
     today = date.today().isoformat()
 
@@ -214,14 +225,14 @@ def daily_cash_close() -> dict:
     if today_session_ids:
         attendances = (
             db.table("training_attendance")
-            .select("attended, session_id")
-            .in_("session_id", today_session_ids)
+            .select("attended, training_session_id")
+            .in_("training_session_id", today_session_ids)
             .execute()
         ).data or []
     else:
         attendances = []
 
-    sessions_count = len({a.get("session_id") for a in attendances if a.get("session_id")})
+    sessions_count = len({a.get("training_session_id") for a in attendances if a.get("training_session_id")})
     attended = sum(1 for a in attendances if a.get("attended"))
     total_expected = len(attendances)
     att_rate = round((attended / total_expected * 100), 1) if total_expected else 0
@@ -262,6 +273,9 @@ def daily_cash_close() -> dict:
 @celery_app.task(name="tasks.finance.monthly_financial_projection")
 def monthly_financial_projection() -> dict:
     """Último día del mes 18:00 — proyección de flujo de caja 3 meses."""
+    cfg = get_automation_config("AUTO-10")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     import calendar as _calendar
     today = date.today()
     last_day = _calendar.monthrange(today.year, today.month)[1]
@@ -322,9 +336,15 @@ def monthly_financial_projection() -> dict:
 @celery_app.task(name="tasks.finance.membership_renewal_reminder")
 def membership_renewal_reminder() -> dict:
     """Diario — avisa 30/15/7/1 días antes del vencimiento de membresía."""
+    cfg = get_automation_config("AUTO-11")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
+    p = cfg["custom_params"]
     db = get_supabase()
     today = date.today()
-    reminder_days = [30, 15, 7, 1]
+    expiry_days = int(p.get("days_before_expiry", 30))
+    urgent_days = int(p.get("days_urgent", 7))
+    reminder_days = sorted({expiry_days, expiry_days // 2, urgent_days, 1}, reverse=True)
 
     actions = 0
     total_found = 0

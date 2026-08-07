@@ -8,6 +8,7 @@ from database.supabase_client import get_supabase
 from tasks.celery_app import celery_app
 from tasks.helpers import (
     get_admin_user_ids,
+    get_automation_config,
     log_activity,
     notify_user,
     send_email,
@@ -20,6 +21,9 @@ logger = logging.getLogger(__name__)
 @celery_app.task(name="tasks.marketing.birthday_greetings")
 def birthday_greetings() -> dict:
     """Diario 07:00 — detecta cumpleaños y envía felicitaciones personalizadas."""
+    cfg = get_automation_config("AUTO-21")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
     today = date.today()
     today_mmdd = today.strftime("-%m-%d")
@@ -84,8 +88,13 @@ def birthday_greetings() -> dict:
 @celery_app.task(name="tasks.marketing.reactivate_inactive_athletes")
 def reactivate_inactive_athletes() -> dict:
     """Quincena 10:00 — campaña de reactivación para atletas inactivos."""
+    cfg = get_automation_config("AUTO-22")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
+    inactive_days = int(cfg["custom_params"].get("inactive_days", 60))
     db = get_supabase()
-    thirty_days_ago = (date.today() - timedelta(days=30)).isoformat()
+    today = date.today()
+    thirty_days_ago = (today - timedelta(days=inactive_days)).isoformat()
 
     # Athletes inactive or with no attendance in 30+ days
     inactive = (
@@ -163,6 +172,9 @@ def reactivate_inactive_athletes() -> dict:
 @celery_app.task(name="tasks.marketing.satisfaction_survey")
 def satisfaction_survey() -> dict:
     """Trimestral — envía encuesta NPS a atletas y padres."""
+    cfg = get_automation_config("AUTO-23")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
     today = date.today()
     period = f"{today.year}-Q{(today.month - 1) // 3 + 1}"
@@ -221,6 +233,9 @@ def satisfaction_survey() -> dict:
 @celery_app.task(name="tasks.marketing.request_testimonial")
 def request_testimonial(result_id: str) -> dict:
     """Triggered 24h after a notable competition result (medal or >5% improvement)."""
+    cfg = get_automation_config("AUTO-24")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
 
     result = (
@@ -280,6 +295,9 @@ def request_testimonial(result_id: str) -> dict:
 @celery_app.task(name="tasks.marketing.season_enrollment_campaign")
 def season_enrollment_campaign() -> dict:
     """60 días antes del inicio de temporada — campaña de re-inscripción."""
+    cfg = get_automation_config("AUTO-25")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
     today = date.today()
 

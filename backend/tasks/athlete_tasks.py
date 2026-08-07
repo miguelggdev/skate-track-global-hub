@@ -8,6 +8,7 @@ from database.supabase_client import get_supabase
 from tasks.celery_app import celery_app
 from tasks.helpers import (
     get_admin_user_ids,
+    get_automation_config,
     get_coach_user_ids,
     log_activity,
     notify_user,
@@ -21,6 +22,9 @@ logger = logging.getLogger(__name__)
 @celery_app.task(name="tasks.athlete.post_competition_followup")
 def post_competition_followup(result_id: str) -> dict:
     """Triggered on new competition_results row — análisis y feedback al atleta."""
+    cfg = get_automation_config("AUTO-12")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
 
     result = (
@@ -82,6 +86,9 @@ def post_competition_followup(result_id: str) -> dict:
 @celery_app.task(name="tasks.athlete.evaluation_reminder")
 def evaluation_reminder() -> dict:
     """Semanal — identifica atletas sin evaluación en >180 días."""
+    cfg = get_automation_config("AUTO-13")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
     today = date.today()
     threshold = (today - timedelta(days=180)).isoformat()
@@ -141,6 +148,9 @@ def evaluation_reminder() -> dict:
 @celery_app.task(name="tasks.athlete.injury_protocol")
 def injury_protocol(medical_session_id: str) -> dict:
     """Triggered on new medical_session with injury type — protocolo automático."""
+    cfg = get_automation_config("AUTO-14")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
 
     session = (
@@ -253,6 +263,9 @@ def injury_followup(medical_session_id: str, days: int) -> dict:
 @celery_app.task(name="tasks.athlete.weekly_progress_monitor")
 def weekly_progress_monitor() -> dict:
     """Lunes 07:00 — compara tiempos vs 4 semanas atrás, ranking interno."""
+    cfg = get_automation_config("AUTO-15")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
     today = date.today()
     four_weeks_ago = (today - timedelta(weeks=4)).isoformat()

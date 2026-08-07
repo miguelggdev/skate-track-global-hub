@@ -8,6 +8,7 @@ from database.supabase_client import get_supabase
 from tasks.celery_app import celery_app
 from tasks.helpers import (
     get_admin_user_ids,
+    get_automation_config,
     get_coach_user_ids,
     log_activity,
     notify_user,
@@ -21,6 +22,9 @@ logger = logging.getLogger(__name__)
 @celery_app.task(name="tasks.admin.morning_briefing")
 def morning_briefing() -> dict:
     """Lun–Vie 07:30 — resumen diario para el administrador."""
+    cfg = get_automation_config("AUTO-16")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
     today = date.today()
     today_str = today.isoformat()
@@ -108,6 +112,9 @@ def morning_briefing() -> dict:
 @celery_app.task(name="tasks.admin.end_of_day_summary")
 def end_of_day_summary() -> dict:
     """Lun–Sáb 21:00 — resumen de lo ocurrido en el día."""
+    cfg = get_automation_config("AUTO-17")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
     today = date.today().isoformat()
 
@@ -177,6 +184,10 @@ def end_of_day_summary() -> dict:
 @celery_app.task(name="tasks.admin.expiring_documents_check")
 def expiring_documents_check() -> dict:
     """Diario 09:00 — notifica sobre documentos próximos a vencer."""
+    cfg = get_automation_config("AUTO-18")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
+    p = cfg["custom_params"]
     db = get_supabase()
     today = date.today()
     reminder_days = [30, 15, 5]
@@ -247,6 +258,10 @@ def expiring_documents_check() -> dict:
 @celery_app.task(name="tasks.admin.equipment_inventory_check")
 def equipment_inventory_check() -> dict:
     """Lunes 06:00 — detecta stock bajo y mantenimiento vencido."""
+    cfg = get_automation_config("AUTO-19")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
+    p = cfg["custom_params"]
     db = get_supabase()
     today = date.today().isoformat()
 
@@ -304,6 +319,9 @@ def equipment_inventory_check() -> dict:
 @celery_app.task(name="tasks.admin.new_athlete_documents")
 def new_athlete_documents(athlete_id: str) -> dict:
     """Triggered on new athlete registration — prepara documentos iniciales."""
+    cfg = get_automation_config("AUTO-20")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
 
     athlete = (

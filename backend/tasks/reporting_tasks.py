@@ -8,6 +8,7 @@ from database.supabase_client import get_supabase
 from tasks.celery_app import celery_app
 from tasks.helpers import (
     get_admin_user_ids,
+    get_automation_config,
     get_coach_user_ids,
     log_activity,
     notify_user,
@@ -21,6 +22,9 @@ logger = logging.getLogger(__name__)
 @celery_app.task(name="tasks.reporting.weekly_executive_report")
 def weekly_executive_report() -> dict:
     """Domingos 20:00 — consolida KPIs semanales para el directivo."""
+    cfg = get_automation_config("AUTO-26")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
     today = date.today()
     week_ago = (today - timedelta(weeks=1)).isoformat()
@@ -114,6 +118,9 @@ def weekly_executive_report() -> dict:
 @celery_app.task(name="tasks.reporting.monthly_performance_report")
 def monthly_performance_report() -> dict:
     """1ro de cada mes 08:00 — consolida rendimiento deportivo del mes anterior."""
+    cfg = get_automation_config("AUTO-27")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
     today = date.today()
     # Last month range
@@ -168,6 +175,9 @@ def monthly_performance_report() -> dict:
 @celery_app.task(name="tasks.reporting.federation_inscription_report")
 def federation_inscription_report() -> dict:
     """Manual + automático 30 días antes de cierre federativo — verifica documentación."""
+    cfg = get_automation_config("AUTO-28")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
     today = date.today()
     season = str(today.year)
@@ -243,6 +253,9 @@ def federation_inscription_report() -> dict:
 @celery_app.task(name="tasks.reporting.predictive_analysis")
 def predictive_analysis() -> dict:
     """Domingos 23:00 — predice rendimiento y riesgo de lesión por atleta."""
+    cfg = get_automation_config("AUTO-29")
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
     today = date.today()
     three_months_ago = (today - timedelta(days=90)).isoformat()

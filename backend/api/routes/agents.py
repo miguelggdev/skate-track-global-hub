@@ -17,6 +17,9 @@ from agents.psychology_agent import PsychologyAgent
 from agents.finance_agent import FinanceAgent
 from agents.marketing_agent import MarketingAgent
 from agents.results_agent import ResultsAgent
+from agents.security_agent import SecurityAgent
+from agents.operations_agent import OperationsAgent
+from agents.legal_agent import LegalAgent
 from agents.base_agent import current_user_id as _user_id_ctx, current_user_role as _user_role_ctx
 from api.deps import get_current_user, require_roles, _fetch_app_role_async, PRIVILEGED_ROLES
 
@@ -34,6 +37,9 @@ _AGENT_CLASSES = {
     "finance":    FinanceAgent,
     "marketing":  MarketingAgent,
     "results":    ResultsAgent,
+    "security":   SecurityAgent,
+    "operations": OperationsAgent,
+    "legal":      LegalAgent,
 }
 
 
@@ -44,7 +50,7 @@ def _get_registry() -> dict:
     return _registry
 
 # Agentes que requieren rol privilegiado (admin/coach/leader)
-_RESTRICTED_AGENTS = {"admin", "medical", "finance"}
+_RESTRICTED_AGENTS = {"admin", "medical", "finance", "security", "legal"}
 
 
 class HistoryMessage(BaseModel):
@@ -150,6 +156,24 @@ def list_agents(current_user: dict = Depends(get_current_user)) -> dict:
                 "description": "Resultados de competencias, rankings, historial y análisis de rendimiento",
                 "restricted": False,
             },
+            {
+                "id": "security",
+                "name": "Agente de Seguridad",
+                "description": "Auditoría de accesos, permisos de usuarios, alertas y actividad del sistema",
+                "restricted": True,
+            },
+            {
+                "id": "operations",
+                "name": "Agente de Operaciones",
+                "description": "Eficiencia operativa, equipamiento, capacidad y resumen del día",
+                "restricted": False,
+            },
+            {
+                "id": "legal",
+                "name": "Agente Legal y Cumplimiento",
+                "description": "FCP, consentimientos parentales, seguros, documentos legales y cumplimiento normativo",
+                "restricted": True,
+            },
         ]
     }
 
@@ -167,7 +191,7 @@ async def chat_with_agent(
     if not agent:
         raise HTTPException(
             status_code=404,
-            detail=f"Agente '{agent_id}' no encontrado. Disponibles: {list(registry.keys())}",
+            detail=f"Agente '{agent_id}' no encontrado",
         )
 
     user_id = current_user.get("sub", "")
@@ -198,7 +222,7 @@ async def stream_chat_with_agent(
     if not agent:
         raise HTTPException(
             status_code=404,
-            detail=f"Agente '{agent_id}' no encontrado. Disponibles: {list(registry.keys())}",
+            detail=f"Agente '{agent_id}' no encontrado",
         )
 
     user_id = current_user.get("sub", "")

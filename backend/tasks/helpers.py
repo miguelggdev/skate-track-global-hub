@@ -14,6 +14,99 @@ from database.supabase_client import get_supabase
 
 logger = logging.getLogger(__name__)
 
+# ── Automation config cache ────────────────────────────────────────────────────
+_CONFIG_CACHE: dict[str, tuple[dict, float]] = {}
+_CACHE_TTL = 300.0
+
+_DEFAULT_AUTOMATION_PARAMS: dict[str, dict] = {
+    "AUTO-01": {"days_ahead": 1},
+    "AUTO-02": {"hours_ahead": 2, "window_minutes": 30},
+    "AUTO-03": {"lookahead_weeks": 4, "min_gap_days": 3},
+    "AUTO-04": {"consecutive_threshold": 3},
+    "AUTO-05": {},
+    "AUTO-06": {"max_weekly_hours": 15, "overload_threshold": 0.85},
+    "AUTO-07": {},
+    "AUTO-08": {"days_warning": 30, "days_critical": 60, "days_urgent": 90},
+    "AUTO-09": {"notify_admin": True},
+    "AUTO-10": {"projection_months": 3},
+    "AUTO-11": {"days_before_expiry": 30, "days_urgent": 7},
+    "AUTO-12": {"followup_hours": 24},
+    "AUTO-13": {"evaluation_months": 6},
+    "AUTO-14": {},
+    "AUTO-15": {"lookback_weeks": 4},
+    "AUTO-16": {},
+    "AUTO-17": {},
+    "AUTO-18": {"warning_days": 14, "urgent_days": 7},
+    "AUTO-19": {"low_stock_threshold": 2},
+    "AUTO-20": {},
+    "AUTO-21": {},
+    "AUTO-22": {"inactive_days": 60},
+    "AUTO-23": {},
+    "AUTO-24": {"delay_hours": 24, "min_position": 3},
+    "AUTO-25": {},
+    "AUTO-26": {},
+    "AUTO-27": {},
+    "AUTO-28": {},
+    "AUTO-29": {"lookback_months": 6},
+    "AUTO-30": {"max_failures": 5, "window_minutes": 10},
+    "AUTO-31": {},
+    "AUTO-32": {"anomaly_threshold": 100},
+    "AUTO-33": {"inactive_days": 30},
+    "AUTO-34": {},
+    "AUTO-35": {},
+    "AUTO-36-WA": {},
+    "AUTO-36-BIL": {"billing_day": 1, "due_day_of_month": 5},
+    "AUTO-37": {"pre_due_days": 5, "overdue_cycle_days": 7},
+}
+
+
+def get_automation_config(automation_id: str) -> dict:
+    """Return live automation config from DB with 5-minute in-process cache."""
+    now = time.monotonic()
+    cached = _CONFIG_CACHE.get(automation_id)
+    if cached and now - cached[1] < _CACHE_TTL:
+        return cached[0]
+
+    defaults = _DEFAULT_AUTOMATION_PARAMS.get(automation_id, {})
+    config: dict = {
+        "enabled": True,
+        "schedule_hour": None,
+        "schedule_minute": None,
+        "custom_params": defaults.copy(),
+    }
+
+    try:
+        db = get_supabase()
+        row = (
+            db.table("automation_config")
+            .select("enabled,schedule_hour,schedule_minute,custom_params")
+            .eq("automation_id", automation_id)
+            .maybe_single()
+            .execute()
+        )
+        if row.data:
+            d = row.data
+            config["enabled"] = bool(d.get("enabled", True))
+            config["schedule_hour"] = d.get("schedule_hour")
+            config["schedule_minute"] = d.get("schedule_minute")
+            merged = defaults.copy()
+            merged.update(d.get("custom_params") or {})
+            config["custom_params"] = merged
+    except Exception as exc:
+        logger.warning("get_automation_config failed for %s: %s", automation_id, exc)
+
+    _CONFIG_CACHE[automation_id] = (config, now)
+    return config
+
+
+def invalidate_automation_config_cache(automation_id: str | None = None) -> None:
+    if automation_id:
+        _CONFIG_CACHE.pop(automation_id, None)
+    else:
+        _CONFIG_CACHE.clear()
+
+
+# ── Email templates ────────────────────────────────────────────────────────────
 _template_env = Environment(
     loader=FileSystemLoader(os.path.join(os.path.dirname(__file__), '..', 'templates'))
 )
@@ -243,12 +336,16 @@ def send_email(
 
 
 def task_wrapper(automation_id: str, agent_id: str):
-    """Decorator that catches exceptions and logs the activity outcome."""
+    """Decorator: checks enabled flag, catches exceptions, logs activity."""
     import functools
 
     def decorator(fn):
         @functools.wraps(fn)
         def wrapper(*args, **kwargs) -> dict[str, Any]:
+            cfg = get_automation_config(automation_id)
+            if not cfg.get("enabled", True):
+                logger.info("%s: deshabilitada — omitida", automation_id)
+                return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
             try:
                 result = fn(*args, **kwargs)
                 log_activity(
