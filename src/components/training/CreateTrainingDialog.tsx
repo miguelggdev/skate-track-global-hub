@@ -1,4 +1,5 @@
-﻿import React, { useState, useEffect } from 'react';
+﻿import React, { useState } from 'react';
+import { z } from 'zod';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +28,21 @@ interface TrainingType {
   icon: any;
   description?: string;
 }
+
+const scheduleItemSchema = z.object({
+  day: z.string().min(1),
+  start_time: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:MM requerido'),
+  end_time: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:MM requerido'),
+  training_type: z.string().min(1, 'Tipo de entrenamiento requerido'),
+  category: z.string().min(1, 'Categoría requerida'),
+  location: z.string().optional(),
+  max_participants: z.string().optional(),
+  coach_id: z.string().optional(),
+}).refine(item => {
+  const [sh, sm] = item.start_time.split(':').map(Number);
+  const [eh, em] = item.end_time.split(':').map(Number);
+  return (eh * 60 + em) > (sh * 60 + sm);
+}, { message: 'La hora de fin debe ser posterior a la hora de inicio' });
 
 const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
   const [open, setOpen] = useState(false);
@@ -233,13 +249,16 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (weeklySchedule.length === 0) {
-      toast({
-        title: "Error",
-        description: "Agrega al menos un horario a la programación semanal",
-        variant: "destructive"
-      });
+      toast({ title: 'Error', description: 'Agrega al menos un horario a la programación semanal', variant: 'destructive' });
+      return;
+    }
+
+    const parseResult = z.array(scheduleItemSchema).safeParse(weeklySchedule);
+    if (!parseResult.success) {
+      const msg = parseResult.error.errors[0]?.message ?? 'Datos inválidos en la programación';
+      toast({ title: 'Error de validación', description: msg, variant: 'destructive' });
       return;
     }
 
@@ -791,8 +810,8 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                 {weeklySchedule.length > 0 && (
                   <div className="space-y-2">
                     <Label className="text-base font-medium">Lista de Entrenamientos:</Label>
-                    {weeklySchedule.map((item) => (
-                      <div key={item.day} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                    {weeklySchedule.map((item, index) => (
+                      <div key={`${item.day}-${index}`} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                         <div className="flex items-center space-x-4">
                           <CalendarIcon className="h-4 w-4" />
                           <span className="font-medium">

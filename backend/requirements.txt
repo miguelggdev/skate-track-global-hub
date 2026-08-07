@@ -35,3 +35,9 @@ sentry-sdk[fastapi]>=2.15.0,<3.0.0
 
 # Rate limiting
 slowapi>=0.1.9,<1.0.0
+
+# PDF generation (invoice attachments)
+reportlab>=4.2.0,<5.0.0
+
+# Template rendering (email templates in helpers.py)
+jinja2>=3.1.0,<4.0.0
