@@ -205,7 +205,7 @@ const AttendanceReportGenerator: React.FC = () => {
       yPosition = template.addText('RESUMEN ESTADÍSTICO', 14);
       yPosition = template.addText(`Total de atletas: ${reportData.length}`, 11);
       yPosition = template.addText(`Sesiones totales: ${reportData.reduce((sum, athlete) => sum + athlete.total_sessions, 0)}`, 11);
-      yPosition = template.addText(`Asistencia promedio: ${(reportData.reduce((sum, athlete) => sum + athlete.attendance_rate, 0) / reportData.length ?? 0).toFixed(1)}%`, 11);
+      yPosition = template.addText(`Asistencia promedio: ${(reportData.length ? reportData.reduce((sum, athlete) => sum + athlete.attendance_rate, 0) / reportData.length : 0).toFixed(1)}%`, 11);
       yPosition = template.addText(`Atletas con +80% asistencia: ${reportData.filter(athlete => athlete.attendance_rate >= 80).length}`, 11);
       yPosition = template.addSpace(15);
 
