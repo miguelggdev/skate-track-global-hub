@@ -37,8 +37,11 @@ import {
   Timer
 } from 'lucide-react';
 
+import { useTranslation } from '@/hooks/useTranslation';
+
 const Training = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showCalendarDialog, setShowCalendarDialog] = useState(false);
@@ -143,7 +146,7 @@ const Training = () => {
     .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
 
   return (
-    <DashboardLayout title="Gestión de Entrenamientos">
+    <DashboardLayout title={t('page.training.title')}>
       <div className="space-y-6 w-full">
         {/* Header Actions */}
         <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
@@ -249,7 +252,7 @@ const Training = () => {
         {currentView === 'attendance' ? (
           <div ref={attendanceRef} className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Registro de Asistencia</h2>
+              <h2 className="text-xl font-semibold">{t('section.attendance_register')}</h2>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -273,7 +276,7 @@ const Training = () => {
         ) : currentView === 'reports' ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Reportes de Asistencia</h2>
+              <h2 className="text-xl font-semibold">{t('section.attendance_reports')}</h2>
               <div className="flex gap-2">
                 <Button
                   variant="outline"

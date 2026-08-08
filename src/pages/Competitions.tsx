@@ -17,19 +17,22 @@ import {
 import { useCompetitions, type Competition } from '@/hooks/useCompetitions';
 import { Trophy } from 'lucide-react';
 
+import { useTranslation } from '@/hooks/useTranslation';
+
 const Competitions = () => {
+  const { t } = useTranslation();
   const [selectedCompetitionId, setSelectedCompetitionId] = useState<string>('');
   const { data: competitions = [] } = useCompetitions();
 
   const selectedCompetition = competitions.find((c: Competition) => c.id === selectedCompetitionId);
 
   return (
-    <DashboardLayout title="Competencias">
+    <DashboardLayout title={t('page.competitions.title')}>
       <div className="space-y-6 max-w-none">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Competencias</h1>
+            <h1 className="text-2xl font-bold text-foreground">{t('page.competitions.title')}</h1>
             <p className="text-muted-foreground text-sm mt-0.5">
               Gestiona competencias, eventos, resultados y podio virtual
             </p>

@@ -52,7 +52,10 @@ import {
   Download
 } from 'lucide-react';
 
+import { useTranslation } from '@/hooks/useTranslation';
+
 const Finance = () => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   
   // Get initial values from URL params or defaults
@@ -291,7 +294,7 @@ const Finance = () => {
   const totalAvailable = totalBudget - totalSpent;
 
   return (
-    <DashboardLayout title="Gestión Financiera" userRole="Gestor Financiero">
+    <DashboardLayout title={t('page.finance.title')} userRole="Gestor Financiero">
       <div className="space-y-6">
         {/* Header Actions */}
         <div className="flex justify-end gap-3">
