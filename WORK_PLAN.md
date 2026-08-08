@@ -499,4 +499,19 @@ Revisión de specs y cierre de deuda de documentación:
 
 ---
 
-*Actualizado: Agosto 2026 — Sprint 15 + mejoras técnicas + housekeeping SDD*
+## SPRINT 16 — Pentest / Seguridad ofensiva (planificado)
+
+**Objetivo:** validar la seguridad de la plataforma con un pentest autónomo antes de exponer datos reales.
+
+| Spec | Título | Status |
+|------|--------|--------|
+| SPEC-045 | Pentest autónomo con Strix (DAST+SAST, OWASP Top 10) | 📝 draft |
+
+- **Fase 1 (SAST):** se puede correr **ya** sobre el repo (solo requiere Docker + API key de LLM), sin entorno desplegado.
+- **Fase 2 (DAST):** requiere staging/local seguro (Supabase de prueba, Resend/Twilio off, datos seed) — **nunca contra producción**.
+- **Fase 3 (CI):** integración opcional en GitHub Actions con scope por PR.
+- Foco: IDOR/RLS, bypass de auth, webhooks, inyección. Reporte en `docs/PENTEST_STRIX.md`.
+
+---
+
+*Actualizado: Agosto 2026 — Sprint 15 + mejoras técnicas + housekeeping SDD + Sprint 16 (pentest, draft)*
