@@ -18,6 +18,10 @@ Marcar cada ítem con ✅ o ❌ + nota.
 
 ## 0. Infraestructura y SSL (curl — primero)
 
+> **Atajo:** `bash scripts/smoke.sh` ejecuta las secciones 0 y 0b automáticamente y
+> devuelve un resumen ✅/❌ (las pruebas con efectos —webhook con escritura y email—
+> son opt-in: `RUN_WEBHOOK_WRITE=1`, `RUN_EMAIL=1 SMOKE_EMAIL=tu@correo`).
+
 ```bash
 # Contenedores arriba (6 servicios)
 ./deploy.sh status
