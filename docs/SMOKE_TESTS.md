@@ -28,8 +28,8 @@ Marcar cada ítem con ✅ o ❌ + nota.
 
 # SSL + respuesta de cada host
 curl -sI https://track.arkanatech.tech         | head -1   # → HTTP/2 200
-curl -s  https://track.arkanatech.tech/api/health           # → {"status":"ok"} (proxy)
-curl -s  https://stride.arkanatech.tech/health              # → {"status":"ok"} (directo)
+curl -s  https://track.arkanatech.tech/health.txt           # → ok (frontend nginx; NO existe /api/health)
+curl -s  https://stride.arkanatech.tech/health              # → {"status":"ok"} (backend directo)
 curl -sI https://split.arkanatech.tech/flower  | head -1    # → 401 (basic-auth, correcto)
 curl -sI https://speedskatetrack.arkanatech.tech | head -1  # → 200/301 (landing)
 
@@ -40,7 +40,7 @@ echo | openssl s_client -connect track.arkanatech.tech:443 \
 
 - [ ] `./deploy.sh status` → 6 contenedores `Up` (frontend, backend, celery_worker, celery_beat, flower, redis)
 - [ ] `track.` responde 200 y sirve la app
-- [ ] Health directo (`stride./health`) y vía proxy (`track./api/health`) → `{"status":"ok"}`
+- [ ] Backend `stride./health` → `{"status":"ok"}` y frontend `track./health.txt` → `ok` (no existe `/api/health`)
 - [ ] `split./flower` pide usuario/clave (401 sin credenciales)
 - [ ] Certificados SSL válidos (issuer Let's Encrypt) en `track.`, `stride.`, `split.`
 - [ ] Landing (`speedskatetrack.`) carga

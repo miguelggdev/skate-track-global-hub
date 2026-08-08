@@ -245,9 +245,9 @@ Pruebas manuales:
 curl -I https://track.arkanatech.tech
 # → HTTP/2 200
 
-# Backend health (vía proxy del frontend)
-curl https://track.arkanatech.tech/api/health
-# → {"status":"ok"}
+# Frontend up (health estático de nginx — NO hay /api/health)
+curl https://track.arkanatech.tech/health.txt
+# → ok
 
 # Backend health (directo — verifica el router stride. y su SSL)
 curl https://stride.arkanatech.tech/health
@@ -416,7 +416,7 @@ Las variables `VITE_*` se bakearon incorrectamente. Verifica `.env.production` y
 ### Infraestructura
 - [ ] DNS: `track.arkanatech.tech`, `stride.arkanatech.tech`, `split.arkanatech.tech` → IP del VPS
 - [ ] `https://track.arkanatech.tech` carga la pantalla de login (SSL válido)
-- [ ] `https://track.arkanatech.tech/api/health` devuelve `{"status":"ok"}`
+- [ ] `https://stride.arkanatech.tech/health` → `{"status":"ok"}` (backend) y `https://track.arkanatech.tech/health.txt` → `ok` (frontend)
 - [ ] Panel Flower: `https://split.arkanatech.tech/flower` accesible con usuario/clave
 - [ ] Todos los contenedores `Up`: `./deploy.sh status`
 
