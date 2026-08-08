@@ -14,6 +14,7 @@ import AthletesHeader from '@/components/athletes/AthletesHeader';
 import { Athlete } from '@/hooks/useAthletes';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from '@/hooks/useTranslation';
 
 // Raw row from athletes table including columns added via ALTER TABLE migrations
 interface AthleteRow extends Athlete {
@@ -52,6 +53,7 @@ const Athletes = () => {
   const queryClient = useQueryClient();
   const { profile } = useUserProfile();
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   const isCoach = profile?.role === 'coach';
 
@@ -99,13 +101,13 @@ const Athletes = () => {
   });
 
   if (isError) return (
-    <DashboardLayout title="Athletes Management">
+    <DashboardLayout title={t('page.athletes.title')}>
       <Alert variant="destructive">
-        <AlertTitle>Error al cargar atletas</AlertTitle>
+        <AlertTitle>{t('page.athletes.load_error')}</AlertTitle>
         <AlertDescription>
-          {error instanceof Error ? error.message : 'Error de conexión'}
+          {error instanceof Error ? error.message : t('common.connection_error')}
           <Button variant="outline" size="sm" className="mt-2 ml-2" onClick={() => refetch()}>
-            Reintentar
+            {t('action.retry')}
           </Button>
         </AlertDescription>
       </Alert>
@@ -129,7 +131,7 @@ const Athletes = () => {
   };
 
   return (
-    <DashboardLayout title="Athletes Management">
+    <DashboardLayout title={t('page.athletes.title')}>
       <div className="space-y-6 max-w-none">
         <AthletesHeader onAthleteAdded={handleAthleteAdded} />
         <StatsCards />
