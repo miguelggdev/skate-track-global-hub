@@ -71,7 +71,8 @@ services:
     environment:
       REDIS_URL: "redis://:${REDIS_PASSWORD}@redis:6379/0"
     networks:
-      - app_net         # Solo interno — Traefik no llega aquí directamente
+      - supabase2_net   # Traefik llega por aquí (API pública + webhooks Supabase)
+      - app_net         # Habla con redis y con el frontend por aquí
     depends_on:
       redis:
         condition: service_healthy
@@ -81,6 +82,16 @@ services:
       timeout: 10s
       retries: 3
       start_period: 20s
+    labels:
+      # Backend expuesto en API_DOMAIN (stride.*) — endpoints protegidos por JWT
+      # (agentes) y X-Webhook-Secret (webhooks). El frontend igual usa el proxy
+      # interno /api/ (VITE_BACKEND_URL vacío); este router es para webhooks/API pública.
+      - "traefik.enable=true"
+      - "traefik.docker.network=supabase2_net"
+      - "traefik.http.routers.skatetrack-api.rule=Host(`${API_DOMAIN}`)"
+      - "traefik.http.routers.skatetrack-api.entrypoints=websecure"
+      - "traefik.http.routers.skatetrack-api.tls.certresolver=leresolver"
+      - "traefik.http.services.skatetrack-api.loadbalancer.server.port=8000"
 
   # ── Celery Worker (ejecuta las 35 automatizaciones) ──────────────────────
   celery_worker:
@@ -137,7 +148,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=supabase2_net"
-      - "traefik.http.routers.skatetrack-flower.rule=Host(`flower.${DOMAIN}`)"
+      - "traefik.http.routers.skatetrack-flower.rule=Host(`${FLOWER_DOMAIN}`)"
       - "traefik.http.routers.skatetrack-flower.entrypoints=websecure"
       - "traefik.http.routers.skatetrack-flower.tls.certresolver=leresolver"
       - "traefik.http.services.skatetrack-flower.loadbalancer.server.port=5555"

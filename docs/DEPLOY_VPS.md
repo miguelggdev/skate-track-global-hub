@@ -11,9 +11,9 @@ Internet (443/80)
     │
     ▼
 Traefik (ya corre en el VPS, red: supabase2_net)
-    ├── skate.arkanatech.tech   ──► frontend:80  (nginx SPA + proxy /api/)
-    ├── api.arkanatech.tech     ──► backend:8000 (FastAPI, recibe webhooks Supabase)
-    └── flower.arkanatech.tech  ──► flower:5555  (Celery monitor)
+    ├── track.arkanatech.tech   ──► frontend:80  (nginx SPA + proxy /api/)
+    ├── stride.arkanatech.tech     ──► backend:8000 (FastAPI, recibe webhooks Supabase)
+    └── split.arkanatech.tech  ──► flower:5555  (Celery monitor)
 
 frontend:80 → http://backend:8000/api/ (red interna app_net)
 backend:8000 → redis:6379 (app_net)
@@ -41,7 +41,7 @@ celery_worker + celery_beat → redis:6379 (app_net)
 Checklist maestro de **todo lo que debes hacer a mano** (Claude no puede: requieren credenciales, el dashboard de Supabase, cuentas externas o el VPS). Cada ítem enlaza al paso detallado más abajo.
 
 ### Antes / durante el despliegue (una sola vez)
-- [ ] **Registros DNS en Hostinger** — `skate.`, `api.`, `flower.arkanatech.tech` → IP del VPS. → *Paso 0*
+- [ ] **Registros DNS en Hostinger** — `track.`, `stride.`, `split.arkanatech.tech` → IP del VPS. → *Paso 0*
 - [ ] **Verificar dominio en Resend** — `arkanatech.tech` con sus registros DNS, o los emails rebotan/van a spam.
 - [ ] **Rellenar `.env.production`** — con todas las variables. → *Paso 2 y referencia completa al final*. Claves que debes generar/obtener tú:
   - [ ] `WEBHOOK_SECRET` → generar con `openssl rand -hex 32`
@@ -71,19 +71,23 @@ Crea estos registros **tipo A** apuntando a la IP de tu VPS:
 
 | Nombre (Host) | Tipo | Valor | TTL |
 |---------------|------|-------|-----|
-| `skate` | A | `<IP_DEL_VPS>` | 3600 |
-| `api` | A | `<IP_DEL_VPS>` | 3600 |
-| `flower` | A | `<IP_DEL_VPS>` | 3600 |
+| `track` | A | `<IP_DEL_VPS>` | 3600 |
+| `stride` | A | `<IP_DEL_VPS>` | 3600 |
+| `split` | A | `<IP_DEL_VPS>` | 3600 |
 
 Resultado esperado:
-- `skate.arkanatech.tech` → frontend React (login, dashboards)
-- `api.arkanatech.tech` → FastAPI (agentes IA + webhooks Supabase)
-- `flower.arkanatech.tech` → Monitor Celery (protegido con usuario/clave)
+- `track.arkanatech.tech` → frontend React (login, dashboards)
+- `stride.arkanatech.tech` → FastAPI (agentes IA + webhooks Supabase)
+- `split.arkanatech.tech` → Monitor Celery (protegido con usuario/clave)
+
+> **Landing** (`speedskatetrack.arkanatech.tech`): va **aparte** en GitHub Pages, no en el VPS.
+> Crea un registro **CNAME** `speedskatetrack` → `miguelggdev.github.io` (y configura el
+> Custom Domain en el repo de la landing). No requiere Traefik ni tocar este compose.
 
 Verifica propagación (puede tardar 10–60 min) antes de continuar:
 ```bash
-dig +short skate.arkanatech.tech
-dig +short api.arkanatech.tech
+dig +short track.arkanatech.tech
+dig +short stride.arkanatech.tech
 # Ambos deben devolver la IP del VPS
 ```
 
@@ -111,7 +115,7 @@ Rellena **todos** los valores. Los críticos:
 
 | Variable | Dónde obtenerla |
 |----------|-----------------|
-| `DOMAIN` | `skate.arkanatech.tech` |
+| `DOMAIN` | `track.arkanatech.tech` |
 | `ANTHROPIC_API_KEY` | console.anthropic.com → API Keys |
 | `SUPABASE_URL` | Supabase → Project Settings → API |
 | `SUPABASE_SERVICE_KEY` | Supabase → Project Settings → API → `service_role` key |
@@ -135,9 +139,9 @@ Rellena **todos** los valores. Los críticos:
 Traefik solicitará el certificado SSL al arrancar. Si el DNS no resuelve, el certificado no se genera.
 
 ```bash
-dig +short skate.arkanatech.tech   # → IP del VPS
-dig +short api.arkanatech.tech     # → IP del VPS
-dig +short flower.arkanatech.tech  # → IP del VPS
+dig +short track.arkanatech.tech   # → IP del VPS
+dig +short stride.arkanatech.tech     # → IP del VPS
+dig +short split.arkanatech.tech  # → IP del VPS
 ```
 
 Si alguno no responde, espera la propagación del DNS y vuelve.
@@ -187,12 +191,12 @@ Para cada fila de la tabla siguiente, crea un webhook:
 
 | Nombre del hook | Tabla | Eventos | URL del endpoint |
 |-----------------|-------|---------|-----------------|
-| `hook_attendance_change` | `training_attendance` | INSERT, UPDATE | `https://api.arkanatech.tech/api/webhooks/attendance-change` |
-| `hook_payment_received` | `financial_transactions` | INSERT | `https://api.arkanatech.tech/api/webhooks/payment-received` |
-| `hook_competition_result` | `competition_results` | INSERT | `https://api.arkanatech.tech/api/webhooks/competition-result` |
-| `hook_medical_session` | `medical_sessions` | INSERT | `https://api.arkanatech.tech/api/webhooks/medical-session` |
-| `hook_new_athlete` | `athletes` | INSERT | `https://api.arkanatech.tech/api/webhooks/new-athlete` |
-| `hook_suspicious_access` | `audit_log` | INSERT | `https://api.arkanatech.tech/api/webhooks/suspicious-access` |
+| `hook_attendance_change` | `training_attendance` | INSERT, UPDATE | `https://stride.arkanatech.tech/api/webhooks/attendance-change` |
+| `hook_payment_received` | `financial_transactions` | INSERT | `https://stride.arkanatech.tech/api/webhooks/payment-received` |
+| `hook_competition_result` | `competition_results` | INSERT | `https://stride.arkanatech.tech/api/webhooks/competition-result` |
+| `hook_medical_session` | `medical_sessions` | INSERT | `https://stride.arkanatech.tech/api/webhooks/medical-session` |
+| `hook_new_athlete` | `athletes` | INSERT | `https://stride.arkanatech.tech/api/webhooks/new-athlete` |
+| `hook_suspicious_access` | `audit_log` | INSERT | `https://stride.arkanatech.tech/api/webhooks/suspicious-access` |
 
 **En cada webhook, añadir el header HTTP:**
 
@@ -235,29 +239,29 @@ skatetrack-redis-1         Up
 Pruebas manuales:
 ```bash
 # Frontend
-curl -I https://skate.arkanatech.tech
+curl -I https://track.arkanatech.tech
 # → HTTP/2 200
 
 # Backend health
-curl https://skate.arkanatech.tech/api/health
+curl https://track.arkanatech.tech/api/health
 # → {"status":"ok"}
 
 # Webhook (prueba rápida — debe dar 401 si el secreto falta)
 curl -s -o /dev/null -w "%{http_code}" \
-  -X POST https://api.arkanatech.tech/api/webhooks/new-athlete \
+  -X POST https://stride.arkanatech.tech/api/webhooks/new-athlete \
   -H "Content-Type: application/json" \
   -d '{"type":"INSERT","table":"athletes","record":{"id":"test"}}'
 # → 401 (correcto — no llevó el header secreto)
 
 # Webhook con secreto correcto
-curl -s -X POST https://api.arkanatech.tech/api/webhooks/new-athlete \
+curl -s -X POST https://stride.arkanatech.tech/api/webhooks/new-athlete \
   -H "Content-Type: application/json" \
   -H "X-Webhook-Secret: <TU_WEBHOOK_SECRET>" \
   -d '{"type":"INSERT","table":"athletes","record":{"id":"00000000-0000-0000-0000-000000000001"}}'
 # → {"queued":true}
 
 # Panel Celery
-# Abre: https://flower.arkanatech.tech/flower
+# Abre: https://split.arkanatech.tech/flower
 ```
 
 ---
@@ -313,7 +317,9 @@ docker compose --env-file .env.production up -d --scale celery_worker=2
 
 | Variable | Req | Descripción |
 |----------|-----|-------------|
-| `DOMAIN` | Sí | `skate.arkanatech.tech` (sin `https://`) |
+| `DOMAIN` | Sí | `track.arkanatech.tech` — app/frontend (sin `https://`) |
+| `API_DOMAIN` | Sí | `stride.arkanatech.tech` — backend/API (recibe webhooks) |
+| `FLOWER_DOMAIN` | Sí | `split.arkanatech.tech` — monitor Flower |
 | `ANTHROPIC_API_KEY` | Sí | Agentes IA (LangGraph) |
 | `SUPABASE_URL` | Sí | URL del proyecto Supabase |
 | `SUPABASE_SERVICE_KEY` | Sí | `service_role` key — solo backend |
@@ -322,7 +328,7 @@ docker compose --env-file .env.production up -d --scale celery_worker=2
 | `VITE_SUPABASE_ANON_KEY` | Sí | `anon` key en el bundle JS |
 | `VITE_BACKEND_URL` | — | Dejar **vacío** (proxy nginx interno) |
 | `REDIS_PASSWORD` | Sí | Contraseña interna Redis |
-| `FRONTEND_URL` | Sí | `https://skate.arkanatech.tech` (CORS) |
+| `FRONTEND_URL` | Sí | `https://track.arkanatech.tech` (CORS) |
 | `ENVIRONMENT` | Sí | `production` |
 | `WEBHOOK_SECRET` | Sí | Secreto compartido con Supabase Webhooks |
 | `RESEND_API_KEY` | Sí | Para emails de facturas y recordatorios |
@@ -341,11 +347,12 @@ docker compose --env-file .env.production up -d --scale celery_worker=2
 
 ```
 supabase2_net (externa — Traefik la gestiona)
-├── frontend   — nginx: sirve SPA + proxy /api/ → backend
-└── flower     — Monitor Celery
+├── frontend   — nginx: sirve SPA (track.) + proxy /api/ → backend
+├── backend    — FastAPI (stride.) — API pública + webhooks Supabase
+└── flower     — Monitor Celery (split.)
 
 app_net (interna — solo esta app)
-├── backend        — FastAPI + LangGraph + endpoints webhook
+├── backend        — FastAPI + LangGraph + endpoints webhook (también aquí, para redis/frontend)
 ├── celery_worker  — Ejecuta las 37 automatizaciones
 ├── celery_beat    — Scheduler de tareas periódicas
 └── redis          — Broker Celery (contraseña, volumen persistente)
@@ -361,7 +368,7 @@ Si persiste: `./deploy.sh logs backend` — busca `ValidationError` (falta varia
 
 ### Traefik no genera el certificado SSL
 - DNS debe resolver antes de arrancar los contenedores
-- Verifica: `dig +short skate.arkanatech.tech` → IP del VPS
+- Verifica: `dig +short track.arkanatech.tech` → IP del VPS
 - Logs: `docker logs traefik 2>&1 | grep -i "skate\|acme\|error"`
 
 ### Los webhooks Supabase devuelven 503
@@ -397,10 +404,10 @@ Las variables `VITE_*` se bakearon incorrectamente. Verifica `.env.production` y
 ## Post-deploy checklist
 
 ### Infraestructura
-- [ ] DNS: `skate.arkanatech.tech`, `api.arkanatech.tech`, `flower.arkanatech.tech` → IP del VPS
-- [ ] `https://skate.arkanatech.tech` carga la pantalla de login (SSL válido)
-- [ ] `https://skate.arkanatech.tech/api/health` devuelve `{"status":"ok"}`
-- [ ] Panel Flower: `https://flower.arkanatech.tech/flower` accesible con usuario/clave
+- [ ] DNS: `track.arkanatech.tech`, `stride.arkanatech.tech`, `split.arkanatech.tech` → IP del VPS
+- [ ] `https://track.arkanatech.tech` carga la pantalla de login (SSL válido)
+- [ ] `https://track.arkanatech.tech/api/health` devuelve `{"status":"ok"}`
+- [ ] Panel Flower: `https://split.arkanatech.tech/flower` accesible con usuario/clave
 - [ ] Todos los contenedores `Up`: `./deploy.sh status`
 
 ### Aplicación
@@ -425,8 +432,8 @@ Las variables `VITE_*` se bakearon incorrectamente. Verifica `.env.production` y
 
 Traefik renueva automáticamente. Sin cron adicional. Para verificar expiración:
 ```bash
-echo | openssl s_client -connect skate.arkanatech.tech:443 \
-  -servername skate.arkanatech.tech 2>/dev/null \
+echo | openssl s_client -connect track.arkanatech.tech:443 \
+  -servername track.arkanatech.tech 2>/dev/null \
   | openssl x509 -noout -dates
 ```
 

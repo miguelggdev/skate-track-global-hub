@@ -10,11 +10,11 @@ Each endpoint:
 
 Configure in Supabase Dashboard → Database → Webhooks:
   Table              Event         URL
-  training_attendance INSERT/UPDATE https://api.arkanatech.tech/api/webhooks/attendance-change
-  financial_transactions INSERT     https://api.arkanatech.tech/api/webhooks/payment-received
-  competition_results  INSERT      https://api.arkanatech.tech/api/webhooks/competition-result
-  medical_sessions     INSERT      https://api.arkanatech.tech/api/webhooks/medical-session
-  athletes             INSERT      https://api.arkanatech.tech/api/webhooks/new-athlete
+  training_attendance INSERT/UPDATE https://stride.arkanatech.tech/api/webhooks/attendance-change
+  financial_transactions INSERT     https://stride.arkanatech.tech/api/webhooks/payment-received
+  competition_results  INSERT      https://stride.arkanatech.tech/api/webhooks/competition-result
+  medical_sessions     INSERT      https://stride.arkanatech.tech/api/webhooks/medical-session
+  athletes             INSERT      https://stride.arkanatech.tech/api/webhooks/new-athlete
 
 Custom header: X-Webhook-Secret: <WEBHOOK_SECRET from .env>
 """

@@ -319,7 +319,7 @@ Antes de marcar un spec como `done`:
 
 Ir a **Database → Webhooks** y crear un webhook por tabla con:
 - HTTP Header: `X-Webhook-Secret: <valor de WEBHOOK_SECRET en .env>`
-- URL: `https://api.arkanatech.tech/api/webhooks/<endpoint>`
+- URL: `https://stride.arkanatech.tech/api/webhooks/<endpoint>`
 
 ---
 
