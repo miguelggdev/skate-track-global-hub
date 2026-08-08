@@ -13,7 +13,7 @@ import {
 import RevenueChart from '@/components/dashboard/RevenueChart';
 import { ExportExcelButton } from '@/components/ui/ExportExcelButton';
 import { exportFinanceTransactions } from '@/utils/exportExcel';
-import { FinanceReportDownloadButton } from '@/lib/pdf/FinanceReportDocument';
+import { FinanceReportDownloadButton } from '@/lib/pdf/FinanceReportButton';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

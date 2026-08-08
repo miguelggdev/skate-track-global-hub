@@ -78,4 +78,23 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Separa librerías pesadas en chunks propios para aligerar el chunk
+        // principal y mejorar el cacheo entre despliegues.
+        manualChunks(id: string) {
+          if (!id.includes('node_modules')) return;
+          if (id.includes('@react-pdf') || id.includes('pdfjs') || id.includes('fontkit')) return 'react-pdf';
+          if (id.includes('xlsx')) return 'xlsx';
+          if (id.includes('jspdf') || id.includes('html2canvas')) return 'jspdf';
+          if (id.includes('recharts') || id.includes('/d3-') || id.includes('victory-')) return 'charts';
+          if (id.includes('leaflet')) return 'leaflet';
+          if (id.includes('@radix-ui')) return 'radix';
+          if (id.includes('@tanstack')) return 'tanstack';
+          if (id.includes('@supabase')) return 'supabase';
+        },
+      },
+    },
+  },
 }));

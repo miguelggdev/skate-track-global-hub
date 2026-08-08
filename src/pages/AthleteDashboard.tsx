@@ -24,7 +24,7 @@ import AthleteGallery from '@/components/athletes/dashboard/cv/AthleteGallery';
 import AthletePDFExport from '@/components/athletes/dashboard/cv/AthletePDFExport';
 import AthleteProfileEditDialog from '@/components/athletes/dashboard/cv/AthleteProfileEditDialog';
 import { AthleteSkillsRadar, AthleteNextCompetition, AthleteAchievements } from '@/components/dashboard/AthleteCharts';
-import { AthleteCVDownloadButton } from '@/lib/pdf/AthleteCVDocument';
+import { AthleteCVDownloadButton } from '@/lib/pdf/AthleteCVButton';
 import { DashboardAgentPanel } from '@/components/agents/DashboardAgentPanel';
 import { AgentPanelsSection } from '@/components/agents/AgentPanelsSection';
 

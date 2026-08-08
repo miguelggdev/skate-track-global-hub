@@ -1,9 +1,7 @@
 import React from 'react';
 import {
-  Document, Page, View, Text, StyleSheet, PDFDownloadLink,
+  Document, Page, View, Text, StyleSheet,
 } from '@react-pdf/renderer';
-import { Button } from '@/components/ui/button';
-import { FileDown, Loader2 } from 'lucide-react';
 
 const ORANGE = '#f97316';
 const DARK   = '#0d1526';
@@ -44,7 +42,7 @@ export interface FinanceTransaction {
   payer_name?: string;
 }
 
-interface FinanceReportData {
+export interface FinanceReportData {
   period: string;
   totalIncome: number;
   totalExpenses: number;
@@ -114,24 +112,5 @@ export function FinanceReportDocument({ data }: { data: FinanceReportData }) {
         </View>
       </Page>
     </Document>
-  );
-}
-
-interface FinanceReportButtonProps {
-  data: FinanceReportData;
-}
-
-export function FinanceReportDownloadButton({ data }: FinanceReportButtonProps) {
-  const filename = `reporte_financiero_${data.period.replace(/\s/g, '_')}.pdf`;
-
-  return (
-    <PDFDownloadLink document={<FinanceReportDocument data={data} />} fileName={filename}>
-      {({ loading }) => (
-        <Button variant="outline" size="sm" className="gap-2" disabled={loading}>
-          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
-          {loading ? 'Generando…' : 'Exportar PDF'}
-        </Button>
-      )}
-    </PDFDownloadLink>
   );
 }

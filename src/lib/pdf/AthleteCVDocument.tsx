@@ -1,9 +1,7 @@
 import React from 'react';
 import {
-  Document, Page, View, Text, StyleSheet, PDFDownloadLink,
+  Document, Page, View, Text, StyleSheet,
 } from '@react-pdf/renderer';
-import { Button } from '@/components/ui/button';
-import { FileDown, Loader2 } from 'lucide-react';
 
 const ORANGE = '#f97316';
 const DARK   = '#0d1526';
@@ -56,7 +54,7 @@ const styles = StyleSheet.create({
 
 // ─── Document ───────────────────────────────────────────────────────────────
 
-interface CVData {
+export interface CVData {
   athlete: {
     first_name?: string | null;
     last_name?: string | null;
@@ -230,28 +228,5 @@ export function AthleteCVDocument({ data }: { data: CVData }) {
         </View>
       </Page>
     </Document>
-  );
-}
-
-// ─── Download button ─────────────────────────────────────────────────────────
-
-interface AthleteCVDownloadButtonProps {
-  data: CVData;
-  filename?: string;
-}
-
-export function AthleteCVDownloadButton({ data, filename }: AthleteCVDownloadButtonProps) {
-  const name = `${data.athlete.first_name ?? ''}_${data.athlete.last_name ?? ''}`.replace(/\s+/g, '_');
-  const file = filename ?? `CV_${name}_${new Date().toISOString().slice(0,10)}.pdf`;
-
-  return (
-    <PDFDownloadLink document={<AthleteCVDocument data={data} />} fileName={file}>
-      {({ loading }) => (
-        <Button variant="outline" size="sm" className="gap-2" disabled={loading}>
-          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
-          {loading ? 'Generando PDF…' : 'CV PDF'}
-        </Button>
-      )}
-    </PDFDownloadLink>
   );
 }
