@@ -44,7 +44,7 @@ class SupabaseWebhookPayload(BaseModel):
 def _verify(secret: str | None) -> None:
     if not settings.webhook_secret:
         raise HTTPException(status_code=503, detail="Webhook secret not configured on server")
-    if not hmac.compare_digest(secret, settings.webhook_secret):
+    if not secret or not hmac.compare_digest(secret, settings.webhook_secret):
         raise HTTPException(status_code=401, detail="Invalid webhook secret")
 
 

@@ -51,8 +51,8 @@ class TestReactivateInactiveAthletes:
 class TestCalendarTasks:
     def test_reminder_next_session_disabled(self, mock_supabase_ctx):
         with patch("tasks.calendar_tasks.get_automation_config", return_value=_make_config(enabled=False)):
-            from tasks.calendar_tasks import send_training_reminder
-            result = send_training_reminder()
+            from tasks.calendar_tasks import training_reminder_next_day
+            result = training_reminder_next_day()
         assert result["actions_taken"] == 0
         assert "Deshabilitada" in result["summary"]
 
@@ -62,8 +62,8 @@ class TestCalendarTasks:
 
         with patch("tasks.calendar_tasks.get_automation_config", return_value=_make_config(params={"days_ahead": 1})):
             with patch("tasks.calendar_tasks.get_supabase", return_value=mock_db):
-                from tasks.calendar_tasks import send_training_reminder
-                result = send_training_reminder()
+                from tasks.calendar_tasks import training_reminder_next_day
+                result = training_reminder_next_day()
         assert result["records_found"] == 0
 
 
@@ -77,31 +77,48 @@ class TestFinanceTasks:
         assert result["actions_taken"] == 0
 
     def test_cash_close_uses_training_session_id(self, mock_supabase_ctx):
-        """Regression: was using session_id instead of training_session_id."""
-        mock_db = mock_supabase_ctx
-        # Capture which columns are selected in attendance query
+        """Regression: la consulta de asistencia debe usar training_session_id, no session_id.
+
+        Se mockea por nombre de tabla para forzar que existan sesiones hoy y así
+        alcanzar la consulta a training_attendance donde se selecciona la columna.
+        """
         selected_columns: list[str] = []
 
-        def track_select(cols):
-            selected_columns.append(cols)
-            return mock_db.table.return_value.select.return_value
+        def make_query(rows):
+            q = MagicMock()
 
-        mock_db.table.return_value.select.side_effect = track_select
-        mock_db.table.return_value.select.return_value.gte.return_value.lte.return_value.execute.return_value.data = []
-        mock_db.table.return_value.select.return_value.in_.return_value.execute.return_value.data = []
-        mock_db.table.return_value.select.return_value.eq.return_value.gte.return_value.lte.return_value.execute.return_value.data = []
-        mock_db.table.return_value.select.return_value.gte.return_value.execute.return_value.data = []
+            def sel(cols):
+                selected_columns.append(cols)
+                return q
 
-        with patch("tasks.finance_tasks.get_automation_config", return_value=_make_config()):
-            with patch("tasks.finance_tasks.get_supabase", return_value=mock_db):
-                with patch("tasks.finance_tasks.get_admin_user_ids", return_value=[]):
-                    from tasks.finance_tasks import daily_cash_close
-                    daily_cash_close()
+            q.select.side_effect = sel
+            q.gte.return_value = q
+            q.lte.return_value = q
+            q.eq.return_value = q
+            q.in_.return_value = q
+            q.upsert.return_value = q
+            q.insert.return_value = q
+            q.execute.return_value = MagicMock(data=rows)
+            return q
 
-        # Verify training_session_id appears in a select call, not session_id
-        all_cols = " ".join(str(c) for c in selected_columns)
+        tables = {
+            "financial_transactions": make_query([]),
+            "training_sessions": make_query([{"id": "s1"}]),
+            "training_attendance": make_query([{"attended": True, "training_session_id": "s1"}]),
+        }
+        mock_db = MagicMock()
+        mock_db.table.side_effect = lambda name: tables.get(name, make_query([]))
+
+        with patch("tasks.finance_tasks.get_automation_config", return_value=_make_config()), \
+             patch("tasks.finance_tasks.get_supabase", return_value=mock_db), \
+             patch("tasks.finance_tasks.get_admin_user_ids", return_value=[]):
+            from tasks.finance_tasks import daily_cash_close
+            daily_cash_close()
+
+        all_cols = " ".join(selected_columns)
         assert "training_session_id" in all_cols
-        assert "session_id," not in all_cols.replace("training_session_id", "")
+        # No debe quedar un session_id "pelado" (sin el prefijo training_)
+        assert "session_id" not in all_cols.replace("training_session_id", "")
 
 
 # ── athlete_tasks ─────────────────────────────────────────────────────────────
@@ -109,8 +126,8 @@ class TestFinanceTasks:
 class TestAthleteTasks:
     def test_weekly_progress_disabled(self, mock_supabase_ctx):
         with patch("tasks.athlete_tasks.get_automation_config", return_value=_make_config(enabled=False)):
-            from tasks.athlete_tasks import weekly_progress_monitoring
-            result = weekly_progress_monitoring()
+            from tasks.athlete_tasks import weekly_progress_monitor
+            result = weekly_progress_monitor()
         assert result["actions_taken"] == 0
 
     def test_post_competition_disabled(self, mock_supabase_ctx):

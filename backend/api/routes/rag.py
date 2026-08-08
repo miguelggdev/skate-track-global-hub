@@ -74,16 +74,16 @@ def _chunk_text(text: str) -> list[str]:
 @router.post("/query", response_model=RagResponse)
 @limiter.limit("20/minute")
 async def query_documents(
-    http_request: Request,
-    request: RagRequest,
+    request: Request,
+    payload: RagRequest,
     current_user: dict = Depends(get_current_user),
 ) -> RagResponse:
     try:
-        result = await run_rag(request.question)
+        result = await run_rag(payload.question)
     except ValueError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception:
-        logger.exception("Error en pipeline RAG: %s", request.question[:100])
+        logger.exception("Error en pipeline RAG: %s", payload.question[:100])
         raise HTTPException(
             status_code=503,
             detail="Error al consultar los documentos. Intenta de nuevo.",
@@ -110,7 +110,7 @@ async def list_documents(current_user: dict = Depends(get_current_user)) -> dict
 @router.post("/upload")
 @limiter.limit("5/minute")
 async def upload_document(
-    http_request: Request,
+    request: Request,
     file: UploadFile = File(...),
     title: str = Form(...),
     document_type: str = Form("otro"),

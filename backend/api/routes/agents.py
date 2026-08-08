@@ -181,9 +181,9 @@ def list_agents(current_user: dict = Depends(get_current_user)) -> dict:
 @router.post("/{agent_id}/chat", response_model=ChatResponse)
 @limiter.limit("30/minute")
 async def chat_with_agent(
-    http_request: Request,
+    request: Request,
     agent_id: str,
-    request: ChatRequest,
+    payload: ChatRequest,
     current_user: dict = Depends(get_current_user),
 ) -> ChatResponse:
     registry = _get_registry()
@@ -203,17 +203,17 @@ async def chat_with_agent(
     _user_id_ctx.set(user_id)
     _user_role_ctx.set(app_role or "")
 
-    history = [h.model_dump() for h in request.history]
-    response = await agent.chat(request.message, history)
+    history = [h.model_dump() for h in payload.history]
+    response = await agent.chat(payload.message, history)
     return ChatResponse(response=response, agent_id=agent_id)
 
 
 @router.post("/{agent_id}/chat/stream")
 @limiter.limit("20/minute")
 async def stream_chat_with_agent(
-    http_request: Request,
+    request: Request,
     agent_id: str,
-    request: ChatRequest,
+    payload: ChatRequest,
     current_user: dict = Depends(get_current_user),
 ) -> StreamingResponse:
     """SSE — devuelve tokens a medida que Claude los genera."""
@@ -234,14 +234,14 @@ async def stream_chat_with_agent(
     _user_id_ctx.set(user_id)
     _user_role_ctx.set(app_role or "")
 
-    history = [h.model_dump() for h in request.history]
+    history = [h.model_dump() for h in payload.history]
 
     async def event_generator():
         if hasattr(agent, "stream_chat"):
-            async for token in agent.stream_chat(request.message, history):
+            async for token in agent.stream_chat(payload.message, history):
                 yield f"data: {json.dumps({'token': token})}\n\n"
         else:
-            full_response = await agent.chat(request.message, history)
+            full_response = await agent.chat(payload.message, history)
             yield f"data: {json.dumps({'token': full_response})}\n\n"
         yield "data: [DONE]\n\n"
 

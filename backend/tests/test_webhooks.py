@@ -14,7 +14,7 @@ def _make_app():
 
 
 def test_webhook_without_secret_header_returns_401():
-    with patch("config.settings") as mock_settings:
+    with patch("api.routes.webhooks.settings") as mock_settings:
         mock_settings.webhook_secret = "real-secret"
         mock_settings.environment = "test"
         mock_settings.frontend_url = "http://localhost:5173"
@@ -25,7 +25,7 @@ def test_webhook_without_secret_header_returns_401():
 
 
 def test_webhook_wrong_secret_returns_401():
-    with patch("config.settings") as mock_settings:
+    with patch("api.routes.webhooks.settings") as mock_settings:
         mock_settings.webhook_secret = "real-secret"
         from api.routes.webhooks import _verify
         with pytest.raises(HTTPException) as exc:
@@ -34,14 +34,14 @@ def test_webhook_wrong_secret_returns_401():
 
 
 def test_webhook_correct_secret_does_not_raise():
-    with patch("config.settings") as mock_settings:
+    with patch("api.routes.webhooks.settings") as mock_settings:
         mock_settings.webhook_secret = "real-secret"
         from api.routes.webhooks import _verify
         _verify("real-secret")
 
 
 def test_webhook_unconfigured_server_returns_503():
-    with patch("config.settings") as mock_settings:
+    with patch("api.routes.webhooks.settings") as mock_settings:
         mock_settings.webhook_secret = ""
         from api.routes.webhooks import _verify
         with pytest.raises(HTTPException) as exc:

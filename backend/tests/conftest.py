@@ -6,17 +6,30 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+# ── Variables de entorno para tests ──────────────────────────────────────────
+# Se fijan A NIVEL DE MÓDULO (conftest se importa antes de recolectar los tests)
+# porque `config.py` instancia `Settings()` al importarse, durante la
+# recolección — antes de que corra cualquier fixture. `setdefault` respeta un
+# valor real si ya existe en el entorno.
+_TEST_ENV = {
+    "SUPABASE_URL": "https://test.supabase.co",
+    "SUPABASE_SERVICE_KEY": "test-service-key",
+    "SUPABASE_JWT_SECRET": "test-jwt-secret",
+    "ANTHROPIC_API_KEY": "test-anthropic-key",
+    "RESEND_API_KEY": "",
+    "WEBHOOK_SECRET": "test-webhook-secret-32chars-long!!",
+    "REDIS_URL": "redis://localhost:6379/0",
+    "ENVIRONMENT": "test",
+}
+for _k, _v in _TEST_ENV.items():
+    os.environ.setdefault(_k, _v)
+
 
 @pytest.fixture(autouse=True)
 def mock_env_vars(monkeypatch):
     """Ensure all tests have required environment variables set."""
-    monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
-    monkeypatch.setenv("SUPABASE_SERVICE_KEY", "test-service-key")
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-anthropic-key")
-    monkeypatch.setenv("RESEND_API_KEY", "")
-    monkeypatch.setenv("WEBHOOK_SECRET", "test-webhook-secret-32chars-long!!")
-    monkeypatch.setenv("REDIS_URL", "redis://localhost:6379/0")
-    monkeypatch.setenv("ENVIRONMENT", "test")
+    for _key, _val in _TEST_ENV.items():
+        monkeypatch.setenv(_key, _val)
 
 
 @pytest.fixture
@@ -51,3 +64,23 @@ def mock_supabase_ctx(mock_supabase):
     with patch("database.supabase_client.get_supabase", return_value=mock_supabase):
         with patch("tasks.helpers.get_supabase", return_value=mock_supabase):
             yield mock_supabase
+
+
+@pytest.fixture
+def api_client():
+    """FastAPI app + TestClient. Limpia los dependency_overrides al terminar.
+
+    No se usa como context manager para no disparar los eventos de startup
+    (que en producción validan CORS/webhook_secret).
+    """
+    from fastapi.testclient import TestClient
+    from main import app
+    client = TestClient(app)
+    yield app, client
+    app.dependency_overrides.clear()
+
+
+def override_user(app, sub: str = "user-1"):
+    """Sobrescribe get_current_user para simular un usuario autenticado."""
+    from api.deps import get_current_user
+    app.dependency_overrides[get_current_user] = lambda: {"sub": sub}
