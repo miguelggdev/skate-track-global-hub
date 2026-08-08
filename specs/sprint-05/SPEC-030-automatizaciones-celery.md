@@ -1,6 +1,6 @@
 # SPEC-030 — Sprint 5: 35 Automatizaciones Celery
 
-**Estado:** ✅ done  
+**Status:** `done`
 **Agente:** AG-CLAUDE-BACKEND  
 **Sprint:** 5 (Semanas 9-10)
 

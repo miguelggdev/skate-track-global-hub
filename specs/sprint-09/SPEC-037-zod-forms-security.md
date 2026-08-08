@@ -2,7 +2,7 @@
 
 **Sprint:** 09  
 **Agente:** AG-CLAUDE-SECURITY + AG-CLAUDE-FRONTEND  
-**Estado:** done  
+**Status:** `done`
 **Fecha:** 2026-08-06  
 
 ---

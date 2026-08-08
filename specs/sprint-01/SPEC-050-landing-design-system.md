@@ -1,4 +1,4 @@
-# SPEC-006 — Design System: Unificación con Landing Page
+# SPEC-050 — Design System: Unificación con Landing Page
 **Status:** `done`
 **Agente:** AG-CLAUDE-FRONTEND
 **Sprint:** 01

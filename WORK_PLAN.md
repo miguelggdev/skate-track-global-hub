@@ -481,4 +481,20 @@ Ir a **Database → Webhooks** y crear un webhook por tabla con:
 
 ---
 
-*Actualizado: Agosto 2026 — Sprint 15 + mejoras técnicas completadas*
+## Housekeeping SDD (Agosto 2026)
+
+Revisión de specs y cierre de deuda de documentación:
+
+- **i18n completado (SPEC-026 → `done`)**: el spec se reescribió para reflejar la arquitectura
+  real (DB-backed `ui_translations` + `useTranslation`, no `react-i18next`). Diccionario ampliado
+  (`20260807000000_ui_translations_expand.sql`) y `t()` cableado en `Athletes` como patrón de
+  referencia. Cobertura de cuerpos de página restante es incremental (añadir filas + `t()`).
+- **Backfill de specs** (SDD retroactivo) para sprints que solo estaban en el WORK_PLAN:
+  SPEC-038 (Sprint 4), SPEC-039 (Sprint 10), SPEC-040 (Sprint 11), SPEC-041 (Sprint 12), SPEC-042 (Sprint 13).
+- **Limpieza de numeración**: `SPEC-006-landing-design-system` → **SPEC-050**;
+  `SPEC-009-athlete-evaluations` → **SPEC-016** (eliminados los números duplicados).
+- **Formato unificado**: los specs 030-037 pasaron de `**Estado:**` a `**Status:** \`done\``.
+
+---
+
+*Actualizado: Agosto 2026 — Sprint 15 + mejoras técnicas + housekeeping SDD*
