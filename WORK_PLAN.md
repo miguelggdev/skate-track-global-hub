@@ -449,4 +449,36 @@ Ir a **Database → Webhooks** y crear un webhook por tabla con:
 
 ---
 
-*Actualizado: Agosto 2026 — Sprint 15 completado*
+## Mejoras técnicas (post Sprint 15 — Agosto 2026)
+
+**Objetivo:** optimización de bundle y ampliación de tests del backend.
+
+### Optimización de bundle (frontend)
+- `react-pdf` (~1.4 MB) ya no se carga al abrir los dashboards: los botones de descarga
+  (`AthleteCVButton.tsx`, `FinanceReportButton.tsx`) importan `@react-pdf/renderer` y el
+  documento de forma **dinámica al hacer clic** y generan el blob con `pdf().toBlob()`.
+- `vite.config.ts`: `manualChunks` separa react-pdf, xlsx, jspdf, charts (recharts/d3),
+  leaflet, radix, tanstack y supabase.
+- Resultado: chunk `index` 534 KB → **179 KB**; `FinanceDashboard` 93 KB → **29 KB**.
+
+### Tests del backend (pytest) — 49 passing
+- Nuevos: `test_agents.py`, `test_automations.py`, `test_rag.py` (RBAC, 404/422, límites).
+- `requirements-dev.txt` con `pytest` + `pytest-asyncio` (antes no estaban declarados).
+- `conftest.py`: env a nivel de módulo (+ `SUPABASE_JWT_SECRET`) y fixture `api_client`.
+- Tests preexistentes del Sprint 13 arreglados (nombres reales de tasks, target de patch,
+  mock por nombre de tabla).
+
+### Bugs de producción corregidos (detectados al ejecutar los tests por primera vez)
+1. **Rate limiting roto**: los endpoints con `@limiter.limit` usaban `http_request`; slowapi
+   exige un parámetro llamado `request`. Renombrado `Request`→`request` y body→`payload` en
+   `agents.py` y `rag.py`.
+2. **Webhook sin header → 500**: `_verify(None)` hacía `hmac.compare_digest(None, …)`;
+   ahora valida `not secret` y devuelve 401.
+
+> Bug latente NO corregido (fuera de alcance): `AttendanceReportGenerator.tsx:208` tiene
+> `/ reportData.length ?? 0` — el `??` nunca aplica (precedencia); probablemente se buscaba
+> evitar división por cero.
+
+---
+
+*Actualizado: Agosto 2026 — Sprint 15 + mejoras técnicas completadas*
