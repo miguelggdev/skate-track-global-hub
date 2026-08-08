@@ -487,8 +487,10 @@ Revisión de specs y cierre de deuda de documentación:
 
 - **i18n completado (SPEC-026 → `done`)**: el spec se reescribió para reflejar la arquitectura
   real (DB-backed `ui_translations` + `useTranslation`, no `react-i18next`). Diccionario ampliado
-  (`20260807000000_ui_translations_expand.sql`) y `t()` cableado en `Athletes` como patrón de
-  referencia. Cobertura de cuerpos de página restante es incremental (añadir filas + `t()`).
+  (`20260807000000_ui_translations_expand.sql` + `20260807010000_ui_translations_pages.sql`) y
+  `t()` cableado en `Athletes`, `Training`, `Competitions` y `Finance`. Cobertura del resto de
+  páginas es incremental (añadir filas + `t()`). Fix aplicado: división por cero en el promedio
+  de asistencia (`AttendanceReportGenerator`). Íconos PWA regenerados con badge más prominente.
 - **Backfill de specs** (SDD retroactivo) para sprints que solo estaban en el WORK_PLAN:
   SPEC-038 (Sprint 4), SPEC-039 (Sprint 10), SPEC-040 (Sprint 11), SPEC-041 (Sprint 12), SPEC-042 (Sprint 13).
 - **Limpieza de numeración**: `SPEC-006-landing-design-system` → **SPEC-050**;
