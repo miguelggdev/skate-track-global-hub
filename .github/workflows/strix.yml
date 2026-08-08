@@ -1,0 +1,96 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Strix — Pentest asistido por IA en CI (SPEC-045, Fase 3)
+#
+# ALCANCE: SOLO análisis estático (SAST) sobre el CÓDIGO del repo, con scope al
+# diff en Pull Requests. NUNCA hace DAST contra producción ni contra ningún
+# host en vivo — el DAST (Fase 2) se corre en el entorno local seguro
+# (ver docs/PENTEST_ENV.md), no aquí.
+#
+# COSTO: consume tokens de un LLM. Por eso NO corre en cada push:
+#   - Manual:  Actions → "Strix SAST" → Run workflow
+#   - En PR:   solo si el PR lleva la etiqueta  strix
+# Si el secreto LLM_API_KEY no está configurado, el job se salta con gracia.
+#
+# CONFIG (repo → Settings):
+#   - Secrets → LLM_API_KEY   = API key del proveedor LLM (p. ej. Anthropic)
+#   - Variables → STRIX_LLM   = id del modelo (p. ej. anthropic/claude-sonnet-4-6)
+#
+# ⚠️ Verifica el comando de instalación y los flags EXACTOS en
+#    https://github.com/usestrix/strix — pueden diferir de este ejemplo.
+# ─────────────────────────────────────────────────────────────────────────────
+name: Strix SAST
+
+on:
+  workflow_dispatch: {}
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+    branches: [main, master]
+
+# Cancela ejecuciones previas del mismo PR/rama
+concurrency:
+  group: strix-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write   # para publicar hallazgos como comentario (si Strix lo soporta)
+
+jobs:
+  strix:
+    # En PR: solo con la etiqueta `strix`. Manual (workflow_dispatch): siempre.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.pull_request.labels.*.name, 'strix')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout (con historia para el diff del PR)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Guardar — ¿hay LLM_API_KEY?
+        id: guard
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        run: |
+          if [ -z "${LLM_API_KEY}" ]; then
+            echo "has_key=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::LLM_API_KEY no configurado — se omite el escaneo Strix."
+          else
+            echo "has_key=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Instalar Strix
+        if: steps.guard.outputs.has_key == 'true'
+        run: |
+          # ⚠️ Confirmar el instalador oficial en github.com/usestrix/strix.
+          # Ejemplo orientativo (según el README):
+          curl -sSL https://strix.ai/install | bash
+          echo "$HOME/.strix/bin" >> "$GITHUB_PATH" || true
+
+      - name: Ejecutar Strix (SAST sobre el repo)
+        if: steps.guard.outputs.has_key == 'true'
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          STRIX_LLM: ${{ vars.STRIX_LLM || 'anthropic/claude-sonnet-4-6' }}
+          # PR base para acotar el análisis al diff (si Strix lo soporta):
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          # ⚠️ Verificar flags reales (target/diff/output) en la doc de Strix.
+          # Análisis estático del código del repo, no de un target en vivo:
+          strix --target . || true
+          # Si Strix soporta scope por diff, algo como:
+          #   strix --target . --diff-base "$PR_BASE"
+
+      - name: Subir reporte (si Strix genera artefactos)
+        if: steps.guard.outputs.has_key == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: strix-report
+          path: |
+            strix-report/**
+            **/strix-*.json
+            **/strix-*.md
+          if-no-files-found: ignore
+          retention-days: 14
