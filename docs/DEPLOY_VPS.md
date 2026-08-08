@@ -160,6 +160,9 @@ supabase db push
 
 O manualmente en **Supabase Dashboard → SQL Editor**, ejecutando los archivos de `supabase/migrations/` en orden cronológico (más antiguo primero).
 
+> Asegúrate de incluir las más recientes: `automation_config`, `security_fixes`,
+> `ui_translations` (+ `_expand` y `_pages`). `supabase db push` las aplica todas de una vez.
+
 Verifica que todas las migraciones aparecen en Supabase → Database → Migrations antes de continuar.
 
 ---
@@ -242,8 +245,12 @@ Pruebas manuales:
 curl -I https://track.arkanatech.tech
 # → HTTP/2 200
 
-# Backend health
+# Backend health (vía proxy del frontend)
 curl https://track.arkanatech.tech/api/health
+# → {"status":"ok"}
+
+# Backend health (directo — verifica el router stride. y su SSL)
+curl https://stride.arkanatech.tech/health
 # → {"status":"ok"}
 
 # Webhook (prueba rápida — debe dar 401 si el secreto falta)
@@ -263,6 +270,9 @@ curl -s -X POST https://stride.arkanatech.tech/api/webhooks/new-athlete \
 # Panel Celery
 # Abre: https://split.arkanatech.tech/flower
 ```
+
+> **Antes de dar por producción** el despliegue, corre la verificación funcional completa
+> (login real, un chat de agente, un email de prueba) siguiendo **`docs/SMOKE_TESTS.md`**.
 
 ---
 
