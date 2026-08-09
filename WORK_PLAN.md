@@ -514,4 +514,16 @@ Revisión de specs y cierre de deuda de documentación:
 
 ---
 
-*Actualizado: Agosto 2026 — Sprint 15 + mejoras técnicas + housekeeping SDD + Sprint 16 (pentest, draft)*
+## SPRINT 17 — Galería de agentes IA en vivo (Agosto 2026)
+
+| Spec | Título | Status |
+|------|--------|--------|
+| SPEC-046 | Galería de agentes IA en vivo (`/agentes`, animaciones + Realtime) | ✅ done |
+
+- Página `/agentes` (admin/leader): 13 agentes como tarjetas animadas (framer-motion), estado idle/"trabajando".
+- Actividad real desde `agent_activity_log` (carga vía PostgREST) + **en vivo** por Supabase Realtime.
+- Migración `20260808000000_agent_activity_realtime.sql`: SELECT para leader + tabla en publicación Realtime.
+
+---
+
+*Actualizado: Agosto 2026 — Sprints 15-17 + mejoras técnicas + housekeeping SDD + pentest (draft)*

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Home, Users, Calendar, Trophy, DollarSign, Settings, Cog, LogOut, Timer, FileText, Package, ClipboardList, MessageSquare, HeartPulse, Bot, BookOpen, Zap,
+  Home, Users, Calendar, Trophy, DollarSign, Settings, Cog, LogOut, Timer, FileText, Package, ClipboardList, MessageSquare, HeartPulse, Bot, BookOpen, Zap, Activity,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -92,6 +92,7 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
       { title: t('menu.agents'), icon: Bot, path: '/chat' },
       { title: 'Base de Conocimiento', icon: BookOpen, path: '/knowledge-base' },
       { title: 'Automatizaciones', icon: Zap, path: '/automatizaciones' },
+      { title: 'Agentes en vivo', icon: Activity, path: '/agentes' },
       { title: t('menu.settings'), icon: Settings, path: '/settings' },
     ];
   };
@@ -129,10 +130,10 @@ const DashboardLayout = ({ children, title, userRole = 'User' }: DashboardLayout
 
     // Filter by path — language-independent
     const allowedPaths: Record<string, string[]> = {
-      admin:    ['/', '/athletes', '/training', '/tiempos', '/documentos', '/equipamiento', '/evaluaciones', '/mensajes', '/medico', '/competitions', '/finance', '/club-config', '/chat', '/knowledge-base', '/automatizaciones', '/settings'],
+      admin:    ['/', '/athletes', '/training', '/tiempos', '/documentos', '/equipamiento', '/evaluaciones', '/mensajes', '/medico', '/competitions', '/finance', '/club-config', '/chat', '/knowledge-base', '/automatizaciones', '/agentes', '/settings'],
       coach:    ['/', '/athletes', '/training', '/tiempos', '/documentos', '/equipamiento', '/evaluaciones', '/mensajes', '/medico', '/competitions', '/chat', '/settings'],
       delegate: ['/', '/mensajes', '/competitions', '/chat', '/settings'],
-      leader:   ['/', '/athletes', '/training', '/tiempos', '/documentos', '/equipamiento', '/evaluaciones', '/mensajes', '/competitions', '/finance', '/club-config', '/chat', '/knowledge-base', '/automatizaciones', '/settings'],
+      leader:   ['/', '/athletes', '/training', '/tiempos', '/documentos', '/equipamiento', '/evaluaciones', '/mensajes', '/competitions', '/finance', '/club-config', '/chat', '/knowledge-base', '/automatizaciones', '/agentes', '/settings'],
       finance:  ['/', '/mensajes', '/finance', '/chat', '/settings'],
     };
     const paths = role ? allowedPaths[role] : roleItems.map(i => i.path);
