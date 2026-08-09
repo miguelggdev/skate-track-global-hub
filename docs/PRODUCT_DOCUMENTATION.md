@@ -137,7 +137,7 @@ Panel de control con KPIs en tiempo real: total de atletas activos, sesiones del
 - Configuración de tarifas y calendario deportivo
 
 ### 4.14 Agentes IA (Módulo Conversacional)
-Chat en tiempo real con agentes especializados por área, con streaming de respuestas vía SSE. Ver sección 5 para detalle completo.
+Chat en tiempo real con agentes especializados por área, con streaming de respuestas vía SSE. Ver sección 5 para detalle completo. Además, la vista `/agentes` (admin/leader) muestra los 13 agentes "trabajando" con animaciones y estado en vivo — ver sección 5.5.
 
 ---
 
@@ -209,6 +209,21 @@ async def _can_access_athlete(client, athlete_id: str) -> bool:
 Agentes protegidos con IDOR: AG-03 Nutrición, AG-04 Gym, AG-06 Ciclismo, AG-07 Psicología, AG-09 Finanzas, AG-10 Resultados.
 
 **Guardrail adicional:** `@field_validator('content')` en `HistoryMessage` limita el contenido de mensajes de historial a 2000 caracteres, previniendo ataques de inyección de contexto.
+
+### 5.5 Galería de agentes en vivo (`/agentes`)
+
+Vista para **admin** y **leader** que muestra los 13 agentes IA como tarjetas animadas y su
+**actividad en tiempo real**:
+
+- **Idle** — cada tarjeta "respira" (pulso suave del color del agente).
+- **Trabajando** — cuando el agente ejecuta una automatización, la tarjeta se anima con un glow
+  y anillo pulsante y muestra "Trabajando…". El estado se limpia solo tras unos segundos.
+- **Última actividad** — hora relativa + resultado (✅ éxito / ❌ error / ⏭ omitido).
+
+**Cómo funciona:** la actividad proviene de la tabla `agent_activity_log` (la escriben las tareas
+Celery vía `log_activity`). La carga inicial se hace por PostgREST respetando RLS (SELECT para
+admin/leader) y las actualizaciones "en vivo" llegan por **Supabase Realtime** (evento INSERT).
+Animaciones con `framer-motion`. Sin backend/Celery en marcha, la galería muestra el histórico + estado idle.
 
 ---
 
