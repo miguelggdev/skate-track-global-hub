@@ -31,8 +31,42 @@ celery_worker + celery_beat → redis:6379 (app_net)
 | VPS | Ubuntu 22.04/24.04 — mínimo 2 GB RAM, 20 GB disco |
 | Docker + Compose v2 | `docker compose version` debe funcionar |
 | Traefik corriendo | Con red externa `supabase2_net` y resolver `leresolver` |
-| DNS en Hostinger | Registros `A` creados (ver Paso 0) |
+| DNS en Hostinger | ✅ Registros `A` (`track`, `stride`, `split`) + CNAME `speedskatetrack` — ya creados |
 | Dominio verificado en Resend | `noreply@arkanatech.tech` verificado para emails |
+
+---
+
+## 🚀 Despliegue rápido (el DNS ya está creado)
+
+Con los registros DNS listos, esta es la secuencia mínima de copiar/pegar. El detalle de cada
+paso está más abajo (Pasos 1-7).
+
+```bash
+# 0) En TU PC: aplicar migraciones a Supabase (una sola vez)
+supabase link --project-ref <project-ref> && supabase db push
+
+# 1) En el VPS: clonar el repo
+mkdir -p /opt/skatetrack && cd /opt/skatetrack
+git clone https://github.com/miguelggdev/skate-track-global-hub.git . && chmod +x deploy.sh scripts/smoke.sh
+
+# 2) Configurar variables (rellena TODOS los valores reales)
+cp .env.production.example .env.production && nano .env.production
+#   DOMAIN=track.arkanatech.tech   API_DOMAIN=stride.arkanatech.tech   FLOWER_DOMAIN=split.arkanatech.tech
+#   WEBHOOK_SECRET=<openssl rand -hex 32>   ANTHROPIC_API_KEY   SUPABASE_*   VITE_SUPABASE_*   RESEND_API_KEY   FLOWER_*
+
+# 3) Verificar que el DNS resuelve a la IP del VPS (los tres deben devolverla)
+for h in track stride split; do echo -n "$h → "; dig +short $h.arkanatech.tech; done
+
+# 4) Desplegar: build + levantar 6 contenedores (Traefik emite el SSL en 1-2 min)
+./deploy.sh init
+
+# 5) Verificación automática de infraestructura/backend
+bash scripts/smoke.sh
+```
+
+Después del arranque: **crear los 6 Database Webhooks en Supabase** (Paso 6) y correr la
+verificación funcional completa de `docs/SMOKE_TESTS.md`. Si algo falla en el primer arranque
+(es lo esperable), revisa `./deploy.sh logs backend` y pásame el error.
 
 ---
 
@@ -161,7 +195,8 @@ supabase db push
 O manualmente en **Supabase Dashboard → SQL Editor**, ejecutando los archivos de `supabase/migrations/` en orden cronológico (más antiguo primero).
 
 > Asegúrate de incluir las más recientes: `automation_config`, `security_fixes`,
-> `ui_translations` (+ `_expand` y `_pages`). `supabase db push` las aplica todas de una vez.
+> `ui_translations` (+ `_expand` y `_pages`) y `agent_activity_realtime` (para las vistas
+> `/agentes` y `/oficina`). `supabase db push` las aplica todas de una vez.
 
 Verifica que todas las migraciones aparecen en Supabase → Database → Migrations antes de continuar.
 
