@@ -57,6 +57,7 @@ const TrainingTimer      = React.lazy(() => import('./pages/TrainingTimer'));
 const KnowledgeBase      = React.lazy(() => import('./pages/KnowledgeBase'));
 const AutomationsPage    = React.lazy(() => import('./pages/AutomationsPage'));
 const AgentsLive         = React.lazy(() => import('./pages/AgentsLive'));
+const AgentOffice        = React.lazy(() => import('./pages/AgentOffice'));
 const AthleteCardPublic  = React.lazy(() => import('./pages/AthleteCardPublic'));
 
 const queryClient = new QueryClient();
@@ -455,6 +456,14 @@ const App = () => (
                       element={
                         <ProtectedRoute allowedRoles={['admin', 'leader']}>
                           <AgentsLive />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/oficina"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin', 'leader']}>
+                          <AgentOffice />
                         </ProtectedRoute>
                       }
                     />

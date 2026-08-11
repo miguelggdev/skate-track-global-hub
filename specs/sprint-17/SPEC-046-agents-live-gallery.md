@@ -35,7 +35,15 @@ Dar una vista visual donde se ven los 13 agentes IA del club "trabajando", con a
 - Realtime usa `supabase.channel(...postgres_changes...)` (el `table` es string, sin restricción de tipos).
 - Mapeo agente→código en `agentMeta.ts` (admin=AG-01 … psychology=AG-13).
 
+## Extra — Oficina isométrica (`/oficina`)
+Vista lúdica opcional: los 13 agentes como personas (chibi) en una oficina isométrica (Canvas)
+que caminan, se sientan a teclear, hacen **reuniones**, **charlan**, van por **café** y encienden
+la **luz de escritorio** al estar en su puesto; **reloj de pared** con la hora; **cámara arrastrable**;
+burbujas con la **automatización real (AUTO-XX)**. El componente `AgentOfficeScene` acepta
+`activeCodes` (desde `useAgentActivity`) para que los agentes con actividad real se pongan a trabajar.
+
 ## Archivos
 - `supabase/migrations/20260808000000_agent_activity_realtime.sql`
 - `src/pages/AgentsLive.tsx`, `src/components/agents/{AgentsGallery.tsx,agentMeta.ts}`, `src/hooks/useAgentActivity.ts`
+- `src/pages/AgentOffice.tsx`, `src/components/agents/AgentOfficeScene.tsx` (oficina isométrica)
 - `src/App.tsx`, `src/components/layout/DashboardLayout.tsx`

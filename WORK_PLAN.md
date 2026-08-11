@@ -523,6 +523,7 @@ Revisión de specs y cierre de deuda de documentación:
 - Página `/agentes` (admin/leader): 13 agentes como tarjetas animadas (framer-motion), estado idle/"trabajando".
 - Actividad real desde `agent_activity_log` (carga vía PostgREST) + **en vivo** por Supabase Realtime.
 - Migración `20260808000000_agent_activity_realtime.sql`: SELECT para leader + tabla en publicación Realtime.
+- Extra `/oficina` (`AgentOfficeScene`): oficina isométrica en Canvas (personas caminando, reuniones, café, reloj, luces de escritorio, cámara arrastrable, burbujas con AUTO-XX), alimentada por la actividad real vía `activeCodes`.
 
 ---
 
