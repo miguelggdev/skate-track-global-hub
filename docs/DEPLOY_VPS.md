@@ -184,21 +184,55 @@ Si alguno no responde, espera la propagación del DNS y vuelve.
 
 ## Paso 4 — Aplicar migraciones de Supabase ⚠️ MANUAL (una sola vez)
 
-Las migraciones se aplican **desde tu PC local**, no desde el VPS:
+Las migraciones se aplican **desde tu PC local** (no desde el VPS), con el CLI de Supabase.
+**Procedimiento probado (11-ago-2026):**
 
+### 4.1 Instalar/usar el CLI
+Supabase ya **no** soporta `npm i -g supabase`. En Windows/cualquier SO, lo más simple es `npx`
+(no instala nada global):
 ```bash
-# Desde tu PC (con Supabase CLI instalado)
-supabase link --project-ref <project-ref>
-supabase db push
+npx supabase@latest --version
 ```
+> Alternativa permanente (Windows, recomendada por Supabase): Scoop
+> `scoop bucket add supabase https://github.com/supabase/scoop-bucket.git && scoop install supabase`
 
-O manualmente en **Supabase Dashboard → SQL Editor**, ejecutando los archivos de `supabase/migrations/` en orden cronológico (más antiguo primero).
+### 4.2 Autenticarse
+```bash
+npx supabase@latest login
+```
+Abre el navegador y autoriza (o usa `login --token <token>` desde
+https://supabase.com/dashboard/account/tokens si no hay navegador). Debe terminar en
+`Finished supabase login.`
 
-> Asegúrate de incluir las más recientes: `automation_config`, `security_fixes`,
-> `ui_translations` (+ `_expand` y `_pages`) y `agent_activity_realtime` (para las vistas
-> `/agentes` y `/oficina`). `supabase db push` las aplica todas de una vez.
+### 4.3 Enlazar el proyecto y hacer push
+El `project-ref` es el subdominio de tu `SUPABASE_URL` (`https://<ref>.supabase.co`). Ya está
+fijado en `supabase/config.toml` (`project_id`), así que basta:
+```bash
+npx supabase@latest link --project-ref tvzebtbcrwnyszxiqvyw   # ref de producción
+npx supabase@latest db push                                   # pedirá la contraseña de la BD
+```
+`db push` aplica **solo** las migraciones de `supabase/migrations/` que aún no estén registradas
+en la BD remota, en orden cronológico. Debe terminar en `Finished supabase db push.`
 
-Verifica que todas las migraciones aparecen en Supabase → Database → Migrations antes de continuar.
+> Alternativa sin CLI: **Dashboard → SQL Editor**, ejecutando cada archivo de
+> `supabase/migrations/` en orden (más antiguo primero).
+
+### 4.4 Verificar
+En **Dashboard → Database → Migrations** deben aparecer todas, en especial las recientes:
+`automation_config`, `security_fixes`, `ui_translations` (+ `_expand`/`_pages`) y
+`agent_activity_realtime` (necesaria para `/agentes` y `/oficina`).
+
+### 4.5 Troubleshooting — si `db push` falla en una migración
+Postgres corre **cada migración en transacción**: si una falla, **se revierte entera** y el push
+se detiene ahí; las anteriores sí quedan aplicadas y registradas. Corrige el archivo y **vuelve a
+correr `db push`**: retomará desde la que falló (no reaplica las ya registradas).
+
+- **Caso real resuelto:** `billing_invoices.sql` referenciaba `public.handle_updated_at()`
+  (inexistente). La función correcta del proyecto es **`public.set_updated_at()`** (la usan todas
+  las tablas con `updated_at`). Se corrigió y el push continuó sin problemas.
+- **Historial desincronizado** (`remote migration versions not found` / duplicados): usa
+  `npx supabase@latest migration repair --status applied <version>` (o `--status reverted`) para
+  alinear el historial, y vuelve a `db push`.
 
 ---
 
