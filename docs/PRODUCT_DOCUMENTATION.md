@@ -507,7 +507,7 @@ Todos los servicios tienen healthcheck configurado en `docker-compose.yml`:
 
 - Certificados emitidos por **Let's Encrypt** vía Certbot (webroot challenge)
 - Renovación automática cada 12 horas por el contenedor certbot
-- Cron de respaldo semanal: `0 3 * * 0 cd /opt/skatetrack && docker compose run --rm certbot renew --quiet && docker compose restart nginx`
+- Cron de respaldo semanal: `0 3 * * 0 cd /srv/skatetrack && docker compose run --rm certbot renew --quiet && docker compose restart nginx`
 
 ### 12.6 Requisitos mínimos de servidor
 

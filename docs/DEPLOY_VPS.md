@@ -46,7 +46,7 @@ paso está más abajo (Pasos 1-7).
 supabase link --project-ref <project-ref> && supabase db push
 
 # 1) En el VPS: clonar el repo
-mkdir -p /opt/skatetrack && cd /opt/skatetrack
+mkdir -p /srv/skatetrack && cd /srv/skatetrack
 git clone https://github.com/miguelggdev/skate-track-global-hub.git . && chmod +x deploy.sh scripts/smoke.sh
 
 # 2) Configurar variables (rellena TODOS los valores reales)
@@ -130,8 +130,8 @@ dig +short stride.arkanatech.tech
 ## Paso 1 — Clonar el repositorio en el VPS
 
 ```bash
-mkdir -p /opt/skatetrack
-cd /opt/skatetrack
+mkdir -p /srv/skatetrack
+cd /srv/skatetrack
 git clone https://github.com/miguelggdev/skate-track-global-hub.git .
 chmod +x deploy.sh
 ```
@@ -239,7 +239,7 @@ correr `db push`**: retomará desde la que falló (no reaplica las ya registrada
 ## Paso 5 — Primer despliegue
 
 ```bash
-cd /opt/skatetrack
+cd /srv/skatetrack
 ./deploy.sh init
 ```
 
@@ -348,7 +348,7 @@ curl -s -X POST https://stride.arkanatech.tech/api/webhooks/new-athlete \
 ## Actualizaciones futuras
 
 ```bash
-cd /opt/skatetrack
+cd /srv/skatetrack
 ./deploy.sh update
 ```
 
