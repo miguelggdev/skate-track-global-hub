@@ -5,7 +5,8 @@ class Settings(BaseSettings):
     anthropic_api_key: str
     supabase_url: str
     supabase_service_key: str
-    supabase_jwt_secret: str
+    # Opcional: solo para verificar tokens legacy HS256. Los nuevos usan JWKS asimétrico.
+    supabase_jwt_secret: str = ""
     openai_api_key: str = ""
     frontend_url: str = "http://localhost:5173"
     environment: str = "development"
