@@ -6,7 +6,12 @@ import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: mode === 'production' ? '/speedskatetrack/' : '/',
+  // La app se sirve en la raíz de track.arkanatech.tech (VPS + Docker),
+  // no bajo subcarpeta — a diferencia de la landing (GitHub Pages en
+  // /speedskatetrack/). Con base='/speedskatetrack/' en producción todos
+  // los assets pedían esa ruta y el nginx del VPS los devolvía 404 (la
+  // app cargaba HTML pero JS/CSS nunca, quedaba en blanco).
+  base: '/',
   // Repo: https://github.com/miguelggdev/speedskatetrack
   server: {
     host: "::",
