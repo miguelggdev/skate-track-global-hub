@@ -69,9 +69,11 @@ body=$($CURL "$SCHEME://$API_DOMAIN/health" 2>/dev/null || true)
 echo "$body" | grep -q 'ok' && ok "Backend /health (directo) → $body" || no "Backend /health (directo) → ${body:-sin respuesta}"
 
 # Flower protegido con basic-auth → 401 sin credenciales
-c=$(code "$SCHEME://$FLOWER_DOMAIN/flower")
+# (con --url_prefix=flower, la ruta SIN "/" final da 404 — el prefix
+# real es "/flower/")
+c=$(code "$SCHEME://$FLOWER_DOMAIN/flower/")
 case "$c" in
-  401) ok "Flower $SCHEME://$FLOWER_DOMAIN/flower → 401 (basic-auth activo)";;
+  401) ok "Flower $SCHEME://$FLOWER_DOMAIN/flower/ → 401 (basic-auth activo)";;
   200) no "Flower → 200 SIN auth (¡debería pedir usuario/clave!)";;
   *)   no "Flower → ${c:-sin respuesta} (esperado 401)";;
 esac
