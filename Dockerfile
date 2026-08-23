@@ -16,8 +16,12 @@ ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
     VITE_BACKEND_URL=$VITE_BACKEND_URL
 
 # Instalar dependencias (cacheado si package.json no cambia)
+# --legacy-peer-deps: react-day-picker@8.x declara peer date-fns@^2||^3,
+# pero el proyecto usa date-fns@4 (compatible en la práctica, la API que
+# usa react-day-picker no cambió). npm ci en modo estricto rechaza esa
+# resolución de peer deps aunque funcione en runtime.
 COPY package*.json ./
-RUN npm ci --prefer-offline
+RUN npm ci --prefer-offline --legacy-peer-deps
 
 # Copiar fuentes y compilar
 COPY . .
