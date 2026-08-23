@@ -1,0 +1,362 @@
+<title>Informe de Costos de API — SpeedSkateTrack Hub</title>
+<style>
+  :root{
+    --paper:#f6f5f2; --surface:#ffffff; --surface-2:#faf9f6;
+    --ink:#191c22; --muted:#5c636f; --faint:#8b919c; --line:#e4e1db;
+    --claude:#c15f3c; --claude-soft:#f4e2d9;
+    --gemini:#3b74d0; --gemini-soft:#dde7f8;
+    --save:#0f8a6e; --save-soft:#d8efe7;
+    --warn:#a6771a;
+    --accent:#0f8a6e;
+    --shadow:0 1px 2px rgba(20,24,32,.04),0 8px 24px rgba(20,24,32,.06);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#12151a; --surface:#1a1e25; --surface-2:#20252d;
+      --ink:#eceef2; --muted:#9aa2ad; --faint:#6b7280; --line:#2a3038;
+      --claude:#e08661; --claude-soft:#33241d;
+      --gemini:#6fa0ec; --gemini-soft:#1b2536;
+      --save:#3fc9a8; --save-soft:#132a25;
+      --warn:#d7ab52;
+      --accent:#3fc9a8;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#f6f5f2; --surface:#ffffff; --surface-2:#faf9f6;
+    --ink:#191c22; --muted:#5c636f; --faint:#8b919c; --line:#e4e1db;
+    --claude:#c15f3c; --claude-soft:#f4e2d9; --gemini:#3b74d0; --gemini-soft:#dde7f8;
+    --save:#0f8a6e; --save-soft:#d8efe7; --warn:#a6771a; --accent:#0f8a6e;
+    --shadow:0 1px 2px rgba(20,24,32,.04),0 8px 24px rgba(20,24,32,.06);
+  }
+  :root[data-theme="dark"]{
+    --paper:#12151a; --surface:#1a1e25; --surface-2:#20252d;
+    --ink:#eceef2; --muted:#9aa2ad; --faint:#6b7280; --line:#2a3038;
+    --claude:#e08661; --claude-soft:#33241d; --gemini:#6fa0ec; --gemini-soft:#1b2536;
+    --save:#3fc9a8; --save-soft:#132a25; --warn:#d7ab52; --accent:#3fc9a8;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:920px;margin:0 auto;padding:clamp(24px,5vw,64px) clamp(18px,4vw,40px)}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+
+  /* Header */
+  .eyebrow{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--accent);font-weight:700;margin:0 0 .8rem}
+  h1{font-family:Georgia,"Times New Roman",serif;font-weight:600;
+    font-size:clamp(1.9rem,4.6vw,2.9rem);line-height:1.1;letter-spacing:-.01em;
+    text-wrap:balance;margin:0 0 .6rem}
+  .lede{color:var(--muted);font-size:clamp(1rem,2.2vw,1.15rem);max-width:60ch;margin:0}
+  .meta{margin-top:1.4rem;display:flex;flex-wrap:wrap;gap:.5rem 1.4rem;
+    font-size:.82rem;color:var(--faint)}
+  .meta b{color:var(--muted);font-weight:600}
+
+  /* Key callout */
+  .key{margin:2.4rem 0;padding:1.5rem 1.7rem;border-radius:14px;
+    background:var(--save-soft);border:1px solid color-mix(in srgb,var(--save) 30%,transparent);
+    box-shadow:var(--shadow)}
+  .key .tag{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--save);font-weight:800;display:block;margin-bottom:.4rem}
+  .key p{margin:0;font-size:1.06rem}
+  .key strong{color:var(--ink)}
+
+  /* Sections */
+  section{margin-top:3rem}
+  h2{font-family:Georgia,serif;font-weight:600;font-size:1.42rem;letter-spacing:-.01em;
+    margin:0 0 .35rem;display:flex;align-items:baseline;gap:.6rem}
+  h2 .n{font-family:ui-monospace,monospace;font-size:.8rem;color:var(--accent);
+    font-weight:700;border:1px solid var(--line);border-radius:6px;padding:.1rem .4rem}
+  .sub{color:var(--muted);margin:.1rem 0 1.3rem;font-size:.95rem}
+
+  /* Tables */
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;
+    background:var(--surface);box-shadow:var(--shadow)}
+  table{width:100%;border-collapse:collapse;font-size:.9rem;min-width:520px}
+  th,td{padding:.72rem .9rem;text-align:left;border-bottom:1px solid var(--line)}
+  thead th{font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--faint);font-weight:700;background:var(--surface-2)}
+  tbody tr:last-child td{border-bottom:none}
+  td.num,th.num{text-align:right;font-family:ui-monospace,monospace;font-variant-numeric:tabular-nums}
+  .used{display:inline-block;font-size:.66rem;font-weight:700;padding:.08rem .4rem;
+    border-radius:5px;background:var(--claude-soft);color:var(--claude);margin-left:.4rem;
+    letter-spacing:.03em;vertical-align:middle}
+  tr.dim td{color:var(--faint)}
+
+  /* Provider chips */
+  .chip{display:inline-flex;align-items:center;gap:.4rem;font-weight:600}
+  .dot{width:.62rem;height:.62rem;border-radius:50%;flex:none}
+  .dot.c{background:var(--claude)} .dot.g{background:var(--gemini)}
+
+  /* Cards grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-top:1.2rem}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:1.2rem 1.3rem;box-shadow:var(--shadow)}
+  .card h3{margin:0 0 .2rem;font-size:1rem}
+  .card .scope{font-size:.78rem;color:var(--faint);margin:0 0 1rem}
+  .row{display:flex;justify-content:space-between;align-items:baseline;
+    padding:.5rem 0;border-top:1px dashed var(--line)}
+  .row:first-of-type{border-top:none}
+  .row .lbl{display:flex;align-items:center;gap:.45rem;font-size:.88rem}
+  .row .val{font-family:ui-monospace,monospace;font-weight:600;font-variant-numeric:tabular-nums}
+  .val.save{color:var(--save)}
+
+  /* Bars */
+  .bars{margin-top:1.2rem;background:var(--surface);border:1px solid var(--line);
+    border-radius:14px;padding:1.4rem 1.5rem;box-shadow:var(--shadow)}
+  .barrow{display:grid;grid-template-columns:130px 1fr auto;align-items:center;gap:.8rem;margin:.55rem 0}
+  .barrow .name{font-size:.85rem}
+  .track{height:22px;background:var(--surface-2);border-radius:6px;overflow:hidden}
+  .fill{height:100%;border-radius:6px}
+  .fill.c{background:var(--claude)} .fill.h{background:linear-gradient(90deg,var(--claude),var(--gemini))}
+  .fill.g{background:var(--gemini)}
+  .barrow .amt{font-family:ui-monospace,monospace;font-weight:700;font-size:.9rem;font-variant-numeric:tabular-nums}
+  .cap{font-size:.78rem;color:var(--faint);margin-top:1rem}
+
+  /* Diff two-col */
+  .diff{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.2rem}
+  .diff .col{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:1.2rem 1.35rem;box-shadow:var(--shadow)}
+  .diff .col.c{border-top:3px solid var(--claude)}
+  .diff .col.g{border-top:3px solid var(--gemini)}
+  .diff h3{margin:0 0 .8rem;font-size:1rem;display:flex;align-items:center;gap:.5rem}
+  .diff ul{margin:0;padding-left:1.1rem}
+  .diff li{margin:.4rem 0;font-size:.88rem;color:var(--muted)}
+  .diff li b{color:var(--ink);font-weight:600}
+
+  /* Factors */
+  .factors{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-top:1.2rem}
+  .factor{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.2rem}
+  .factor .ico{font-size:1.1rem}
+  .factor h4{margin:.3rem 0 .3rem;font-size:.94rem}
+  .factor p{margin:0;font-size:.84rem;color:var(--muted)}
+
+  /* Decision */
+  .rec{margin-top:1.2rem;border-radius:14px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow)}
+  .rec .head{background:var(--accent);color:#fff;padding:1rem 1.4rem;font-weight:700}
+  :root[data-theme="dark"] .rec .head,@media (prefers-color-scheme:dark){.rec .head{color:#0c1512}}
+  .rec .body{background:var(--surface);padding:1.3rem 1.5rem}
+  .rec ol{margin:0;padding-left:1.2rem}
+  .rec li{margin:.55rem 0;font-size:.92rem}
+  .rec li b{color:var(--ink)}
+
+  footer{margin-top:3.5rem;padding-top:1.4rem;border-top:1px solid var(--line);
+    font-size:.78rem;color:var(--faint)}
+  footer p{margin:.35rem 0}
+
+  @media (max-width:640px){
+    .diff{grid-template-columns:1fr}
+    .barrow{grid-template-columns:90px 1fr auto}
+  }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">SpeedSkateTrack Hub · Backend IA</p>
+    <h1>Informe de costos de API para IA</h1>
+    <p class="lede">Precios reales de Anthropic (Claude) y Google (Gemini), costo por interacción, estimación mensual y guía de decisión para el backend de agentes y RAG.</p>
+    <div class="meta">
+      <span><b>Fecha:</b> 12 ago 2026</span>
+      <span><b>Modelos en uso:</b> Claude Sonnet 4.6 + Haiku 4.5</span>
+      <span><b>Embeddings:</b> OpenAI (aparte)</span>
+    </div>
+  </header>
+
+  <div class="key">
+    <span class="tag">Conclusión clave</span>
+    <p><strong>En reposo el costo es ~$0.</strong> Ninguna automatización programada (Celery Beat, AUTO-01…37) llama a un LLM — solo consultan BD y envían emails. El gasto de API es <strong>100% por uso</strong>: cada mensaje de chat a un agente y cada consulta a la base de conocimiento (RAG).</p>
+  </div>
+
+  <!-- 1. Precios por modelo -->
+  <section>
+    <h2><span class="n">01</span> Precios por modelo</h2>
+    <p class="sub">Por millón de tokens (MTok). Entrada = lo que envías (prompt + contexto). Salida = lo que genera el modelo.</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>Proveedor / Modelo</th><th class="num">Entrada $/MTok</th><th class="num">Salida $/MTok</th><th>Rol típico</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="chip"><span class="dot c"></span>Claude Sonnet 4.6</span><span class="used">EN USO</span></td>
+            <td class="num">3.00</td><td class="num">15.00</td><td>Chat agentes · RAG generate</td>
+          </tr>
+          <tr>
+            <td><span class="chip"><span class="dot c"></span>Claude Haiku 4.5</span><span class="used">EN USO</span></td>
+            <td class="num">1.00</td><td class="num">5.00</td><td>RAG check · rerank</td>
+          </tr>
+          <tr class="dim">
+            <td><span class="chip"><span class="dot c"></span>Claude Opus 5</span></td>
+            <td class="num">5.00</td><td class="num">25.00</td><td>(no usado — máxima calidad)</td>
+          </tr>
+          <tr>
+            <td><span class="chip"><span class="dot g"></span>Gemini 2.5 Flash</span></td>
+            <td class="num">0.30</td><td class="num">2.50</td><td>Alternativa a Sonnet</td>
+          </tr>
+          <tr>
+            <td><span class="chip"><span class="dot g"></span>Gemini 2.5 Flash-Lite</span></td>
+            <td class="num">0.10</td><td class="num">0.40</td><td>Alternativa a Haiku</td>
+          </tr>
+          <tr class="dim">
+            <td><span class="chip"><span class="dot g"></span>Gemini 2.5 Pro</span></td>
+            <td class="num">1.25</td><td class="num">10.00</td><td>(≤200k tok · alta calidad)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap" style="margin-top:.9rem;color:var(--warn)">⚠️ Gemini 2.0 Flash queda fuera de servicio el 1 jun 2026 — usar 2.5 Flash / Flash-Lite. Gemini tiene <b>tier gratuito</b> en modelos Flash (con límites de peticiones/minuto).</p>
+  </section>
+
+  <!-- 2. Diferencias clave -->
+  <section>
+    <h2><span class="n">02</span> Diferencias a tener en cuenta</h2>
+    <p class="sub">No es solo precio: cambiar de proveedor implica trabajo de código y riesgo de calidad.</p>
+    <div class="diff">
+      <div class="col c">
+        <h3><span class="dot c"></span>Claude (Anthropic) — actual</h3>
+        <ul>
+          <li><b>Ya integrado</b> en todo el backend (SDK + LangChain).</li>
+          <li><b>Calidad alta</b> en razonamiento y seguimiento de instrucciones — ideal para el chat de agentes.</li>
+          <li><b>Prompt caching</b>: hasta ~90% de ahorro en el prompt de sistema repetido.</li>
+          <li>Más caro por token (5–10× vs Gemini Flash).</li>
+          <li><b>Sin tier gratuito</b> — todo es de pago desde el token 1.</li>
+        </ul>
+      </div>
+      <div class="col g">
+        <h3><span class="dot g"></span>Gemini (Google)</h3>
+        <ul>
+          <li><b>Mucho más barato</b> y con <b>tier gratuito</b> en Flash.</li>
+          <li>Requiere <b>reescribir código</b>: los 3 nodos RAG usan el SDK directo de Anthropic.</li>
+          <li><b>Riesgo de calidad</b>: los prompts pueden comportarse distinto — hay que re-testear.</li>
+          <li>SDK y formato de respuesta distintos (no es "pegar la key").</li>
+          <li>Modelos rotan/deprecan más rápido (ej. 2.0 Flash apagado).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Costo por interacción -->
+  <section>
+    <h2><span class="n">03</span> Costo por interacción</h2>
+    <p class="sub">Supuestos: chat ≈ 3.000 tok entrada + 400 salida · RAG ≈ check + rerank (8 fragmentos) + generate.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>💬 Mensaje de chat</h3>
+        <p class="scope">Usuario escribe a un agente IA</p>
+        <div class="row"><span class="lbl"><span class="dot c"></span>Claude Sonnet 4.6</span><span class="val">$0,0150</span></div>
+        <div class="row"><span class="lbl"><span class="dot g"></span>Gemini 2.5 Flash</span><span class="val save">$0,0019</span></div>
+        <div class="row"><span class="lbl"><span class="dot g"></span>Gemini Flash-Lite</span><span class="val save">$0,0005</span></div>
+      </div>
+      <div class="card">
+        <h3>📚 Consulta RAG</h3>
+        <p class="scope">Pregunta a la base de conocimiento</p>
+        <div class="row"><span class="lbl"><span class="dot c"></span>Claude (Haiku+Sonnet)</span><span class="val">$0,0240</span></div>
+        <div class="row"><span class="lbl"><span class="dot g"></span>Gemini (Lite+Flash)</span><span class="val save">$0,0028</span></div>
+        <div class="row"><span class="lbl">Embeddings ingesta</span><span class="val">OpenAI ·</span></div>
+      </div>
+    </div>
+    <p class="cap">Regla rápida: con Claude, <b>~1,5 céntimos</b> por chat y <b>~2,4 céntimos</b> por consulta RAG. Con Gemini Flash, ~8–10× menos.</p>
+  </section>
+
+  <!-- 4. Estimación mensual -->
+  <section>
+    <h2><span class="n">04</span> Estimación mensual por volumen</h2>
+    <p class="sub">Tres estrategias × tres niveles de uso. "Híbrido" = chat en Claude (calidad) + RAG en Gemini (barato).</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Escenario (uso/mes)</th>
+            <th class="num">Solo Claude</th>
+            <th class="num">Híbrido</th>
+            <th class="num">Solo Gemini</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><b>Ligero</b><br><span style="color:var(--faint);font-size:.8rem">500 chats + 200 RAG</span></td>
+            <td class="num">~$12</td><td class="num">~$8</td><td class="num" style="color:var(--save)">~$1,5</td></tr>
+          <tr><td><b>Medio</b><br><span style="color:var(--faint);font-size:.8rem">3.000 chats + 1.000 RAG</span></td>
+            <td class="num">~$69</td><td class="num">~$48</td><td class="num" style="color:var(--save)">~$8,5</td></tr>
+          <tr><td><b>Alto</b><br><span style="color:var(--faint);font-size:.8rem">10.000 chats + 4.000 RAG</span></td>
+            <td class="num">~$246</td><td class="num">~$161</td><td class="num" style="color:var(--save)">~$30</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bars">
+      <div style="font-size:.8rem;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:.8rem">Escenario Medio — comparación</div>
+      <div class="barrow"><span class="name"><span class="dot c" style="display:inline-block"></span> Solo Claude</span>
+        <div class="track"><div class="fill c" style="width:100%"></div></div><span class="amt">$69</span></div>
+      <div class="barrow"><span class="name">Híbrido</span>
+        <div class="track"><div class="fill h" style="width:70%"></div></div><span class="amt">$48</span></div>
+      <div class="barrow"><span class="name"><span class="dot g" style="display:inline-block"></span> Solo Gemini</span>
+        <div class="track"><div class="fill g" style="width:12%"></div></div><span class="amt">$8,5</span></div>
+      <p class="cap">El híbrido ahorra ~30% conservando la calidad del chat; Gemini puro ahorra ~88% con riesgo de calidad y trabajo de migración.</p>
+    </div>
+  </section>
+
+  <!-- 5. Factores que mueven el costo -->
+  <section>
+    <h2><span class="n">05</span> Factores que cambian el costo</h2>
+    <div class="factors">
+      <div class="factor">
+        <div class="ico">🗂️</div>
+        <h4>Prompt caching (Claude)</h4>
+        <p>Cachear el system prompt de los agentes baja el costo de entrada hasta ~90% en mensajes repetidos. Optimización opcional.</p>
+      </div>
+      <div class="factor">
+        <div class="ico">🆓</div>
+        <h4>Tier gratuito (Gemini)</h4>
+        <p>Modelos Flash tienen cuota gratis con límites de peticiones/min. Puede cubrir un club pequeño casi sin costo.</p>
+      </div>
+      <div class="factor">
+        <div class="ico">📦</div>
+        <h4>Batch API (ambos)</h4>
+        <p>−50% en tareas no urgentes (informes nocturnos). Aplica si mueves cargas asíncronas a lote.</p>
+      </div>
+      <div class="factor">
+        <div class="ico">🔤</div>
+        <h4>Embeddings (OpenAI)</h4>
+        <p>La ingesta RAG usa <span class="mono">OPENAI_API_KEY</span>, no Anthropic. Muy barato (centavos/miles de fragmentos). Presupuestar aparte.</p>
+      </div>
+      <div class="factor">
+        <div class="ico">📏</div>
+        <h4>Tamaño del contexto</h4>
+        <p>RAG con más fragmentos = más tokens de entrada. Limitar top-k del reranker controla el costo directamente.</p>
+      </div>
+      <div class="factor">
+        <div class="ico">🚦</div>
+        <h4>Límite de gasto</h4>
+        <p>Tope mensual en la consola del proveedor. Seguro contra sorpresas — no un gasto fijo.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Recomendación -->
+  <section>
+    <h2><span class="n">06</span> Recomendación de decisión</h2>
+    <div class="rec">
+      <div class="head">Decisión tomada: mantener todo en Claude</div>
+      <div class="body">
+        <ol>
+          <li><b>Ahora (lanzamiento):</b> quedarse en Claude. Sin tocar código, sin riesgo de calidad. El volumen inicial de un club es bajo (~$12/mes).</li>
+          <li><b>Poner límite de gasto</b> en <span class="mono">console.anthropic.com → Settings → Limits</span> (ej. $30–50/mes) + alertas al 50/80%.</li>
+          <li><b>Revisar a los 2–3 meses:</b> si el uso crece al escenario Medio/Alto, evaluar el <b>modo híbrido</b> (RAG en Gemini Flash-Lite) — ahorra ~30% sin tocar el chat.</li>
+          <li><b>Migrar todo a Gemini solo si</b> el costo se vuelve un problema real y aceptas re-testear la calidad de los agentes.</li>
+          <li><b>Quick win opcional:</b> activar prompt caching del system prompt de agentes — reduce el costo de chat sin cambiar de proveedor.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p><b>Supuestos:</b> chat ≈ 3.000 tok entrada + 400 salida; RAG ≈ check(~0,5k)+rerank(8×~0,6k)+generate(~3k+0,5k). Cifras redondeadas, sin prompt caching ni batch.</p>
+    <p><b>Fuentes de precio:</b> tabla Anthropic (skill claude-api, jun 2026) · Google AI pricing (ai.google.dev, ago 2026). Verificar antes de comprometer presupuesto.</p>
+    <p>Informe generado para SpeedSkateTrack Hub · 12 ago 2026.</p>
+  </footer>
+
+</div>

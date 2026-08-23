@@ -44,6 +44,13 @@ services:
       - "traefik.http.routers.skatetrack.entrypoints=websecure"
       - "traefik.http.routers.skatetrack.tls.certresolver=leresolver"
       - "traefik.http.services.skatetrack.loadbalancer.server.port=80"
+      # Redirect HTTP→HTTPS explícito (defensa en profundidad — no depende
+      # de que el Traefik global del VPS ya tenga el redirect configurado)
+      - "traefik.http.middlewares.skatetrack-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.skatetrack-https-redirect.redirectscheme.permanent=true"
+      - "traefik.http.routers.skatetrack-web.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.skatetrack-web.entrypoints=web"
+      - "traefik.http.routers.skatetrack-web.middlewares=skatetrack-https-redirect"
 
   # ── Redis (broker Celery + cache) ───────────────────────────────────────
   redis:
@@ -92,6 +99,12 @@ services:
       - "traefik.http.routers.skatetrack-api.entrypoints=websecure"
       - "traefik.http.routers.skatetrack-api.tls.certresolver=leresolver"
       - "traefik.http.services.skatetrack-api.loadbalancer.server.port=8000"
+      # Redirect HTTP→HTTPS explícito (defensa en profundidad)
+      - "traefik.http.middlewares.skatetrack-api-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.skatetrack-api-https-redirect.redirectscheme.permanent=true"
+      - "traefik.http.routers.skatetrack-api-web.rule=Host(`${API_DOMAIN}`)"
+      - "traefik.http.routers.skatetrack-api-web.entrypoints=web"
+      - "traefik.http.routers.skatetrack-api-web.middlewares=skatetrack-api-https-redirect"
 
   # ── Celery Worker (ejecuta las 35 automatizaciones) ──────────────────────
   celery_worker:
@@ -152,6 +165,12 @@ services:
       - "traefik.http.routers.skatetrack-flower.entrypoints=websecure"
       - "traefik.http.routers.skatetrack-flower.tls.certresolver=leresolver"
       - "traefik.http.services.skatetrack-flower.loadbalancer.server.port=5555"
+      # Redirect HTTP→HTTPS explícito (defensa en profundidad)
+      - "traefik.http.middlewares.skatetrack-flower-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.skatetrack-flower-https-redirect.redirectscheme.permanent=true"
+      - "traefik.http.routers.skatetrack-flower-web.rule=Host(`${FLOWER_DOMAIN}`)"
+      - "traefik.http.routers.skatetrack-flower-web.entrypoints=web"
+      - "traefik.http.routers.skatetrack-flower-web.middlewares=skatetrack-flower-https-redirect"
 
 volumes:
   redis_data:
