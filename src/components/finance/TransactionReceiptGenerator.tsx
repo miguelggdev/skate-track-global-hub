@@ -7,6 +7,7 @@ import jsPDF from 'jspdf';
 import { supabase } from '@/integrations/supabase/client';
 import { useReportTemplate } from '@/hooks/useReportTemplate';
 import { useCurrency } from '@/hooks/useCurrency';
+import { useCurrentClub } from '@/hooks/useCurrentClub';
 
 interface Transaction {
   id: string;
@@ -38,6 +39,7 @@ export const TransactionReceiptGenerator: React.FC<TransactionReceiptGeneratorPr
   const [previewMode, setPreviewMode] = useState(false);
   const { createReportTemplate, loading: templateLoading } = useReportTemplate();
   const { currency } = useCurrency();
+  const { club } = useCurrentClub();
 
   const generateReceiptNumber = () => {
     const year = new Date().getFullYear();
@@ -125,16 +127,21 @@ export const TransactionReceiptGenerator: React.FC<TransactionReceiptGeneratorPr
         // Save PDF and upload to storage
         const pdfBlob = pdf.output('blob');
         const fileName = `receipt_${receiptNumber}_${transaction.id}.pdf`;
-        
-        // Upload to Supabase Storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('receipts')
-          .upload(`receipts/${fileName}`, pdfBlob, {
-            contentType: 'application/pdf',
-            upsert: true
-          });
+        // {club_id}/receipts/archivo (Fase 4 multi-tenant) — sin club
+        // resuelto todavía no se sube al storage compartido, solo local.
+        const storagePath = club ? `${club.id}/receipts/${fileName}` : null;
 
-        if (uploadError) {
+        // Upload to Supabase Storage
+        const { data: uploadData, error: uploadError } = storagePath
+          ? await supabase.storage
+              .from('receipts')
+              .upload(storagePath, pdfBlob, {
+                contentType: 'application/pdf',
+                upsert: true
+              })
+          : { data: null, error: new Error('Club no resuelto') };
+
+        if (uploadError || !storagePath) {
           // Still download the file locally
           pdf.save(fileName);
           toast.success('Recibo generado y descargado localmente');
@@ -142,7 +149,7 @@ export const TransactionReceiptGenerator: React.FC<TransactionReceiptGeneratorPr
           // Get public URL
           const { data: urlData } = supabase.storage
             .from('receipts')
-            .getPublicUrl(`receipts/${fileName}`);
+            .getPublicUrl(storagePath);
           
           // Update transaction with receipt URL
           if (onReceiptGenerated && urlData.publicUrl) {

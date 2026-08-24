@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useCurrentClub } from '@/hooks/useCurrentClub';
 
 export interface GalleryImage {
   id: string;
@@ -16,6 +17,7 @@ const ACCEPTED_TYPES = ['image/jpeg', 'image/jpg'];
 export const useAthleteGallery = (athleteId: string | null) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { club } = useCurrentClub();
 
   // Fetch gallery images
   const { data: images = [], isLoading } = useQuery({
@@ -43,22 +45,26 @@ export const useAthleteGallery = (athleteId: string | null) => {
         throw new Error('Solo se permiten archivos JPEG');
       }
 
+      if (!club) {
+        throw new Error('No se pudo determinar el club del usuario');
+      }
+
       // Check max images
       if (images.length >= MAX_IMAGES) {
         throw new Error(`Máximo ${MAX_IMAGES} imágenes permitidas`);
       }
 
       // Get next display order
-      const nextOrder = images.length > 0 
-        ? Math.max(...images.map(img => img.display_order)) + 1 
+      const nextOrder = images.length > 0
+        ? Math.max(...images.map(img => img.display_order)) + 1
         : 1;
 
       if (nextOrder > MAX_IMAGES) {
         throw new Error(`Máximo ${MAX_IMAGES} imágenes permitidas`);
       }
 
-      // Upload to storage
-      const fileName = `${userId}/${Date.now()}-${file.name}`;
+      // Upload to storage — {club_id}/{user_id}/archivo (Fase 4 multi-tenant)
+      const fileName = `${club.id}/${userId}/${Date.now()}-${file.name}`;
       const { error: uploadError } = await supabase.storage
         .from('athlete-gallery')
         .upload(fileName, file);
@@ -137,6 +143,10 @@ export const useAthleteGallery = (athleteId: string | null) => {
         throw new Error('Solo se permiten archivos JPEG');
       }
 
+      if (!club) {
+        throw new Error('No se pudo determinar el club del usuario');
+      }
+
       const imageToReplace = images.find(img => img.id === imageId);
       if (!imageToReplace) throw new Error('Imagen no encontrada');
 
@@ -147,8 +157,8 @@ export const useAthleteGallery = (athleteId: string | null) => {
         await supabase.storage.from('athlete-gallery').remove([filePath]);
       }
 
-      // Upload new file
-      const fileName = `${userId}/${Date.now()}-${file.name}`;
+      // Upload new file — {club_id}/{user_id}/archivo (Fase 4 multi-tenant)
+      const fileName = `${club.id}/${userId}/${Date.now()}-${file.name}`;
       const { error: uploadError } = await supabase.storage
         .from('athlete-gallery')
         .upload(fileName, file);
