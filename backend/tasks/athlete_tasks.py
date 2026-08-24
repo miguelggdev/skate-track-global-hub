@@ -1,4 +1,9 @@
-"""AUTO-12 to AUTO-15: Automatizaciones de Seguimiento de Atletas."""
+"""AUTO-12 to AUTO-15: Automatizaciones de Seguimiento de Atletas.
+
+Multi-tenant (Fase 5 + 6): AUTO-13/15 (programadas) usan el patrón
+dispatch. AUTO-12/14 (event-driven) derivan club_id del atleta/sesión
+médica que las dispara.
+"""
 from __future__ import annotations
 
 import logging
@@ -7,6 +12,7 @@ from datetime import date, timedelta
 from database.supabase_client import get_supabase
 from tasks.celery_app import celery_app
 from tasks.helpers import (
+    get_active_club_ids,
     get_admin_user_ids,
     get_automation_config,
     get_coach_user_ids,
@@ -18,18 +24,16 @@ from tasks.helpers import (
 logger = logging.getLogger(__name__)
 
 
-# ── AUTO-12: Seguimiento post-competencia ───────────────────────────────────
+# ── AUTO-12: Seguimiento post-competencia (event-driven) ───────────────────
+
 @celery_app.task(name="tasks.athlete.post_competition_followup")
 def post_competition_followup(result_id: str) -> dict:
     """Triggered on new competition_results row — análisis y feedback al atleta."""
-    cfg = get_automation_config("AUTO-12")
-    if not cfg["enabled"]:
-        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
 
     result = (
         db.table("competition_results")
-        .select("id, athlete_id, final_time, position, category, competition_id, athletes(user_id, first_name, last_name, coach_id, email)")
+        .select("id, athlete_id, final_time, position, category, competition_id, athletes(user_id, first_name, last_name, coach_id, email, club_id)")
         .eq("id", result_id)
         .maybeSingle()
         .execute()
@@ -40,6 +44,12 @@ def post_competition_followup(result_id: str) -> dict:
         return {"records_found": 0, "actions_taken": 0}
 
     athlete = result.get("athletes") or {}
+    club_id = athlete.get("club_id")
+
+    cfg = get_automation_config("AUTO-12", club_id)
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
+
     name = f"{athlete.get('first_name', '')} {athlete.get('last_name', '')}".strip()
     position = result.get("position")
     category = result.get("category", "")
@@ -64,7 +74,7 @@ def post_competition_followup(result_id: str) -> dict:
 
     actions = 0
     if athlete.get("user_id"):
-        notify_user(athlete["user_id"], "🏆 Resultado registrado", msg, msg_type, "AUTO-12")
+        notify_user(athlete["user_id"], "🏆 Resultado registrado", msg, msg_type, "AUTO-12", club_id=club_id)
         actions += 1
 
     # Notify coach
@@ -73,20 +83,30 @@ def post_competition_followup(result_id: str) -> dict:
             f"Nuevo resultado de {name}: Posición #{position}, Tiempo {final_time}, "
             f"Categoría {category}. Revisa el análisis técnico en el perfil del atleta."
         )
-        notify_user(athlete["coach_id"], f"📊 Resultado: {name}", coach_msg, "info", "AUTO-12")
+        notify_user(athlete["coach_id"], f"📊 Resultado: {name}", coach_msg, "info", "AUTO-12", club_id=club_id)
         actions += 1
 
     log_activity("AUTO-12", "AG-02", "success",
                  records_found=1, actions_taken=actions,
-                 summary=f"{name} pos #{position} tiempo {final_time}")
+                 summary=f"{name} pos #{position} tiempo {final_time}", club_id=club_id)
     return {"records_found": 1, "actions_taken": actions}
 
 
 # ── AUTO-13: Recordatorio de evaluación física semestral ───────────────────
+
+@celery_app.task(name="tasks.athlete.evaluation_reminder_dispatch")
+def evaluation_reminder_dispatch() -> dict:
+    club_ids = get_active_club_ids()
+    for club_id in club_ids:
+        evaluation_reminder.delay(club_id)
+    return {"records_found": len(club_ids), "actions_taken": len(club_ids),
+            "summary": f"Despachado a {len(club_ids)} club(es)"}
+
+
 @celery_app.task(name="tasks.athlete.evaluation_reminder")
-def evaluation_reminder() -> dict:
-    """Semanal — identifica atletas sin evaluación en >180 días."""
-    cfg = get_automation_config("AUTO-13")
+def evaluation_reminder(club_id: str) -> dict:
+    """Semanal — identifica atletas del club sin evaluación en >180 días."""
+    cfg = get_automation_config("AUTO-13", club_id)
     if not cfg["enabled"]:
         return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
@@ -96,6 +116,7 @@ def evaluation_reminder() -> dict:
     athletes = (
         db.table("athletes")
         .select("id, first_name, last_name, email, user_id, last_evaluation_date, coach_id")
+        .eq("club_id", club_id)
         .eq("status", "active")
         .execute()
     ).data or []
@@ -106,7 +127,7 @@ def evaluation_reminder() -> dict:
     ]
 
     if not overdue:
-        log_activity("AUTO-13", "AG-04", "skipped", summary="Todos con evaluación reciente")
+        log_activity("AUTO-13", "AG-04", "skipped", summary="Todos con evaluación reciente", club_id=club_id)
         return {"records_found": 0, "actions_taken": 0}
 
     actions = 0
@@ -124,38 +145,37 @@ def evaluation_reminder() -> dict:
                 msg,
                 "warning",
                 "AUTO-13",
+                club_id=club_id,
             )
             actions += 1
         if athlete.get("email"):
             send_email(athlete["email"], "Evaluación física semestral pendiente", msg)
 
-    # Summary to coaches
+    # Summary to coaches of THIS club
     summary_msg = (
         f"{len(overdue)} atletas sin evaluación en más de 180 días. "
         f"Por favor programa sus evaluaciones."
     )
-    for uid in get_coach_user_ids():
-        notify_user(uid, "📋 Evaluaciones pendientes", summary_msg, "warning", "AUTO-13")
+    for uid in get_coach_user_ids(club_id):
+        notify_user(uid, "📋 Evaluaciones pendientes", summary_msg, "warning", "AUTO-13", club_id=club_id)
         actions += 1
 
     log_activity("AUTO-13", "AG-04", "success",
                  records_found=len(overdue), actions_taken=actions,
-                 summary=f"{len(overdue)} atletas sin evaluación")
+                 summary=f"{len(overdue)} atletas sin evaluación", club_id=club_id)
     return {"records_found": len(overdue), "actions_taken": actions}
 
 
-# ── AUTO-14: Alertas de lesión y protocolo de recuperación ─────────────────
+# ── AUTO-14: Alertas de lesión y protocolo de recuperación (event-driven) ──
+
 @celery_app.task(name="tasks.athlete.injury_protocol")
 def injury_protocol(medical_session_id: str) -> dict:
     """Triggered on new medical_session with injury type — protocolo automático."""
-    cfg = get_automation_config("AUTO-14")
-    if not cfg["enabled"]:
-        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
 
     session = (
         db.table("medical_sessions")
-        .select("id, athlete_id, session_type, diagnosis, recommendations, session_date, athletes(user_id, first_name, last_name, coach_id)")
+        .select("id, athlete_id, session_type, diagnosis, recommendations, session_date, athletes(user_id, first_name, last_name, coach_id, club_id)")
         .eq("id", medical_session_id)
         .maybeSingle()
         .execute()
@@ -166,6 +186,12 @@ def injury_protocol(medical_session_id: str) -> dict:
         return {"records_found": 0, "actions_taken": 0}
 
     athlete = session.get("athletes") or {}
+    club_id = athlete.get("club_id")
+
+    cfg = get_automation_config("AUTO-14", club_id)
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
+
     name = f"{athlete.get('first_name', '')} {athlete.get('last_name', '')}".strip()
     diagnosis = session.get("diagnosis") or "lesión registrada"
     recs = session.get("recommendations") or "Reposo y seguimiento médico"
@@ -181,6 +207,7 @@ def injury_protocol(medical_session_id: str) -> dict:
             f"Tu entrenador fue notificado. Seguimiento programado a los 7, 14 y 30 días.",
             "warning",
             "AUTO-14",
+            club_id=club_id,
         )
         actions += 1
 
@@ -194,6 +221,7 @@ def injury_protocol(medical_session_id: str) -> dict:
             f"Recomendaciones: {recs}",
             "error",
             "AUTO-14",
+            club_id=club_id,
         )
         actions += 1
 
@@ -206,7 +234,7 @@ def injury_protocol(medical_session_id: str) -> dict:
 
     log_activity("AUTO-14", "AG-06", "success",
                  records_found=1, actions_taken=actions,
-                 summary=f"{name}: {diagnosis} — seguimientos programados 7/14/30 días")
+                 summary=f"{name}: {diagnosis} — seguimientos programados 7/14/30 días", club_id=club_id)
     return {"records_found": 1, "actions_taken": actions}
 
 
@@ -217,7 +245,7 @@ def injury_followup(medical_session_id: str, days: int) -> dict:
 
     session = (
         db.table("medical_sessions")
-        .select("id, athlete_id, diagnosis, athletes(user_id, first_name, coach_id)")
+        .select("id, athlete_id, diagnosis, athletes(user_id, first_name, coach_id, club_id)")
         .eq("id", medical_session_id)
         .maybeSingle()
         .execute()
@@ -227,6 +255,7 @@ def injury_followup(medical_session_id: str, days: int) -> dict:
         return {"records_found": 0, "actions_taken": 0}
 
     athlete = session.get("athletes") or {}
+    club_id = athlete.get("club_id")
     name = athlete.get("first_name", "Deportista")
     diagnosis = session.get("diagnosis", "lesión")
 
@@ -239,6 +268,7 @@ def injury_followup(medical_session_id: str, days: int) -> dict:
             f"¿Cómo te encuentras? Informa a tu médico o entrenador tu estado actual.",
             "info",
             "AUTO-14",
+            club_id=club_id,
         )
         actions += 1
 
@@ -250,36 +280,49 @@ def injury_followup(medical_session_id: str, days: int) -> dict:
             f"Verifica su estado de recuperación.",
             "info",
             "AUTO-14",
+            club_id=club_id,
         )
         actions += 1
 
     log_activity("AUTO-14", "AG-06", "success",
                  records_found=1, actions_taken=actions,
-                 summary=f"Seguimiento día {days} para {name}")
+                 summary=f"Seguimiento día {days} para {name}", club_id=club_id)
     return {"records_found": 1, "actions_taken": actions}
 
 
 # ── AUTO-15: Monitoreo de progreso por categoría ────────────────────────────
+
+@celery_app.task(name="tasks.athlete.weekly_progress_monitor_dispatch")
+def weekly_progress_monitor_dispatch() -> dict:
+    club_ids = get_active_club_ids()
+    for club_id in club_ids:
+        weekly_progress_monitor.delay(club_id)
+    return {"records_found": len(club_ids), "actions_taken": len(club_ids),
+            "summary": f"Despachado a {len(club_ids)} club(es)"}
+
+
 @celery_app.task(name="tasks.athlete.weekly_progress_monitor")
-def weekly_progress_monitor() -> dict:
-    """Lunes 07:00 — compara tiempos vs 4 semanas atrás, ranking interno."""
-    cfg = get_automation_config("AUTO-15")
+def weekly_progress_monitor(club_id: str) -> dict:
+    """Lunes 07:00 — compara tiempos vs 4 semanas atrás, ranking interno del club."""
+    cfg = get_automation_config("AUTO-15", club_id)
     if not cfg["enabled"]:
         return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
     today = date.today()
     four_weeks_ago = (today - timedelta(weeks=4)).isoformat()
 
+    # time_records es Grupo A con club_id propio (Fase 1).
     recent = (
         db.table("time_records")
         .select("athlete_id, time_seconds, discipline, recorded_at, athletes(first_name, last_name, category)")
+        .eq("club_id", club_id)
         .gte("recorded_at", four_weeks_ago)
         .order("athlete_id, recorded_at", desc=True)
         .execute()
     ).data or []
 
     if not recent:
-        log_activity("AUTO-15", "AG-02", "skipped", summary="Sin registros de tiempo recientes")
+        log_activity("AUTO-15", "AG-02", "skipped", summary="Sin registros de tiempo recientes", club_id=club_id)
         return {"records_found": 0, "actions_taken": 0}
 
     # Group by athlete, get best time this week vs 4 weeks ago
@@ -323,11 +366,11 @@ def weekly_progress_monitor() -> dict:
             for i, (name, imp, cat) in enumerate(top3)
         )
         msg = f"🏅 Atletas de la semana:\n{ranking_text}\n\nTotal evaluados: {len(improvements)}"
-        for uid in get_coach_user_ids() + get_admin_user_ids():
-            notify_user(uid, "📊 Progreso semanal de atletas", msg, "success", "AUTO-15")
+        for uid in get_coach_user_ids(club_id) + get_admin_user_ids(club_id):
+            notify_user(uid, "📊 Progreso semanal de atletas", msg, "success", "AUTO-15", club_id=club_id)
             actions += 1
 
     log_activity("AUTO-15", "AG-02", "success",
                  records_found=len(by_athlete), actions_taken=actions,
-                 summary=f"{len(improvements)} atletas con mejora detectada")
+                 summary=f"{len(improvements)} atletas con mejora detectada", club_id=club_id)
     return {"records_found": len(by_athlete), "actions_taken": actions}

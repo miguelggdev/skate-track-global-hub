@@ -1,4 +1,8 @@
-"""AUTO-26 to AUTO-29: Automatizaciones de Reportería."""
+"""AUTO-26 to AUTO-29: Automatizaciones de Reportería.
+
+Multi-tenant (Fase 5 + 6): las 4 son programadas, todas usan el patrón
+dispatch — `_dispatch` (Beat) abanica una corrida por club activo.
+"""
 from __future__ import annotations
 
 import logging
@@ -7,22 +11,32 @@ from datetime import date, timedelta
 from database.supabase_client import get_supabase
 from tasks.celery_app import celery_app
 from tasks.helpers import (
+    get_active_club_ids,
     get_admin_user_ids,
     get_automation_config,
     get_coach_user_ids,
     log_activity,
     notify_user,
-    send_email,
 )
 
 logger = logging.getLogger(__name__)
 
 
 # ── AUTO-26: Reporte semanal para el directivo ──────────────────────────────
+
+@celery_app.task(name="tasks.reporting.weekly_executive_report_dispatch")
+def weekly_executive_report_dispatch() -> dict:
+    club_ids = get_active_club_ids()
+    for club_id in club_ids:
+        weekly_executive_report.delay(club_id)
+    return {"records_found": len(club_ids), "actions_taken": len(club_ids),
+            "summary": f"Despachado a {len(club_ids)} club(es)"}
+
+
 @celery_app.task(name="tasks.reporting.weekly_executive_report")
-def weekly_executive_report() -> dict:
-    """Domingos 20:00 — consolida KPIs semanales para el directivo."""
-    cfg = get_automation_config("AUTO-26")
+def weekly_executive_report(club_id: str) -> dict:
+    """Domingos 20:00 — consolida KPIs semanales del club para el directivo."""
+    cfg = get_automation_config("AUTO-26", club_id)
     if not cfg["enabled"]:
         return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
@@ -34,6 +48,7 @@ def weekly_executive_report() -> dict:
     recent_session_rows = (
         db.table("training_sessions")
         .select("id")
+        .eq("club_id", club_id)
         .gte("scheduled_at", two_weeks_ago)
         .lte("scheduled_at", today.isoformat())
         .execute()
@@ -70,6 +85,7 @@ def weekly_executive_report() -> dict:
     transactions = (
         db.table("financial_transactions")
         .select("amount, payment_status")
+        .eq("club_id", club_id)
         .gte("transaction_date", week_ago)
         .lte("transaction_date", today.isoformat())
         .execute()
@@ -80,13 +96,17 @@ def weekly_executive_report() -> dict:
 
     # Active athletes count
     athletes = (
-        db.table("athletes").select("id").eq("status", "active").execute()
+        db.table("athletes").select("id").eq("club_id", club_id).eq("status", "active").execute()
     ).data or []
 
-    # Competition results this week
+    # Competition results this week. competition_results es Grupo C (hereda
+    # club_id de competitions vía RLS) — se filtra por athlete_id del club
+    # para no depender de un join adicional.
+    athlete_ids = [a["id"] for a in athletes] or ["00000000-0000-0000-0000-000000000000"]
     results = (
         db.table("competition_results")
         .select("id, position")
+        .in_("athlete_id", athlete_ids)
         .gte("created_at", week_ago)
         .execute()
     ).data or []
@@ -104,21 +124,31 @@ def weekly_executive_report() -> dict:
     )
 
     actions = 0
-    for uid in get_admin_user_ids():
-        notify_user(uid, "📊 Reporte semanal", msg, "info", "AUTO-26")
+    for uid in get_admin_user_ids(club_id):
+        notify_user(uid, "📊 Reporte semanal", msg, "info", "AUTO-26", club_id=club_id)
         actions += 1
 
     log_activity("AUTO-26", "AG-01", "success",
                  records_found=len(athletes), actions_taken=actions,
-                 summary=f"Asistencia {att_rate_now}%, ingresos ${weekly_income:,.0f}")
+                 summary=f"Asistencia {att_rate_now}%, ingresos ${weekly_income:,.0f}", club_id=club_id)
     return {"records_found": len(athletes), "actions_taken": actions}
 
 
 # ── AUTO-27: Reporte mensual de rendimiento deportivo ──────────────────────
+
+@celery_app.task(name="tasks.reporting.monthly_performance_report_dispatch")
+def monthly_performance_report_dispatch() -> dict:
+    club_ids = get_active_club_ids()
+    for club_id in club_ids:
+        monthly_performance_report.delay(club_id)
+    return {"records_found": len(club_ids), "actions_taken": len(club_ids),
+            "summary": f"Despachado a {len(club_ids)} club(es)"}
+
+
 @celery_app.task(name="tasks.reporting.monthly_performance_report")
-def monthly_performance_report() -> dict:
-    """1ro de cada mes 08:00 — consolida rendimiento deportivo del mes anterior."""
-    cfg = get_automation_config("AUTO-27")
+def monthly_performance_report(club_id: str) -> dict:
+    """1ro de cada mes 08:00 — consolida rendimiento deportivo del club del mes anterior."""
+    cfg = get_automation_config("AUTO-27", club_id)
     if not cfg["enabled"]:
         return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
@@ -128,10 +158,16 @@ def monthly_performance_report() -> dict:
     last_month_end = first_this_month - timedelta(days=1)
     last_month_start = last_month_end.replace(day=1)
 
-    # Competition results last month
+    athletes = (
+        db.table("athletes").select("id").eq("club_id", club_id).execute()
+    ).data or []
+    athlete_ids = [a["id"] for a in athletes] or ["00000000-0000-0000-0000-000000000000"]
+
+    # Competition results last month (Grupo C, se filtra por athlete_id del club)
     results = (
         db.table("competition_results")
         .select("id, athlete_id, position, final_time, category, athletes(first_name, last_name)")
+        .in_("athlete_id", athlete_ids)
         .gte("created_at", last_month_start.isoformat())
         .lte("created_at", last_month_end.isoformat())
         .execute()
@@ -141,6 +177,7 @@ def monthly_performance_report() -> dict:
     time_records = (
         db.table("time_records")
         .select("athlete_id, time_seconds, discipline, athletes(first_name, last_name, category)")
+        .eq("club_id", club_id)
         .gte("recorded_at", last_month_start.isoformat())
         .lte("recorded_at", last_month_end.isoformat())
         .execute()
@@ -161,21 +198,31 @@ def monthly_performance_report() -> dict:
     )
 
     actions = 0
-    for uid in get_coach_user_ids() + get_admin_user_ids():
-        notify_user(uid, "🏅 Reporte mensual deportivo", msg, "success", "AUTO-27")
+    for uid in get_coach_user_ids(club_id) + get_admin_user_ids(club_id):
+        notify_user(uid, "🏅 Reporte mensual deportivo", msg, "success", "AUTO-27", club_id=club_id)
         actions += 1
 
     log_activity("AUTO-27", "AG-02", "success",
                  records_found=len(results), actions_taken=actions,
-                 summary=f"{len(results)} resultados, {len(medals)} medallas en {last_month_start.strftime('%B %Y')}")
+                 summary=f"{len(results)} resultados, {len(medals)} medallas en {last_month_start.strftime('%B %Y')}", club_id=club_id)
     return {"records_found": len(results), "actions_taken": actions}
 
 
 # ── AUTO-28: Reporte inscripción federativa ──────────────────────────────────
+
+@celery_app.task(name="tasks.reporting.federation_inscription_report_dispatch")
+def federation_inscription_report_dispatch() -> dict:
+    club_ids = get_active_club_ids()
+    for club_id in club_ids:
+        federation_inscription_report.delay(club_id)
+    return {"records_found": len(club_ids), "actions_taken": len(club_ids),
+            "summary": f"Despachado a {len(club_ids)} club(es)"}
+
+
 @celery_app.task(name="tasks.reporting.federation_inscription_report")
-def federation_inscription_report() -> dict:
-    """Manual + automático 30 días antes de cierre federativo — verifica documentación."""
-    cfg = get_automation_config("AUTO-28")
+def federation_inscription_report(club_id: str) -> dict:
+    """Manual + automático 30 días antes de cierre federativo — verifica documentación del club."""
+    cfg = get_automation_config("AUTO-28", club_id)
     if not cfg["enabled"]:
         return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
@@ -185,6 +232,7 @@ def federation_inscription_report() -> dict:
     active_athletes = (
         db.table("athletes")
         .select("id, first_name, last_name, email, user_id")
+        .eq("club_id", club_id)
         .eq("status", "active")
         .execute()
     ).data or []
@@ -198,6 +246,7 @@ def federation_inscription_report() -> dict:
     all_docs = (
         db.table("federation_documents")
         .select("athlete_id, doc_type, status")
+        .eq("club_id", club_id)
         .in_("athlete_id", athlete_ids or ["00000000-0000-0000-0000-000000000000"])
         .eq("season", season)
         .execute()
@@ -226,6 +275,7 @@ def federation_inscription_report() -> dict:
                     f"Súbelos a tu perfil antes del cierre de inscripciones.",
                     "warning",
                     "AUTO-28",
+                    club_id=club_id,
                 )
         else:
             complete += 1
@@ -238,22 +288,32 @@ def federation_inscription_report() -> dict:
     )
 
     actions = incomplete  # Each incomplete notification counts
-    for uid in get_admin_user_ids():
+    for uid in get_admin_user_ids(club_id):
         notify_user(uid, "📋 Estado documentación federativa", summary_msg,
-                    "error" if incomplete > 5 else "warning", "AUTO-28")
+                    "error" if incomplete > 5 else "warning", "AUTO-28", club_id=club_id)
         actions += 1
 
     log_activity("AUTO-28", "AG-01", "success",
                  records_found=len(active_athletes), actions_taken=actions,
-                 summary=f"{complete} completos, {incomplete} incompletos para temporada {season}")
+                 summary=f"{complete} completos, {incomplete} incompletos para temporada {season}", club_id=club_id)
     return {"records_found": len(active_athletes), "actions_taken": actions}
 
 
 # ── AUTO-29: Dashboard de análisis predictivo ───────────────────────────────
+
+@celery_app.task(name="tasks.reporting.predictive_analysis_dispatch")
+def predictive_analysis_dispatch() -> dict:
+    club_ids = get_active_club_ids()
+    for club_id in club_ids:
+        predictive_analysis.delay(club_id)
+    return {"records_found": len(club_ids), "actions_taken": len(club_ids),
+            "summary": f"Despachado a {len(club_ids)} club(es)"}
+
+
 @celery_app.task(name="tasks.reporting.predictive_analysis")
-def predictive_analysis() -> dict:
-    """Domingos 23:00 — predice rendimiento y riesgo de lesión por atleta."""
-    cfg = get_automation_config("AUTO-29")
+def predictive_analysis(club_id: str) -> dict:
+    """Domingos 23:00 — predice rendimiento y riesgo de lesión por atleta del club."""
+    cfg = get_automation_config("AUTO-29", club_id)
     if not cfg["enabled"]:
         return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
@@ -264,6 +324,7 @@ def predictive_analysis() -> dict:
     athletes = (
         db.table("athletes")
         .select("id, first_name, last_name, category")
+        .eq("club_id", club_id)
         .eq("status", "active")
         .execute()
     ).data or []
@@ -348,11 +409,11 @@ def predictive_analysis() -> dict:
             f"{predictions_created} atletas analizados.\n"
             f"Revisa el dashboard para ver potencial de medallas y riesgo de lesión."
         )
-        for uid in get_coach_user_ids() + get_admin_user_ids():
-            notify_user(uid, "🤖 Análisis predictivo listo", msg, "info", "AUTO-29")
+        for uid in get_coach_user_ids(club_id) + get_admin_user_ids(club_id):
+            notify_user(uid, "🤖 Análisis predictivo listo", msg, "info", "AUTO-29", club_id=club_id)
             actions += 1
 
     log_activity("AUTO-29", "AG-02", "success",
                  records_found=len(athletes), actions_taken=actions,
-                 summary=f"{predictions_created} predicciones generadas")
+                 summary=f"{predictions_created} predicciones generadas", club_id=club_id)
     return {"records_found": len(athletes), "actions_taken": predictions_created}

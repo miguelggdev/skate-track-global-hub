@@ -1,4 +1,11 @@
-"""AUTO-01 to AUTO-06: Automatizaciones de Calendario y Entrenamientos."""
+"""AUTO-01 to AUTO-06: Automatizaciones de Calendario y Entrenamientos.
+
+Multi-tenant (Fase 5 + 6, ver ~/.claude/plans/linear-roaming-torvalds.md):
+las tareas programadas (AUTO-01, 02, 03, 06) usan el patrón dispatch —
+`_dispatch` (llamado por Beat) abanica una corrida por cada club activo.
+Las event-driven (AUTO-04, AUTO-05) derivan club_id del atleta/sesión que
+las dispara, no necesitan dispatch.
+"""
 from __future__ import annotations
 
 import logging
@@ -7,26 +14,32 @@ from datetime import date, datetime, timedelta, timezone
 from database.supabase_client import get_supabase
 from tasks.celery_app import celery_app
 from tasks.helpers import (
+    get_active_club_ids,
     get_admin_user_ids,
     get_automation_config,
     get_coach_user_ids,
     log_activity,
-    notify_role,
     notify_user,
-    send_email,
-    task_wrapper,
 )
 
 logger = logging.getLogger(__name__)
 
-AUTO = "AUTO-01"
-
 
 # ── AUTO-01: Recordatorio entrenamiento del día siguiente ───────────────────
+
+@celery_app.task(name="tasks.calendar.training_reminder_next_day_dispatch")
+def training_reminder_next_day_dispatch() -> dict:
+    club_ids = get_active_club_ids()
+    for club_id in club_ids:
+        training_reminder_next_day.delay(club_id)
+    return {"records_found": len(club_ids), "actions_taken": len(club_ids),
+            "summary": f"Despachado a {len(club_ids)} club(es)"}
+
+
 @celery_app.task(name="tasks.calendar.training_reminder_next_day")
-def training_reminder_next_day() -> dict:
-    """19:00 diario — notifica atletas sobre entrenamientos del día siguiente."""
-    cfg = get_automation_config("AUTO-01")
+def training_reminder_next_day(club_id: str) -> dict:
+    """19:00 diario — notifica atletas del club sobre entrenamientos del día siguiente."""
+    cfg = get_automation_config("AUTO-01", club_id)
     if not cfg["enabled"]:
         return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     days_ahead = cfg["custom_params"].get("days_ahead", 1)
@@ -36,6 +49,7 @@ def training_reminder_next_day() -> dict:
     sessions = (
         db.table("training_sessions")
         .select("id, scheduled_at, training_type, location, max_participants")
+        .eq("club_id", club_id)
         .gte("scheduled_at", f"{tomorrow}T00:00:00")
         .lt("scheduled_at", f"{tomorrow}T23:59:59")
         .eq("status", "scheduled")
@@ -43,7 +57,7 @@ def training_reminder_next_day() -> dict:
     ).data or []
 
     if not sessions:
-        log_activity("AUTO-01", "AG-11", "skipped", summary="No hay sesiones mañana")
+        log_activity("AUTO-01", "AG-11", "skipped", summary="No hay sesiones mañana", club_id=club_id)
         return {"records_found": 0, "actions_taken": 0}
 
     actions = 0
@@ -53,6 +67,8 @@ def training_reminder_next_day() -> dict:
         training_type = session.get("training_type", "Entrenamiento").replace("_", " ").title()
         location = session.get("location") or "lugar habitual"
 
+        # training_attendance es hija de training_sessions (Grupo C) — al
+        # filtrar por training_session_id de un club ya queda acotado.
         athletes = (
             db.table("training_attendance")
             .select("athlete_id, athletes(user_id, first_name)")
@@ -70,20 +86,30 @@ def training_reminder_next_day() -> dict:
                 f"Hola {name}, mañana tienes {training_type} a las {time_str} "
                 f"en {location}. ¡Te esperamos! 🛼"
             )
-            notify_user(user_id, "Entrenamiento mañana", msg, "info", "AUTO-01")
+            notify_user(user_id, "Entrenamiento mañana", msg, "info", "AUTO-01", club_id=club_id)
             actions += 1
 
     log_activity("AUTO-01", "AG-11", "success",
                  records_found=len(sessions), actions_taken=actions,
-                 summary=f"{len(sessions)} sesiones, {actions} notificaciones enviadas")
+                 summary=f"{len(sessions)} sesiones, {actions} notificaciones enviadas", club_id=club_id)
     return {"records_found": len(sessions), "actions_taken": actions}
 
 
 # ── AUTO-02: Recordatorio 2 horas antes ────────────────────────────────────
+
+@celery_app.task(name="tasks.calendar.training_reminder_2h_dispatch")
+def training_reminder_2h_dispatch() -> dict:
+    club_ids = get_active_club_ids()
+    for club_id in club_ids:
+        training_reminder_2h.delay(club_id)
+    return {"records_found": len(club_ids), "actions_taken": len(club_ids),
+            "summary": f"Despachado a {len(club_ids)} club(es)"}
+
+
 @celery_app.task(name="tasks.calendar.training_reminder_2h")
-def training_reminder_2h() -> dict:
-    """Cada 30 min — detecta sesiones que empiezan en 2 horas exactas."""
-    cfg = get_automation_config("AUTO-02")
+def training_reminder_2h(club_id: str) -> dict:
+    """Cada 30 min — detecta sesiones del club que empiezan en 2 horas exactas."""
+    cfg = get_automation_config("AUTO-02", club_id)
     if not cfg["enabled"]:
         return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     p = cfg["custom_params"]
@@ -95,6 +121,7 @@ def training_reminder_2h() -> dict:
     sessions = (
         db.table("training_sessions")
         .select("id, scheduled_at, training_type")
+        .eq("club_id", club_id)
         .gte("scheduled_at", window_start.isoformat())
         .lt("scheduled_at", window_end.isoformat())
         .eq("status", "scheduled")
@@ -126,19 +153,30 @@ def training_reminder_2h() -> dict:
                 f"Hola {name}, tu {training_type} empieza a las {time_str}. ¡Prepárate!",
                 "info",
                 "AUTO-02",
+                club_id=club_id,
             )
             actions += 1
 
     log_activity("AUTO-02", "AG-11", "success" if sessions else "skipped",
-                 records_found=len(sessions), actions_taken=actions)
+                 records_found=len(sessions), actions_taken=actions, club_id=club_id)
     return {"records_found": len(sessions), "actions_taken": actions}
 
 
 # ── AUTO-03: Detección de huecos en el calendario ──────────────────────────
+
+@celery_app.task(name="tasks.calendar.detect_schedule_gaps_dispatch")
+def detect_schedule_gaps_dispatch() -> dict:
+    club_ids = get_active_club_ids()
+    for club_id in club_ids:
+        detect_schedule_gaps.delay(club_id)
+    return {"records_found": len(club_ids), "actions_taken": len(club_ids),
+            "summary": f"Despachado a {len(club_ids)} club(es)"}
+
+
 @celery_app.task(name="tasks.calendar.detect_schedule_gaps")
-def detect_schedule_gaps() -> dict:
-    """Lunes 08:00 — detecta días sin sesión en las próximas 4 semanas."""
-    cfg = get_automation_config("AUTO-03")
+def detect_schedule_gaps(club_id: str) -> dict:
+    """Lunes 08:00 — detecta días sin sesión del club en las próximas 4 semanas."""
+    cfg = get_automation_config("AUTO-03", club_id)
     if not cfg["enabled"]:
         return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     p = cfg["custom_params"]
@@ -149,6 +187,7 @@ def detect_schedule_gaps() -> dict:
     sessions = (
         db.table("training_sessions")
         .select("scheduled_at")
+        .eq("club_id", club_id)
         .gte("scheduled_at", today.isoformat())
         .lt("scheduled_at", end_date.isoformat())
         .eq("status", "scheduled")
@@ -169,7 +208,7 @@ def detect_schedule_gaps() -> dict:
         current += timedelta(days=1)
 
     if not gaps:
-        log_activity("AUTO-03", "AG-11", "skipped", summary="Sin huecos detectados")
+        log_activity("AUTO-03", "AG-11", "skipped", summary="Sin huecos detectados", club_id=club_id)
         return {"records_found": 0, "actions_taken": 0}
 
     summary_text = ", ".join(gaps[:5])
@@ -179,24 +218,38 @@ def detect_schedule_gaps() -> dict:
         f"Considera agregar sesiones para mantener el plan de periodización."
     )
     actions = 0
-    for uid in get_admin_user_ids() + get_coach_user_ids():
-        notify_user(uid, "Huecos en el calendario", msg, "warning", "AUTO-03")
+    for uid in get_admin_user_ids(club_id) + get_coach_user_ids(club_id):
+        notify_user(uid, "Huecos en el calendario", msg, "warning", "AUTO-03", club_id=club_id)
         actions += 1
 
     log_activity("AUTO-03", "AG-11", "success",
                  records_found=len(gaps), actions_taken=actions,
-                 summary=f"{len(gaps)} huecos detectados")
+                 summary=f"{len(gaps)} huecos detectados", club_id=club_id)
     return {"records_found": len(gaps), "actions_taken": actions}
 
 
-# ── AUTO-04: Gestión de inasistencias ──────────────────────────────────────
+# ── AUTO-04: Gestión de inasistencias (event-driven) ───────────────────────
+
 @celery_app.task(name="tasks.calendar.handle_absence")
 def handle_absence(athlete_id: str, session_id: str) -> dict:
     """Triggered via DB hook — analiza inasistencias consecutivas del atleta."""
-    cfg = get_automation_config("AUTO-04")
+    db = get_supabase()
+
+    athlete = (
+        db.table("athletes")
+        .select("first_name, last_name, user_id, coach_id, club_id")
+        .eq("id", athlete_id)
+        .maybeSingle()
+        .execute()
+    ).data
+
+    if not athlete:
+        return {"records_found": 0, "actions_taken": 0}
+
+    club_id = athlete.get("club_id")
+    cfg = get_automation_config("AUTO-04", club_id)
     if not cfg["enabled"]:
         return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
-    db = get_supabase()
 
     # Count recent consecutive absences (last 30 days)
     thirty_days_ago = (date.today() - timedelta(days=30)).isoformat()
@@ -220,28 +273,20 @@ def handle_absence(athlete_id: str, session_id: str) -> dict:
     if consecutive < 2:
         return {"records_found": 1, "actions_taken": 0}
 
-    athlete = (
-        db.table("athletes")
-        .select("first_name, last_name, user_id, coach_id")
-        .eq("id", athlete_id)
-        .maybeSingle()
-        .execute()
-    ).data
-
-    if not athlete:
-        return {"records_found": 0, "actions_taken": 0}
-
     name = f"{athlete.get('first_name', '')} {athlete.get('last_name', '')}".strip()
     alert_level = "critical" if consecutive >= 3 else "warning"
     msg = f"{name} lleva {consecutive} inasistencias consecutivas."
 
-    # Upsert attendance alert (avoid duplicate rows per athlete)
+    # Upsert attendance alert (avoid duplicate rows per athlete). Grupo A,
+    # club_id lo completa el trigger de la Fase 1 desde el default del
+    # backend — se pasa explícito igual por claridad/consistencia.
     db.table("attendance_alerts").upsert({
         "athlete_id": athlete_id,
         "consecutive_absences": consecutive,
         "alert_level": alert_level,
         "notified_coach": True,
         "notified_admin": consecutive >= 3,
+        "club_id": club_id,
     }, on_conflict="athlete_id").execute()
 
     actions = 0
@@ -261,33 +306,32 @@ def handle_absence(athlete_id: str, session_id: str) -> dict:
                 msg + " Por favor realiza seguimiento.",
                 "warning",
                 "AUTO-04",
+                club_id=club_id,
             )
             actions += 1
 
     # Notify admin if critical
     if consecutive >= 3:
-        for uid in get_admin_user_ids():
-            notify_user(uid, f"🚨 Alerta retención: {name}", msg, "error", "AUTO-04")
+        for uid in get_admin_user_ids(club_id):
+            notify_user(uid, f"🚨 Alerta retención: {name}", msg, "error", "AUTO-04", club_id=club_id)
             actions += 1
 
     log_activity("AUTO-04", "AG-02", "success",
                  records_found=1, actions_taken=actions,
-                 summary=f"{name}: {consecutive} inasistencias consecutivas ({alert_level})")
+                 summary=f"{name}: {consecutive} inasistencias consecutivas ({alert_level})", club_id=club_id)
     return {"records_found": 1, "actions_taken": actions}
 
 
-# ── AUTO-05: Lista de espera inteligente ────────────────────────────────────
+# ── AUTO-05: Lista de espera inteligente (event-driven) ────────────────────
+
 @celery_app.task(name="tasks.calendar.process_waitlist")
 def process_waitlist(session_id: str, freed_slot_athlete_id: str) -> dict:
     """Triggered when an athlete cancels — notifies next in waitlist."""
-    cfg = get_automation_config("AUTO-05")
-    if not cfg["enabled"]:
-        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
 
     session = (
         db.table("training_sessions")
-        .select("id, scheduled_at, training_type")
+        .select("id, scheduled_at, training_type, club_id")
         .eq("id", session_id)
         .maybeSingle()
         .execute()
@@ -295,6 +339,11 @@ def process_waitlist(session_id: str, freed_slot_athlete_id: str) -> dict:
 
     if not session:
         return {"records_found": 0, "actions_taken": 0}
+
+    club_id = session.get("club_id")
+    cfg = get_automation_config("AUTO-05", club_id)
+    if not cfg["enabled"]:
+        return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
 
     # Find athletes marked as waitlisted (status = 'waitlisted') in attendance
     waitlisted = (
@@ -308,7 +357,7 @@ def process_waitlist(session_id: str, freed_slot_athlete_id: str) -> dict:
     ).data or []
 
     if not waitlisted:
-        log_activity("AUTO-05", "AG-11", "skipped", summary="Lista de espera vacía")
+        log_activity("AUTO-05", "AG-11", "skipped", summary="Lista de espera vacía", club_id=club_id)
         return {"records_found": 0, "actions_taken": 0}
 
     next_athlete = waitlisted[0]
@@ -326,18 +375,29 @@ def process_waitlist(session_id: str, freed_slot_athlete_id: str) -> dict:
             f"Confirma tu asistencia en los próximos 30 minutos.",
             "success",
             "AUTO-05",
+            club_id=club_id,
         )
 
     log_activity("AUTO-05", "AG-11", "success", records_found=1, actions_taken=1,
-                 summary=f"Cupo notificado a {athlete.get('first_name', 'atleta')}")
+                 summary=f"Cupo notificado a {athlete.get('first_name', 'atleta')}", club_id=club_id)
     return {"records_found": 1, "actions_taken": 1}
 
 
 # ── AUTO-06: Análisis semanal de carga de entrenamiento ────────────────────
+
+@celery_app.task(name="tasks.calendar.weekly_load_analysis_dispatch")
+def weekly_load_analysis_dispatch() -> dict:
+    club_ids = get_active_club_ids()
+    for club_id in club_ids:
+        weekly_load_analysis.delay(club_id)
+    return {"records_found": len(club_ids), "actions_taken": len(club_ids),
+            "summary": f"Despachado a {len(club_ids)} club(es)"}
+
+
 @celery_app.task(name="tasks.calendar.weekly_load_analysis")
-def weekly_load_analysis() -> dict:
-    """Viernes 20:00 — semáforo verde/amarillo/rojo de carga por atleta."""
-    cfg = get_automation_config("AUTO-06")
+def weekly_load_analysis(club_id: str) -> dict:
+    """Viernes 20:00 — semáforo verde/amarillo/rojo de carga por atleta del club."""
+    cfg = get_automation_config("AUTO-06", club_id)
     if not cfg["enabled"]:
         return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     db = get_supabase()
@@ -346,6 +406,7 @@ def weekly_load_analysis() -> dict:
     sessions = (
         db.table("training_sessions")
         .select("id, scheduled_at, duration_minutes, intensity_level")
+        .eq("club_id", club_id)
         .gte("scheduled_at", week_ago)
         .lte("scheduled_at", date.today().isoformat())
         .execute()
@@ -353,7 +414,7 @@ def weekly_load_analysis() -> dict:
 
     session_ids = [s["id"] for s in sessions]
     if not session_ids:
-        log_activity("AUTO-06", "AG-02", "skipped", summary="Sin sesiones esta semana")
+        log_activity("AUTO-06", "AG-02", "skipped", summary="Sin sesiones esta semana", club_id=club_id)
         return {"records_found": 0, "actions_taken": 0}
 
     attendance = (
@@ -391,16 +452,16 @@ def weekly_load_analysis() -> dict:
     actions = 0
     if alerts:
         msg = "Resumen de carga semanal:\n" + "\n".join(alerts[:20])
-        for uid in get_coach_user_ids() + get_admin_user_ids():
-            notify_user(uid, "📊 Análisis carga semanal", msg, "warning", "AUTO-06")
+        for uid in get_coach_user_ids(club_id) + get_admin_user_ids(club_id):
+            notify_user(uid, "📊 Análisis carga semanal", msg, "warning", "AUTO-06", club_id=club_id)
             actions += 1
     else:
         msg = f"Carga semanal normal para {len(athlete_sessions)} atletas. ✅"
-        for uid in get_coach_user_ids():
-            notify_user(uid, "📊 Carga semanal OK", msg, "success", "AUTO-06")
+        for uid in get_coach_user_ids(club_id):
+            notify_user(uid, "📊 Carga semanal OK", msg, "success", "AUTO-06", club_id=club_id)
             actions += 1
 
     log_activity("AUTO-06", "AG-02", "success",
                  records_found=len(athlete_sessions), actions_taken=actions,
-                 summary=f"{len(alerts)} atletas con alerta de carga")
+                 summary=f"{len(alerts)} atletas con alerta de carga", club_id=club_id)
     return {"records_found": len(athlete_sessions), "actions_taken": actions}

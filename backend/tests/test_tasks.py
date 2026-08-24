@@ -80,7 +80,7 @@ class TestCalendarTasks:
     def test_reminder_next_session_disabled(self, mock_supabase_ctx):
         with patch("tasks.calendar_tasks.get_automation_config", return_value=_make_config(enabled=False)):
             from tasks.calendar_tasks import training_reminder_next_day
-            result = training_reminder_next_day()
+            result = training_reminder_next_day(_TEST_CLUB_ID)
         assert result["actions_taken"] == 0
         assert "Deshabilitada" in result["summary"]
 
@@ -91,7 +91,7 @@ class TestCalendarTasks:
         with patch("tasks.calendar_tasks.get_automation_config", return_value=_make_config(params={"days_ahead": 1})):
             with patch("tasks.calendar_tasks.get_supabase", return_value=mock_db):
                 from tasks.calendar_tasks import training_reminder_next_day
-                result = training_reminder_next_day()
+                result = training_reminder_next_day(_TEST_CLUB_ID)
         assert result["records_found"] == 0
 
 
@@ -101,7 +101,7 @@ class TestFinanceTasks:
     def test_cash_close_disabled(self, mock_supabase_ctx):
         with patch("tasks.finance_tasks.get_automation_config", return_value=_make_config(enabled=False)):
             from tasks.finance_tasks import daily_cash_close
-            result = daily_cash_close()
+            result = daily_cash_close(_TEST_CLUB_ID)
         assert result["actions_taken"] == 0
 
     def test_cash_close_uses_training_session_id(self, mock_supabase_ctx):
@@ -141,7 +141,7 @@ class TestFinanceTasks:
              patch("tasks.finance_tasks.get_supabase", return_value=mock_db), \
              patch("tasks.finance_tasks.get_admin_user_ids", return_value=[]):
             from tasks.finance_tasks import daily_cash_close
-            daily_cash_close()
+            daily_cash_close(_TEST_CLUB_ID)
 
         all_cols = " ".join(selected_columns)
         assert "training_session_id" in all_cols
@@ -155,7 +155,7 @@ class TestAthleteTasks:
     def test_weekly_progress_disabled(self, mock_supabase_ctx):
         with patch("tasks.athlete_tasks.get_automation_config", return_value=_make_config(enabled=False)):
             from tasks.athlete_tasks import weekly_progress_monitor
-            result = weekly_progress_monitor()
+            result = weekly_progress_monitor(_TEST_CLUB_ID)
         assert result["actions_taken"] == 0
 
     def test_post_competition_disabled(self, mock_supabase_ctx):
@@ -171,13 +171,13 @@ class TestAdminTasks:
     def test_morning_briefing_disabled(self, mock_supabase_ctx):
         with patch("tasks.admin_tasks.get_automation_config", return_value=_make_config(enabled=False)):
             from tasks.admin_tasks import morning_briefing
-            result = morning_briefing()
+            result = morning_briefing(_TEST_CLUB_ID)
         assert result["actions_taken"] == 0
 
     def test_end_of_day_disabled(self, mock_supabase_ctx):
         with patch("tasks.admin_tasks.get_automation_config", return_value=_make_config(enabled=False)):
             from tasks.admin_tasks import end_of_day_summary
-            result = end_of_day_summary()
+            result = end_of_day_summary(_TEST_CLUB_ID)
         assert result["actions_taken"] == 0
 
 
@@ -199,7 +199,7 @@ class TestSecurityTasks:
     def test_daily_agent_summary_disabled(self, mock_supabase_ctx):
         with patch("tasks.security_tasks.get_automation_config", return_value=_make_config(enabled=False)):
             from tasks.security_tasks import daily_agent_activity_summary
-            result = daily_agent_activity_summary()
+            result = daily_agent_activity_summary(_TEST_CLUB_ID)
         assert result["actions_taken"] == 0
 
 
@@ -209,14 +209,14 @@ class TestBillingTasks:
     def test_generate_monthly_fees_disabled(self, mock_supabase_ctx):
         with patch("tasks.billing_tasks.get_automation_config", return_value=_make_config(enabled=False)):
             from tasks.billing_tasks import generate_monthly_fees
-            result = generate_monthly_fees()
+            result = generate_monthly_fees(_TEST_CLUB_ID)
         assert result["actions_taken"] == 0
 
     def test_send_invoice_reminder_disabled(self, mock_supabase_ctx):
         with patch("tasks.billing_tasks.get_automation_config", return_value=_make_config(enabled=False)):
             from tasks.billing_tasks import send_invoice_reminder
             # send_invoice_reminder is a Celery task; call run() or call it directly
-            result = send_invoice_reminder()
+            result = send_invoice_reminder(_TEST_CLUB_ID)
         assert result["actions_taken"] == 0
 
     def test_due_day_param(self, mock_supabase_ctx):
@@ -224,11 +224,12 @@ class TestBillingTasks:
         mock_db = mock_supabase_ctx
         mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value.data = []
         mock_db.table.return_value.select.return_value.execute.return_value.data = []
+        mock_db.table.return_value.select.return_value.eq.return_value.eq.return_value.maybeSingle.return_value.execute.return_value.data = None
 
         with patch("tasks.billing_tasks.get_automation_config", return_value=_make_config(params={"due_day_of_month": 15})):
             with patch("tasks.billing_tasks.get_supabase", return_value=mock_db):
                 from tasks.billing_tasks import generate_monthly_fees
-                result = generate_monthly_fees()
+                result = generate_monthly_fees(_TEST_CLUB_ID)
         assert isinstance(result, dict)
 
 
@@ -238,7 +239,7 @@ class TestWhatsappTasks:
     def test_disabled_returns_early(self, mock_supabase_ctx):
         with patch("tasks.whatsapp_tasks.get_automation_config", return_value=_make_config(enabled=False)):
             from tasks.whatsapp_tasks import send_daily_motivational_phrase
-            result = send_daily_motivational_phrase()
+            result = send_daily_motivational_phrase(_TEST_CLUB_ID)
         assert result["actions_taken"] == 0
 
     def test_cfg_not_overwritten(self, mock_supabase_ctx):
@@ -247,7 +248,7 @@ class TestWhatsappTasks:
         with patch.dict(os.environ, {"TWILIO_ACCOUNT_SID": ""}):
             with patch("tasks.whatsapp_tasks.get_automation_config", return_value=_make_config(enabled=True)):
                 from tasks.whatsapp_tasks import send_daily_motivational_phrase
-                result = send_daily_motivational_phrase()
+                result = send_daily_motivational_phrase(_TEST_CLUB_ID)
         # Should return early because Twilio not configured, not crash
         assert "Twilio" in result["summary"]
 
@@ -258,11 +259,11 @@ class TestReportingTasks:
     def test_weekly_executive_disabled(self, mock_supabase_ctx):
         with patch("tasks.reporting_tasks.get_automation_config", return_value=_make_config(enabled=False)):
             from tasks.reporting_tasks import weekly_executive_report
-            result = weekly_executive_report()
+            result = weekly_executive_report(_TEST_CLUB_ID)
         assert result["actions_taken"] == 0
 
     def test_predictive_analysis_disabled(self, mock_supabase_ctx):
         with patch("tasks.reporting_tasks.get_automation_config", return_value=_make_config(enabled=False)):
             from tasks.reporting_tasks import predictive_analysis
-            result = predictive_analysis()
+            result = predictive_analysis(_TEST_CLUB_ID)
         assert result["actions_taken"] == 0

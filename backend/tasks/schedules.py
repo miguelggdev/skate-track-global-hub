@@ -32,25 +32,25 @@ celery_app.conf.beat_schedule = {
 
     # AUTO-01: Recordatorio entrenamiento día siguiente — diario 19:00
     "auto-01-training-reminder-next-day": {
-        "task": "tasks.calendar.training_reminder_next_day",
+        "task": "tasks.calendar.training_reminder_next_day_dispatch",
         "schedule": crontab(hour=19, minute=0),
     },
 
     # AUTO-02: Recordatorio 2 horas antes — cada 30 min
     "auto-02-training-reminder-2h": {
-        "task": "tasks.calendar.training_reminder_2h",
+        "task": "tasks.calendar.training_reminder_2h_dispatch",
         "schedule": crontab(minute="*/30"),
     },
 
     # AUTO-03: Detección de huecos en calendario — lunes 08:00
     "auto-03-detect-schedule-gaps": {
-        "task": "tasks.calendar.detect_schedule_gaps",
+        "task": "tasks.calendar.detect_schedule_gaps_dispatch",
         "schedule": crontab(hour=8, minute=0, day_of_week="monday"),
     },
 
     # AUTO-06: Análisis semanal carga de entrenamiento — viernes 20:00
     "auto-06-weekly-load-analysis": {
-        "task": "tasks.calendar.weekly_load_analysis",
+        "task": "tasks.calendar.weekly_load_analysis_dispatch",
         "schedule": crontab(hour=20, minute=0, day_of_week="friday"),
     },
 
@@ -65,30 +65,30 @@ celery_app.conf.beat_schedule = {
 
     # AUTO-08: Alertas cartera morosa — 1ro y 15 de cada mes 09:00
     "auto-08-overdue-payment-alerts-1st": {
-        "task": "tasks.finance.overdue_payment_alerts",
+        "task": "tasks.finance.overdue_payment_alerts_dispatch",
         "schedule": crontab(hour=9, minute=0, day_of_month="1"),
     },
     "auto-08-overdue-payment-alerts-15th": {
-        "task": "tasks.finance.overdue_payment_alerts",
+        "task": "tasks.finance.overdue_payment_alerts_dispatch",
         "schedule": crontab(hour=9, minute=0, day_of_month="15"),
     },
 
     # AUTO-09: Cierre de caja diario — 22:00
     "auto-09-daily-cash-close": {
-        "task": "tasks.finance.daily_cash_close",
+        "task": "tasks.finance.daily_cash_close_dispatch",
         "schedule": crontab(hour=22, minute=0),
     },
 
     # AUTO-10: Proyección financiera mensual — días 28-31 a las 18:00
     # La tarea verifica internamente si es el último día del mes.
     "auto-10-monthly-financial-projection": {
-        "task": "tasks.finance.monthly_financial_projection",
+        "task": "tasks.finance.monthly_financial_projection_dispatch",
         "schedule": crontab(hour=18, minute=0, day_of_month="28,29,30,31"),
     },
 
     # AUTO-11: Renovación membresía — diario 08:00
     "auto-11-membership-renewal-reminder": {
-        "task": "tasks.finance.membership_renewal_reminder",
+        "task": "tasks.finance.membership_renewal_reminder_dispatch",
         "schedule": crontab(hour=8, minute=0),
     },
 
@@ -99,7 +99,7 @@ celery_app.conf.beat_schedule = {
 
     # AUTO-13: Recordatorio evaluación semestral — semanal lunes 10:00
     "auto-13-evaluation-reminder": {
-        "task": "tasks.athlete.evaluation_reminder",
+        "task": "tasks.athlete.evaluation_reminder_dispatch",
         "schedule": crontab(hour=10, minute=0, day_of_week="monday"),
     },
 
@@ -108,7 +108,7 @@ celery_app.conf.beat_schedule = {
 
     # AUTO-15: Monitoreo progreso semanal — lunes 07:00
     "auto-15-weekly-progress-monitor": {
-        "task": "tasks.athlete.weekly_progress_monitor",
+        "task": "tasks.athlete.weekly_progress_monitor_dispatch",
         "schedule": crontab(hour=7, minute=0, day_of_week="monday"),
     },
 
@@ -116,25 +116,25 @@ celery_app.conf.beat_schedule = {
 
     # AUTO-16: Briefing matutino — lun–vie 07:30
     "auto-16-morning-briefing": {
-        "task": "tasks.admin.morning_briefing",
+        "task": "tasks.admin.morning_briefing_dispatch",
         "schedule": crontab(hour=7, minute=30, day_of_week="monday-friday"),
     },
 
     # AUTO-17: Resumen fin de día — lun–sáb 21:00
     "auto-17-end-of-day-summary": {
-        "task": "tasks.admin.end_of_day_summary",
+        "task": "tasks.admin.end_of_day_summary_dispatch",
         "schedule": crontab(hour=21, minute=0, day_of_week="monday-saturday"),
     },
 
     # AUTO-18: Documentos vencidos — diario 09:00
     "auto-18-expiring-documents-check": {
-        "task": "tasks.admin.expiring_documents_check",
+        "task": "tasks.admin.expiring_documents_check_dispatch",
         "schedule": crontab(hour=9, minute=0),
     },
 
     # AUTO-19: Control inventario — lunes 06:00
     "auto-19-equipment-inventory-check": {
-        "task": "tasks.admin.equipment_inventory_check",
+        "task": "tasks.admin.equipment_inventory_check_dispatch",
         "schedule": crontab(hour=6, minute=0, day_of_week="monday"),
     },
 
@@ -181,25 +181,25 @@ celery_app.conf.beat_schedule = {
 
     # AUTO-26: Reporte semanal directivo — domingos 20:00
     "auto-26-weekly-executive-report": {
-        "task": "tasks.reporting.weekly_executive_report",
+        "task": "tasks.reporting.weekly_executive_report_dispatch",
         "schedule": crontab(hour=20, minute=0, day_of_week="sunday"),
     },
 
     # AUTO-27: Reporte mensual rendimiento — 1ro de cada mes 08:00
     "auto-27-monthly-performance-report": {
-        "task": "tasks.reporting.monthly_performance_report",
+        "task": "tasks.reporting.monthly_performance_report_dispatch",
         "schedule": crontab(hour=8, minute=0, day_of_month="1"),
     },
 
     # AUTO-28: Documentación federativa — 1ro de agosto 09:00
     "auto-28-federation-inscription-report": {
-        "task": "tasks.reporting.federation_inscription_report",
+        "task": "tasks.reporting.federation_inscription_report_dispatch",
         "schedule": crontab(hour=9, minute=0, day_of_month="1", month_of_year="8"),
     },
 
     # AUTO-29: Análisis predictivo — domingos 23:00
     "auto-29-predictive-analysis": {
-        "task": "tasks.reporting.predictive_analysis",
+        "task": "tasks.reporting.predictive_analysis_dispatch",
         "schedule": crontab(hour=23, minute=0, day_of_week="sunday"),
     },
 
@@ -216,13 +216,13 @@ celery_app.conf.beat_schedule = {
 
     # AUTO-32: Auditoría datos sensibles — domingos 04:00
     "auto-32-sensitive-data-audit": {
-        "task": "tasks.security.sensitive_data_audit",
+        "task": "tasks.security.sensitive_data_audit_dispatch",
         "schedule": crontab(hour=4, minute=0, day_of_week="sunday"),
     },
 
     # AUTO-33: Rotación sesiones inactivas — diario 02:00
     "auto-33-rotate-inactive-sessions": {
-        "task": "tasks.security.rotate_inactive_sessions",
+        "task": "tasks.security.rotate_inactive_sessions_dispatch",
         "schedule": crontab(hour=2, minute=0),
     },
 
@@ -231,7 +231,7 @@ celery_app.conf.beat_schedule = {
 
     # AUTO-35: Resumen actividad agentes — diario 23:30
     "auto-35-daily-agent-activity-summary": {
-        "task": "tasks.security.daily_agent_activity_summary",
+        "task": "tasks.security.daily_agent_activity_summary_dispatch",
         "schedule": crontab(hour=23, minute=30),
     },
 
@@ -240,7 +240,7 @@ celery_app.conf.beat_schedule = {
     # AUTO-36: Frase motivadora diaria por WhatsApp — 08:30 todos los días
     # Requiere TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_FROM
     "auto-36-daily-whatsapp-motivation": {
-        "task": "tasks.whatsapp.send_daily_motivational",
+        "task": "tasks.whatsapp.send_daily_motivational_dispatch",
         "schedule": crontab(hour=8, minute=30),
     },
 
@@ -248,13 +248,13 @@ celery_app.conf.beat_schedule = {
 
     # AUTO-36 (billing): Generación de cuotas mensuales — 1ro de cada mes 07:00
     "auto-billing-generate-monthly-fees": {
-        "task": "tasks.billing.generate_monthly_fees",
+        "task": "tasks.billing.generate_monthly_fees_dispatch",
         "schedule": crontab(hour=7, minute=0, day_of_month="1"),
     },
 
     # AUTO-37: Recordatorios de pago diarios — 09:00
     "auto-billing-invoice-reminder": {
-        "task": "tasks.billing.send_invoice_reminder",
+        "task": "tasks.billing.send_invoice_reminder_dispatch",
         "schedule": crontab(hour=9, minute=0),
     },
 }

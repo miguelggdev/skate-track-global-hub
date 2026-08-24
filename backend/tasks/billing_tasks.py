@@ -3,6 +3,10 @@ Billing automation tasks — Monthly invoice generation and reminders.
 
 AUTO-36: generate_monthly_fees   — 1st of each month at 07:00
 AUTO-37: send_invoice_reminder   — daily at 09:00
+
+Multi-tenant (Fase 5 + 6): ambas programadas usan el patrón dispatch — el
+riesgo más alto del plan (mezclar facturación entre clubes), así que se
+migran al final, con el patrón ya validado en 8 módulos anteriores.
 """
 from __future__ import annotations
 
@@ -14,7 +18,14 @@ from datetime import date, datetime, timedelta
 
 from database.supabase_client import get_supabase
 from tasks.celery_app import celery_app
-from tasks.helpers import get_automation_config, log_activity, notify_user, render_email_template, send_email
+from tasks.helpers import (
+    get_active_club_ids,
+    get_automation_config,
+    log_activity,
+    notify_user,
+    render_email_template,
+    send_email,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -141,17 +152,25 @@ def _generate_invoice_pdf(
 
 # ── AUTO-36: Generación de cuotas mensuales ────────────────────────────────
 
+@celery_app.task(name="tasks.billing.generate_monthly_fees_dispatch")
+def generate_monthly_fees_dispatch() -> dict:
+    club_ids = get_active_club_ids()
+    for club_id in club_ids:
+        generate_monthly_fees.delay(club_id)
+    return {"records_found": len(club_ids), "actions_taken": len(club_ids),
+            "summary": f"Despachado a {len(club_ids)} club(es)"}
+
 
 @celery_app.task(name="tasks.billing.generate_monthly_fees", bind=True, max_retries=3)
-def generate_monthly_fees(self, year: int = None, month: int = None) -> dict:
+def generate_monthly_fees(self, club_id: str, year: int = None, month: int = None) -> dict:
     """
-    AUTO-36: Run on the 1st of each month at 07:00.
+    AUTO-36: Run on the 1st of each month at 07:00 (via dispatch, por club).
 
-    Creates one invoice + one financial_transaction (pending) per active athlete.
-    Skips athletes who already have an invoice for this period.
-    Sends a billing email to each athlete that has an email address.
+    Creates one invoice + one financial_transaction (pending) per active
+    athlete DEL CLUB. Skips athletes who already have an invoice for this
+    period. Sends a billing email to each athlete that has an email address.
     """
-    cfg = get_automation_config("AUTO-36-BIL")
+    cfg = get_automation_config("AUTO-36-BIL", club_id)
     if not cfg["enabled"]:
         return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     p = cfg["custom_params"]
@@ -164,14 +183,28 @@ def generate_monthly_fees(self, year: int = None, month: int = None) -> dict:
 
     db = get_supabase()
 
-    # Get default monthly fee from system_settings
-    settings_row = db.table("system_settings").select("monthly_fee").single().execute()
-    default_fee = float((settings_row.data or {}).get("monthly_fee", 80000))
+    # Get default monthly fee from system_settings (modelo key/value:
+    # setting_key='monthly_fee', setting_value=texto). Bug preexistente
+    # corregido: el código anterior hacía .select("monthly_fee") — esa
+    # columna nunca existió (la tabla es key/value), así que esta consulta
+    # fallaba con un error de PostgREST y tumbaba la tarea completa ANTES
+    # de crear ninguna factura, en cada corrida desde que existe AUTO-36.
+    settings_row = (
+        db.table("system_settings")
+        .select("setting_value")
+        .eq("club_id", club_id)
+        .eq("setting_key", "monthly_fee")
+        .maybeSingle()
+        .execute()
+    )
+    raw_fee = (settings_row.data or {}).get("setting_value")
+    default_fee = float(raw_fee) if raw_fee else 80000.0
 
-    # Get all active athletes with email
+    # Get all active athletes of este club con email
     athletes = (
         db.table("athletes")
         .select("id, first_name, last_name, email, category, monthly_fee, user_id")
+        .eq("club_id", club_id)
         .eq("status", "active")
         .execute()
     ).data or []
@@ -211,6 +244,7 @@ def generate_monthly_fees(self, year: int = None, month: int = None) -> dict:
                 "due_date": due_date.isoformat(),
                 "description": f"Cuota mensual {month_name} {year}",
                 "category": "membership",
+                "club_id": club_id,
             }).execute()
 
             tx_id = tx_result.data[0]["id"] if tx_result.data else None
@@ -226,6 +260,7 @@ def generate_monthly_fees(self, year: int = None, month: int = None) -> dict:
                 "due_date": due_date.isoformat(),
                 "transaction_id": tx_id,
                 "sent_at": datetime.utcnow().isoformat(),
+                "club_id": club_id,
             }).execute()
 
             invoice = invoice_result.data[0] if invoice_result.data else {}
@@ -279,6 +314,7 @@ def generate_monthly_fees(self, year: int = None, month: int = None) -> dict:
                     ),
                     notification_type="info",
                     automation_id="AUTO-36-BIL",
+                    club_id=club_id,
                 )
 
             created += 1
@@ -287,26 +323,21 @@ def generate_monthly_fees(self, year: int = None, month: int = None) -> dict:
             logger.error("Error creating invoice for athlete %s: %s", athlete_id, exc)
             errors += 1
 
-    # Log to agent_activity_log
+    # Log a agent_activity_log vía el helper compartido — antes este módulo
+    # hacía un insert manual con columnas ("action", "result", "metadata")
+    # que no existen en la tabla real (automation_id/status/records_found/
+    # actions_taken/summary), envuelto en un try/except que lo silenciaba:
+    # nunca quedó registro real de las corridas de AUTO-36.
     summary = (
         f"Facturas {month_name} {year}: {created} creadas, "
         f"{skipped} ya existían, {errors} errores"
     )
-    try:
-        db.table("agent_activity_log").insert({
-            "agent_id": "AUTO-36",
-            "action": "generate_monthly_fees",
-            "result": summary,
-            "metadata": {
-                "year": year,
-                "month": month,
-                "created": created,
-                "skipped": skipped,
-                "errors": errors,
-            },
-        }).execute()
-    except Exception as exc:
-        logger.warning("Failed to write agent_activity_log: %s", exc)
+    log_activity(
+        "AUTO-36-BIL", "AG-07",
+        "error" if errors and not created else "success",
+        records_found=len(athletes), actions_taken=created,
+        summary=summary, club_id=club_id,
+    )
 
     logger.info(summary)
     return {"created": created, "skipped": skipped, "errors": errors}
@@ -314,18 +345,26 @@ def generate_monthly_fees(self, year: int = None, month: int = None) -> dict:
 
 # ── AUTO-37: Recordatorios de pago ────────────────────────────────────────
 
+@celery_app.task(name="tasks.billing.send_invoice_reminder_dispatch")
+def send_invoice_reminder_dispatch() -> dict:
+    club_ids = get_active_club_ids()
+    for club_id in club_ids:
+        send_invoice_reminder.delay(club_id)
+    return {"records_found": len(club_ids), "actions_taken": len(club_ids),
+            "summary": f"Despachado a {len(club_ids)} club(es)"}
+
 
 @celery_app.task(name="tasks.billing.send_invoice_reminder", bind=True, max_retries=3)
-def send_invoice_reminder(self) -> dict:
+def send_invoice_reminder(self, club_id: str) -> dict:
     """
-    AUTO-37: Run daily at 09:00.
+    AUTO-37: Run daily at 09:00 (via dispatch, por club).
 
     Sends payment reminders for:
     - Invoices due in exactly 5 days (pre-due gentle reminder).
     - Overdue invoices, repeating every 7 days after the due date
       (1st, 8th, 15th, 22nd overdue day, etc.).
     """
-    cfg = get_automation_config("AUTO-37")
+    cfg = get_automation_config("AUTO-37", club_id)
     if not cfg["enabled"]:
         return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
     p = cfg["custom_params"]
@@ -341,6 +380,7 @@ def send_invoice_reminder(self) -> dict:
             "id, invoice_number, athlete_id, amount, period_year, period_month, due_date, "
             "athletes(first_name, last_name, email, user_id)"
         )
+        .eq("club_id", club_id)
         .eq("status", "sent")
         .eq("due_date", reminder_date.isoformat())
         .execute()
@@ -379,6 +419,7 @@ def send_invoice_reminder(self) -> dict:
                 message=f"Tu cuota de {month_name} vence en 5 días.",
                 notification_type="warning",
                 automation_id="AUTO-37",
+                club_id=club_id,
             )
 
     # ── Overdue reminders ──────────────────────────────────────────────────
@@ -389,6 +430,7 @@ def send_invoice_reminder(self) -> dict:
             "due_date, transaction_id, "
             "athletes(first_name, last_name, email, user_id)"
         )
+        .eq("club_id", club_id)
         .eq("status", "sent")
         .lt("due_date", today.isoformat())
         .execute()
@@ -447,7 +489,8 @@ def send_invoice_reminder(self) -> dict:
                 ),
                 notification_type="error",
                 automation_id="AUTO-37",
+                club_id=club_id,
             )
 
-    logger.info("AUTO-37 send_invoice_reminder: %d reminder emails sent", sent)
+    logger.info("AUTO-37 send_invoice_reminder (club %s): %d reminder emails sent", club_id, sent)
     return {"sent": sent}
