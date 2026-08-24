@@ -181,15 +181,17 @@ const AthleteProfileEditDialog: React.FC<AthleteProfileEditDialogProps> = ({
           <TabsContent value="personal" className="space-y-4 mt-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Nombre</Label>
+                <Label htmlFor="edit-first-name">Nombre</Label>
                 <Input
+                  id="edit-first-name"
                   value={formData.first_name}
                   onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Apellido</Label>
+                <Label htmlFor="edit-last-name">Apellido</Label>
                 <Input
+                  id="edit-last-name"
                   value={formData.last_name}
                   onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                 />
@@ -197,15 +199,17 @@ const AthleteProfileEditDialog: React.FC<AthleteProfileEditDialogProps> = ({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Ciudad</Label>
+                <Label htmlFor="edit-city">Ciudad</Label>
                 <Input
+                  id="edit-city"
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label>País</Label>
+                <Label htmlFor="edit-country">País</Label>
                 <Input
+                  id="edit-country"
                   value={formData.country}
                   onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                 />
@@ -216,19 +220,20 @@ const AthleteProfileEditDialog: React.FC<AthleteProfileEditDialogProps> = ({
           <TabsContent value="sports" className="space-y-4 mt-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Club / Academia</Label>
+                <Label htmlFor="edit-club-name">Club / Academia</Label>
                 <Input
+                  id="edit-club-name"
                   value={formData.club_name}
                   onChange={(e) => setFormData({ ...formData, club_name: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Disciplina Principal</Label>
+                <Label htmlFor="edit-main-discipline">Disciplina Principal</Label>
                 <Select
                   value={formData.main_discipline}
                   onValueChange={(v) => setFormData({ ...formData, main_discipline: v })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="edit-main-discipline">
                     <SelectValue placeholder="Seleccionar" />
                   </SelectTrigger>
                   <SelectContent>
@@ -241,8 +246,9 @@ const AthleteProfileEditDialog: React.FC<AthleteProfileEditDialogProps> = ({
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Biografía</Label>
+              <Label htmlFor="edit-bio">Biografía</Label>
               <Textarea
+                id="edit-bio"
                 value={formData.bio}
                 onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                 rows={4}
@@ -254,48 +260,54 @@ const AthleteProfileEditDialog: React.FC<AthleteProfileEditDialogProps> = ({
           <TabsContent value="socials" className="space-y-4 mt-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Instagram</Label>
+                <Label htmlFor="edit-instagram">Instagram</Label>
                 <Input
+                  id="edit-instagram"
                   value={formData.instagram}
                   onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
                   placeholder="@usuario"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Facebook</Label>
+                <Label htmlFor="edit-facebook">Facebook</Label>
                 <Input
+                  id="edit-facebook"
                   value={formData.facebook}
                   onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
                   placeholder="usuario"
                 />
               </div>
               <div className="space-y-2">
-                <Label>TikTok</Label>
+                <Label htmlFor="edit-tiktok">TikTok</Label>
                 <Input
+                  id="edit-tiktok"
                   value={formData.tiktok}
                   onChange={(e) => setFormData({ ...formData, tiktok: e.target.value })}
                   placeholder="@usuario"
                 />
               </div>
               <div className="space-y-2">
-                <Label>YouTube</Label>
+                <Label htmlFor="edit-youtube">YouTube</Label>
                 <Input
+                  id="edit-youtube"
                   value={formData.youtube}
                   onChange={(e) => setFormData({ ...formData, youtube: e.target.value })}
                   placeholder="@canal"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Twitter/X</Label>
+                <Label htmlFor="edit-twitter">Twitter/X</Label>
                 <Input
+                  id="edit-twitter"
                   value={formData.twitter}
                   onChange={(e) => setFormData({ ...formData, twitter: e.target.value })}
                   placeholder="@usuario"
                 />
               </div>
               <div className="space-y-2">
-                <Label>WhatsApp</Label>
+                <Label htmlFor="edit-whatsapp">WhatsApp</Label>
                 <Input
+                  id="edit-whatsapp"
                   value={formData.whatsapp}
                   onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
                   placeholder="+57 300 123 4567"
@@ -306,8 +318,9 @@ const AthleteProfileEditDialog: React.FC<AthleteProfileEditDialogProps> = ({
 
           <TabsContent value="goals" className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label>Valores Personales</Label>
+              <Label htmlFor="edit-personal-values">Valores Personales</Label>
               <Textarea
+                id="edit-personal-values"
                 value={formData.personal_values}
                 onChange={(e) => setFormData({ ...formData, personal_values: e.target.value })}
                 rows={3}
@@ -315,8 +328,9 @@ const AthleteProfileEditDialog: React.FC<AthleteProfileEditDialogProps> = ({
               />
             </div>
             <div className="space-y-2">
-              <Label>Metas a Corto Plazo (1 año)</Label>
+              <Label htmlFor="edit-short-term-goals">Metas a Corto Plazo (1 año)</Label>
               <Textarea
+                id="edit-short-term-goals"
                 value={formData.short_term_goals}
                 onChange={(e) => setFormData({ ...formData, short_term_goals: e.target.value })}
                 rows={3}
@@ -324,8 +338,9 @@ const AthleteProfileEditDialog: React.FC<AthleteProfileEditDialogProps> = ({
               />
             </div>
             <div className="space-y-2">
-              <Label>Metas a Largo Plazo (3-5 años)</Label>
+              <Label htmlFor="edit-long-term-goals">Metas a Largo Plazo (3-5 años)</Label>
               <Textarea
+                id="edit-long-term-goals"
                 value={formData.long_term_goals}
                 onChange={(e) => setFormData({ ...formData, long_term_goals: e.target.value })}
                 rows={3}

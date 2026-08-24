@@ -169,8 +169,8 @@ const Reports = () => {
   });
 
   const handleDownloadReport = async (reportCategory: string) => {
-    const [XLSX, { default: jsPDF }] = await Promise.all([
-      import('xlsx'),
+    const [{ createWorkbook, addJsonSheet, downloadWorkbook }, { default: jsPDF }] = await Promise.all([
+      import('@/utils/excel'),
       import('jspdf'),
     ]);
     const { start, end } = getPeriodRange(selectedPeriod);
@@ -199,10 +199,9 @@ const Reports = () => {
           };
         });
 
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.json_to_sheet(rows);
-        XLSX.utils.book_append_sheet(wb, ws, 'Financiero');
-        XLSX.writeFile(wb, `reporte-financiero-${now}.xlsx`);
+        const wb = createWorkbook();
+        addJsonSheet(wb, 'Financiero', rows);
+        await downloadWorkbook(wb, `reporte-financiero-${now}.xlsx`);
         toast.success(`Reporte financiero del ${periodLabel} generado`);
 
       } else if (reportCategory === 'athletes') {
@@ -225,10 +224,9 @@ const Reports = () => {
           'F. Ingreso': a.join_date ?? '',
         }));
 
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.json_to_sheet(rows);
-        XLSX.utils.book_append_sheet(wb, ws, 'Deportistas');
-        XLSX.writeFile(wb, `reporte-deportistas-${now}.xlsx`);
+        const wb = createWorkbook();
+        addJsonSheet(wb, 'Deportistas', rows);
+        await downloadWorkbook(wb, `reporte-deportistas-${now}.xlsx`);
         toast.success('Reporte de deportistas generado');
 
       } else if (reportCategory === 'competitions') {
@@ -249,10 +247,9 @@ const Reports = () => {
           'Descripción': c.description ?? '',
         }));
 
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.json_to_sheet(rows);
-        XLSX.utils.book_append_sheet(wb, ws, 'Competencias');
-        XLSX.writeFile(wb, `reporte-competencias-${now}.xlsx`);
+        const wb = createWorkbook();
+        addJsonSheet(wb, 'Competencias', rows);
+        await downloadWorkbook(wb, `reporte-competencias-${now}.xlsx`);
         toast.success('Reporte de competencias generado');
 
       } else if (reportCategory === 'training') {

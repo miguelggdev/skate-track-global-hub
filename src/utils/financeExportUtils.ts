@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+import { createWorkbook, addAoaSheet, downloadWorkbook } from './excel';
 import { jsPDF } from "jspdf";
 import { formatCurrency } from "./currency";
 import { format } from "date-fns";
@@ -29,8 +29,8 @@ interface FinancialExportData {
   }>;
 }
 
-export function exportToExcel(data: FinancialExportData, clubName: string) {
-  const workbook = XLSX.utils.book_new();
+export async function exportToExcel(data: FinancialExportData, clubName: string) {
+  const workbook = createWorkbook();
 
   // Sheet 1: KPI Summary
   const kpiData = [
@@ -42,16 +42,14 @@ export function exportToExcel(data: FinancialExportData, clubName: string) {
     ["Ingreso Promedio Mensual", formatCurrency(data.kpis.averageMonthlyIncome)],
     ["Pagos Este Mes", data.kpis.paymentsThisMonthCount.toString()],
   ];
-  const kpiSheet = XLSX.utils.aoa_to_sheet(kpiData);
-  XLSX.utils.book_append_sheet(workbook, kpiSheet, "Resumen KPIs");
+  addAoaSheet(workbook, "Resumen KPIs", kpiData);
 
   // Sheet 2: Monthly Revenue
   const revenueData = [
     ["Mes", "Ingresos"],
     ...data.monthlyRevenue.map(row => [row.month, row.revenue]),
   ];
-  const revenueSheet = XLSX.utils.aoa_to_sheet(revenueData);
-  XLSX.utils.book_append_sheet(workbook, revenueSheet, "Ingresos Mensuales");
+  addAoaSheet(workbook, "Ingresos Mensuales", revenueData);
 
   // Sheet 3: Payment Status
   const statusData = [
@@ -60,8 +58,7 @@ export function exportToExcel(data: FinancialExportData, clubName: string) {
     ["Pendientes", data.paymentStatus.pending],
     ["En Mora", data.paymentStatus.overdue],
   ];
-  const statusSheet = XLSX.utils.aoa_to_sheet(statusData);
-  XLSX.utils.book_append_sheet(workbook, statusSheet, "Estado de Pagos");
+  addAoaSheet(workbook, "Estado de Pagos", statusData);
 
   // Sheet 4: Delinquent Athletes
   if (data.delinquentAthletes.length > 0) {
@@ -73,8 +70,7 @@ export function exportToExcel(data: FinancialExportData, clubName: string) {
         formatCurrency(row.totalPending),
       ]),
     ];
-    const delinquentSheet = XLSX.utils.aoa_to_sheet(delinquentData);
-    XLSX.utils.book_append_sheet(workbook, delinquentSheet, "Atletas en Mora");
+    addAoaSheet(workbook, "Atletas en Mora", delinquentData);
   }
 
   // Sheet 5: Payment Summary by Category
@@ -88,12 +84,11 @@ export function exportToExcel(data: FinancialExportData, clubName: string) {
       formatCurrency(row.totalPending),
     ]),
   ];
-  const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-  XLSX.utils.book_append_sheet(workbook, summarySheet, "Resumen por Categoría");
+  addAoaSheet(workbook, "Resumen por Categoría", summaryData);
 
   // Export
   const fileName = `Reporte_Financiero_${clubName}_${format(new Date(), "yyyy-MM-dd")}.xlsx`;
-  XLSX.writeFile(workbook, fileName);
+  await downloadWorkbook(workbook, fileName);
 }
 
 export async function exportToPDF(data: FinancialExportData, clubName: string, clubLogo?: string) {

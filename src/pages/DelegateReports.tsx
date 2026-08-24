@@ -1,5 +1,5 @@
 ﻿import React, { useState } from 'react';
-import * as XLSX from 'xlsx';
+import { createWorkbook, addJsonSheet, downloadWorkbook } from '@/utils/excel';
 import jsPDF from 'jspdf';
 import { toast } from 'sonner';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -113,7 +113,7 @@ const DelegateReports = () => {
     return true;
   };
 
-  const handleGenerateReport = (outputFormat: 'pdf' | 'excel') => {
+  const handleGenerateReport = async (outputFormat: 'pdf' | 'excel') => {
     if (reportType === 'attendance') {
       toast.error('Reporte de asistencia próximamente disponible');
       return;
@@ -176,10 +176,9 @@ const DelegateReports = () => {
         filename = `pagos-${now}.xlsx`;
       }
 
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(sheetData);
-      XLSX.utils.book_append_sheet(wb, ws, sheetName);
-      XLSX.writeFile(wb, filename);
+      const wb = createWorkbook();
+      addJsonSheet(wb, sheetName, sheetData);
+      await downloadWorkbook(wb, filename);
       toast.success(`Excel generado: ${filename}`);
       return;
     }

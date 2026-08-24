@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import * as XLSX from 'xlsx';
+import { createWorkbook, addAoaSheet, downloadWorkbook, readWorkbookFile, worksheetToJson } from '@/utils/excel';
 import { z } from 'zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -117,10 +117,9 @@ function normalizeCategory(v: unknown): string | undefined {
 
 function parseDate(v: unknown): string | undefined {
   if (!v) return undefined;
-  // Excel serial number
-  if (typeof v === 'number') {
-    const d = XLSX.SSF.parse_date_code(v);
-    if (d) return `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
+  // exceljs entrega las celdas de fecha ya como Date
+  if (v instanceof Date) {
+    return `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2,'0')}-${String(v.getDate()).padStart(2,'0')}`;
   }
   const s = String(v).trim();
   // DD/MM/YYYY
@@ -143,7 +142,7 @@ interface PreviewRow {
 
 // ─── Template download ────────────────────────────────────────────────────────
 
-function downloadTemplate() {
+async function downloadTemplate() {
   const headers = [
     'nombres', 'apellidos', 'identificacion', 'tipo_id',
     'fecha_nacimiento', 'genero', 'categoria',
@@ -156,64 +155,92 @@ function downloadTemplate() {
     'juan@mail.com', '3001234567', 'Bogotá', 'Sura',
     'María Pérez', '3009876543',
   ];
-  const ws = XLSX.utils.aoa_to_sheet([headers, sample]);
-  ws['!cols'] = headers.map(() => ({ wch: 18 }));
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Atletas');
-  XLSX.writeFile(wb, 'plantilla_importacion_atletas.xlsx');
+  const wb = createWorkbook();
+  const ws = addAoaSheet(wb, 'Atletas', [headers, sample]);
+  ws.columns = headers.map(() => ({ width: 18 }));
+  await downloadWorkbook(wb, 'plantilla_importacion_atletas.xlsx');
 }
 
 // ─── Parse file ───────────────────────────────────────────────────────────────
 
-function parseFile(file: File): Promise<PreviewRow[]> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target!.result as ArrayBuffer);
-        const wb = XLSX.read(data, { type: 'array', cellDates: false });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' });
-
-        const preview: PreviewRow[] = raw.map((rawRow, i) => {
-          const mapped = mapHeaders(rawRow);
-          const cleaned = {
-            ...mapped,
-            gender:   normalizeGender(mapped.gender),
-            category: normalizeCategory(mapped.category),
-            date_of_birth: parseDate(mapped.date_of_birth),
-            email: mapped.email ? String(mapped.email).trim().toLowerCase() : undefined,
-            first_name: String(mapped.first_name ?? '').trim(),
-            last_name:  String(mapped.last_name  ?? '').trim(),
-            identification_number: mapped.identification_number ? String(mapped.identification_number) : undefined,
-            personal_phone: mapped.personal_phone ? String(mapped.personal_phone) : undefined,
-            guardian_phone: mapped.guardian_phone ? String(mapped.guardian_phone) : undefined,
-            city:    mapped.city    ? String(mapped.city)    : undefined,
-            eps:     mapped.eps     ? String(mapped.eps)     : undefined,
-            guardian_name: mapped.guardian_name ? String(mapped.guardian_name) : undefined,
-            identification_type: mapped.identification_type ? String(mapped.identification_type) : undefined,
-          };
-
-          const result = rowSchema.safeParse(cleaned);
-          if (result.success) {
-            return { _row: i + 2, raw: rawRow, data: result.data, valid: true };
-          }
-          return {
-            _row: i + 2,
-            raw: rawRow,
-            errors: result.error.errors.map(e => e.message),
-            valid: false,
-          };
-        });
-
-        resolve(preview);
-      } catch (err) {
-        reject(err);
-      }
+function buildPreview(raw: Record<string, unknown>[]): PreviewRow[] {
+  return raw.map((rawRow, i) => {
+    const mapped = mapHeaders(rawRow);
+    const cleaned = {
+      ...mapped,
+      gender:   normalizeGender(mapped.gender),
+      category: normalizeCategory(mapped.category),
+      date_of_birth: parseDate(mapped.date_of_birth),
+      email: mapped.email ? String(mapped.email).trim().toLowerCase() : undefined,
+      first_name: String(mapped.first_name ?? '').trim(),
+      last_name:  String(mapped.last_name  ?? '').trim(),
+      identification_number: mapped.identification_number ? String(mapped.identification_number) : undefined,
+      personal_phone: mapped.personal_phone ? String(mapped.personal_phone) : undefined,
+      guardian_phone: mapped.guardian_phone ? String(mapped.guardian_phone) : undefined,
+      city:    mapped.city    ? String(mapped.city)    : undefined,
+      eps:     mapped.eps     ? String(mapped.eps)     : undefined,
+      guardian_name: mapped.guardian_name ? String(mapped.guardian_name) : undefined,
+      identification_type: mapped.identification_type ? String(mapped.identification_type) : undefined,
     };
-    reader.onerror = reject;
-    reader.readAsArrayBuffer(file);
+
+    const result = rowSchema.safeParse(cleaned);
+    if (result.success) {
+      return { _row: i + 2, raw: rawRow, data: result.data, valid: true };
+    }
+    return {
+      _row: i + 2,
+      raw: rawRow,
+      errors: result.error.errors.map(e => e.message),
+      valid: false,
+    };
   });
+}
+
+// Parser CSV simple: detecta separador (, o ;) y soporta campos entre comillas con "" escapado
+function parseCsvText(text: string): Record<string, unknown>[] {
+  const firstLine = text.split(/\r?\n/, 1)[0] ?? '';
+  const delimiter = firstLine.split(';').length > firstLine.split(',').length ? ';' : ',';
+
+  function parseLine(line: string): string[] {
+    const fields: string[] = [];
+    let cur = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQuotes) {
+        if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+        else if (ch === '"') { inQuotes = false; }
+        else { cur += ch; }
+      } else if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === delimiter) {
+        fields.push(cur); cur = '';
+      } else {
+        cur += ch;
+      }
+    }
+    fields.push(cur);
+    return fields;
+  }
+
+  const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+  if (lines.length === 0) return [];
+  const headers = parseLine(lines[0]);
+  return lines.slice(1).map(line => {
+    const values = parseLine(line);
+    const row: Record<string, unknown> = {};
+    headers.forEach((h, idx) => { row[h] = values[idx] ?? ''; });
+    return row;
+  });
+}
+
+async function parseFile(file: File): Promise<PreviewRow[]> {
+  if (file.name.match(/\.csv$/i)) {
+    const text = await file.text();
+    return buildPreview(parseCsvText(text));
+  }
+  const ws = await readWorkbookFile(file);
+  return buildPreview(worksheetToJson(ws));
 }
 
 // ─── Bulk insert ──────────────────────────────────────────────────────────────
@@ -285,8 +312,8 @@ export function BulkImportDialog({ open, onClose, onImported }: BulkImportDialog
   const invalidRows = preview.filter(r => !r.valid);
 
   const handleFile = useCallback(async (file: File) => {
-    if (!file.name.match(/\.(xlsx|xls|csv)$/i)) {
-      toast({ title: 'Formato no soportado', description: 'Usa .xlsx, .xls o .csv', variant: 'destructive' });
+    if (!file.name.match(/\.(xlsx|csv)$/i)) {
+      toast({ title: 'Formato no soportado', description: 'Usa .xlsx o .csv', variant: 'destructive' });
       return;
     }
     setFileName(file.name);
@@ -354,7 +381,7 @@ export function BulkImportDialog({ open, onClose, onImported }: BulkImportDialog
             Importación Masiva de Atletas
           </DialogTitle>
           <DialogDescription>
-            Carga un archivo Excel (.xlsx) con los datos de múltiples atletas a la vez
+            Carga un archivo Excel (.xlsx) o CSV con los datos de múltiples atletas a la vez
           </DialogDescription>
           {/* Step indicator */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
@@ -383,7 +410,7 @@ export function BulkImportDialog({ open, onClose, onImported }: BulkImportDialog
                 onDragLeave={() => setDragging(false)}
                 onDrop={onDrop}
               >
-                <input type="file" accept=".xlsx,.xls,.csv" className="sr-only" onChange={onInputChange} />
+                <input type="file" accept=".xlsx,.csv" className="sr-only" onChange={onInputChange} />
                 <div className="w-14 h-14 rounded-full bg-orange-500/10 flex items-center justify-center">
                   {parsing
                     ? <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
@@ -393,7 +420,7 @@ export function BulkImportDialog({ open, onClose, onImported }: BulkImportDialog
                 <div className="text-center">
                   <p className="font-semibold">{parsing ? 'Procesando…' : 'Arrastra tu archivo aquí'}</p>
                   <p className="text-sm text-muted-foreground mt-1">o haz click para seleccionar</p>
-                  <p className="text-xs text-muted-foreground mt-1">Formatos: .xlsx · .xls · .csv</p>
+                  <p className="text-xs text-muted-foreground mt-1">Formatos: .xlsx · .csv</p>
                 </div>
               </label>
 

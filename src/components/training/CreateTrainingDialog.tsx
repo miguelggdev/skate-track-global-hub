@@ -436,10 +436,11 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <Label>Fecha de Programación</Label>
+                    <Label htmlFor="schedule-date-trigger">Fecha de Programación</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
+                          id="schedule-date-trigger"
                           variant={"outline"}
                           className={cn(
                             "w-full justify-start text-left font-normal",
@@ -563,9 +564,9 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   <div>
-                    <Label>Día</Label>
+                    <Label htmlFor="schedule-day">Día</Label>
                     <Select value={selectedDay} onValueChange={setSelectedDay}>
-                      <SelectTrigger>
+                      <SelectTrigger id="schedule-day">
                         <SelectValue placeholder="Día" />
                       </SelectTrigger>
                       <SelectContent>
@@ -577,10 +578,10 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                   </div>
 
                   <div>
-                    <Label>Hora Inicio</Label>
+                    <Label id="schedule-start-time-label">Hora Inicio</Label>
                     <div className="flex gap-1 items-center">
                       <Select value={formData.start_hour} onValueChange={(value) => setFormData({...formData, start_hour: value})}>
-                        <SelectTrigger className="flex-1">
+                        <SelectTrigger className="flex-1" aria-labelledby="schedule-start-time-label" aria-label="Hora">
                           <SelectValue placeholder="HH" />
                         </SelectTrigger>
                         <SelectContent className="max-h-[200px]">
@@ -591,7 +592,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                       </Select>
                       <span className="text-muted-foreground">:</span>
                       <Select value={formData.start_minute} onValueChange={(value) => setFormData({...formData, start_minute: value})}>
-                        <SelectTrigger className="flex-1">
+                        <SelectTrigger className="flex-1" aria-labelledby="schedule-start-time-label" aria-label="Minutos">
                           <SelectValue placeholder="MM" />
                         </SelectTrigger>
                         <SelectContent className="max-h-[200px]">
@@ -604,10 +605,10 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                   </div>
 
                   <div>
-                    <Label>Hora Fin</Label>
+                    <Label id="schedule-end-time-label">Hora Fin</Label>
                     <div className="flex gap-1 items-center">
                       <Select value={formData.end_hour} onValueChange={(value) => setFormData({...formData, end_hour: value})}>
-                        <SelectTrigger className="flex-1">
+                        <SelectTrigger className="flex-1" aria-labelledby="schedule-end-time-label" aria-label="Hora">
                           <SelectValue placeholder="HH" />
                         </SelectTrigger>
                         <SelectContent className="max-h-[200px]">
@@ -618,7 +619,7 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                       </Select>
                       <span className="text-muted-foreground">:</span>
                       <Select value={formData.end_minute} onValueChange={(value) => setFormData({...formData, end_minute: value})}>
-                        <SelectTrigger className="flex-1">
+                        <SelectTrigger className="flex-1" aria-labelledby="schedule-end-time-label" aria-label="Minutos">
                           <SelectValue placeholder="MM" />
                         </SelectTrigger>
                         <SelectContent className="max-h-[200px]">
@@ -631,9 +632,9 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                   </div>
 
                   <div>
-                    <Label>Tipo</Label>
+                    <Label htmlFor="schedule-training-type">Tipo</Label>
                     <Select value={formData.training_type} onValueChange={(value) => setFormData({...formData, training_type: value})}>
-                      <SelectTrigger>
+                      <SelectTrigger id="schedule-training-type">
                         <SelectValue placeholder="Tipo" />
                       </SelectTrigger>
                       <SelectContent>
@@ -663,7 +664,8 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                     </div>
                     
                     {/* Calendar Grid */}
-                    <div className="border border-gray-800 bg-white">
+                    <div className="overflow-x-auto">
+                    <div className="border border-gray-800 bg-white min-w-[640px]">
                       {/* Days Header */}
                       <div className="grid grid-cols-8 bg-green-200">
                         <div className="p-3 border border-gray-800 text-center font-bold text-xs bg-green-300">JORNADA</div>
@@ -795,7 +797,8 @@ const CreateTrainingDialog = ({ children }: CreateTrainingDialogProps) => {
                         })}
                       </div>
                     </div>
-                    
+                    </div>
+
                     {/* Footer */}
                     <div className="bg-yellow-400 text-black p-3 text-center font-bold text-sm border border-gray-800">
                       Respeto / Amistad / Excelencia

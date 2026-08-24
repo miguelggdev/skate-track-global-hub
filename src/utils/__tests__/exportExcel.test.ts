@@ -1,16 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock XLSX — hoisted above imports by Vitest automatically
-vi.mock('xlsx', () => ({
-  utils: {
-    book_new: vi.fn(() => ({})),
-    json_to_sheet: vi.fn((_data) => ({})),
-    book_append_sheet: vi.fn(),
-  },
-  writeFile: vi.fn(),
+// Mock del helper de exceljs — hoisted above imports by Vitest automatically
+vi.mock('../excel', () => ({
+  createWorkbook: vi.fn(() => ({})),
+  addJsonSheet: vi.fn(),
+  downloadWorkbook: vi.fn(() => Promise.resolve()),
 }));
 
-import * as XLSX from 'xlsx';
+import * as ExcelHelpers from '../excel';
 import {
   exportToExcel,
   exportAthletesList,
@@ -24,34 +21,33 @@ beforeEach(() => {
 });
 
 describe('exportToExcel', () => {
-  it('creates workbook and calls writeFile', () => {
+  it('creates workbook, adds the sheet and downloads it', async () => {
     const data = [{ name: 'Test', value: 1 }];
-    exportToExcel(data, 'test-file', 'Hoja1');
+    await exportToExcel(data, 'test-file', 'Hoja1');
 
-    expect(XLSX.utils.book_new).toHaveBeenCalledOnce();
-    expect(XLSX.utils.json_to_sheet).toHaveBeenCalledWith(data);
-    expect(XLSX.utils.book_append_sheet).toHaveBeenCalled();
-    expect(XLSX.writeFile).toHaveBeenCalledWith(expect.anything(), 'test-file.xlsx');
+    expect(ExcelHelpers.createWorkbook).toHaveBeenCalledOnce();
+    expect(ExcelHelpers.addJsonSheet).toHaveBeenCalledWith(expect.anything(), 'Hoja1', data);
+    expect(ExcelHelpers.downloadWorkbook).toHaveBeenCalledWith(expect.anything(), 'test-file.xlsx');
   });
 
-  it('appends .xlsx extension to filename', () => {
-    exportToExcel([], 'my-report');
-    const lastCall = (XLSX.writeFile as ReturnType<typeof vi.fn>).mock.lastCall;
+  it('appends .xlsx extension to filename', async () => {
+    await exportToExcel([], 'my-report');
+    const lastCall = (ExcelHelpers.downloadWorkbook as ReturnType<typeof vi.fn>).mock.lastCall;
     expect(lastCall?.[1]).toMatch(/\.xlsx$/);
   });
 });
 
 describe('exportAthletesList', () => {
-  it('maps athlete fields to Spanish column headers', () => {
+  it('maps athlete fields to Spanish column headers', async () => {
     const athletes = [{
       first_name: 'Juan', last_name: 'Pérez',
       athlete_number: 'COL-001', category: 'Juvenil',
       status: 'active', date_of_birth: '2007-03-15', email: 'j@t.com',
     }];
 
-    exportAthletesList(athletes);
+    await exportAthletesList(athletes);
 
-    const rows = (XLSX.utils.json_to_sheet as ReturnType<typeof vi.fn>).mock.lastCall?.[0] as Record<string, unknown>[];
+    const rows = (ExcelHelpers.addJsonSheet as ReturnType<typeof vi.fn>).mock.lastCall?.[2] as Record<string, unknown>[];
     expect(rows?.[0]).toMatchObject({
       'Nombre': 'Juan',
       'Apellido': 'Pérez',
@@ -60,25 +56,25 @@ describe('exportAthletesList', () => {
     });
   });
 
-  it('handles missing optional fields gracefully', () => {
-    expect(() => exportAthletesList([{}])).not.toThrow();
+  it('handles missing optional fields gracefully', async () => {
+    await expect(exportAthletesList([{}])).resolves.not.toThrow();
   });
 });
 
 describe('exportFinanceTransactions', () => {
-  it('maps transaction fields to Spanish headers', () => {
+  it('maps transaction fields to Spanish headers', async () => {
     const txs = [{ description: 'Cuota', amount: 150000, transaction_type: 'income' }];
-    exportFinanceTransactions(txs);
-    const rows = (XLSX.utils.json_to_sheet as ReturnType<typeof vi.fn>).mock.lastCall?.[0] as Record<string, unknown>[];
+    await exportFinanceTransactions(txs);
+    const rows = (ExcelHelpers.addJsonSheet as ReturnType<typeof vi.fn>).mock.lastCall?.[2] as Record<string, unknown>[];
     expect(rows?.[0]).toMatchObject({ 'Descripción': 'Cuota', 'Monto': 150000 });
   });
 });
 
 describe('exportCompetitionResults', () => {
-  it('maps result fields to Spanish headers', () => {
+  it('maps result fields to Spanish headers', async () => {
     const results = [{ athlete_name: 'Juan', time_formatted: '38.241', position: 1 }];
-    exportCompetitionResults(results);
-    const rows = (XLSX.utils.json_to_sheet as ReturnType<typeof vi.fn>).mock.lastCall?.[0] as Record<string, unknown>[];
+    await exportCompetitionResults(results);
+    const rows = (ExcelHelpers.addJsonSheet as ReturnType<typeof vi.fn>).mock.lastCall?.[2] as Record<string, unknown>[];
     expect(rows?.[0]).toMatchObject({ 'Atleta': 'Juan', 'Tiempo': '38.241', 'Posición': 1 });
   });
 });

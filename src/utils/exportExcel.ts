@@ -1,44 +1,24 @@
-import * as XLSX from 'xlsx';
+import { createWorkbook, addJsonSheet, downloadWorkbook } from './excel';
 
-function autoFitColumns(ws: XLSX.WorkSheet, data: Record<string, unknown>[]) {
-  if (!data.length) return;
-  const cols = Object.keys(data[0]);
-  ws['!cols'] = cols.map(col => ({
-    wch: Math.max(
-      col.length,
-      ...data.map(row => String(row[col] ?? '').length)
-    ) + 2,
-  }));
-}
-
-function addStyledHeader(wb: XLSX.WorkBook, ws: XLSX.WorkSheet, title: string) {
-  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
-  ws['A1'] = { v: title, t: 's' };
-}
-
-export function exportToExcel<T extends Record<string, unknown>>(
+export async function exportToExcel<T extends Record<string, unknown>>(
   data: T[],
   filename: string,
   sheetName = 'Datos'
 ) {
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(data);
-  autoFitColumns(ws, data as Record<string, unknown>[]);
-  XLSX.utils.book_append_sheet(wb, ws, sheetName);
-  XLSX.writeFile(wb, `${filename}.xlsx`);
+  const wb = createWorkbook();
+  addJsonSheet(wb, sheetName, data as Record<string, unknown>[]);
+  await downloadWorkbook(wb, `${filename}.xlsx`);
 }
 
-export function exportMultiSheet(
+export async function exportMultiSheet(
   sheets: Array<{ name: string; data: Record<string, unknown>[] }>,
   filename: string
 ) {
-  const wb = XLSX.utils.book_new();
+  const wb = createWorkbook();
   sheets.forEach(({ name, data }) => {
-    const ws = XLSX.utils.json_to_sheet(data);
-    autoFitColumns(ws, data);
-    XLSX.utils.book_append_sheet(wb, ws, name.slice(0, 31));
+    addJsonSheet(wb, name, data);
   });
-  XLSX.writeFile(wb, `${filename}.xlsx`);
+  await downloadWorkbook(wb, `${filename}.xlsx`);
 }
 
 // ─── Domain-specific exporters ─────────────────────────────────────────────
@@ -56,7 +36,7 @@ export function exportAthletesList(athletes: Array<{
     'Fecha Nac.': a.date_of_birth ?? '',
     'Email': a.email ?? '',
   }));
-  exportToExcel(rows, `atletas_${new Date().toISOString().slice(0,10)}`, 'Atletas');
+  return exportToExcel(rows, `atletas_${new Date().toISOString().slice(0,10)}`, 'Atletas');
 }
 
 export function exportFinanceTransactions(transactions: Array<{
@@ -71,7 +51,7 @@ export function exportFinanceTransactions(transactions: Array<{
     'Estado': t.payment_status ?? '',
     'Pagador': t.payer_name ?? '',
   }));
-  exportToExcel(rows, `finanzas_${new Date().toISOString().slice(0,10)}`, 'Transacciones');
+  return exportToExcel(rows, `finanzas_${new Date().toISOString().slice(0,10)}`, 'Transacciones');
 }
 
 export function exportCompetitionResults(results: Array<{
@@ -87,7 +67,7 @@ export function exportCompetitionResults(results: Array<{
     'Medalla': r.medal ?? '',
     'Categoría': r.category ?? '',
   }));
-  exportToExcel(rows, `resultados_${new Date().toISOString().slice(0,10)}`, 'Resultados');
+  return exportToExcel(rows, `resultados_${new Date().toISOString().slice(0,10)}`, 'Resultados');
 }
 
 // ─── Planilla de inscripción Liga de Bogotá ───────────────────────────────────
@@ -127,11 +107,11 @@ export interface PlanillaHeaderInfo {
   valor_ins_dep?: number;
 }
 
-export function exportRegistrationPlanilla(
+export async function exportRegistrationPlanilla(
   athletes: PlanillaAthleteRow[],
   header: PlanillaHeaderInfo
 ) {
-  const wb = XLSX.utils.book_new();
+  const wb = createWorkbook();
 
   // Fila 1: encabezado del evento (aplanado en una sola hoja para compatibilidad)
   const headerRows: Record<string, unknown>[] = [
@@ -154,9 +134,7 @@ export function exportRegistrationPlanilla(
     },
   ];
 
-  const wsHeader = XLSX.utils.json_to_sheet(headerRows);
-  wsHeader['!cols'] = [{ wch: 28 }, { wch: 40 }];
-  XLSX.utils.book_append_sheet(wb, wsHeader, 'Encabezado');
+  addJsonSheet(wb, 'Encabezado', headerRows);
 
   // Hoja de deportistas
   const athleteRows = athletes.map(a => ({
@@ -179,12 +157,10 @@ export function exportRegistrationPlanilla(
     'P5': a.p5 ? 'X' : '',
   }));
 
-  const wsAthletes = XLSX.utils.json_to_sheet(athleteRows);
-  autoFitColumns(wsAthletes, athleteRows);
-  XLSX.utils.book_append_sheet(wb, wsAthletes, 'Deportistas');
+  addJsonSheet(wb, 'Deportistas', athleteRows);
 
   const date = new Date().toISOString().slice(0, 10);
-  XLSX.writeFile(wb, `planilla_inscripcion_${header.evento.replace(/\s+/g, '_')}_${date}.xlsx`);
+  await downloadWorkbook(wb, `planilla_inscripcion_${header.evento.replace(/\s+/g, '_')}_${date}.xlsx`);
 }
 
 export function exportAttendanceReport(sessions: Array<{
@@ -197,5 +173,5 @@ export function exportAttendanceReport(sessions: Array<{
     'Asistió': s.attended ? 'Sí' : 'No',
     'Notas': s.notes ?? '',
   }));
-  exportToExcel(rows, `asistencia_${new Date().toISOString().slice(0,10)}`, 'Asistencia');
+  return exportToExcel(rows, `asistencia_${new Date().toISOString().slice(0,10)}`, 'Asistencia');
 }

@@ -2,7 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.4';
 
-const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') ?? 'https://byaxcqhxxxdjogvdhyqn.supabase.co';
+const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') ?? 'https://track.arkanatech.tech';
 const ALLOWED_ROLES = ['admin', 'coach', 'athlete', 'delegate', 'leader', 'finance', 'parent'] as const;
 type AllowedRole = typeof ALLOWED_ROLES[number];
 

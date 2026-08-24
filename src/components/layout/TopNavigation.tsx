@@ -480,23 +480,26 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
         </Button>
 
         {/* Club Logo */}
-        <div className="flex-shrink-0 mr-4">
+        <button
+          type="button"
+          onClick={() => navigate('/')}
+          className="flex-shrink-0 mr-4"
+          aria-label="Ir al inicio"
+        >
           {clubLogo ? (
             <img
               src={clubLogo}
               alt="Club logo"
               className="club-logo-header"
-              onClick={() => navigate('/')}
             />
           ) : (
             <img
               src="/logo.svg"
               alt="SpeedSkate Academy logo"
               className="club-logo-header"
-              onClick={() => navigate('/')}
             />
           )}
-        </div>
+        </button>
 
         {/* Search Bar — desktop only */}
         <div className="hidden sm:block flex-1 max-w-[60%] mr-4" ref={searchRef}>
@@ -505,6 +508,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
             <Input
               type="text"
               placeholder={t('common.search')}
+              aria-label={t('common.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -650,6 +654,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
               type="text"
               autoFocus
               placeholder={t('common.search')}
+              aria-label={t('common.search')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               onKeyDown={e => {

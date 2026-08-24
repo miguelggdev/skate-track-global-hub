@@ -1,5 +1,5 @@
-﻿import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
+﻿import jsPDF from 'jspdf';
+import { createWorkbook, addJsonSheet, addAoaSheet, downloadWorkbook } from './excel';
 import { AthleteReportData } from '@/hooks/useAllAthletes';
 import { ClubInfo, ReportSettings, ReportTemplateGenerator } from './reportTemplateGenerator';
 
@@ -12,14 +12,14 @@ export const generateAthleteExcel = async (athletes: AthleteReportData[], clubIn
       'Número de Atleta': athlete.athlete_number ?? '',
       'Categoría': athlete.category ?? '',
       'Nivel': athlete.level ?? '',
-      'Fecha de Nacimiento': athlete.date_of_birth ? 
+      'Fecha de Nacimiento': athlete.date_of_birth ?
         new Date(athlete.date_of_birth).toLocaleDateString('es-ES') : '',
       'Género': athlete.gender ?? '',
       'Tipo de Documento': athlete.id_type ?? '',
       'Número de Documento': athlete.id_number ?? '',
       'Teléfono': athlete.phone ?? '',
       'Email': athlete.email ?? '',
-      'Fecha de Ingreso': athlete.join_date ? 
+      'Fecha de Ingreso': athlete.join_date ?
         new Date(athlete.join_date).toLocaleDateString('es-ES') : '',
       'Estado': athlete.status ?? '',
       'Contacto de Emergencia': athlete.emergency_contact_name ?? '',
@@ -28,43 +28,20 @@ export const generateAthleteExcel = async (athletes: AthleteReportData[], clubIn
       'Logros': athlete.achievements ?? '',
     }));
 
-    // Create workbook
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = createWorkbook();
+    const worksheet = addJsonSheet(workbook, 'Atletas', excelData);
 
-    // Set column widths
-    const columnWidths = [
-      { wch: 25 }, // Nombre Completo
-      { wch: 15 }, // Número de Atleta
-      { wch: 15 }, // Categoría
-      { wch: 15 }, // Nivel
-      { wch: 15 }, // Fecha de Nacimiento
-      { wch: 10 }, // Género
-      { wch: 15 }, // Tipo de Documento
-      { wch: 20 }, // Número de Documento
-      { wch: 15 }, // Teléfono
-      { wch: 25 }, // Email
-      { wch: 15 }, // Fecha de Ingreso
-      { wch: 10 }, // Estado
-      { wch: 25 }, // Contacto de Emergencia
-      { wch: 20 }, // Teléfono de Emergencia
-      { wch: 30 }, // Notas Médicas
-      { wch: 30 }, // Logros
-    ];
-    worksheet['!cols'] = columnWidths;
+    // Column widths (mismo orden que las columnas de excelData)
+    const columnWidths = [25, 15, 15, 15, 15, 10, 15, 20, 15, 25, 15, 10, 25, 20, 30, 30];
+    worksheet.columns.forEach((col, i) => { col.width = columnWidths[i]; });
 
-    // Add header row styling
-    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
-    for (let col = range.s.c; col <= range.e.c; col++) {
-      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
-      if (worksheet[cellAddress]) {
-        worksheet[cellAddress].s = {
-          font: { bold: true },
-          fill: { fgColor: { rgb: "0891B2" } },
-          alignment: { horizontal: "center" }
-        };
-      }
-    }
+    // Header row styling
+    const headerRow = worksheet.getRow(1);
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0891B2' } };
+      cell.alignment = { horizontal: 'center' };
+    });
 
     // Add club information as a separate sheet
     const clubInfoData = [
@@ -85,19 +62,15 @@ export const generateAthleteExcel = async (athletes: AthleteReportData[], clubIn
       ['Fecha de Generación', new Date().toLocaleDateString('es-ES')],
     ];
 
-    const clubSheet = XLSX.utils.aoa_to_sheet(clubInfoData);
-    clubSheet['!cols'] = [{ wch: 20 }, { wch: 40 }];
-
-    // Add sheets to workbook
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Atletas');
-    XLSX.utils.book_append_sheet(workbook, clubSheet, 'Información del Club');
+    const clubSheet = addAoaSheet(workbook, 'Información del Club', clubInfoData);
+    clubSheet.getColumn(1).width = 20;
+    clubSheet.getColumn(2).width = 40;
 
     // Generate filename with timestamp
     const timestamp = new Date().toISOString().split('T')[0];
     const filename = `Reporte_Atletas_${clubInfo.club_name || 'Club'}_${timestamp}.xlsx`;
 
-    // Save file
-    XLSX.writeFile(workbook, filename);
+    await downloadWorkbook(workbook, filename);
 
   } catch (error) {
     throw error;
