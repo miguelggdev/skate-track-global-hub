@@ -12,12 +12,18 @@ def _make_config(enabled: bool = True, params: dict | None = None) -> dict:
 
 
 # ── marketing_tasks ───────────────────────────────────────────────────────────
+# Multi-tenant (Fase 5/6): estos tasks ahora reciben club_id explícito — el
+# dispatch por club vive en *_dispatch (ver marketing_tasks.py), estos tests
+# ejercitan directamente la corrida "por club" con un club_id de prueba.
+
+_TEST_CLUB_ID = "11111111-1111-1111-1111-111111111111"
+
 
 class TestReactivateInactiveAthletes:
     def test_disabled_returns_early(self, mock_supabase_ctx):
         with patch("tasks.marketing_tasks.get_automation_config", return_value=_make_config(enabled=False)):
             from tasks.marketing_tasks import reactivate_inactive_athletes
-            result = reactivate_inactive_athletes()
+            result = reactivate_inactive_athletes(_TEST_CLUB_ID)
         assert result["actions_taken"] == 0
         assert "Deshabilitada" in result["summary"]
 
@@ -31,7 +37,7 @@ class TestReactivateInactiveAthletes:
             with patch("tasks.marketing_tasks.get_supabase", return_value=mock_db):
                 from tasks.marketing_tasks import reactivate_inactive_athletes
                 # Should not raise NameError
-                result = reactivate_inactive_athletes()
+                result = reactivate_inactive_athletes(_TEST_CLUB_ID)
         assert isinstance(result, dict)
 
     def test_inactive_days_param_respected(self, mock_supabase_ctx):
@@ -42,7 +48,29 @@ class TestReactivateInactiveAthletes:
         with patch("tasks.marketing_tasks.get_automation_config", return_value=_make_config(params={"inactive_days": 90})):
             with patch("tasks.marketing_tasks.get_supabase", return_value=mock_db):
                 from tasks.marketing_tasks import reactivate_inactive_athletes
-                result = reactivate_inactive_athletes()
+                result = reactivate_inactive_athletes(_TEST_CLUB_ID)
+        assert result["records_found"] == 0
+
+
+class TestMarketingDispatch:
+    """Fase 6: cada *_dispatch abanica una tarea .delay(club_id) por club activo."""
+
+    def test_birthday_greetings_dispatch_fans_out_per_active_club(self, mock_supabase_ctx):
+        from tasks import marketing_tasks
+        with patch("tasks.marketing_tasks.get_active_club_ids", return_value=["club-a", "club-b"]):
+            with patch.object(marketing_tasks.birthday_greetings, "delay") as mock_delay:
+                result = marketing_tasks.birthday_greetings_dispatch()
+        assert mock_delay.call_count == 2
+        mock_delay.assert_any_call("club-a")
+        mock_delay.assert_any_call("club-b")
+        assert result["records_found"] == 2
+
+    def test_dispatch_with_no_active_clubs_does_nothing(self, mock_supabase_ctx):
+        from tasks import marketing_tasks
+        with patch("tasks.marketing_tasks.get_active_club_ids", return_value=[]):
+            with patch.object(marketing_tasks.reactivate_inactive_athletes, "delay") as mock_delay:
+                result = marketing_tasks.reactivate_inactive_athletes_dispatch()
+        mock_delay.assert_not_called()
         assert result["records_found"] == 0
 
 

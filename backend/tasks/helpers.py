@@ -60,10 +60,27 @@ _DEFAULT_AUTOMATION_PARAMS: dict[str, dict] = {
 }
 
 
-def get_automation_config(automation_id: str) -> dict:
-    """Return live automation config from DB with 5-minute in-process cache."""
+def _config_cache_key(automation_id: str, club_id: str | None) -> str:
+    # club_id=None preserva la key en formato viejo (string plano) — así los
+    # módulos que todavía no pasan club_id (no migrados a Fase 5) no invalidan
+    # ni comparten cache con los que sí lo hacen.
+    return automation_id if club_id is None else f"{automation_id}:{club_id}"
+
+
+def get_automation_config(automation_id: str, club_id: str | None = None) -> dict:
+    """Return live automation config from DB with 5-minute in-process cache.
+
+    Multi-tenant (Fase 5): automation_config ahora tiene club_id (cada club
+    puede activar/desactivar y parametrizar cada automatización por su
+    cuenta). Pasar club_id explícito una vez el caller ya sabe para qué club
+    está corriendo (dispatch pattern, ver get_active_club_ids). club_id=None
+    preserva el comportamiento viejo (sin filtro) para módulos aún no
+    migrados a Fase 5 — no rompe nada, simplemente no es multi-tenant-aware
+    todavía.
+    """
+    cache_key = _config_cache_key(automation_id, club_id)
     now = time.monotonic()
-    cached = _CONFIG_CACHE.get(automation_id)
+    cached = _CONFIG_CACHE.get(cache_key)
     if cached and now - cached[1] < _CACHE_TTL:
         return cached[0]
 
@@ -77,13 +94,14 @@ def get_automation_config(automation_id: str) -> dict:
 
     try:
         db = get_supabase()
-        row = (
+        query = (
             db.table("automation_config")
             .select("enabled,schedule_hour,schedule_minute,custom_params")
             .eq("automation_id", automation_id)
-            .maybe_single()
-            .execute()
         )
+        if club_id is not None:
+            query = query.eq("club_id", club_id)
+        row = query.maybe_single().execute()
         if row.data:
             d = row.data
             config["enabled"] = bool(d.get("enabled", True))
@@ -95,13 +113,15 @@ def get_automation_config(automation_id: str) -> dict:
     except Exception as exc:
         logger.warning("get_automation_config failed for %s: %s", automation_id, exc)
 
-    _CONFIG_CACHE[automation_id] = (config, now)
+    _CONFIG_CACHE[cache_key] = (config, now)
     return config
 
 
 def invalidate_automation_config_cache(automation_id: str | None = None) -> None:
     if automation_id:
-        _CONFIG_CACHE.pop(automation_id, None)
+        # Invalida tanto la key global vieja como cualquier variante por club.
+        for key in [k for k in _CONFIG_CACHE if k == automation_id or k.startswith(f"{automation_id}:")]:
+            _CONFIG_CACHE.pop(key, None)
     else:
         _CONFIG_CACHE.clear()
 
@@ -124,27 +144,59 @@ def now_utc() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def get_active_club_ids() -> list[str]:
+    """Return the ids of every active club (Fase 6: base del patrón dispatch).
+
+    Un task programado deja de correr "una vez global" y pasa a correr una
+    vez POR CLUB ACTIVO — este helper es la fuente de verdad de qué clubes
+    procesar. Un club con is_active=false (suspendido, ver clubs.is_active)
+    se excluye a propósito: no tiene sentido facturarlo/notificarlo.
+    """
+    db = get_supabase()
+    try:
+        rows = (
+            db.table("clubs").select("id").eq("is_active", True).execute()
+        ).data or []
+        return [r["id"] for r in rows]
+    except Exception as exc:
+        logger.error("get_active_club_ids failed: %s", exc)
+        return []
+
+
 def notify_user(
     user_id: str,
     title: str,
     message: str,
     notification_type: str = "info",
     automation_id: str = "unknown",
+    club_id: str | None = None,
 ) -> None:
-    """Insert in-app notification (picked up by Supabase Realtime) and log it."""
+    """Insert in-app notification (picked up by Supabase Realtime) and log it.
+
+    club_id: pásalo explícito una vez el caller sepa para qué club está
+    notificando (dispatch pattern). notifications/notification_log tienen
+    club_id NOT NULL — sin pasarlo acá, el trigger de la BD lo completa con
+    el club "por defecto" (el primero que existe), lo cual es incorrecto en
+    cuanto haya más de un club: el usuario del club B recibiría una
+    notificación marcada como del club A y, por RLS, ¡nunca la vería!
+    """
     db = get_supabase()
     try:
-        db.table("notifications").insert({
+        payload = {
             "user_id": user_id,
             "title": title,
             "message": message,
             "type": notification_type,
-        }).execute()
+        }
+        if club_id is not None:
+            payload["club_id"] = club_id
+        db.table("notifications").insert(payload).execute()
     except Exception as exc:
         logger.error("notify_user insert failed for %s: %s", user_id, exc)
 
     _log_notification(automation_id=automation_id, channel="push",
-                      recipient_id=user_id, subject=title, body=message)
+                      recipient_id=user_id, subject=title, body=message,
+                      club_id=club_id)
 
 
 def notify_role(
@@ -153,16 +205,21 @@ def notify_role(
     message: str,
     notification_type: str = "info",
     automation_id: str = "unknown",
+    club_id: str | None = None,
 ) -> int:
-    """Send in-app notification to every active user with a given role."""
+    """Send in-app notification to every user with a given role.
+
+    club_id: filtra a los usuarios de ESE club solamente (y se propaga a
+    cada notify_user). Sin pasarlo, notifica al rol en TODOS los clubes —
+    correcto solo para módulos globales de plataforma, no para automations
+    de negocio de un club específico.
+    """
     db = get_supabase()
     try:
-        rows = (
-            db.table("user_roles")
-            .select("user_id")
-            .eq("role", role)
-            .execute()
-        ).data or []
+        query = db.table("user_roles").select("user_id").eq("role", role)
+        if club_id is not None:
+            query = query.eq("club_id", club_id)
+        rows = query.execute().data or []
     except Exception as exc:
         logger.error("notify_role fetch failed role=%s: %s", role, exc)
         return 0
@@ -175,6 +232,7 @@ def notify_role(
             message=message,
             notification_type=notification_type,
             automation_id=automation_id,
+            club_id=club_id,
         )
         count += 1
     return count
@@ -188,10 +246,11 @@ def _log_notification(
     recipient_id: str | None = None,
     recipient_ref: str | None = None,
     status: str = "sent",
+    club_id: str | None = None,
 ) -> None:
     db = get_supabase()
     try:
-        db.table("notification_log").insert({
+        payload = {
             "automation_id": automation_id,
             "channel": channel,
             "recipient_id": recipient_id,
@@ -199,7 +258,10 @@ def _log_notification(
             "subject": subject,
             "body": body,
             "status": status,
-        }).execute()
+        }
+        if club_id is not None:
+            payload["club_id"] = club_id
+        db.table("notification_log").insert(payload).execute()
     except Exception as exc:
         logger.error("_log_notification failed: %s", exc)
 
@@ -212,11 +274,19 @@ def log_activity(
     actions_taken: int = 0,
     summary: str | None = None,
     error_message: str | None = None,
+    club_id: str | None = None,
 ) -> None:
-    """Write a row to agent_activity_log for observability."""
+    """Write a row to agent_activity_log for observability.
+
+    club_id: agent_activity_log lo tiene NULLABLE (a diferencia de
+    notifications/notification_log) porque no todos los callers están
+    migrados todavía — pero pasarlo cuando se conoce (dispatch por club)
+    evita que el log de auditoría de un club quede atribuido al club
+    "por defecto" por el trigger de la BD.
+    """
     db = get_supabase()
     try:
-        db.table("agent_activity_log").insert({
+        payload = {
             "automation_id": automation_id,
             "agent_id": agent_id,
             "status": status,
@@ -224,31 +294,36 @@ def log_activity(
             "actions_taken": actions_taken,
             "summary": summary,
             "error_message": error_message,
-        }).execute()
+        }
+        if club_id is not None:
+            payload["club_id"] = club_id
+        db.table("agent_activity_log").insert(payload).execute()
     except Exception as exc:
         logger.error("log_activity insert failed: %s", exc)
 
 
-def get_admin_user_ids() -> list[str]:
-    """Return all user IDs with the admin role."""
+def get_admin_user_ids(club_id: str | None = None) -> list[str]:
+    """Return user IDs with the admin role. club_id=None => todos los clubes."""
     db = get_supabase()
     try:
-        rows = (
-            db.table("user_roles").select("user_id").eq("role", "admin").execute()
-        ).data or []
+        query = db.table("user_roles").select("user_id").eq("role", "admin")
+        if club_id is not None:
+            query = query.eq("club_id", club_id)
+        rows = query.execute().data or []
         return [r["user_id"] for r in rows]
     except Exception as exc:
         logger.error("get_admin_user_ids failed: %s", exc)
         return []
 
 
-def get_coach_user_ids() -> list[str]:
-    """Return all user IDs with the coach role."""
+def get_coach_user_ids(club_id: str | None = None) -> list[str]:
+    """Return user IDs with the coach role. club_id=None => todos los clubes."""
     db = get_supabase()
     try:
-        rows = (
-            db.table("user_roles").select("user_id").eq("role", "coach").execute()
-        ).data or []
+        query = db.table("user_roles").select("user_id").eq("role", "coach")
+        if club_id is not None:
+            query = query.eq("club_id", club_id)
+        rows = query.execute().data or []
         return [r["user_id"] for r in rows]
     except Exception as exc:
         logger.error("get_coach_user_ids failed: %s", exc)

@@ -144,33 +144,36 @@ celery_app.conf.beat_schedule = {
     # ── MARKETING ──────────────────────────────────────────────────────────
 
     # AUTO-21: Felicitaciones cumpleaños — diario 07:00
+    # Multi-tenant: Beat llama al "_dispatch", que abanica una corrida real
+    # (tasks.marketing.birthday_greetings) por cada club activo.
     "auto-21-birthday-greetings": {
-        "task": "tasks.marketing.birthday_greetings",
+        "task": "tasks.marketing.birthday_greetings_dispatch",
         "schedule": crontab(hour=7, minute=0),
     },
 
     # AUTO-22: Reactivación inactivos — quincena (1ro y 15) 10:00
     "auto-22-reactivate-inactive-1st": {
-        "task": "tasks.marketing.reactivate_inactive_athletes",
+        "task": "tasks.marketing.reactivate_inactive_athletes_dispatch",
         "schedule": crontab(hour=10, minute=0, day_of_month="1"),
     },
     "auto-22-reactivate-inactive-15th": {
-        "task": "tasks.marketing.reactivate_inactive_athletes",
+        "task": "tasks.marketing.reactivate_inactive_athletes_dispatch",
         "schedule": crontab(hour=10, minute=0, day_of_month="15"),
     },
 
     # AUTO-23: Encuesta satisfacción — trimestral día 1 de ene/abr/jul/oct
     "auto-23-satisfaction-survey-quarterly": {
-        "task": "tasks.marketing.satisfaction_survey",
+        "task": "tasks.marketing.satisfaction_survey_dispatch",
         "schedule": crontab(hour=10, minute=0, day_of_month="1", month_of_year="1,4,7,10"),
     },
 
-    # AUTO-24: Solicitud testimonio — event-driven (24h después de resultado top-3)
+    # AUTO-24: Solicitud testimonio — event-driven (24h después de resultado top-3),
+    # club_id se deriva del atleta del resultado, no necesita dispatch por club.
     # Llamar via: request_testimonial.apply_async(args=[result_id], countdown=86400)
 
     # AUTO-25: Campaña pre-inscripción — 1ro de octubre 09:00
     "auto-25-season-enrollment-campaign": {
-        "task": "tasks.marketing.season_enrollment_campaign",
+        "task": "tasks.marketing.season_enrollment_campaign_dispatch",
         "schedule": crontab(hour=9, minute=0, day_of_month="1", month_of_year="10"),
     },
 
