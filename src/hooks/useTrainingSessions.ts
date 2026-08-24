@@ -21,12 +21,8 @@ interface TrainingSession {
 
 interface TrainingSessionWithCoach extends TrainingSession {
   coaches?: {
-    id: string;
-    user_id: string;
-    profiles?: {
-      first_name: string;
-      last_name: string;
-    };
+    first_name: string;
+    last_name: string;
   };
 }
 
@@ -51,12 +47,8 @@ export const useTrainingSessions = (options?: {
         .select(`
           *,
           coaches:coach_id (
-            id,
-            user_id,
-            profiles:user_id (
-              first_name,
-              last_name
-            )
+            first_name,
+            last_name
           )
         `);
 
@@ -172,8 +164,8 @@ export const useTrainingSessions = (options?: {
     return {
       ...session,
       status,
-      coach: session.coaches?.profiles
-        ? `${session.coaches.profiles.first_name} ${session.coaches.profiles.last_name}`.trim()
+      coach: session.coaches
+        ? `${session.coaches.first_name} ${session.coaches.last_name}`.trim()
         : 'Sin asignar'
     };
   });

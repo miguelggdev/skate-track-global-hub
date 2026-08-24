@@ -73,13 +73,13 @@ export function AdminClubHealthRadar() {
         athletesRes, transactionsRes,
         attendanceRes, docsRes, equipmentRes,
       ] = await Promise.all([
-        supabase.from('athletes').select('id, status, performance_score'),
-        supabase.from('transactions').select('status'),
+        supabase.from('athletes').select('id, user_id, status, performance_score'),
+        supabase.from('financial_transactions').select('payment_status'),
         supabase
           .from('training_attendance')
           .select('attended')
           .gte('created_at', monthStart),
-        supabase.from('user_documents').select('athlete_id').not('file_url', 'is', null),
+        supabase.from('user_documents').select('user_id').not('document_url', 'is', null),
         supabase.from('athlete_equipment').select('athlete_id'),
       ]);
 
@@ -104,7 +104,7 @@ export function AdminClubHealthRadar() {
   const retention      = totalAthletes > 0 ? Math.round((activeAthletes / totalAthletes) * 100) : 0;
 
   const totalTx = transactions.length;
-  const paidTx  = transactions.filter(t => t.status === 'paid').length;
+  const paidTx  = transactions.filter(t => t.payment_status === 'paid').length;
   const finanzas = totalTx > 0 ? Math.round((paidTx / totalTx) * 100) : 0;
 
   const avgPerformance = activeAthletes > 0
@@ -119,9 +119,10 @@ export function AdminClubHealthRadar() {
     ? Math.round((attendance.filter(a => a.attended).length / attendance.length) * 100)
     : 0;
 
-  const athleteIdsWithDocs = new Set(docs.map(d => d.athlete_id));
+  const userIdsWithDocs = new Set(docs.map(d => d.user_id));
+  const athletesWithDocs = athletes.filter(a => a.user_id && userIdsWithDocs.has(a.user_id)).length;
   const documentos = totalAthletes > 0
-    ? Math.round((athleteIdsWithDocs.size / totalAthletes) * 100)
+    ? Math.round((athletesWithDocs / totalAthletes) * 100)
     : 0;
 
   const athleteIdsWithEquip = new Set(equipment.map(e => e.athlete_id));
