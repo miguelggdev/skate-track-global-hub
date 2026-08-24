@@ -84,15 +84,22 @@ const Onboarding = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { data: existing } = await supabase
-        .from('club_settings')
+      // La fila de `clubs` para este usuario ya existe (la crea Fase 0 /
+      // ops al provisionar el club) — RLS ("Users view own club") la
+      // filtra automáticamente, solo hace falta su id para el UPDATE.
+      const { data: existing, error: fetchError } = await supabase
+        .from('clubs')
         .select('id')
-        .limit(1)
         .maybeSingle();
 
+      if (fetchError) throw fetchError;
+      if (!existing?.id) {
+        throw new Error('No se encontró el club de tu cuenta. Contacta al administrador de la plataforma.');
+      }
+
       const payload = {
-        club_name: data.club_name,
-        club_description: data.club_description || null,
+        name: data.club_name,
+        description: data.club_description || null,
         contact_email: data.contact_email || null,
         contact_phone: data.contact_phone || null,
         address: data.address || null,
@@ -103,25 +110,17 @@ const Onboarding = () => {
         president_email: data.president_email || null,
         delegate_name: data.delegate_name || null,
         delegate_phone: data.delegate_phone || null,
+        onboarding_completed: true,
       };
 
-      let saveError;
-      if (existing?.id) {
-        const { error } = await supabase
-          .from('club_settings')
-          .update(payload)
-          .eq('id', existing.id);
-        saveError = error;
-      } else {
-        const { error } = await supabase
-          .from('club_settings')
-          .insert(payload);
-        saveError = error;
-      }
+      const { error: saveError } = await supabase
+        .from('clubs')
+        .update(payload)
+        .eq('id', existing.id);
 
       if (saveError) throw saveError;
 
-      queryClient.invalidateQueries({ queryKey: ['club-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['onboarding-guard'] });
       setStep(4);
     } catch (err: unknown) {
       toast({

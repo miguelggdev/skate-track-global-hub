@@ -123,6 +123,18 @@ serve(async (req) => {
       return json({ error: 'Insufficient permissions' }, 403);
     }
 
+    // Multi-tenant: el usuario nuevo debe quedar en el MISMO club que quien
+    // lo crea. get_user_club_id nunca debería devolver null para un caller
+    // ya autenticado con rol (todo user_roles.club_id es NOT NULL), pero se
+    // valida igual — sin club_id confiable no se crea el usuario.
+    const { data: callerClubId, error: clubIdError } = await supabaseAdmin
+      .rpc('get_user_club_id', { _user_id: user.id });
+
+    if (clubIdError || !callerClubId) {
+      console.error('Error resolving caller club_id:', clubIdError);
+      return json({ error: 'No se pudo determinar el club del usuario actual' }, 500);
+    }
+
     let body: Record<string, unknown>;
     try {
       body = await req.json();
@@ -181,10 +193,16 @@ serve(async (req) => {
         last_name,
         id_type: id_type || undefined,
         id_number: id_number || undefined,
-        role: role as AllowedRole,
         phone: phone || undefined,
         date_of_birth,
         gender,
+      },
+      // app_metadata solo lo puede setear service_role (nunca el cliente vía
+      // signUp() público) — es el canal confiable que lee handle_new_user()
+      // para asignar role/club_id sin pasar por el flujo de invite_token.
+      app_metadata: {
+        role: role as AllowedRole,
+        club_id: callerClubId,
       },
     });
 

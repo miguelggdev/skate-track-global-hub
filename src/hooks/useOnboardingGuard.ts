@@ -5,10 +5,11 @@ export const useOnboardingGuard = (enabled: boolean) => {
   const { data, isLoading } = useQuery({
     queryKey: ['onboarding-guard'],
     queryFn: async () => {
+      // RLS ("Users view own club") ya filtra esto al club del usuario
+      // autenticado — no hace falta pasar club_id a mano.
       const { data } = await supabase
-        .from('club_settings')
-        .select('id')
-        .limit(1)
+        .from('clubs')
+        .select('id, onboarding_completed')
         .maybeSingle();
       return data;
     },
@@ -17,7 +18,7 @@ export const useOnboardingGuard = (enabled: boolean) => {
   });
 
   return {
-    needsOnboarding: !isLoading && data === null,
+    needsOnboarding: !isLoading && !!data && !data.onboarding_completed,
     loading: isLoading,
   };
 };

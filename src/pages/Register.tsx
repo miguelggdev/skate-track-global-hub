@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useClubByDomain } from '@/hooks/useClubByDomain';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Lock, Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react';
+import { User, Lock, Eye, EyeOff, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
 
 const registerSchema = z.object({
   firstName: z.string().min(1, 'Nombre requerido').max(100).transform(v => v.trim()),
@@ -27,6 +28,9 @@ const Register = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { club, loading: clubLoading } = useClubByDomain();
+  const [searchParams] = useSearchParams();
+  const inviteToken = searchParams.get('invite');
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -57,6 +61,15 @@ const Register = () => {
       return;
     }
 
+    if (!club) {
+      toast({
+        title: 'Club no identificado',
+        description: 'Este dominio no está habilitado para registro. Contacta al operador de la plataforma.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const validated = result.data;
     setIsLoading(true);
 
@@ -69,7 +82,9 @@ const Register = () => {
           data: {
             first_name: validated.firstName,
             last_name: validated.lastName,
+            club_id: club.id,
             ...(isParent ? { role: 'parent' } : {}),
+            ...(inviteToken ? { invite_token: inviteToken } : {}),
           },
         },
       });
@@ -115,9 +130,17 @@ const Register = () => {
       <Card className="w-full max-w-md backdrop-blur-lg bg-black/40 shadow-2xl border-white/30 relative z-10 animate-scale-in">
         <CardHeader className="text-center space-y-1 pb-4">
           <div className="flex justify-center mb-2">
-            <div className="w-16 h-16 rounded-full bg-blue-600/80 flex items-center justify-center border-2 border-white/30 shadow-lg">
-              <span className="text-3xl">⛸️</span>
-            </div>
+            {club?.logo_url ? (
+              <img
+                src={club.logo_url}
+                alt={club.name}
+                className="w-16 h-16 rounded-full object-cover border-2 border-white/30 shadow-lg"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-blue-600/80 flex items-center justify-center border-2 border-white/30 shadow-lg">
+                <span className="text-3xl">⛸️</span>
+              </div>
+            )}
           </div>
           <CardTitle className="text-2xl font-bold text-white">
             {registered && needsConfirmation ? '¡Cuenta creada!' : 'Crear cuenta'}
@@ -125,12 +148,28 @@ const Register = () => {
           <CardDescription className="text-gray-300 text-sm">
             {registered && needsConfirmation
               ? 'Revisa tu email para continuar'
-              : 'Registro del administrador del club'}
+              : club
+              ? `Registro en ${club.name}`
+              : inviteToken
+              ? 'Registro del administrador del club'
+              : 'Regístrate para continuar'}
           </CardDescription>
         </CardHeader>
 
         <CardContent className="px-8 pb-6">
-          {registered && needsConfirmation ? (
+          {!clubLoading && !club ? (
+            <div className="text-center space-y-3 py-6">
+              <div className="flex justify-center">
+                <AlertTriangle className="h-12 w-12 text-amber-400" />
+              </div>
+              <p className="text-gray-200 text-sm leading-relaxed">
+                Este dominio no está habilitado para registro todavía.
+              </p>
+              <p className="text-gray-400 text-xs">
+                Contacta al operador de la plataforma si crees que esto es un error.
+              </p>
+            </div>
+          ) : registered && needsConfirmation ? (
             <div className="text-center space-y-4">
               <div className="flex justify-center">
                 <CheckCircle className="h-16 w-16 text-green-400" />
@@ -251,7 +290,7 @@ const Register = () => {
               <Button
                 type="submit"
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
-                disabled={isLoading}
+                disabled={isLoading || clubLoading}
               >
                 {isLoading ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creando cuenta...</>

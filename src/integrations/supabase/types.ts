@@ -1311,45 +1311,78 @@ export type Database = {
       clubs: {
         Row: {
           address: string | null
+          admin_invite_token: string | null
           contact_email: string | null
           contact_phone: string | null
+          country: string | null
           created_at: string
+          custom_domain: string | null
+          delegate_name: string | null
+          delegate_phone: string | null
+          description: string | null
           id: string
           is_active: boolean
+          league: string | null
           logo_url: string | null
           name: string
+          onboarding_completed: boolean
+          president_email: string | null
+          president_name: string | null
           primary_color: string | null
           secondary_color: string | null
           slug: string | null
           updated_at: string
+          website_url: string | null
         }
         Insert: {
           address?: string | null
+          admin_invite_token?: string | null
           contact_email?: string | null
           contact_phone?: string | null
+          country?: string | null
           created_at?: string
+          custom_domain?: string | null
+          delegate_name?: string | null
+          delegate_phone?: string | null
+          description?: string | null
           id?: string
           is_active?: boolean
+          league?: string | null
           logo_url?: string | null
           name: string
+          onboarding_completed?: boolean
+          president_email?: string | null
+          president_name?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           slug?: string | null
           updated_at?: string
+          website_url?: string | null
         }
         Update: {
           address?: string | null
+          admin_invite_token?: string | null
           contact_email?: string | null
           contact_phone?: string | null
+          country?: string | null
           created_at?: string
+          custom_domain?: string | null
+          delegate_name?: string | null
+          delegate_phone?: string | null
+          description?: string | null
           id?: string
           is_active?: boolean
+          league?: string | null
           logo_url?: string | null
           name?: string
+          onboarding_completed?: boolean
+          president_email?: string | null
+          president_name?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           slug?: string | null
           updated_at?: string
+          website_url?: string | null
         }
         Relationships: []
       }
@@ -4409,6 +4442,16 @@ export type Database = {
       default_club_id: { Args: never; Returns: string }
       get_athlete_by_checkin_token: { Args: { p_token: string }; Returns: Json }
       get_athlete_by_nfc_uid: { Args: { p_uid: string }; Returns: Json }
+      get_club_by_domain: {
+        Args: { p_domain: string }
+        Returns: {
+          id: string
+          logo_url: string
+          name: string
+          primary_color: string
+          secondary_color: string
+        }[]
+      }
       get_financial_summary: { Args: never; Returns: Json }
       get_invoice_summary_by_month: {
         Args: { p_month: number; p_year: number }
