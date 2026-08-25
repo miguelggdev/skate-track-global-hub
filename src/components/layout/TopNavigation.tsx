@@ -80,12 +80,12 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
     const fetchClubLogo = async () => {
       try {
         const { data, error } = await supabase
-          .from('club_settings')
-          .select('club_logo_url')
+          .from('clubs')
+          .select('logo_url')
           .maybeSingle();
-        
-        if (data?.club_logo_url) {
-          setClubLogo(data.club_logo_url);
+
+        if (data?.logo_url) {
+          setClubLogo(data.logo_url);
         }
       } catch (error) {
       }

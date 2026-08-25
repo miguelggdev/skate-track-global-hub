@@ -169,22 +169,34 @@ const ClubInfoSettings = ({ clubSettings, onUpdate }: ClubInfoSettingsProps) => 
   const onSubmit = async (data: ClubInfoFormData) => {
     try {
       if (!clubSettings?.id) {
-        // Create new club settings
-        const { error } = await supabase
-          .from('club_settings')
-          .insert([data]);
-        
-        if (error) throw error;
-      } else {
-        // Update existing club settings
-        const { error } = await supabase
-          .from('club_settings')
-          .update(data)
-          .eq('id', clubSettings.id);
-        
-        if (error) throw error;
+        throw new Error('No se pudo determinar el club actual');
       }
-      
+
+      // Solo estos campos existen como columna real en `clubs` — el resto del
+      // formulario (redes sociales, staff médico, plantillas de reporte,
+      // timezone/idioma) nunca tuvo una columna real ni en club_settings ni
+      // en clubs, así que nunca se guardó; se deja tal cual estaba.
+      const { error } = await supabase
+        .from('clubs')
+        .update({
+          name: data.club_name,
+          description: data.club_description || null,
+          contact_email: data.contact_email || null,
+          contact_phone: data.contact_phone || null,
+          address: data.address || null,
+          website_url: data.website_url || null,
+          currency: data.currency || undefined,
+          delegate_name: data.delegate_name || null,
+          delegate_phone: data.delegate_phone || null,
+          president_name: data.president_name || null,
+          president_email: data.president_email || null,
+          league: data.league || null,
+          country: data.country || null,
+        })
+        .eq('id', clubSettings.id);
+
+      if (error) throw error;
+
       toast({
         title: "Éxito",
         description: "Configuración del club actualizada correctamente",

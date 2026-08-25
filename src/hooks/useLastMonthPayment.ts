@@ -53,9 +53,8 @@ export const useClubSettings = () => {
     queryKey: ['club-settings'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('club_settings')
-        .select('*')
-        .limit(1)
+        .from('clubs')
+        .select('id, club_name:name, club_logo_url:logo_url, address, contact_email, contact_phone, website_url')
         .maybeSingle();
 
       if (error) throw new Error(error.message);

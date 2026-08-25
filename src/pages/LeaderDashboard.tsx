@@ -27,7 +27,7 @@ const LeaderDashboard = () => {
     queryKey: ['club-settings-targets'],
     queryFn: async () => {
       const { data } = await supabase
-        .from('club_settings')
+        .from('clubs')
         .select('target_athletes, target_revenue')
         .maybeSingle();
       return { targetAthletes: data?.target_athletes ?? 50, targetRevenue: data?.target_revenue ?? 10_000 };

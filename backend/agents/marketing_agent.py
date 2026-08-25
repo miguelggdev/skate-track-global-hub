@@ -31,10 +31,10 @@ def get_club_overview() -> str:
         .limit(3)
         .execute()
     )
-    settings_res = client.table("club_settings").select("club_name, city, country, website_url").maybeSingle().execute()
-    data = settings_res.data or {}
+    club_res = client.table("clubs").select("name, city, country, website_url").eq("id", club_id).maybeSingle().execute()
+    data = club_res.data or {}
     return json.dumps({
-        "nombre_club": data.get("club_name", ""),
+        "nombre_club": data.get("name", ""),
         "ciudad": data.get("city", ""),
         "pais": data.get("country", "Colombia"),
         "web": data.get("website_url", ""),

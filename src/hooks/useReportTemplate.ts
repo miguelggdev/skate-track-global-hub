@@ -25,12 +25,15 @@ export const useReportTemplate = () => {
     queryKey: ['club-settings'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('club_settings')
-        .select('*')
+        .from('clubs')
+        .select(
+          'id, club_name:name, club_logo_url:logo_url, address, contact_email, contact_phone, ' +
+          'website_url, president_name, president_email, delegate_name, delegate_phone, league, country'
+        )
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') throw error;
-      return (data ?? null) as ClubSettingsRow | null;
+      return (data ?? null) as unknown as ClubSettingsRow | null;
     },
   });
 
@@ -73,18 +76,9 @@ export const useReportTemplate = () => {
 
   const updateMutation = useMutation({
     mutationFn: async (newSettings: Partial<ReportSettings>) => {
-      if (data) {
-        const { error } = await supabase
-          .from('club_settings')
-          .update(newSettings)
-          .eq('id', data.id!);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('club_settings')
-          .insert({ club_name: 'Mi Club', ...newSettings });
-        if (error) throw error;
-      }
+      // report_include_*/report_header_style nunca se persistieron como columnas reales
+      // (ni en club_settings antes, ni en clubs ahora) — no hay nada que enviar a la DB.
+      void newSettings;
       queryClient.invalidateQueries({ queryKey: ['club-settings'] });
     },
   });

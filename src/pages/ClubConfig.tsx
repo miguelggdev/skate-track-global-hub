@@ -76,16 +76,20 @@ const ClubConfig = () => {
     queryKey: ['club-settings'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('club_settings')
-        .select('*')
-        .limit(1)
+        .from('clubs')
+        .select(
+          'id, club_name:name, club_logo_url:logo_url, club_description:description, ' +
+          'contact_email, contact_phone, address, website_url, currency, ' +
+          'delegate_name, delegate_phone, president_name, president_email, league, country, ' +
+          'created_at, updated_at'
+        )
         .maybeSingle();
       if (error) throw error;
       if (!data) return null;
       return {
         ...data,
-        report_header_style: (data.report_header_style as 'minimal' | 'full' | 'corporate') || 'full',
-      } as ClubSettings;
+        report_header_style: 'full' as const,
+      } as unknown as ClubSettings;
     },
     enabled: !profileLoading && !!isAdmin,
   });

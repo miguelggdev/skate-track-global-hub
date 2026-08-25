@@ -206,9 +206,8 @@ export const useCompetitionPDFData = (competitionId: string) => {
       if (competitionError) throw competitionError;
 
       const { data: clubSettings, error: clubError } = await supabase
-        .from('club_settings')
-        .select('*')
-        .limit(1)
+        .from('clubs')
+        .select('id, club_name:name, club_logo_url:logo_url, address, contact_email, contact_phone, website_url')
         .maybeSingle();
       if (clubError) throw clubError;
 

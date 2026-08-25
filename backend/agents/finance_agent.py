@@ -129,13 +129,16 @@ def get_club_settings_targets() -> str:
     role = current_user_role.get()
     if role not in _FINANCE_ROLES:
         return json.dumps({"error": "Solo administradores y el área financiera pueden acceder a esta información."}, ensure_ascii=False)
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
-    result = client.table("club_settings").select("target_athletes, target_revenue, club_name").maybeSingle().execute()
+    result = client.table("clubs").select("target_athletes, target_revenue, name").eq("id", club_id).maybeSingle().execute()
     data = result.data or {}
     return json.dumps({
         "meta_atletas": data.get("target_athletes", 50),
-        "meta_ingresos": float(data.get("target_revenue", 10000)),
-        "nombre_club": data.get("club_name", ""),
+        "meta_ingresos": float(data.get("target_revenue") or 10000),
+        "nombre_club": data.get("name", ""),
     }, ensure_ascii=False)
 
 

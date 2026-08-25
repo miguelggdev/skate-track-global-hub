@@ -1196,7 +1196,7 @@ export type Database = {
       }
       award_scheme_configs: {
         Row: {
-          club_id: string | null
+          club_id: string
           created_at: string
           created_by: string | null
           custom_config: Json | null
@@ -1207,7 +1207,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          club_id?: string | null
+          club_id: string
           created_at?: string
           created_by?: string | null
           custom_config?: Json | null
@@ -1218,7 +1218,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          club_id?: string | null
+          club_id?: string
           created_at?: string
           created_by?: string | null
           custom_config?: Json | null
@@ -1233,7 +1233,7 @@ export type Database = {
             foreignKeyName: "award_scheme_configs_club_id_fkey"
             columns: ["club_id"]
             isOneToOne: false
-            referencedRelation: "club_settings"
+            referencedRelation: "clubs"
             referencedColumns: ["id"]
           },
         ]
@@ -1348,69 +1348,6 @@ export type Database = {
         }
         Relationships: []
       }
-      club_settings: {
-        Row: {
-          address: string | null
-          city: string | null
-          club_logo_url: string | null
-          club_name: string
-          contact_email: string | null
-          contact_phone: string | null
-          country: string
-          created_at: string
-          currency: string
-          founded_year: number | null
-          id: string
-          logo_url: string | null
-          primary_color: string | null
-          secondary_color: string | null
-          target_athletes: number
-          target_revenue: number
-          updated_at: string
-          website_url: string | null
-        }
-        Insert: {
-          address?: string | null
-          city?: string | null
-          club_logo_url?: string | null
-          club_name?: string
-          contact_email?: string | null
-          contact_phone?: string | null
-          country?: string
-          created_at?: string
-          currency?: string
-          founded_year?: number | null
-          id?: string
-          logo_url?: string | null
-          primary_color?: string | null
-          secondary_color?: string | null
-          target_athletes?: number
-          target_revenue?: number
-          updated_at?: string
-          website_url?: string | null
-        }
-        Update: {
-          address?: string | null
-          city?: string | null
-          club_logo_url?: string | null
-          club_name?: string
-          contact_email?: string | null
-          contact_phone?: string | null
-          country?: string
-          created_at?: string
-          currency?: string
-          founded_year?: number | null
-          id?: string
-          logo_url?: string | null
-          primary_color?: string | null
-          secondary_color?: string | null
-          target_athletes?: number
-          target_revenue?: number
-          updated_at?: string
-          website_url?: string | null
-        }
-        Relationships: []
-      }
       clubs: {
         Row: {
           address: string | null
@@ -1420,10 +1357,12 @@ export type Database = {
           contact_phone: string | null
           country: string | null
           created_at: string
+          currency: string
           custom_domain: string | null
           delegate_name: string | null
           delegate_phone: string | null
           description: string | null
+          founded_year: number | null
           id: string
           is_active: boolean
           league: string | null
@@ -1436,6 +1375,8 @@ export type Database = {
           primary_color: string | null
           secondary_color: string | null
           slug: string | null
+          target_athletes: number | null
+          target_revenue: number | null
           updated_at: string
           website_url: string | null
         }
@@ -1447,10 +1388,12 @@ export type Database = {
           contact_phone?: string | null
           country?: string | null
           created_at?: string
+          currency?: string
           custom_domain?: string | null
           delegate_name?: string | null
           delegate_phone?: string | null
           description?: string | null
+          founded_year?: number | null
           id?: string
           is_active?: boolean
           league?: string | null
@@ -1463,6 +1406,8 @@ export type Database = {
           primary_color?: string | null
           secondary_color?: string | null
           slug?: string | null
+          target_athletes?: number | null
+          target_revenue?: number | null
           updated_at?: string
           website_url?: string | null
         }
@@ -1474,10 +1419,12 @@ export type Database = {
           contact_phone?: string | null
           country?: string | null
           created_at?: string
+          currency?: string
           custom_domain?: string | null
           delegate_name?: string | null
           delegate_phone?: string | null
           description?: string | null
+          founded_year?: number | null
           id?: string
           is_active?: boolean
           league?: string | null
@@ -1490,6 +1437,8 @@ export type Database = {
           primary_color?: string | null
           secondary_color?: string | null
           slug?: string | null
+          target_athletes?: number | null
+          target_revenue?: number | null
           updated_at?: string
           website_url?: string | null
         }

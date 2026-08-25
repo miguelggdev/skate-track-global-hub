@@ -11,9 +11,8 @@ export const useCurrency = () => {
     queryKey: ['club-settings'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('club_settings')
+        .from('clubs')
         .select('id, currency')
-        .limit(1)
         .maybeSingle();
 
       if (error) throw error;
@@ -27,18 +26,12 @@ export const useCurrency = () => {
 
   const updateMutation = useMutation({
     mutationFn: async (newCurrency: CurrencyCode) => {
-      if (data?.id) {
-        const { error } = await supabase
-          .from('club_settings')
-          .update({ currency: newCurrency })
-          .eq('id', data.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('club_settings')
-          .insert({ currency: newCurrency, club_name: 'Mi Club', timezone: 'America/Bogota', language: 'es' });
-        if (error) throw error;
-      }
+      if (!data?.id) throw new Error('No se pudo determinar el club actual');
+      const { error } = await supabase
+        .from('clubs')
+        .update({ currency: newCurrency })
+        .eq('id', data.id);
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['club-settings'] });

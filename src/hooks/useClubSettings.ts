@@ -25,19 +25,23 @@ export interface ClubSettings {
   country?: string;
 }
 
+const CLUB_SELECT =
+  'id, club_name:name, club_logo_url:logo_url, club_description:description, ' +
+  'address, contact_email, contact_phone, website_url, ' +
+  'president_name, president_email, delegate_name, delegate_phone, league, country';
+
 export const useClubSettings = () => {
   return useQuery({
     queryKey: ['club-settings'],
     queryFn: async (): Promise<ClubSettings | null> => {
       const { data, error } = await supabase
-        .from('club_settings')
-        .select('*')
-        .limit(1)
+        .from('clubs')
+        .select(CLUB_SELECT)
         .maybeSingle();
-      
+
       if (error) throw error;
-      
-      return data;
+
+      return data as unknown as ClubSettings | null;
     },
   });
 };
