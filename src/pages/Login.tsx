@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -230,12 +230,10 @@ const Login = () => {
           )}
           
           <div className="text-center mt-4 pt-4 border-t border-white/10 space-y-2">
-            <p className="text-xs text-gray-400">
-              ¿Primer acceso?{' '}
-              <Link to="/register" className="text-blue-300 hover:text-blue-200 underline transition-colors">
-                Crear cuenta de administrador
-              </Link>
-            </p>
+            {/* Sin registro público de administrador a propósito — el alta
+                de clubes/admins es 100% interna, vía el panel de
+                Superadmin (/superadmin). Ver
+                supabase/migrations/20260824100000_superadmin_platform_role.sql. */}
             <p className="text-xs text-gray-400">
               © 2026 SpeedSkate Academy - Todos los derechos reservados
             </p>

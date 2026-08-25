@@ -10,7 +10,10 @@ import { TranslationProvider } from "@/providers/TranslationProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useOnboardingGuard } from "@/hooks/useOnboardingGuard";
+import { useCurrentClub } from "@/hooks/useCurrentClub";
+import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 import { PwaReloadPrompt } from "@/components/pwa/PwaReloadPrompt";
+import { SuspendedAccountScreen } from "@/components/SuspendedAccountScreen";
 
 // Static imports — always needed immediately (tiny files, auth critical path)
 import Login from "./pages/Login";
@@ -59,6 +62,7 @@ const AutomationsPage    = React.lazy(() => import('./pages/AutomationsPage'));
 const AgentsLive         = React.lazy(() => import('./pages/AgentsLive'));
 const AgentOffice        = React.lazy(() => import('./pages/AgentOffice'));
 const AthleteCardPublic  = React.lazy(() => import('./pages/AthleteCardPublic'));
+const SuperAdminDashboard = React.lazy(() => import('./pages/SuperAdminDashboard'));
 
 const queryClient = new QueryClient();
 
@@ -72,17 +76,22 @@ const PageLoader = () => (
 const RoleBasedRedirect = () => {
   const { user, loading } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile();
+  const { club, loading: clubLoading } = useCurrentClub();
   const isAdminOrLeader = profile?.role === 'admin' || profile?.role === 'leader';
   const { needsOnboarding, loading: guardLoading } = useOnboardingGuard(
     !loading && !profileLoading && isAdminOrLeader
   );
 
-  if (loading || profileLoading || (isAdminOrLeader && guardLoading)) {
+  if (loading || profileLoading || clubLoading || (isAdminOrLeader && guardLoading)) {
     return <PageLoader />;
   }
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (club && !club.is_active) {
+    return <SuspendedAccountScreen />;
   }
 
   if (profile?.role) {
@@ -113,13 +122,18 @@ const RoleBasedRedirect = () => {
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
   const { user, loading } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile();
+  const { club, loading: clubLoading } = useCurrentClub();
 
-  if (loading || profileLoading) {
+  if (loading || profileLoading || clubLoading) {
     return <PageLoader />;
   }
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (club && !club.is_active) {
+    return <SuspendedAccountScreen />;
   }
 
   if (allowedRoles && !profile?.role) {
@@ -138,6 +152,25 @@ const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode,
     }
   }
 
+  return <>{children}</>;
+};
+
+// Guard aparte para /superadmin: un platform_admin NO tiene por qué
+// pertenecer a ningún club (profile?.role puede venir vacío), así que no
+// puede reusar ProtectedRoute (que exige un rol de club).
+const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  const { isPlatformAdmin, loading: paLoading } = usePlatformAdmin();
+
+  if (loading || (!!user && paLoading)) {
+    return <PageLoader />;
+  }
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  if (!isPlatformAdmin) {
+    return <Navigate to="/app" replace />;
+  }
   return <>{children}</>;
 };
 
@@ -465,6 +498,14 @@ const App = () => (
                         <ProtectedRoute allowedRoles={['admin', 'leader']}>
                           <AgentOffice />
                         </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/superadmin"
+                      element={
+                        <SuperAdminRoute>
+                          <SuperAdminDashboard />
+                        </SuperAdminRoute>
                       }
                     />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

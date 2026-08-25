@@ -1415,6 +1415,7 @@ export type Database = {
         Row: {
           address: string | null
           admin_invite_token: string | null
+          city: string | null
           contact_email: string | null
           contact_phone: string | null
           country: string | null
@@ -1427,6 +1428,7 @@ export type Database = {
           is_active: boolean
           league: string | null
           logo_url: string | null
+          mobile_phone: string | null
           name: string
           onboarding_completed: boolean
           president_email: string | null
@@ -1440,6 +1442,7 @@ export type Database = {
         Insert: {
           address?: string | null
           admin_invite_token?: string | null
+          city?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           country?: string | null
@@ -1452,6 +1455,7 @@ export type Database = {
           is_active?: boolean
           league?: string | null
           logo_url?: string | null
+          mobile_phone?: string | null
           name: string
           onboarding_completed?: boolean
           president_email?: string | null
@@ -1465,6 +1469,7 @@ export type Database = {
         Update: {
           address?: string | null
           admin_invite_token?: string | null
+          city?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           country?: string | null
@@ -1477,6 +1482,7 @@ export type Database = {
           is_active?: boolean
           league?: string | null
           logo_url?: string | null
+          mobile_phone?: string | null
           name?: string
           onboarding_completed?: boolean
           president_email?: string | null
@@ -3486,6 +3492,24 @@ export type Database = {
           },
         ]
       }
+      platform_admins: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       point_tables: {
         Row: {
           competition_type:
@@ -5002,6 +5026,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       mark_invoice_paid: {
         Args: { p_invoice_id: string; p_transaction_id?: string }
         Returns: Json

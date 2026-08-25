@@ -187,7 +187,11 @@ serve(async (req) => {
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true,
+      // false a propósito: Supabase envía un correo de verificación y la
+      // cuenta queda inactiva hasta que el usuario haga clic en el enlace
+      // — requerimiento de "verificación por enlace al correo para
+      // activar cualquier cuenta recién creada" del flujo de onboarding.
+      email_confirm: false,
       user_metadata: {
         first_name,
         last_name,

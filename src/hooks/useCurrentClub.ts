@@ -8,6 +8,7 @@ export interface CurrentClub {
   logo_url: string | null;
   primary_color: string | null;
   secondary_color: string | null;
+  is_active: boolean;
 }
 
 /**
@@ -25,7 +26,7 @@ export const useCurrentClub = () => {
     queryFn: async (): Promise<CurrentClub | null> => {
       const { data, error } = await supabase
         .from('clubs')
-        .select('id, name, logo_url, primary_color, secondary_color')
+        .select('id, name, logo_url, primary_color, secondary_color, is_active')
         .maybeSingle();
       if (error) throw error;
       return data;
