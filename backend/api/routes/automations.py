@@ -7,7 +7,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, field_validator
 
-from api.deps import _fetch_app_role_async, get_current_user
+from api.deps import _fetch_role_and_club_async, get_current_user
 from database.supabase_client import get_supabase
 from tasks.helpers import get_automation_config, invalidate_automation_config_cache
 
@@ -37,11 +37,19 @@ class AutomationConfigUpdate(BaseModel):
 
 @router.get("")
 async def list_automations(current_user: dict = Depends(get_current_user)) -> dict:
-    role = await _fetch_app_role_async(current_user["sub"])
+    role, club_id = await _fetch_role_and_club_async(current_user["sub"])
     if role not in ("admin", "leader"):
         raise HTTPException(status_code=403, detail="Solo admin o leader pueden ver las automatizaciones")
+    if not club_id:
+        raise HTTPException(status_code=403, detail="Usuario sin club asignado")
     db = get_supabase()
-    result = db.table("automation_config").select("*").order("automation_id").execute()
+    result = (
+        db.table("automation_config")
+        .select("*")
+        .eq("club_id", club_id)
+        .order("automation_id")
+        .execute()
+    )
     return {"automations": result.data or []}
 
 
@@ -57,9 +65,11 @@ async def list_activity_logs(
     status: str | None = None,
     current_user: dict = Depends(get_current_user),
 ) -> dict:
-    role = await _fetch_app_role_async(current_user["sub"])
+    role, club_id = await _fetch_role_and_club_async(current_user["sub"])
     if role not in ("admin", "leader"):
         raise HTTPException(status_code=403, detail="Solo admin o leader pueden ver los logs")
+    if not club_id:
+        raise HTTPException(status_code=403, detail="Usuario sin club asignado")
     if status and status not in _VALID_STATUSES:
         raise HTTPException(status_code=422, detail=f"status debe ser uno de: {sorted(_VALID_STATUSES)}")
 
@@ -67,6 +77,7 @@ async def list_activity_logs(
     query = (
         db.table("agent_activity_log")
         .select("id,automation_id,agent_id,status,records_found,actions_taken,summary,error_message,ran_at")
+        .eq("club_id", club_id)
         .order("ran_at", desc=True)
         .limit(min(limit, 200))
     )
@@ -86,14 +97,17 @@ async def update_automation(
     body: AutomationConfigUpdate,
     current_user: dict = Depends(get_current_user),
 ) -> dict:
-    role = await _fetch_app_role_async(current_user["sub"])
+    role, club_id = await _fetch_role_and_club_async(current_user["sub"])
     if role != "admin":
         raise HTTPException(status_code=403, detail="Solo admin puede modificar automatizaciones")
+    if not club_id:
+        raise HTTPException(status_code=403, detail="Usuario sin club asignado")
     if automation_id not in _KNOWN_IDS:
         raise HTTPException(status_code=404, detail=f"Automatización '{automation_id}' no encontrada")
 
     update_data: dict[str, Any] = {
         "automation_id": automation_id,
+        "club_id": club_id,
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "updated_by": current_user["sub"],
     }

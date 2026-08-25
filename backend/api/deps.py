@@ -83,6 +83,33 @@ async def _fetch_app_role_async(user_id: str) -> str | None:
     return await asyncio.to_thread(_fetch_app_role, user_id)
 
 
+def _fetch_role_and_club(user_id: str) -> tuple[str | None, str | None]:
+    """Consulta user_roles y devuelve (role, club_id) del usuario en una sola query.
+
+    Multi-tenant (Fase 5): el backend usa service_role, que ignora RLS por completo —
+    cualquier tool/ruta que lea/escriba tablas de negocio DEBE filtrar por este club_id
+    explícitamente, o mezclará datos entre clubes.
+    """
+    from database.supabase_client import get_supabase
+    result = (
+        get_supabase()
+        .table("user_roles")
+        .select("role, club_id")
+        .eq("user_id", user_id)
+        .limit(1)
+        .execute()
+    )
+    if not result.data:
+        return None, None
+    row = result.data[0]
+    return row.get("role"), row.get("club_id")
+
+
+async def _fetch_role_and_club_async(user_id: str) -> tuple[str | None, str | None]:
+    """Versión async de _fetch_role_and_club."""
+    return await asyncio.to_thread(_fetch_role_and_club, user_id)
+
+
 def require_roles(*allowed_roles: str):
     """
     Dependency factory que verifica que el usuario tenga uno de los roles indicados.

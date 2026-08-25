@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useCurrentClub } from '@/hooks/useCurrentClub';
 import { Upload, FileText, Trash2, Download } from 'lucide-react';
 import { UserDocument } from '@/hooks/useUserDetails';
 
@@ -20,10 +21,11 @@ export const DocumentsTab = ({ userId, documents = [], onDocumentsUpdate }: Docu
   const [uploading, setUploading] = useState(false);
   const [selectedType, setSelectedType] = useState<string>('cv');
   const { toast } = useToast();
+  const { club } = useCurrentClub();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !userId) return;
+    if (!file || !userId || !club) return;
 
     // Validate file size (10MB max)
     if (file.size > 10 * 1024 * 1024) {
@@ -40,7 +42,7 @@ export const DocumentsTab = ({ userId, documents = [], onDocumentsUpdate }: Docu
     try {
       // Upload to storage
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/${selectedType}_${Date.now()}.${fileExt}`;
+      const fileName = `${club.id}/${userId}/${selectedType}_${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('user-documents')

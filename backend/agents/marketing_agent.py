@@ -7,21 +7,25 @@ from langchain_core.messages import SystemMessage
 from langchain_core.tools import tool
 from langgraph.prebuilt import create_react_agent
 
-from agents.base_agent import BaseAgent
+from agents.base_agent import BaseAgent, current_club_id
 from database.supabase_client import get_supabase
 
 
 @tool
 def get_club_overview() -> str:
     """Obtiene datos generales del club: nombre, atletas activos, próximas competencias."""
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
     athletes_res = (
-        client.table("athletes").select("id", count="exact").eq("status", "active").execute()
+        client.table("athletes").select("id", count="exact").eq("club_id", club_id).eq("status", "active").execute()
     )
     today = datetime.now().date().isoformat()
     comp_res = (
         client.table("competitions")
         .select("name, start_date, location, competition_level")
+        .eq("club_id", club_id)
         .gte("start_date", today)
         .order("start_date")
         .limit(3)
@@ -42,10 +46,14 @@ def get_club_overview() -> str:
 @tool
 def get_athlete_demographics() -> str:
     """Obtiene la distribución de atletas por categoría y género para comunicaciones segmentadas."""
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
     result = (
         client.table("athletes")
         .select("category, gender, status")
+        .eq("club_id", club_id)
         .eq("status", "active")
         .execute()
     )
@@ -67,11 +75,15 @@ def get_athlete_demographics() -> str:
 @tool
 def get_recent_awards() -> str:
     """Lista los premios y logros recientes del club para destacar en redes sociales."""
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
     year = datetime.now().year
     result = (
         client.table("awards")
         .select("title, description, award_date, athlete_id")
+        .eq("club_id", club_id)
         .gte("award_date", f"{year}-01-01")
         .order("award_date", desc=True)
         .limit(10)

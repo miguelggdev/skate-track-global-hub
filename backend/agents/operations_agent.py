@@ -1,23 +1,27 @@
 import json
 from datetime import datetime, timedelta
 
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+from langchain_core.messages import SystemMessage
 from langchain_core.tools import tool
 from langgraph.prebuilt import create_react_agent
 
-from agents.base_agent import BaseAgent
+from agents.base_agent import BaseAgent, current_club_id
 from database.supabase_client import get_supabase
 
 
 @tool
 def get_training_sessions_overview() -> str:
     """Próximas 10 sesiones de entrenamiento y resumen de la semana en curso."""
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
     today = datetime.now().date()
     week_start = (today - timedelta(days=today.weekday())).isoformat()
     upcoming = (
         client.table("training_sessions")
         .select("id, scheduled_at, session_type, location, max_athletes, status")
+        .eq("club_id", club_id)
         .gte("scheduled_at", today.isoformat())
         .order("scheduled_at")
         .limit(10)
@@ -26,6 +30,7 @@ def get_training_sessions_overview() -> str:
     past_week = (
         client.table("training_sessions")
         .select("id, scheduled_at, status")
+        .eq("club_id", club_id)
         .gte("scheduled_at", week_start)
         .lt("scheduled_at", today.isoformat())
         .execute()
@@ -43,10 +48,14 @@ def get_training_sessions_overview() -> str:
 @tool
 def get_equipment_status() -> str:
     """Inventario de equipamiento: disponible, en reparación y artículos con stock bajo."""
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
     result = (
         client.table("equipment")
         .select("name, category, quantity, available_quantity, condition, last_maintenance_date")
+        .eq("club_id", club_id)
         .execute()
     )
     items = result.data or []
@@ -67,11 +76,15 @@ def get_equipment_status() -> str:
 @tool
 def get_capacity_analysis() -> str:
     """Análisis de capacidad: atletas activos vs cupos en próximas sesiones."""
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
-    active = client.table("athletes").select("id", count="exact").eq("status", "active").execute()
+    active = client.table("athletes").select("id", count="exact").eq("club_id", club_id).eq("status", "active").execute()
     upcoming = (
         client.table("training_sessions")
         .select("id, session_date, max_athletes, session_type")
+        .eq("club_id", club_id)
         .gte("session_date", datetime.now().date().isoformat())
         .limit(5)
         .execute()
@@ -86,11 +99,15 @@ def get_capacity_analysis() -> str:
 @tool
 def get_today_operations_summary() -> str:
     """Resumen operativo del día: sesiones programadas y asistencia registrada hoy."""
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     today = datetime.now().date().isoformat()
     client = get_supabase()
     sessions = (
         client.table("training_sessions")
         .select("id, session_type, location, status")
+        .eq("club_id", club_id)
         .eq("session_date", today)
         .execute()
     )
@@ -117,20 +134,38 @@ def get_today_operations_summary() -> str:
     )
 
 
-class OperationsAgent(BaseAgent):
-    def get_agent(self):
-        return create_react_agent(self.llm, tools=[
-            get_training_sessions_overview,
-            get_equipment_status,
-            get_capacity_analysis,
-            get_today_operations_summary,
-        ])
+_SYSTEM_PROMPT = (
+    "Eres el Agente de Operaciones de SpeedSkateTrack Hub. "
+    "Tu especialidad es la eficiencia operativa del club: sesiones de entrenamiento, "
+    "estado del equipamiento, análisis de capacidad y optimización de recursos. "
+    "Ayudas a los coordinadores a tomar decisiones operativas informadas con datos reales. "
+    "Responde siempre en español con datos concretos y recomendaciones accionables."
+)
 
-    def get_system_prompt(self) -> str:
-        return (
-            "Eres el Agente de Operaciones de SpeedSkateTrack Hub. "
-            "Tu especialidad es la eficiencia operativa del club: sesiones de entrenamiento, "
-            "estado del equipamiento, análisis de capacidad y optimización de recursos. "
-            "Ayudas a los coordinadores a tomar decisiones operativas informadas con datos reales. "
-            "Responde siempre en español con datos concretos y recomendaciones accionables."
+
+class OperationsAgent(BaseAgent):
+    def __init__(self) -> None:
+        super().__init__()
+        self._graph = create_react_agent(
+            self.llm,
+            tools=[
+                get_training_sessions_overview,
+                get_equipment_status,
+                get_capacity_analysis,
+                get_today_operations_summary,
+            ],
+            state_modifier=SystemMessage(content=_SYSTEM_PROMPT),
         )
+
+    @property
+    def agent_id(self) -> str:
+        return "operations"
+
+    @property
+    def system_prompt(self) -> str:
+        return _SYSTEM_PROMPT
+
+    async def chat(self, message: str, history: list[dict]) -> str:
+        result = await self._graph.ainvoke({"messages": self._build_history(message, history)})
+        last = result["messages"][-1]
+        return last.content if hasattr(last, "content") else str(last)

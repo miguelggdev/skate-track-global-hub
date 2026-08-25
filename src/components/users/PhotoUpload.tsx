@@ -4,6 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Upload, X, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useCurrentClub } from '@/hooks/useCurrentClub';
 
 interface PhotoUploadProps {
   currentPhotoUrl?: string;
@@ -17,6 +18,7 @@ export const PhotoUpload = ({ currentPhotoUrl, onPhotoChange, userId, className 
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentPhotoUrl || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { club } = useCurrentClub();
 
   const validateFile = (file: File): boolean => {
     // Check file type
@@ -60,21 +62,21 @@ export const PhotoUpload = ({ currentPhotoUrl, onPhotoChange, userId, className 
       setPreviewUrl(objectUrl);
 
       // If userId is provided, upload to Supabase
-      if (userId) {
+      if (userId && club) {
         const fileExt = file.name.split('.').pop();
-        const fileName = `${userId}/profile.${fileExt}`;
+        const fileName = `${club.id}/${userId}/profile.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
-          .from('profiles')
-          .upload(fileName, file, { 
+          .from('avatars')
+          .upload(fileName, file, {
             upsert: true,
-            contentType: file.type 
+            contentType: file.type
           });
 
         if (uploadError) throw uploadError;
 
         const { data } = supabase.storage
-          .from('profiles')
+          .from('avatars')
           .getPublicUrl(fileName);
 
         // Don't update database - let the form handle it
@@ -104,11 +106,11 @@ export const PhotoUpload = ({ currentPhotoUrl, onPhotoChange, userId, className 
     try {
       if (userId && currentPhotoUrl) {
         // Delete from Supabase storage - parse the file path from the URL
-        const urlParts = currentPhotoUrl.split('/storage/v1/object/public/profiles/');
+        const urlParts = currentPhotoUrl.split('/storage/v1/object/public/avatars/');
         if (urlParts.length > 1) {
           const filePath = urlParts[1];
           await supabase.storage
-            .from('profiles')
+            .from('avatars')
             .remove([filePath]);
         }
       }

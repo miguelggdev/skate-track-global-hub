@@ -7,7 +7,7 @@ from langchain_core.messages import SystemMessage
 from langchain_core.tools import tool
 from langgraph.prebuilt import create_react_agent
 
-from agents.base_agent import BaseAgent, current_user_id, current_user_role
+from agents.base_agent import BaseAgent, current_user_id, current_user_role, current_club_id
 from database.supabase_client import get_supabase
 
 _STAFF_ROLES = {"admin", "coach", "leader"}
@@ -16,7 +16,20 @@ _STAFF_ROLES = {"admin", "coach", "leader"}
 @tool
 def get_competition_results(competition_id: str) -> str:
     """Obtiene los resultados registrados de una competencia específica."""
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
+    comp = (
+        client.table("competitions")
+        .select("id")
+        .eq("id", competition_id)
+        .eq("club_id", club_id)
+        .limit(1)
+        .execute()
+    )
+    if not comp.data:
+        return json.dumps({"error": "Competencia no encontrada"}, ensure_ascii=False)
     result = (
         client.table("competition_results")
         .select("position, time_seconds, medal_type, athlete_id, category, gender, event_name")
@@ -40,11 +53,15 @@ def get_competition_results(competition_id: str) -> str:
 @tool
 def get_competitions_list(year: int = 0) -> str:
     """Lista las competencias del año (0 = año actual) con su estado."""
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
     target_year = year if year > 0 else datetime.now().year
     result = (
         client.table("competitions")
         .select("id, name, start_date, location, competition_level, status")
+        .eq("club_id", club_id)
         .gte("start_date", f"{target_year}-01-01")
         .lte("start_date", f"{target_year}-12-31")
         .order("start_date")
@@ -56,14 +73,18 @@ def get_competitions_list(year: int = 0) -> str:
 @tool
 def get_athlete_results_history(athlete_id: str) -> str:
     """Obtiene el historial de resultados competitivos de un atleta."""
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
     role = current_user_role.get()
     uid = current_user_id.get()
-    if role not in _STAFF_ROLES:
+    own = client.table("athletes").select("user_id, club_id").eq("id", athlete_id).limit(1).execute()
+    if not own.data or own.data[0].get("club_id") != club_id:
+        return json.dumps({"error": "Sin permiso para ver este historial"}, ensure_ascii=False)
+    if role not in _STAFF_ROLES and own.data[0].get("user_id") != uid:
         # Atletas solo pueden ver su propio historial
-        own = client.table("athletes").select("user_id").eq("id", athlete_id).limit(1).execute()
-        if not own.data or own.data[0].get("user_id") != uid:
-            return json.dumps({"error": "Sin permiso para ver este historial"}, ensure_ascii=False)
+        return json.dumps({"error": "Sin permiso para ver este historial"}, ensure_ascii=False)
     result = (
         client.table("competition_results")
         .select("position, time_seconds, medal_type, category, gender, event_name, competition_id")
@@ -92,11 +113,15 @@ def get_athlete_results_history(athlete_id: str) -> str:
 @tool
 def get_club_ranking_summary() -> str:
     """Obtiene el ranking general del club: atletas con más medallas en el año."""
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
     year = datetime.now().year
     comp_rows = (
         client.table("competitions")
         .select("id")
+        .eq("club_id", club_id)
         .gte("start_date", f"{year}-01-01")
         .lte("start_date", f"{year}-12-31")
         .execute()

@@ -10,7 +10,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
 
-from api.deps import get_current_user, _fetch_app_role_async
+from api.deps import get_current_user, _fetch_role_and_club_async
 from database.supabase_client import get_supabase
 
 logger = logging.getLogger(__name__)
@@ -56,9 +56,11 @@ async def import_athletes_csv(
     user_id = current_user.get("sub")
     if not user_id:
         raise HTTPException(status_code=401, detail="Token sin sub claim")
-    app_role = await _fetch_app_role_async(user_id)
+    app_role, club_id = await _fetch_role_and_club_async(user_id)
     if app_role != "admin":
         raise HTTPException(status_code=403, detail="Solo administradores pueden importar atletas.")
+    if not club_id:
+        raise HTTPException(status_code=403, detail="Usuario sin club asignado")
 
     if file.content_type not in {"text/csv", "application/csv", "text/plain"}:
         raise HTTPException(status_code=400, detail="El archivo debe ser CSV (text/csv).")
@@ -104,6 +106,7 @@ async def import_athletes_csv(
             "first_name": first_name,
             "last_name":  last_name,
             "status":     "active",
+            "club_id":    club_id,
         }
 
         if row.get("email"):

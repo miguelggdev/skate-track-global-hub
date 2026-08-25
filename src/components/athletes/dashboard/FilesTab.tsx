@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { FileText, Upload, Download, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentAthlete } from '@/hooks/useCurrentAthlete';
+import { useCurrentClub } from '@/hooks/useCurrentClub';
 import { useToast } from '@/hooks/use-toast';
 
 const BUCKET = 'athlete-documents';
@@ -40,6 +41,7 @@ const DEFAULT_STATUS: FileStatus = {
 
 export const FilesTab = () => {
   const { athlete } = useCurrentAthlete();
+  const { club } = useCurrentClub();
   const { toast } = useToast();
   const [statuses, setStatuses] = useState<FileStatuses>(() =>
     Object.fromEntries(DOCUMENT_TYPES.map(d => [d.key, { ...DEFAULT_STATUS }])) as FileStatuses
@@ -48,16 +50,17 @@ export const FilesTab = () => {
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
-    if (!athlete?.id) return;
+    if (!athlete?.id || !club?.id) return;
     loadFileList(athlete.id);
-  }, [athlete?.id]);
+  }, [athlete?.id, club?.id]);
 
   const loadFileList = async (athleteId: string) => {
+    if (!club) return;
     setLoadingList(true);
     try {
       const { data, error } = await supabase.storage
         .from(BUCKET)
-        .list(athleteId, { sortBy: { column: 'name', order: 'asc' } });
+        .list(`${club.id}/${athleteId}`, { sortBy: { column: 'name', order: 'asc' } });
 
       if (error) throw error;
 
@@ -88,9 +91,9 @@ export const FilesTab = () => {
   };
 
   const handleUpload = async (key: DocKey, file: File) => {
-    if (!athlete?.id) return;
+    if (!athlete?.id || !club) return;
     const ext = file.name.split('.').pop() ?? 'pdf';
-    const path = `${athlete.id}/${key}.${ext}`;
+    const path = `${club.id}/${athlete.id}/${key}.${ext}`;
     setProp(key, { uploading: true });
     try {
       const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true });
@@ -104,8 +107,8 @@ export const FilesTab = () => {
   };
 
   const handleDownload = async (key: DocKey) => {
-    if (!athlete?.id || !statuses[key].fileName) return;
-    const path = `${athlete.id}/${statuses[key].fileName}`;
+    if (!athlete?.id || !club || !statuses[key].fileName) return;
+    const path = `${club.id}/${athlete.id}/${statuses[key].fileName}`;
     setProp(key, { downloading: true });
     try {
       const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(path, 60);
@@ -119,8 +122,8 @@ export const FilesTab = () => {
   };
 
   const handleDelete = async (key: DocKey) => {
-    if (!athlete?.id || !statuses[key].fileName) return;
-    const path = `${athlete.id}/${statuses[key].fileName}`;
+    if (!athlete?.id || !club || !statuses[key].fileName) return;
+    const path = `${club.id}/${athlete.id}/${statuses[key].fileName}`;
     setProp(key, { deleting: true });
     try {
       const { error } = await supabase.storage.from(BUCKET).remove([path]);

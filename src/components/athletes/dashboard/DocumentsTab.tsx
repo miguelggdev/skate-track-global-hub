@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentAthlete } from '@/hooks/useCurrentAthlete';
+import { useCurrentClub } from '@/hooks/useCurrentClub';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { format, differenceInDays } from 'date-fns';
@@ -75,6 +76,7 @@ const getDocTypeLabel = (type: string) =>
 export const DocumentsTab = () => {
   const { athlete } = useCurrentAthlete();
   const { user } = useAuth();
+  const { club } = useCurrentClub();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -120,14 +122,14 @@ export const DocumentsTab = () => {
   });
 
   const handleSaveSignature = async (dataUrl: string) => {
-    if (!athlete?.id || !user?.id) return;
+    if (!athlete?.id || !user?.id || !club) return;
     setSavingSignature(true);
     try {
       // Convert base64 data URL to Blob
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       const file = new File([blob], 'firma.png', { type: 'image/png' });
-      const path = `${user.id}/firma_digital/${athlete.id}_${Date.now()}.png`;
+      const path = `${club.id}/${user.id}/firma_digital/${athlete.id}_${Date.now()}.png`;
 
       const { error: storageError } = await supabase.storage
         .from('documents')
@@ -187,11 +189,11 @@ export const DocumentsTab = () => {
   };
 
   const handleUpload = async () => {
-    if (!selectedFile || !docType || !athlete?.id || !user?.id) return;
+    if (!selectedFile || !docType || !athlete?.id || !user?.id || !club) return;
     setUploading(true);
     try {
       const ext = selectedFile.name.split('.').pop();
-      const path = `${user.id}/${docType}/${Date.now()}.${ext}`;
+      const path = `${club.id}/${user.id}/${docType}/${Date.now()}.${ext}`;
 
       const { error: storageError } = await supabase.storage
         .from('documents')

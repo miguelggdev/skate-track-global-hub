@@ -32,7 +32,7 @@ def test_restricted_agent_denies_non_privileged_role(api_client):
     agent = MagicMock()
     agent.chat = AsyncMock(return_value="no debería llegar")
     with patch("api.routes.agents._get_registry", return_value={"security": agent}), \
-         patch("api.routes.agents._fetch_app_role_async", new=AsyncMock(return_value="athlete")):
+         patch("api.routes.agents._fetch_role_and_club_async", new=AsyncMock(return_value=("athlete", "club-1"))):
         res = client.post("/api/agents/security/chat", json={"message": "hola", "history": []})
     assert res.status_code == 403
     agent.chat.assert_not_called()
@@ -44,7 +44,7 @@ def test_restricted_agent_allows_admin(api_client):
     agent = MagicMock()
     agent.chat = AsyncMock(return_value="respuesta del agente")
     with patch("api.routes.agents._get_registry", return_value={"security": agent}), \
-         patch("api.routes.agents._fetch_app_role_async", new=AsyncMock(return_value="admin")):
+         patch("api.routes.agents._fetch_role_and_club_async", new=AsyncMock(return_value=("admin", "club-1"))):
         res = client.post("/api/agents/security/chat", json={"message": "hola", "history": []})
     assert res.status_code == 200
     body = res.json()
@@ -58,7 +58,7 @@ def test_open_agent_allows_any_role(api_client):
     agent = MagicMock()
     agent.chat = AsyncMock(return_value="consejo de patinaje")
     with patch("api.routes.agents._get_registry", return_value={"skating": agent}), \
-         patch("api.routes.agents._fetch_app_role_async", new=AsyncMock(return_value="athlete")):
+         patch("api.routes.agents._fetch_role_and_club_async", new=AsyncMock(return_value=("athlete", "club-1"))):
         res = client.post("/api/agents/skating/chat", json={"message": "hola", "history": []})
     assert res.status_code == 200
     assert res.json()["response"] == "consejo de patinaje"

@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useCurrentClub } from '@/hooks/useCurrentClub';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Upload, X, Image, ShieldAlert } from 'lucide-react';
 
@@ -15,12 +17,18 @@ const LogoUpload = ({ currentLogoUrl, onLogoUpdate }: LogoUploadProps) => {
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const { isAdmin, loading: profileLoading } = useUserProfile();
+  const { club } = useCurrentClub();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const uploadLogo = async (file: File) => {
     try {
+      if (!club) {
+        throw new Error('No se pudo determinar el club actual');
+      }
+
       setUploading(true);
-      
+
       // Validate file type
       if (!file.type.startsWith('image/')) {
         throw new Error('Please select an image file');
@@ -32,11 +40,11 @@ const LogoUpload = ({ currentLogoUrl, onLogoUpdate }: LogoUploadProps) => {
       }
 
       const fileExt = file.name.split('.').pop();
-      const fileName = `club-logo-${Date.now()}.${fileExt}`;
+      const fileName = `${club.id}/logo-${Date.now()}.${fileExt}`;
 
       // Upload to Supabase Storage
       const { data, error } = await supabase.storage
-        .from('club-logos')
+        .from('logos')
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: false
@@ -46,42 +54,19 @@ const LogoUpload = ({ currentLogoUrl, onLogoUpdate }: LogoUploadProps) => {
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('club-logos')
+        .from('logos')
         .getPublicUrl(data.path);
 
-      // Update or create club settings
-      const { data: existingSettings, error: selectError } = await supabase
-        .from('club_settings')
-        .select('id')
-        .maybeSingle();
+      const { error: updateError } = await supabase
+        .from('clubs')
+        .update({ logo_url: publicUrl })
+        .eq('id', club.id);
 
-      if (selectError) throw selectError;
+      if (updateError) throw updateError;
 
-      if (existingSettings) {
-        // Update existing settings
-        const { error: updateError } = await supabase
-          .from('club_settings')
-          .update({ club_logo_url: publicUrl })
-          .eq('id', existingSettings.id);
-
-        if (updateError) throw updateError;
-      } else {
-        // Create new settings if none exist
-        const { error: insertError } = await supabase
-          .from('club_settings')
-          .insert({ 
-            club_name: 'Mi Club',
-            club_logo_url: publicUrl,
-            timezone: 'Europe/Madrid',
-            currency: 'EUR',
-            language: 'es'
-          });
-
-        if (insertError) throw insertError;
-      }
-
+      queryClient.invalidateQueries({ queryKey: ['current-club'] });
       onLogoUpdate(publicUrl);
-      
+
       toast({
         title: "Éxito",
         description: "Logo del club actualizado correctamente",
@@ -129,28 +114,22 @@ const LogoUpload = ({ currentLogoUrl, onLogoUpdate }: LogoUploadProps) => {
 
   const removeLogo = async () => {
     try {
-      const { data: existingSettings, error: selectError } = await supabase
-        .from('club_settings')
-        .select('id')
-        .maybeSingle();
+      if (!club) return;
 
-      if (selectError) throw selectError;
+      const { error } = await supabase
+        .from('clubs')
+        .update({ logo_url: null })
+        .eq('id', club.id);
 
-      if (existingSettings) {
-        const { error } = await supabase
-          .from('club_settings')
-          .update({ club_logo_url: null })
-          .eq('id', existingSettings.id);
+      if (error) throw error;
 
-        if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['current-club'] });
+      onLogoUpdate('');
 
-        onLogoUpdate('');
-        
-        toast({
-          title: "Éxito",
-          description: "Logo del club eliminado",
-        });
-      }
+      toast({
+        title: "Éxito",
+        description: "Logo del club eliminado",
+      });
     } catch (error: any) {
       toast({
         title: "Error",

@@ -7,7 +7,7 @@ from langchain_core.messages import SystemMessage
 from langchain_core.tools import tool
 from langgraph.prebuilt import create_react_agent
 
-from agents.base_agent import BaseAgent, current_user_role
+from agents.base_agent import BaseAgent, current_user_role, current_club_id
 from database.supabase_client import get_supabase
 
 _FINANCE_ROLES = {"admin", "finance"}
@@ -19,6 +19,9 @@ def get_monthly_summary(months_back: int = 0) -> str:
     role = current_user_role.get()
     if role not in _FINANCE_ROLES:
         return json.dumps({"error": "Solo administradores y el área financiera pueden acceder a esta información."}, ensure_ascii=False)
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
     months_back = max(0, int(months_back))
     now = datetime.now()
@@ -34,6 +37,7 @@ def get_monthly_summary(months_back: int = 0) -> str:
     result = (
         client.table("financial_transactions")
         .select("amount, transaction_type, description, transaction_date, payment_status")
+        .eq("club_id", club_id)
         .gte("transaction_date", start)
         .lte("transaction_date", end)
         .execute()
@@ -58,10 +62,14 @@ def get_pending_payments() -> str:
     role = current_user_role.get()
     if role not in _FINANCE_ROLES:
         return json.dumps({"error": "Solo administradores y el área financiera pueden acceder a esta información."}, ensure_ascii=False)
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
     result = (
         client.table("financial_transactions")
         .select("id, amount, transaction_type, description, transaction_date, payment_status")
+        .eq("club_id", club_id)
         .eq("payment_status", "pending")
         .order("transaction_date", desc=False)
         .limit(30)
@@ -82,11 +90,15 @@ def get_annual_revenue() -> str:
     role = current_user_role.get()
     if role not in _FINANCE_ROLES:
         return json.dumps({"error": "Solo administradores y el área financiera pueden acceder a esta información."}, ensure_ascii=False)
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
     year = datetime.now().year
     result = (
         client.table("financial_transactions")
         .select("amount, transaction_type, transaction_date")
+        .eq("club_id", club_id)
         .gte("transaction_date", f"{year}-01-01")
         .lte("transaction_date", f"{year}-12-31")
         .execute()

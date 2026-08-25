@@ -7,7 +7,7 @@ from langchain_core.messages import SystemMessage
 from langchain_core.tools import tool
 from langgraph.prebuilt import create_react_agent
 
-from agents.base_agent import BaseAgent, current_user_role
+from agents.base_agent import BaseAgent, current_user_role, current_club_id
 from database.supabase_client import get_supabase
 
 _AUTHORIZED_ROLES = {"admin", "coach", "leader"}
@@ -18,6 +18,9 @@ def get_athlete_health_profile(athlete_id: str) -> str:
     """Obtiene el perfil de salud básico de un atleta: datos generales, lesiones conocidas y contacto de emergencia."""
     if current_user_role.get() not in _AUTHORIZED_ROLES:
         return json.dumps({"error": "Acceso no autorizado al perfil de salud del atleta"}, ensure_ascii=False)
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
     result = (
         client.table("athletes")
@@ -26,6 +29,7 @@ def get_athlete_health_profile(athlete_id: str) -> str:
             "blood_type, allergies, chronic_conditions, emergency_contact_name, emergency_contact_phone"
         )
         .eq("id", athlete_id)
+        .eq("club_id", club_id)
         .limit(1)
         .execute()
     )
@@ -56,10 +60,14 @@ def get_athletes_requiring_medical_attention() -> str:
     """Lista atletas activos con condiciones médicas registradas o alergias conocidas."""
     if current_user_role.get() not in _AUTHORIZED_ROLES:
         return json.dumps({"error": "Acceso no autorizado"}, ensure_ascii=False)
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
     result = (
         client.table("athletes")
         .select("id, first_name, last_name, category, allergies, chronic_conditions, blood_type")
+        .eq("club_id", club_id)
         .eq("status", "active")
         .or_("chronic_conditions.not.is.null,allergies.not.is.null")
         .limit(50)
@@ -71,10 +79,14 @@ def get_athletes_requiring_medical_attention() -> str:
 @tool
 def get_equipment_status() -> str:
     """Revisa el estado del equipamiento médico y de primeros auxilios del club (botiquín)."""
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
     result = (
         client.table("equipment")
         .select("name, equipment_type, status, condition_notes, next_maintenance_at")
+        .eq("club_id", club_id)
         .execute()
     )
     return json.dumps(result.data or [], ensure_ascii=False, default=str)

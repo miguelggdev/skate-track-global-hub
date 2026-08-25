@@ -7,27 +7,33 @@ from langchain_core.messages import SystemMessage
 from langchain_core.tools import tool
 from langgraph.prebuilt import create_react_agent
 
-from agents.base_agent import BaseAgent, current_user_id, current_user_role
+from agents.base_agent import BaseAgent, current_user_id, current_user_role, current_club_id
 from database.supabase_client import get_supabase
 
 _STAFF_ROLES = {"admin", "coach", "leader"}
 
 
-def _can_access_athlete(client, athlete_id: str) -> bool:
-    """Retorna True si el usuario en contexto puede acceder a los datos de este atleta."""
+def _can_access_athlete(client, athlete_id: str, club_id: str) -> bool:
+    """Retorna True si el atleta pertenece al club actual Y el usuario puede ver sus datos
+    (staff del club, o el propio atleta)."""
+    own = client.table("athletes").select("user_id, club_id").eq("id", athlete_id).limit(1).execute()
+    if not own.data or own.data[0].get("club_id") != club_id:
+        return False
     role = current_user_role.get()
     if role in _STAFF_ROLES:
         return True
     uid = current_user_id.get()
-    own = client.table("athletes").select("user_id").eq("id", athlete_id).limit(1).execute()
-    return bool(own.data) and own.data[0].get("user_id") == uid
+    return bool(uid) and own.data[0].get("user_id") == uid
 
 
 @tool
 def get_athlete_competition_history(athlete_id: str) -> str:
     """Obtiene el historial de competencias de un atleta para contextualizar el trabajo psicológico."""
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
-    if not _can_access_athlete(client, athlete_id):
+    if not _can_access_athlete(client, athlete_id, club_id):
         return json.dumps({"error": "Sin permiso para acceder a este atleta"}, ensure_ascii=False)
     result = (
         client.table("competition_registrations")
@@ -47,11 +53,15 @@ def get_athlete_competition_history(athlete_id: str) -> str:
 @tool
 def get_upcoming_competitions() -> str:
     """Lista las próximas competencias para orientar la preparación mental."""
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
     today = datetime.now().date().isoformat()
     result = (
         client.table("competitions")
         .select("name, start_date, location, competition_level")
+        .eq("club_id", club_id)
         .gte("start_date", today)
         .order("start_date")
         .limit(5)
@@ -63,8 +73,11 @@ def get_upcoming_competitions() -> str:
 @tool
 def get_athlete_profile(athlete_id: str) -> str:
     """Obtiene datos básicos del atleta para personalizar el apoyo psicológico."""
+    club_id = current_club_id.get()
+    if not club_id:
+        return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
-    if not _can_access_athlete(client, athlete_id):
+    if not _can_access_athlete(client, athlete_id, club_id):
         return json.dumps({"error": "Sin permiso para acceder a este atleta"}, ensure_ascii=False)
     result = (
         client.table("athletes")

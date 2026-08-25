@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Upload, FileImage, CheckCircle2, AlertCircle, Loader2, X, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useCurrentClub } from '@/hooks/useCurrentClub';
 import { toast } from 'sonner';
 
 interface ExtractedRow {
@@ -51,6 +52,7 @@ export function ResultsImportModal({ competitionId, competitionName, onImported 
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState<'upload' | 'review' | 'done'>('upload');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { club } = useCurrentClub();
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -68,7 +70,7 @@ export function ResultsImportModal({ competitionId, competitionName, onImported 
   };
 
   const uploadAndExtract = async () => {
-    if (!file) return;
+    if (!file || !club) return;
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
@@ -80,7 +82,7 @@ export function ResultsImportModal({ competitionId, competitionName, onImported 
 
     try {
       const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin';
-      const path = `competition-results/${competitionId}/${crypto.randomUUID()}.${ext}`;
+      const path = `${club.id}/competition-results/${competitionId}/${crypto.randomUUID()}.${ext}`;
       const { error: uploadErr } = await supabase.storage
         .from('documents')
         .upload(path, file, { upsert: false });
