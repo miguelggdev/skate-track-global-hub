@@ -68,6 +68,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
             setUserAvatarUrl(data.avatar_url);
           }
         } catch (error) {
+          console.error('Error al cargar el avatar del usuario:', error);
         }
       };
       
@@ -88,9 +89,10 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
           setClubLogo(data.logo_url);
         }
       } catch (error) {
+        console.error('Error al cargar el logo del club:', error);
       }
     };
-    
+
     fetchClubLogo();
   }, []);
 
@@ -370,6 +372,7 @@ const TopNavigation = ({ userRole = 'User', userEmail, userAvatar, onMenuToggle 
         setSearchResults(results);
         setIsSearchOpen(results.length > 0);
       } catch (error) {
+        console.error('Error en la búsqueda global:', error);
       }
     };
 

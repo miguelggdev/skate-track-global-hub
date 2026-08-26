@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { SystemSetting } from '@/pages/ClubConfig';
 import { Edit2, Check, X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface SettingRowProps {
   setting: SystemSetting;
@@ -19,6 +20,7 @@ const SettingRow = ({ setting, onUpdate, onLocalChange, bulkMode = false, hasCha
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(setting.setting_value);
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleSave = async () => {
     if (bulkMode) {
@@ -39,7 +41,12 @@ const SettingRow = ({ setting, onUpdate, onLocalChange, bulkMode = false, hasCha
       
       setIsEditing(false);
       onUpdate();
-    } catch (error) {
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo guardar la configuración",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

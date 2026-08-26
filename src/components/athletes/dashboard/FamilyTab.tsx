@@ -52,7 +52,12 @@ export const FamilyTab = () => {
           guardian_email: data.guardian_email ?? '',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudieron cargar los datos familiares",
+        variant: "destructive",
+      });
     }
   };
 

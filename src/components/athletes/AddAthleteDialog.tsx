@@ -35,15 +35,44 @@ import { toast } from '@/components/ui/sonner';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import {
-  calculateAge,
-  getCategoryFromAge,
-  getLevelFromCategoryAndAge,
-  getCategoryDisplayName,
-  getLevelDisplayName
-} from '@/utils/ageCalculations';
+import { calculateAge } from '@/utils/ageCalculations';
 import DatePickerWithYearMonth from '@/components/ui/date-picker-with-year-month';
 import { useCreateUser, CreateUserData } from '@/hooks/useCreateUser';
+
+// Espeja EXACTAMENTE los cortes de edad de handle_new_user() (trigger de
+// Postgres que asigna la categoría real al crear el atleta) — este preview
+// no se envía al backend, solo se muestra al admin, así que debe coincidir
+// con lo que el trigger realmente va a guardar.
+const CATEGORY_LABELS: Record<string, string> = {
+  escuela: 'Escuela', menores: 'Menores', transicion: 'Transición',
+  prejuvenil: 'Prejuvenil', juvenil: 'Juvenil', mayores: 'Mayores',
+};
+const LEVEL_LABELS: Record<string, string> = {
+  escuela: 'Escuela', escuela_menores: 'Escuela Menores', transicion: 'Transición',
+  pre_juvenil: 'Prejuvenil', juvenil_primer_ano: 'Juvenil 1er año',
+  juvenil_segundo_ano: 'Juvenil 2do año', juvenil_tercer_ano: 'Juvenil 3er año',
+  mayores_unica: 'Mayores',
+};
+
+function previewCategoryFromAge(age: number): string {
+  if (age <= 6) return 'escuela';
+  if (age <= 8) return 'menores';
+  if (age <= 10) return 'transicion';
+  if (age <= 12) return 'prejuvenil';
+  if (age <= 17) return 'juvenil';
+  return 'mayores';
+}
+
+function previewLevelFromAge(age: number): string {
+  if (age <= 6) return 'escuela';
+  if (age <= 8) return 'escuela_menores';
+  if (age <= 10) return 'transicion';
+  if (age <= 12) return 'pre_juvenil';
+  if (age <= 14) return 'juvenil_primer_ano';
+  if (age <= 16) return 'juvenil_segundo_ano';
+  if (age <= 17) return 'juvenil_tercer_ano';
+  return 'mayores_unica';
+}
 
 const addAthleteSchema = z.object({
   firstName: z.string().min(1, 'El nombre es requerido'),
@@ -84,10 +113,8 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
   const dateOfBirth = form.watch('dateOfBirth');
 
   const calculatedAge = dateOfBirth ? calculateAge(dateOfBirth) : null;
-  const calculatedCategory = calculatedAge != null ? getCategoryFromAge(calculatedAge) : null;
-  const calculatedLevel = (calculatedAge != null && calculatedCategory)
-    ? getLevelFromCategoryAndAge(calculatedCategory, calculatedAge)
-    : null;
+  const calculatedCategory = calculatedAge != null ? previewCategoryFromAge(calculatedAge) : null;
+  const calculatedLevel = calculatedAge != null ? previewLevelFromAge(calculatedAge) : null;
 
   const onSubmit = async (data: AthleteFormData) => {
     const createUserData: CreateUserData = {
@@ -290,11 +317,11 @@ const AddAthleteDialog = ({ open, onOpenChange, onAthleteAdded }: AddAthleteDial
                   </div>
                   <div>
                     <span className="text-muted-foreground">Categoría:</span>
-                    <p className="font-medium">{calculatedCategory ? getCategoryDisplayName(calculatedCategory) : '—'}</p>
+                    <p className="font-medium">{calculatedCategory ? CATEGORY_LABELS[calculatedCategory] ?? calculatedCategory : '—'}</p>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Nivel:</span>
-                    <p className="font-medium">{calculatedLevel ? getLevelDisplayName(calculatedLevel) : '—'}</p>
+                    <p className="font-medium">{calculatedLevel ? LEVEL_LABELS[calculatedLevel] ?? calculatedLevel : '—'}</p>
                   </div>
                 </div>
               </div>

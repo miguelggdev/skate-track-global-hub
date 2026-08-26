@@ -9,6 +9,7 @@ import { generateHTMLTemplate } from '@/utils/reportTemplateGenerator';
 import { useReportTemplate } from '@/hooks/useReportTemplate';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { useToast } from '@/hooks/use-toast';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -36,6 +37,7 @@ function escapeHtml(str: string | null | undefined): string {
 
 export const FinancialReportGenerator: React.FC<FinancialReportGeneratorProps> = ({ report }) => {
   const { clubInfo, reportSettings } = useReportTemplate();
+  const { toast } = useToast();
 
   const formatDate = (date: Date) => date.toLocaleDateString('es-ES');
 
@@ -192,7 +194,12 @@ export const FinancialReportGenerator: React.FC<FinancialReportGeneratorProps> =
 
       const fileName = `informe-financiero-${report.type}-${formatDate(report.dateRange.startDate).replace(/\//g, '-')}.pdf`;
       pdf.save(fileName);
-    } catch (error) {
+    } catch (error: any) {
+      toast({
+        title: "Error al generar el PDF",
+        description: error.message || "No se pudo generar el informe financiero",
+        variant: "destructive",
+      });
     } finally {
       document.body.removeChild(container);
     }

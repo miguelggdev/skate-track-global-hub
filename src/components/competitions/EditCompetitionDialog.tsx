@@ -28,6 +28,9 @@ const competitionSchema = z.object({
   entry_fee: z.number().optional(),
   prize_pool: z.number().optional(),
   registration_deadline: z.string().optional(),
+}).refine((data) => data.end_date >= data.start_date, {
+  message: "End date must be after start date",
+  path: ["end_date"],
 });
 
 interface EditCompetitionDialogProps {

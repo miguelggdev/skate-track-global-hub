@@ -46,7 +46,7 @@ export function getLevelFromCategoryAndAge(category: string, age: number): strin
 /** @deprecated Usar obtenerCategoria().category */
 export function getCategoryDisplayName(category: string): string {
   const map: Record<string, string> = {
-    menores: 'Menores', transicion: 'Transición', prejuvenil: 'Prejuvenil',
+    escuela: 'Escuela', menores: 'Menores', transicion: 'Transición', prejuvenil: 'Prejuvenil',
     juvenil: 'Juvenil', mayores: 'Mayores', masters: 'Masters',
   };
   return map[category] ?? category;

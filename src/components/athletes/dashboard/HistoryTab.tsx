@@ -77,7 +77,12 @@ export const HistoryTab = () => {
           is_federated: data.is_federated ?? false,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo cargar el historial deportivo",
+        variant: "destructive",
+      });
     }
   };
 

@@ -52,7 +52,12 @@ export const EquipmentInfoForm: React.FC<EquipmentInfoFormProps> = ({ athleteId,
           helmet_brand: data.helmet_brand ?? '',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo cargar el equipamiento",
+        variant: "destructive",
+      });
     }
   };
 

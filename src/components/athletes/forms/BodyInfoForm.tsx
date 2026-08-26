@@ -57,7 +57,12 @@ export const BodyInfoForm: React.FC<BodyInfoFormProps> = ({ athleteId, onSave })
           limitations: data.limitations ?? '',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudieron cargar los datos corporales",
+        variant: "destructive",
+      });
     }
   };
 

@@ -50,7 +50,12 @@ export const StudiesTab = () => {
           school_email: data.school_email ?? '',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudieron cargar los datos de estudios",
+        variant: "destructive",
+      });
     }
   };
 

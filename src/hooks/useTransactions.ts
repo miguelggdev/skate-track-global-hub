@@ -80,6 +80,7 @@ export const useCreateTransaction = () => {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['paginated-transactions'] });
       queryClient.invalidateQueries({ queryKey: ['financial-stats'] });
       queryClient.invalidateQueries({ queryKey: ['current-month-payment'] });
       queryClient.invalidateQueries({ queryKey: ['athletes'] });
@@ -117,6 +118,7 @@ export const useUpdateTransaction = () => {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['paginated-transactions'] });
       queryClient.invalidateQueries({ queryKey: ['financial-stats'] });
       queryClient.invalidateQueries({ queryKey: ['current-month-payment'] });
       queryClient.invalidateQueries({ queryKey: ['athletes'] });
@@ -181,11 +183,12 @@ export const useDeleteTransaction = () => {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['paginated-transactions'] });
       queryClient.invalidateQueries({ queryKey: ['financial-stats'] });
       queryClient.invalidateQueries({ queryKey: ['current-month-payment'] });
       queryClient.invalidateQueries({ queryKey: ['athletes'] });
       queryClient.invalidateQueries({ queryKey: ['athlete-transactions'] });
-      
+
       toast({
         title: "Transacción eliminada",
         description: "La transacción se ha eliminado correctamente y el estado del atleta se ha actualizado.",

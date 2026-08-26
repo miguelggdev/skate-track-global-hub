@@ -5,6 +5,7 @@ import jsPDF from 'jspdf';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { calculateAge } from '@/utils/ageCalculations';
+import { useToast } from '@/hooks/use-toast';
 
 interface PDFData {
   athlete: {
@@ -50,6 +51,7 @@ interface AthletePDFExportProps {
 
 const AthletePDFExport: React.FC<AthletePDFExportProps> = ({ data }) => {
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const generatePDF = async () => {
     setLoading(true);
@@ -199,7 +201,12 @@ const AthletePDFExport: React.FC<AthletePDFExportProps> = ({ data }) => {
       // Save
       const fileName = `CV_Deportivo_${fullName.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd')}.pdf`;
       doc.save(fileName);
-    } catch (error) {
+    } catch (error: any) {
+      toast({
+        title: "Error al generar el PDF",
+        description: error.message || "No se pudo generar el CV deportivo",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
