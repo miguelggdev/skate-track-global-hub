@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,8 +29,6 @@ const Register = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { club, loading: clubLoading } = useClubByDomain();
-  const [searchParams] = useSearchParams();
-  const inviteToken = searchParams.get('invite');
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -84,7 +82,6 @@ const Register = () => {
             last_name: validated.lastName,
             club_id: club.id,
             ...(isParent ? { role: 'parent' } : {}),
-            ...(inviteToken ? { invite_token: inviteToken } : {}),
           },
         },
       });
@@ -150,8 +147,6 @@ const Register = () => {
               ? 'Revisa tu email para continuar'
               : club
               ? `Registro en ${club.name}`
-              : inviteToken
-              ? 'Registro del administrador del club'
               : 'Regístrate para continuar'}
           </CardDescription>
         </CardHeader>
