@@ -17,6 +17,9 @@ Configure in Supabase Dashboard → Database → Webhooks:
   athletes             INSERT      https://stride.arkanatech.tech/api/webhooks/new-athlete
 
 Custom header: X-Webhook-Secret: <WEBHOOK_SECRET from .env>
+
+Aparte, /telegram-bot es el webhook del Bot de Telegram (no de Supabase) —
+ver comentario en esa ruta más abajo.
 """
 from __future__ import annotations
 
@@ -189,3 +192,34 @@ async def webhook_suspicious_access(
         check_suspicious_access.delay(user_id, ip_address, success)
         logger.info("AUTO-30 queued: user=%s ip=%s success=%s", user_id, ip_address, success)
     return {"queued": True}
+
+
+# ── Bot de Telegram: responde con el chat_id a quien le escriba ────────────
+# No usa X-Webhook-Secret (ese header es para Supabase) — Telegram no lo
+# manda. Se protege con un secret propio en la URL (?secret=), configurado
+# al registrar el webhook con setWebhook.
+
+@router.post("/telegram-bot")
+async def webhook_telegram_bot(payload: dict, secret: str | None = None) -> dict:
+    """Registrar con: https://api.telegram.org/bot<TOKEN>/setWebhook?
+    url=https://stride.arkanatech.tech/api/webhooks/telegram-bot?secret=<TELEGRAM_WEBHOOK_SECRET>
+    """
+    if not settings.telegram_webhook_secret or secret != settings.telegram_webhook_secret:
+        raise HTTPException(status_code=401, detail="Invalid secret")
+
+    message = payload.get("message") or payload.get("edited_message")
+    if not message:
+        return {"ok": True}
+
+    chat_id = message.get("chat", {}).get("id")
+    if chat_id is None:
+        return {"ok": True}
+
+    from services.telegram_service import send_telegram_message
+    send_telegram_message(
+        str(chat_id),
+        f"Tu Chat ID es:\n<code>{chat_id}</code>\n\n"
+        "Pegalo en la configuración de notificaciones de SpeedSkateTrack Hub "
+        "(club → Configurar Club → Notificaciones, o panel de Superadmin).",
+    )
+    return {"ok": True}

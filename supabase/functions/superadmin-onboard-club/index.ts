@@ -186,6 +186,16 @@ serve(async (req) => {
       return json({ error: 'No se pudo crear el club' }, 500);
     }
 
+    // ── Configuración de notificaciones Telegram por defecto (desactivadas
+    // hasta que el admin del club pegue su chat_id) — no bloqueante si falla.
+    await supabaseAdmin.from('system_settings').insert([
+      { club_id: club.id, setting_key: 'telegram_chat_id', setting_value: '', setting_type: 'string', category: 'notifications', description: 'Chat ID del grupo de Telegram del club. Para obtenerlo: creá un grupo, agregá al bot y escribile cualquier mensaje — el bot responde con el Chat ID. Pegalo acá.' },
+      { club_id: club.id, setting_key: 'telegram_notify_payments', setting_value: 'false', setting_type: 'boolean', category: 'notifications', description: 'Avisar por Telegram cuando se registre un pago' },
+      { club_id: club.id, setting_key: 'telegram_notify_new_athletes', setting_value: 'false', setting_type: 'boolean', category: 'notifications', description: 'Avisar por Telegram cuando se registre un atleta nuevo' },
+      { club_id: club.id, setting_key: 'telegram_notify_security', setting_value: 'false', setting_type: 'boolean', category: 'notifications', description: 'Avisar por Telegram ante accesos sospechosos o alertas de seguridad' },
+      { club_id: club.id, setting_key: 'telegram_notify_automation_failures', setting_value: 'false', setting_type: 'boolean', category: 'notifications', description: 'Avisar por Telegram cuando una automatización falle' },
+    ]);
+
     // ── Invitar al administrador (envía correo con link para fijar
     // contraseña — no se genera ni transmite ninguna contraseña temporal) ──
     const { data: invited, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(

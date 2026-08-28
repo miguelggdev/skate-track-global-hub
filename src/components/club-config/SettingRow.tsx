@@ -103,6 +103,13 @@ const SettingRow = ({ setting, onUpdate, onLocalChange, bulkMode = false, hasCha
       'sms_notifications': 'Notificaciones por SMS',
       'auto_backup': 'Copia de seguridad automática',
       'competition_registration_deadline': 'Plazo inscripción competiciones (días)',
+      'notifications_email_enabled': 'Notificaciones por email',
+      'notifications_sms_enabled': 'Notificaciones por SMS',
+      'telegram_chat_id': 'Chat ID de Telegram del club',
+      'telegram_notify_payments': 'Telegram: avisar pagos recibidos',
+      'telegram_notify_new_athletes': 'Telegram: avisar atletas nuevos',
+      'telegram_notify_security': 'Telegram: avisar alertas de seguridad',
+      'telegram_notify_automation_failures': 'Telegram: avisar automatizaciones fallidas',
     };
     return names[key] || key;
   };

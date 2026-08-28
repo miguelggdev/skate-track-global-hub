@@ -15,6 +15,7 @@ from tasks.helpers import (
     get_admin_user_ids,
     get_automation_config,
     log_activity,
+    notify_club_telegram,
     notify_user,
     send_email,
 )
@@ -445,6 +446,12 @@ def new_athlete_documents(athlete_id: str) -> dict:
             club_id=club_id,
         )
         actions += 1
+
+    if club_id:
+        notify_club_telegram(
+            club_id, "new_athletes",
+            f"👤 Nuevo atleta registrado: {name} (#{athlete_number})",
+        )
 
     log_activity("AUTO-20", "AG-01", "success",
                  records_found=1, actions_taken=actions,

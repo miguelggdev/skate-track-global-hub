@@ -16,6 +16,7 @@ from tasks.helpers import (
     get_admin_user_ids,
     get_automation_config,
     log_activity,
+    notify_club_telegram,
     notify_user,
     render_email_template,
     send_email,
@@ -66,6 +67,7 @@ def generate_payment_receipt(transaction_id: str) -> dict:
     )
 
     actions = 0
+    athlete_name = None
     if athlete_id:
         athlete = (
             db.table("athletes")
@@ -75,6 +77,7 @@ def generate_payment_receipt(transaction_id: str) -> dict:
             .execute()
         ).data
         if athlete:
+            athlete_name = f"{athlete.get('first_name', '')} {athlete.get('last_name', '')}".strip()
             if athlete.get("user_id"):
                 notify_user(
                     athlete["user_id"], "✅ Pago registrado", msg, "success", "AUTO-07", club_id=club_id
@@ -87,6 +90,13 @@ def generate_payment_receipt(transaction_id: str) -> dict:
                     msg,
                 )
                 actions += 1
+
+    if club_id:
+        who = f" de {athlete_name}" if athlete_name else ""
+        notify_club_telegram(
+            club_id, "payments",
+            f"💰 Pago recibido{who}: ${amount:,.0f} — {description} ({tx_date})",
+        )
 
     log_activity("AUTO-07", "AG-07", "success",
                  records_found=1, actions_taken=actions,

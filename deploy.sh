@@ -45,9 +45,11 @@ cmd_init() {
         info "=== Deploy completado. ==="
         info "Traefik asignará el certificado SSL automáticamente (puede tardar 1-2 min)."
         docker compose --env-file .env.production ps
+        bash scripts/telegram_notify.sh "✅ SpeedSkateTrack — deploy (init) completado" || true
     else
         warn "El backend tardó más de 90s en responder. Revisa los logs:"
         warn "  docker compose logs backend"
+        bash scripts/telegram_notify.sh "🔴 SpeedSkateTrack — deploy (init): backend no respondió en 90s" || true
     fi
 }
 
@@ -68,16 +70,19 @@ cmd_update() {
         warn "Build fallido — revertiendo a $ROLLBACK_SHA..."
         git checkout "$ROLLBACK_SHA" -- .
         docker compose --env-file .env.production up -d --build
+        bash scripts/telegram_notify.sh "🔴 SpeedSkateTrack — deploy (update): build falló, rollback a ${ROLLBACK_SHA:0:7}" || true
         error "Deploy fallido. Rollback restaurado."
     fi
 
     if wait_backend; then
         info "=== Actualización completada ==="
         docker compose --env-file .env.production ps
+        bash scripts/telegram_notify.sh "✅ SpeedSkateTrack — deploy (update) completado" || true
     else
         warn "Health check fallido — revertiendo a $ROLLBACK_SHA..."
         git checkout "$ROLLBACK_SHA" -- .
         docker compose --env-file .env.production up -d --build
+        bash scripts/telegram_notify.sh "🔴 SpeedSkateTrack — deploy (update): health check falló, rollback a ${ROLLBACK_SHA:0:7}" || true
         error "Health check fallido post-deploy. Se restauró $ROLLBACK_SHA."
     fi
 }

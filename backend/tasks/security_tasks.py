@@ -21,6 +21,7 @@ from tasks.helpers import (
     get_admin_user_ids,
     get_automation_config,
     log_activity,
+    notify_club_telegram,
     notify_user,
 )
 
@@ -118,6 +119,9 @@ def check_suspicious_access(user_id: str, ip_address: str, success: bool) -> dic
             for uid in get_admin_user_ids(club_id):
                 notify_user(uid, "🔒 Acceso sospechoso bloqueado", alert_msg, "error", "AUTO-30", club_id=club_id)
                 actions += 1
+
+            if club_id:
+                notify_club_telegram(club_id, "security", f"🚨 {alert_msg}")
 
     log_activity("AUTO-30", "AG-08", "success",
                  records_found=len(failed), actions_taken=actions,

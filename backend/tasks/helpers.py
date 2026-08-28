@@ -266,6 +266,50 @@ def _log_notification(
         logger.error("_log_notification failed: %s", exc)
 
 
+_TELEGRAM_CATEGORY_TOGGLE = {
+    "payments": "telegram_notify_payments",
+    "new_athletes": "telegram_notify_new_athletes",
+    "security": "telegram_notify_security",
+    "automation_failures": "telegram_notify_automation_failures",
+}
+
+
+def notify_club_telegram(club_id: str, category: str, message: str) -> bool:
+    """Manda un mensaje al chat de Telegram del club, si está configurado y
+    el toggle de esa categoría está activo (system_settings, category=
+    'notifications', claves telegram_chat_id / telegram_notify_<category>).
+
+    category: 'payments' | 'new_athletes' | 'security' | 'automation_failures'.
+    No lanza excepción — un fallo acá nunca debe tumbar el flujo que lo llama.
+    """
+    toggle_key = _TELEGRAM_CATEGORY_TOGGLE.get(category)
+    if not toggle_key or not club_id:
+        return False
+
+    db = get_supabase()
+    try:
+        rows = (
+            db.table("system_settings")
+            .select("setting_key, setting_value")
+            .eq("club_id", club_id)
+            .eq("category", "notifications")
+            .in_("setting_key", ["telegram_chat_id", toggle_key])
+            .execute()
+        ).data or []
+    except Exception as exc:
+        logger.error("notify_club_telegram: lectura de system_settings falló: %s", exc)
+        return False
+
+    values = {r["setting_key"]: r["setting_value"] for r in rows}
+    chat_id = values.get("telegram_chat_id", "")
+    enabled = values.get(toggle_key, "false") == "true"
+    if not chat_id or not enabled:
+        return False
+
+    from services.telegram_service import send_telegram_message
+    return send_telegram_message(chat_id, message)
+
+
 def log_activity(
     automation_id: str,
     agent_id: str,
@@ -300,6 +344,12 @@ def log_activity(
         db.table("agent_activity_log").insert(payload).execute()
     except Exception as exc:
         logger.error("log_activity insert failed: %s", exc)
+
+    if status == "error" and club_id is not None:
+        notify_club_telegram(
+            club_id, "automation_failures",
+            f"⚠️ Automatización {automation_id} falló\n{error_message or summary or ''}"[:4000],
+        )
 
 
 def get_admin_user_ids(club_id: str | None = None) -> list[str]:

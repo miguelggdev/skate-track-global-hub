@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -19,7 +19,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger,
 } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Loader2, Plus, ShieldCheck, LogOut } from 'lucide-react';
+import { Loader2, Plus, ShieldCheck, LogOut, Send } from 'lucide-react';
 
 interface ClubRow {
   id: string;
@@ -58,12 +58,49 @@ const useClubs = () => useQuery({
   },
 });
 
+const useOwnTelegramChatId = (userId?: string) => useQuery({
+  queryKey: ['platform-admin-telegram', userId],
+  queryFn: async (): Promise<string> => {
+    const { data, error } = await supabase
+      .from('platform_admins')
+      .select('telegram_chat_id')
+      .eq('user_id', userId!)
+      .maybeSingle();
+    if (error) throw error;
+    return data?.telegram_chat_id ?? '';
+  },
+  enabled: !!userId,
+});
+
 const SuperAdminDashboard = () => {
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: clubs = [], isLoading } = useClubs();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const { data: ownChatId = '' } = useOwnTelegramChatId(user?.id);
+  const [chatIdInput, setChatIdInput] = useState('');
+
+  useEffect(() => {
+    setChatIdInput(ownChatId);
+  }, [ownChatId]);
+
+  const saveChatIdMutation = useMutation({
+    mutationFn: async (chatId: string) => {
+      const { error } = await supabase
+        .from('platform_admins')
+        .update({ telegram_chat_id: chatId || null })
+        .eq('user_id', user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['platform-admin-telegram', user?.id] });
+      toast({ title: 'Guardado', description: 'Chat ID de Telegram actualizado' });
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'No se pudo guardar el Chat ID', variant: 'destructive' });
+    },
+  });
 
   const form = useForm<OnboardFormData>({
     resolver: zodResolver(onboardSchema),
@@ -282,6 +319,44 @@ const SuperAdminDashboard = () => {
                 </Table>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5" />
+              Notificaciones de Infraestructura
+            </CardTitle>
+            <CardDescription>
+              Alertas por Telegram del servidor y contenedores (no depende de ningún club) —
+              contenedor caído, fallo o éxito de un deploy, espacio en disco.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Escribile cualquier mensaje al bot en Telegram y te va a responder con tu Chat ID.
+              Pegalo acá para activar las alertas.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Input
+                value={chatIdInput}
+                onChange={(e) => setChatIdInput(e.target.value)}
+                placeholder="Chat ID (ej: 123456789)"
+                className="sm:max-w-xs"
+              />
+              <Button
+                onClick={() => saveChatIdMutation.mutate(chatIdInput)}
+                disabled={saveChatIdMutation.isPending || chatIdInput === ownChatId}
+              >
+                {saveChatIdMutation.isPending ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Guardando...</>
+                ) : 'Guardar'}
+              </Button>
+            </div>
+            <Badge variant={ownChatId ? 'secondary' : 'outline'}>
+              {ownChatId ? 'Alertas activas' : 'Sin configurar'}
+            </Badge>
           </CardContent>
         </Card>
       </div>
