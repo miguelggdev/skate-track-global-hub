@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useCurrentClub } from '@/hooks/useCurrentClub';
 
 export interface ChatMessage {
   id: string;
@@ -33,6 +34,7 @@ function saveMessages(id: AgentId, msgs: ChatMessage[]) {
 }
 
 export function useAgentChat(agentId: AgentId) {
+  const { club } = useCurrentClub();
   const [messages, setMessages] = useState<ChatMessage[]>(() => loadMessages(agentId));
   const [messagesForAgent, setMessagesForAgent] = useState<AgentId>(agentId);
   const [isLoading, setIsLoading] = useState(false);
@@ -58,6 +60,15 @@ export function useAgentChat(agentId: AgentId) {
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isLoadingRef.current) return;
+
+    // Chequeo preventivo (UX) — el backend igual lo exige como fuente de
+    // verdad. Solo bloqueamos si ya sabemos con certeza que está deshabilitado
+    // (club cargado y agents_enabled explícitamente false); si todavía está
+    // cargando, dejamos pasar y que responda el backend.
+    if (club && club.agents_enabled === false) {
+      setError('Tu plan no incluye el asistente de IA. Actualizá a Profesional o superior para desbloquearlo.');
+      return;
+    }
 
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -133,7 +144,7 @@ export function useAgentChat(agentId: AgentId) {
       isLoadingRef.current = false;
       setIsLoading(false);
     }
-  }, [agentId, messages]);
+  }, [agentId, messages, club]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);

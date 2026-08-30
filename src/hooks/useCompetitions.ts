@@ -277,3 +277,59 @@ export const useCompetitionPDFData = (competitionId: string) => {
     enabled: !!competitionId,
   });
 };
+
+export interface CompetitionStats {
+  activeCompetitions: number;
+  newCompetitionsLast30d: number;
+  participants: number;
+  newRegistrationsLast30d: number;
+  medals: number;
+  medalsThisYear: number;
+  upcomingEvents: number;
+}
+
+export const useCompetitionStats = () => {
+  return useQuery<CompetitionStats>({
+    queryKey: ['competition-stats'],
+    queryFn: async () => {
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      const in30d = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const ago30d = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const yearStart = `${today.getFullYear()}-01-01`;
+
+      const [
+        activeRes, newCompRes, participantsRows, newRegRes,
+        medalsRes, medalsYearRes, upcomingRes,
+      ] = await Promise.all([
+        supabase.from('competitions').select('id', { count: 'exact', head: true })
+          .in('status', ['upcoming', 'ongoing']),
+        supabase.from('competitions').select('id', { count: 'exact', head: true })
+          .gte('created_at', ago30d),
+        supabase.from('competition_registrations').select('athlete_id'),
+        supabase.from('competition_registrations').select('id', { count: 'exact', head: true })
+          .gte('registration_date', ago30d),
+        supabase.from('competition_results').select('id', { count: 'exact', head: true })
+          .not('medal_type', 'is', null),
+        supabase.from('competition_results').select('id', { count: 'exact', head: true })
+          .not('medal_type', 'is', null).gte('created_at', yearStart),
+        supabase.from('competitions').select('id', { count: 'exact', head: true })
+          .gte('start_date', todayStr).lte('start_date', in30d),
+      ]);
+
+      const distinctParticipants = new Set(
+        (participantsRows.data ?? []).map((r) => r.athlete_id)
+      ).size;
+
+      return {
+        activeCompetitions: activeRes.count ?? 0,
+        newCompetitionsLast30d: newCompRes.count ?? 0,
+        participants: distinctParticipants,
+        newRegistrationsLast30d: newRegRes.count ?? 0,
+        medals: medalsRes.count ?? 0,
+        medalsThisYear: medalsYearRes.count ?? 0,
+        upcomingEvents: upcomingRes.count ?? 0,
+      };
+    },
+  });
+};

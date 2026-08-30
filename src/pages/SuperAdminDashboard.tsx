@@ -19,7 +19,16 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger,
 } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Loader2, Plus, ShieldCheck, LogOut, Send } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Plus, ShieldCheck, LogOut, Send, Bot } from 'lucide-react';
+import type { ClubPlan } from '@/hooks/useCurrentClub';
+
+const PLAN_LABELS: Record<ClubPlan, string> = {
+  starter: 'Starter',
+  profesional: 'Profesional',
+  premium: 'Premium',
+  custom: 'Personalizado',
+};
 
 interface ClubRow {
   id: string;
@@ -30,6 +39,8 @@ interface ClubRow {
   is_active: boolean;
   onboarding_completed: boolean;
   created_at: string;
+  plan: ClubPlan;
+  agents_enabled: boolean;
 }
 
 const onboardSchema = z.object({
@@ -43,6 +54,7 @@ const onboardSchema = z.object({
   mobile_phone: z.string().optional(),
   admin_name: z.string().min(2, 'Nombre requerido'),
   admin_email: z.string().email('Email inválido'),
+  plan: z.enum(['starter', 'profesional', 'premium', 'custom']),
 });
 type OnboardFormData = z.infer<typeof onboardSchema>;
 
@@ -51,7 +63,7 @@ const useClubs = () => useQuery({
   queryFn: async (): Promise<ClubRow[]> => {
     const { data, error } = await supabase
       .from('clubs')
-      .select('id, name, custom_domain, city, country, is_active, onboarding_completed, created_at')
+      .select('id, name, custom_domain, city, country, is_active, onboarding_completed, created_at, plan, agents_enabled')
       .order('created_at', { ascending: false });
     if (error) throw error;
     return data ?? [];
@@ -106,7 +118,7 @@ const SuperAdminDashboard = () => {
     resolver: zodResolver(onboardSchema),
     defaultValues: {
       club_name: '', custom_domain: '', address: '', city: '', country: 'Colombia',
-      contact_phone: '', mobile_phone: '', admin_name: '', admin_email: '',
+      contact_phone: '', mobile_phone: '', admin_name: '', admin_email: '', plan: 'starter',
     },
   });
 
@@ -120,6 +132,32 @@ const SuperAdminDashboard = () => {
     },
     onError: () => {
       toast({ title: 'Error', description: 'No se pudo cambiar el estado del club', variant: 'destructive' });
+    },
+  });
+
+  const toggleAgentsMutation = useMutation({
+    mutationFn: async ({ id, agents_enabled }: { id: string; agents_enabled: boolean }) => {
+      const { error } = await supabase.from('clubs').update({ agents_enabled }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['superadmin-clubs'] });
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'No se pudo cambiar el acceso a agentes IA', variant: 'destructive' });
+    },
+  });
+
+  const updatePlanMutation = useMutation({
+    mutationFn: async ({ id, plan }: { id: string; plan: ClubPlan }) => {
+      const { error } = await supabase.from('clubs').update({ plan }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['superadmin-clubs'] });
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'No se pudo cambiar el plan', variant: 'destructive' });
     },
   });
 
@@ -214,6 +252,25 @@ const SuperAdminDashboard = () => {
                         <FormMessage />
                       </FormItem>
                     )} />
+                    <FormField control={form.control} name="plan" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Plan</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccioná un plan" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="starter">Starter — sin asistente IA</SelectItem>
+                            <SelectItem value="profesional">Profesional — con asistente IA</SelectItem>
+                            <SelectItem value="premium">Premium — con asistente IA</SelectItem>
+                            <SelectItem value="custom">Personalizado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
                     <div className="grid grid-cols-2 gap-4">
                       <FormField control={form.control} name="contact_phone" render={({ field }) => (
                         <FormItem>
@@ -283,6 +340,10 @@ const SuperAdminDashboard = () => {
                       <TableHead>Dominio</TableHead>
                       <TableHead className="hidden sm:table-cell">Ciudad</TableHead>
                       <TableHead>Onboarding</TableHead>
+                      <TableHead>Plan</TableHead>
+                      <TableHead className="text-right">
+                        <Bot className="h-4 w-4 inline" aria-hidden="true" /> IA
+                      </TableHead>
                       <TableHead className="text-right">Activo</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -299,6 +360,29 @@ const SuperAdminDashboard = () => {
                             {club.onboarding_completed ? 'Completo' : 'Pendiente'}
                           </Badge>
                         </TableCell>
+                        <TableCell>
+                          <Select
+                            value={club.plan}
+                            onValueChange={(value) => updatePlanMutation.mutate({ id: club.id, plan: value as ClubPlan })}
+                          >
+                            <SelectTrigger className="h-8 w-36" aria-label={`Plan de ${club.name}`}>
+                              <SelectValue>{PLAN_LABELS[club.plan]}</SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="starter">Starter</SelectItem>
+                              <SelectItem value="profesional">Profesional</SelectItem>
+                              <SelectItem value="premium">Premium</SelectItem>
+                              <SelectItem value="custom">Personalizado</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Switch
+                            checked={club.agents_enabled}
+                            onCheckedChange={(checked) => toggleAgentsMutation.mutate({ id: club.id, agents_enabled: checked })}
+                            aria-label={`${club.agents_enabled ? 'Desactivar' : 'Activar'} asistente IA de ${club.name}`}
+                          />
+                        </TableCell>
                         <TableCell className="text-right">
                           <Switch
                             checked={club.is_active}
@@ -310,7 +394,7 @@ const SuperAdminDashboard = () => {
                     ))}
                     {clubs.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                           Sin clubes registrados todavía
                         </TableCell>
                       </TableRow>

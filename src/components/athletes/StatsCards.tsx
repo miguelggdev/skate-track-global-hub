@@ -37,7 +37,7 @@ const StatsCards = () => {
     {
       title: "TOTAL ATLETAS",
       value: athleteStats?.totalAthletes?.toString() ?? "0",
-      change: "+12%",
+      change: "",
       period: "total registrados",
       icon: Users,
       bgColor: "argon-gradient-indigo",

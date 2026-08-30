@@ -16,14 +16,10 @@ const TT = {
   }
 };
 
-const SKILLS_DATA = [
-  { skill: 'Velocidad', score: 82 },
-  { skill: 'Resistencia', score: 74 },
-  { skill: 'Técnica', score: 88 },
-  { skill: 'Potencia', score: 71 },
-  { skill: 'Flexibilidad', score: 65 },
-  { skill: 'Mental', score: 79 },
-];
+// No existe todavía una tabla de evaluaciones técnicas por atleta en el
+// esquema — este radar se muestra vacío hasta que esa feature se construya,
+// en vez de inventar puntajes.
+const SKILLS_DATA: Array<{ skill: string; score: number }> = [];
 
 interface NextComp {
   name: string;
@@ -62,6 +58,22 @@ function useNextCompetition(athleteId: string | null): NextComp | null {
 }
 
 export function AthleteSkillsRadar({ athleteId }: { athleteId?: string }) {
+  if (SKILLS_DATA.length === 0) {
+    return (
+      <Card className="animate-fade-in">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold">Perfil de Capacidades</CardTitle>
+          <CardDescription>Evaluación técnica del atleta</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground text-center py-10">
+            Sin evaluaciones técnicas registradas todavía
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const avg = Math.round(SKILLS_DATA.reduce((s, d) => s + d.score, 0) / SKILLS_DATA.length);
 
   return (

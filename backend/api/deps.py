@@ -110,6 +110,28 @@ async def _fetch_role_and_club_async(user_id: str) -> tuple[str | None, str | No
     return await asyncio.to_thread(_fetch_role_and_club, user_id)
 
 
+def _fetch_agents_enabled(club_id: str) -> bool:
+    """¿El plan del club incluye acceso a los agentes IA? (clubs.agents_enabled,
+    gate técnico separado de clubs.plan — ver migración 20260829000000)."""
+    from database.supabase_client import get_supabase
+    result = (
+        get_supabase()
+        .table("clubs")
+        .select("agents_enabled")
+        .eq("id", club_id)
+        .limit(1)
+        .execute()
+    )
+    if not result.data:
+        return False
+    return bool(result.data[0].get("agents_enabled"))
+
+
+async def _fetch_agents_enabled_async(club_id: str) -> bool:
+    """Versión async de _fetch_agents_enabled."""
+    return await asyncio.to_thread(_fetch_agents_enabled, club_id)
+
+
 def require_roles(*allowed_roles: str):
     """
     Dependency factory que verifica que el usuario tenga uno de los roles indicados.

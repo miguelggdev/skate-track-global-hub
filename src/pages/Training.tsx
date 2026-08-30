@@ -61,8 +61,8 @@ const Training = () => {
     {
       title: "SESIONES ACTIVAS",
       value: trainingStats?.activeSessions?.toString() ?? "0",
-      change: "+8%",
-      period: "desde la semana pasada",
+      change: "",
+      period: "programadas desde hoy",
       icon: Activity,
       bgColor: "argon-gradient-blue",
       isPositive: true
@@ -79,8 +79,8 @@ const Training = () => {
     {
       title: "TASA DE FINALIZACIÓN",
       value: `${trainingStats?.completionRate?.toFixed(1) ?? "0"}%`,
-      change: "+2.1%",
-      period: "desde el mes pasado",
+      change: "",
+      period: "últimos 30 días",
       icon: Target,
       bgColor: "argon-gradient-orange",
       isPositive: true
@@ -88,7 +88,7 @@ const Training = () => {
     {
       title: "TIEMPO PROM. SESIÓN",
       value: `${trainingStats?.avgSessionTime?.toFixed(1) ?? "0"}h`,
-      change: "estable",
+      change: "",
       period: "duración promedio",
       icon: Timer,
       bgColor: "argon-gradient-red",
@@ -96,12 +96,26 @@ const Training = () => {
     },
   ];
 
-  const trainingPrograms = [
-    { name: "Desarrollo de Velocidad", progress: 75, color: "bg-blue-500", athletes: 24 },
-    { name: "Resistencia y Fondo", progress: 60, color: "bg-green-500", athletes: 18 },
-    { name: "Dominio Técnico", progress: 90, color: "bg-purple-500", athletes: 12 },
-    { name: "Preparación Competitiva", progress: 45, color: "bg-orange-500", athletes: 8 }
-  ];
+  const TRAINING_TYPE_LABELS: Record<string, string> = {
+    regular: 'Entrenamiento Regular',
+    bicicleta: 'Ciclismo',
+    cortesia: 'Cortesía',
+  };
+  const TRAINING_TYPE_COLORS = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500'];
+  const trainingPrograms = (trainingStats?.trainingTypeDistribution ?? []).map((t, i) => ({
+    name: TRAINING_TYPE_LABELS[t.type] ?? t.type,
+    progress: Math.round(t.percentage),
+    color: TRAINING_TYPE_COLORS[i % TRAINING_TYPE_COLORS.length],
+    sessions: t.count,
+  }));
+
+  const weeklyAttendanceRate = trainingStats?.attendanceTrends?.length
+    ? Math.round(
+        trainingStats.attendanceTrends.reduce((s, d) => s + d.attendanceRate, 0) /
+        trainingStats.attendanceTrends.length
+      )
+    : 0;
+  const weeklySessionCount = Math.round(trainingStats?.weeklyIntensity ?? 0);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -221,9 +235,11 @@ const Training = () => {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <p className="text-xs text-muted-foreground truncate">
-                      <span className={`font-semibold ${stat.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                        {stat.change}
-                      </span>{' '}
+                      {stat.change && (
+                        <span className={`font-semibold ${stat.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                          {stat.change}{' '}
+                        </span>
+                      )}
                       {stat.period}
                     </p>
                   </CardContent>
@@ -455,11 +471,15 @@ const Training = () => {
           {/* Training Programs Progress */}
           <Card className="argon-card">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold text-foreground">Programas de Entrenamiento</CardTitle>
-              <CardDescription className="text-sm text-muted-foreground">Progreso actual y participación en programas</CardDescription>
+              <CardTitle className="text-lg font-semibold text-foreground">Tipos de Entrenamiento</CardTitle>
+              <CardDescription className="text-sm text-muted-foreground">Distribución de sesiones por tipo (últimos 30 días)</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {trainingPrograms.map((program) => (
+              {trainingPrograms.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  Sin sesiones registradas en los últimos 30 días
+                </p>
+              ) : trainingPrograms.map((program) => (
                 <div key={program.name} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3 min-w-0 flex-1">
@@ -470,13 +490,13 @@ const Training = () => {
                       </div>
                       <div className="min-w-0 flex-1">
                         <span className="font-medium text-foreground text-sm block truncate">{program.name}</span>
-                        <p className="text-xs text-muted-foreground">{program.athletes} atletas inscritos</p>
+                        <p className="text-xs text-muted-foreground">{program.sessions} sesiones</p>
                       </div>
                     </div>
                     <span className="text-sm font-semibold text-muted-foreground flex-shrink-0">{program.progress}%</span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-2">
-                    <div 
+                    <div
                       className={`h-2 rounded-full ${program.color}`}
                       style={{ width: `${program.progress}%` }}
                     ></div>
@@ -499,12 +519,12 @@ const Training = () => {
                   <p className="text-muted-foreground mb-4">Análisis de Desempeño</p>
                   <div className="grid grid-cols-2 gap-4 text-center">
                     <div>
-                      <p className="text-2xl font-bold text-blue-600">24</p>
-                      <p className="text-sm text-muted-foreground">Sesiones</p>
+                      <p className="text-2xl font-bold text-blue-600">{weeklySessionCount}</p>
+                      <p className="text-sm text-muted-foreground">Sesiones/semana (prom.)</p>
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-green-600">92%</p>
-                      <p className="text-sm text-muted-foreground">Asistencia</p>
+                      <p className="text-2xl font-bold text-green-600">{weeklyAttendanceRate}%</p>
+                      <p className="text-sm text-muted-foreground">Asistencia (7 días)</p>
                     </div>
                   </div>
                 </div>

@@ -53,6 +53,23 @@ export function useInvoices(year: number, month: number) {
   });
 }
 
+export function useUpcomingInvoices(limit = 5) {
+  return useQuery<Invoice[]>({
+    queryKey: ['upcoming-invoices', limit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('invoices' as any)
+        .select('*, athletes(first_name, last_name, email, category)')
+        .in('status', ['draft', 'sent'])
+        .order('due_date', { ascending: true })
+        .limit(limit);
+      if (error) throw error;
+      return (data ?? []) as Invoice[];
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
 export function useInvoiceSummary(year: number, month: number) {
   return useQuery<InvoiceSummary | null>({
     queryKey: ['invoice-summary', year, month],

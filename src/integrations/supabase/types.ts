@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -1351,6 +1351,7 @@ export type Database = {
       clubs: {
         Row: {
           address: string | null
+          agents_enabled: boolean
           city: string | null
           contact_email: string | null
           contact_phone: string | null
@@ -1369,6 +1370,7 @@ export type Database = {
           mobile_phone: string | null
           name: string
           onboarding_completed: boolean
+          plan: Database["public"]["Enums"]["club_plan"]
           president_email: string | null
           president_name: string | null
           primary_color: string | null
@@ -1381,6 +1383,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          agents_enabled?: boolean
           city?: string | null
           contact_email?: string | null
           contact_phone?: string | null
@@ -1399,6 +1402,7 @@ export type Database = {
           mobile_phone?: string | null
           name: string
           onboarding_completed?: boolean
+          plan?: Database["public"]["Enums"]["club_plan"]
           president_email?: string | null
           president_name?: string | null
           primary_color?: string | null
@@ -1411,6 +1415,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          agents_enabled?: boolean
           city?: string | null
           contact_email?: string | null
           contact_phone?: string | null
@@ -1429,6 +1434,7 @@ export type Database = {
           mobile_phone?: string | null
           name?: string
           onboarding_completed?: boolean
+          plan?: Database["public"]["Enums"]["club_plan"]
           president_email?: string | null
           president_name?: string | null
           primary_color?: string | null
@@ -5045,6 +5051,7 @@ export type Database = {
       athlete_specialty: "fondista" | "velocista" | "omnium"
       athlete_status: "active" | "inactive" | "suspended"
       award_scheme_type: "clasico" | "resolucion_061" | "personalizado"
+      club_plan: "starter" | "profesional" | "premium" | "custom"
       competition_type:
         | "distrital"
         | "nacional"
@@ -5292,6 +5299,7 @@ export const Constants = {
       athlete_specialty: ["fondista", "velocista", "omnium"],
       athlete_status: ["active", "inactive", "suspended"],
       award_scheme_type: ["clasico", "resolucion_061", "personalizado"],
+      club_plan: ["starter", "profesional", "premium", "custom"],
       competition_type: [
         "distrital",
         "nacional",

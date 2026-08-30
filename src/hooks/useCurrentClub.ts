@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
+export type ClubPlan = 'starter' | 'profesional' | 'premium' | 'custom';
+
 export interface CurrentClub {
   id: string;
   name: string;
@@ -9,6 +11,9 @@ export interface CurrentClub {
   primary_color: string | null;
   secondary_color: string | null;
   is_active: boolean;
+  plan: ClubPlan;
+  agents_enabled: boolean;
+  target_revenue: number | null;
 }
 
 /**
@@ -26,7 +31,7 @@ export const useCurrentClub = () => {
     queryFn: async (): Promise<CurrentClub | null> => {
       const { data, error } = await supabase
         .from('clubs')
-        .select('id, name, logo_url, primary_color, secondary_color, is_active')
+        .select('id, name, logo_url, primary_color, secondary_color, is_active, plan, agents_enabled, target_revenue')
         .maybeSingle();
       if (error) throw error;
       return data;

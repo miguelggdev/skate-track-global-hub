@@ -1,60 +1,58 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trophy, Users, Medal, Calendar, LucideIcon } from 'lucide-react';
+import { Trophy, Users, Medal, Calendar, LucideIcon, Loader2 } from 'lucide-react';
+import { useCompetitionStats } from '@/hooks/useCompetitions';
 
 interface StatCard {
   title: string;
-  value: string;
+  value: number;
   change: string;
   period: string;
   icon: LucideIcon;
   bgColor: string;
-  isPositive: boolean;
 }
 
 const CompetitionStatsCards = () => {
-  const stats: StatCard[] = [
+  const { data: stats, isLoading } = useCompetitionStats();
+
+  const cards: StatCard[] = [
     {
       title: "COMPETENCIAS ACTIVAS",
-      value: "12",
-      change: "+2",
-      period: "respecto al mes anterior",
+      value: stats?.activeCompetitions ?? 0,
+      change: `+${stats?.newCompetitionsLast30d ?? 0}`,
+      period: "nuevas en los últimos 30 días",
       icon: Trophy,
       bgColor: "argon-gradient-blue",
-      isPositive: true
     },
     {
       title: "PARTICIPANTES",
-      value: "348",
-      change: "+15%",
-      period: "desde el último evento",
+      value: stats?.participants ?? 0,
+      change: `+${stats?.newRegistrationsLast30d ?? 0}`,
+      period: "inscripciones en los últimos 30 días",
       icon: Users,
       bgColor: "argon-gradient-green",
-      isPositive: true
     },
     {
       title: "MEDALLAS GANADAS",
-      value: "87",
-      change: "+23",
+      value: stats?.medals ?? 0,
+      change: `${stats?.medalsThisYear ?? 0}`,
       period: "esta temporada",
       icon: Medal,
       bgColor: "argon-gradient-orange",
-      isPositive: true
     },
     {
       title: "PRÓXIMOS EVENTOS",
-      value: "8",
-      change: "+3",
+      value: stats?.upcomingEvents ?? 0,
+      change: '',
       period: "próximos 30 días",
       icon: Calendar,
       bgColor: "argon-gradient-red",
-      isPositive: true
     },
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      {stats.map((stat) => (
+      {cards.map((stat) => (
         <Card key={stat.title} className="argon-card relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
             <div>
@@ -62,7 +60,7 @@ const CompetitionStatsCards = () => {
                 {stat.title}
               </CardDescription>
               <CardTitle className="text-2xl font-bold text-foreground">
-                {stat.value}
+                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : stat.value}
               </CardTitle>
             </div>
             <div className={`p-3 rounded-lg ${stat.bgColor} text-white shadow-lg`}>
@@ -71,9 +69,11 @@ const CompetitionStatsCards = () => {
           </CardHeader>
           <CardContent className="relative z-10">
             <p className="text-sm text-muted-foreground">
-              <span className={`font-semibold ${stat.isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                {stat.change}
-              </span>{' '}
+              {stat.change && (
+                <span className="font-semibold text-green-600 dark:text-green-400">
+                  {stat.change}{' '}
+                </span>
+              )}
               {stat.period}
             </p>
           </CardContent>

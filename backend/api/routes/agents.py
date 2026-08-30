@@ -25,7 +25,7 @@ from agents.base_agent import (
     current_user_role as _user_role_ctx,
     current_club_id as _club_id_ctx,
 )
-from api.deps import get_current_user, require_roles, _fetch_role_and_club_async, PRIVILEGED_ROLES
+from api.deps import get_current_user, require_roles, _fetch_role_and_club_async, _fetch_agents_enabled_async, PRIVILEGED_ROLES
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
@@ -205,6 +205,11 @@ async def chat_with_agent(
         raise HTTPException(status_code=403, detail="Sin acceso al agente administrativo")
     if not club_id:
         raise HTTPException(status_code=403, detail="Usuario sin club asignado")
+    if not await _fetch_agents_enabled_async(club_id):
+        raise HTTPException(
+            status_code=403,
+            detail="Tu plan no incluye el asistente de IA. Actualizá a Profesional o superior para desbloquearlo.",
+        )
 
     _user_id_ctx.set(user_id)
     _user_role_ctx.set(app_role or "")
@@ -239,6 +244,11 @@ async def stream_chat_with_agent(
         raise HTTPException(status_code=403, detail="Sin acceso al agente administrativo")
     if not club_id:
         raise HTTPException(status_code=403, detail="Usuario sin club asignado")
+    if not await _fetch_agents_enabled_async(club_id):
+        raise HTTPException(
+            status_code=403,
+            detail="Tu plan no incluye el asistente de IA. Actualizá a Profesional o superior para desbloquearlo.",
+        )
 
     _user_id_ctx.set(user_id)
     _user_role_ctx.set(app_role or "")

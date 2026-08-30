@@ -84,6 +84,13 @@ function sanitizeText(value: unknown, maxLen = 255): string {
   return value.replace(/<[^>]*>/g, '').trim().slice(0, maxLen);
 }
 
+const VALID_PLANS = ['starter', 'profesional', 'premium', 'custom'] as const;
+type ClubPlan = typeof VALID_PLANS[number];
+
+function sanitizePlan(value: unknown): ClubPlan {
+  return (VALID_PLANS as readonly string[]).includes(value as string) ? (value as ClubPlan) : 'starter';
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -141,6 +148,7 @@ serve(async (req) => {
     const country = sanitizeText(body.country);
     const contact_phone = sanitizeText(body.contact_phone, 50);
     const mobile_phone = sanitizeText(body.mobile_phone, 50);
+    const plan = sanitizePlan(body.plan);
 
     // ── Validar datos del admin ──────────────────────────────────────────
     const admin_name = sanitizeText(body.admin_name);
@@ -174,8 +182,10 @@ serve(async (req) => {
         contact_phone: contact_phone || null,
         mobile_phone: mobile_phone || null,
         contact_email: admin_email,
+        plan,
+        agents_enabled: plan !== 'starter',
       })
-      .select('id, name, custom_domain')
+      .select('id, name, custom_domain, plan, agents_enabled')
       .single();
 
     if (clubError) {

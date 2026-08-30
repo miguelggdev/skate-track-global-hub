@@ -204,7 +204,7 @@ async def webhook_telegram_bot(payload: dict, secret: str | None = None) -> dict
     """Registrar con: https://api.telegram.org/bot<TOKEN>/setWebhook?
     url=https://stride.arkanatech.tech/api/webhooks/telegram-bot?secret=<TELEGRAM_WEBHOOK_SECRET>
     """
-    if not settings.telegram_webhook_secret or secret != settings.telegram_webhook_secret:
+    if not settings.telegram_webhook_secret or not secret or not hmac.compare_digest(secret, settings.telegram_webhook_secret):
         raise HTTPException(status_code=401, detail="Invalid secret")
 
     message = payload.get("message") or payload.get("edited_message")

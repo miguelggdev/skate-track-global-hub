@@ -274,6 +274,63 @@ export const usePaginatedTransactions = (
   });
 };
 
+const TRANSACTION_TYPE_LABELS: Record<string, string> = {
+  mensualidad: 'Cuotas de Socios',
+  anualidad: 'Cuotas de Socios',
+  poliza_deportiva: 'Pólizas Deportivas',
+  psicologia: 'Psicología',
+  prendas_deportivas: 'Prendas Deportivas',
+  inscripcion_competencia: 'Inscripciones a Competencias',
+  competition_district: 'Competencias',
+  competition_departmental: 'Competencias',
+  competition_marathon: 'Competencias',
+  competition_panamerican: 'Competencias',
+  competition_interleague: 'Competencias',
+  accident_insurance: 'Seguro de Accidentes',
+  league_registration_renewal: 'Renovación Liga',
+  federation_registration_renewal: 'Renovación Federación',
+  registration_fee: 'Cuota de Inscripción',
+  equipment: 'Equipamiento',
+  travel: 'Viajes',
+  other: 'Otros',
+  otro: 'Otros',
+};
+
+export interface IncomeDistributionItem {
+  name: string;
+  value: number;
+  percentage: number;
+}
+
+export const useIncomeDistribution = () => {
+  return useQuery<IncomeDistributionItem[]>({
+    queryKey: ['income-distribution'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('financial_transactions')
+        .select('transaction_type, amount')
+        .gt('amount', 0);
+      if (error) throw error;
+
+      const totals = new Map<string, number>();
+      let grandTotal = 0;
+      for (const row of data ?? []) {
+        const label = TRANSACTION_TYPE_LABELS[row.transaction_type ?? ''] ?? row.transaction_type ?? 'Otros';
+        totals.set(label, (totals.get(label) ?? 0) + Number(row.amount));
+        grandTotal += Number(row.amount);
+      }
+
+      return Array.from(totals.entries())
+        .map(([name, value]) => ({
+          name,
+          value,
+          percentage: grandTotal > 0 ? (value / grandTotal) * 100 : 0,
+        }))
+        .sort((a, b) => b.value - a.value);
+    },
+  });
+};
+
 export const useFinancialStats = () => {
   return useQuery({
     queryKey: ['financial-stats'],
