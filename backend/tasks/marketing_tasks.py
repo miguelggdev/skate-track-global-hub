@@ -299,7 +299,7 @@ def request_testimonial(result_id: str) -> dict:
 
     result = (
         db.table("competition_results")
-        .select("id, athlete_id, position, final_time, competition_id, athletes(user_id, first_name, last_name, email, club_id)")
+        .select("id, athlete_id, position, time_seconds, competition_id, athletes(user_id, first_name, last_name, email, club_id)")
         .eq("id", result_id)
         .maybeSingle()
         .execute()

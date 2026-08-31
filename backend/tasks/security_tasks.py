@@ -98,7 +98,7 @@ def check_suspicious_access(user_id: str, ip_address: str, success: bool) -> dic
         # Check if already blocked
         already_blocked = (
             db.table("blocked_ips")
-            .select("id")
+            .select("ip_address")
             .eq("ip_address", ip_address)
             .gt("expires_at", now.isoformat())
             .execute()
@@ -210,10 +210,10 @@ def sensitive_data_audit(club_id: str) -> dict:
     sensitive_tables = ["athlete_body_info", "medical_sessions", "financial_transactions"]
     audit_entries = (
         db.table("audit_log")
-        .select("user_id, action, table_name, created_at")
+        .select("performed_by, operation, table_name, performed_at")
         .eq("club_id", club_id)
         .in_("table_name", sensitive_tables)
-        .gte("created_at", week_ago)
+        .gte("performed_at", week_ago)
         .execute()
     ).data or []
 
@@ -223,7 +223,7 @@ def sensitive_data_audit(club_id: str) -> dict:
 
     # Group by user
     from collections import Counter
-    by_user: Counter = Counter(entry["user_id"] for entry in audit_entries)
+    by_user: Counter = Counter(entry["performed_by"] for entry in audit_entries)
 
     # Flag users with excessive access (>100 accesses in a week)
     anomalies = [(uid, count) for uid, count in by_user.items() if count > 100]

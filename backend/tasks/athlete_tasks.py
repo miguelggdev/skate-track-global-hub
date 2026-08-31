@@ -33,7 +33,7 @@ def post_competition_followup(result_id: str) -> dict:
 
     result = (
         db.table("competition_results")
-        .select("id, athlete_id, final_time, position, category, competition_id, athletes(user_id, first_name, last_name, coach_id, email, club_id)")
+        .select("id, athlete_id, time_seconds, position, event_name, competition_id, athletes(user_id, first_name, last_name, coach_id, email, club_id)")
         .eq("id", result_id)
         .maybeSingle()
         .execute()
@@ -52,8 +52,8 @@ def post_competition_followup(result_id: str) -> dict:
 
     name = f"{athlete.get('first_name', '')} {athlete.get('last_name', '')}".strip()
     position = result.get("position")
-    category = result.get("category", "")
-    final_time = result.get("final_time", "")
+    event_name = result.get("event_name", "")
+    final_time = result.get("time_seconds", "")
 
     # Determine sentiment based on position
     if position and position <= 3:
@@ -68,7 +68,7 @@ def post_competition_followup(result_id: str) -> dict:
 
     msg = (
         f"Hola {name}, tu resultado en la competencia: "
-        f"Posición #{position} | Tiempo: {final_time} | Categoría: {category}. "
+        f"Posición #{position} | Tiempo: {final_time}s | Prueba: {event_name}. "
         f"{sentiment} Tu entrenador revisará los detalles técnicos contigo."
     )
 
@@ -175,7 +175,7 @@ def injury_protocol(medical_session_id: str) -> dict:
 
     session = (
         db.table("medical_sessions")
-        .select("id, athlete_id, session_type, diagnosis, recommendations, session_date, athletes(user_id, first_name, last_name, coach_id, club_id)")
+        .select("id, athlete_id, session_type, diagnosis, treatment, session_date, athletes(user_id, first_name, last_name, coach_id, club_id)")
         .eq("id", medical_session_id)
         .maybeSingle()
         .execute()
@@ -194,7 +194,7 @@ def injury_protocol(medical_session_id: str) -> dict:
 
     name = f"{athlete.get('first_name', '')} {athlete.get('last_name', '')}".strip()
     diagnosis = session.get("diagnosis") or "lesión registrada"
-    recs = session.get("recommendations") or "Reposo y seguimiento médico"
+    recs = session.get("treatment") or "Reposo y seguimiento médico"
 
     actions = 0
 
@@ -314,7 +314,7 @@ def weekly_progress_monitor(club_id: str) -> dict:
     # time_records es Grupo A con club_id propio (Fase 1).
     recent = (
         db.table("time_records")
-        .select("athlete_id, time_seconds, discipline, recorded_at, athletes(first_name, last_name, category)")
+        .select("athlete_id, time_ms, recorded_at, athletes(first_name, last_name, category)")
         .eq("club_id", club_id)
         .gte("recorded_at", four_weeks_ago)
         .order("athlete_id, recorded_at", desc=True)
@@ -341,8 +341,8 @@ def weekly_progress_monitor(club_id: str) -> dict:
         if not this_week or not older:
             continue
 
-        best_now_values = [r["time_seconds"] for r in this_week if r.get("time_seconds")]
-        best_before_values = [r["time_seconds"] for r in older if r.get("time_seconds")]
+        best_now_values = [r["time_ms"] for r in this_week if r.get("time_ms")]
+        best_before_values = [r["time_ms"] for r in older if r.get("time_ms")]
 
         if not best_now_values or not best_before_values:
             continue

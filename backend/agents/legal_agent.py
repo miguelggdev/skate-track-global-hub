@@ -31,12 +31,12 @@ def get_parental_consent_status() -> str:
     ]
     docs = (
         client.table("documents")
-        .select("athlete_id, document_type, expiry_date, status")
+        .select("athlete_id, document_type, expiry_date, doc_status")
         .eq("club_id", club_id)
         .eq("document_type", "parental_consent")
         .execute()
     )
-    consented_ids = {d["athlete_id"] for d in (docs.data or []) if d.get("status") == "active"}
+    consented_ids = {d["athlete_id"] for d in (docs.data or []) if d.get("doc_status") == "vigente"}
     missing = [m for m in minors if m["id"] not in consented_ids]
     return json.dumps(
         {
@@ -61,11 +61,11 @@ def get_expiring_documents(days_ahead: int = 60) -> str:
     client = get_supabase()
     result = (
         client.table("documents")
-        .select("title, document_type, expiry_date, athlete_id, status")
+        .select("title, document_type, expiry_date, athlete_id, doc_status")
         .eq("club_id", club_id)
         .lte("expiry_date", until)
         .gte("expiry_date", today.isoformat())
-        .eq("status", "active")
+        .eq("doc_status", "vigente")
         .order("expiry_date")
         .execute()
     )
@@ -87,10 +87,10 @@ def get_insurance_coverage_summary() -> str:
     active = client.table("athletes").select("id", count="exact").eq("club_id", club_id).eq("status", "active").execute()
     insurance = (
         client.table("documents")
-        .select("athlete_id, document_type, expiry_date, status")
+        .select("athlete_id, document_type, expiry_date, doc_status")
         .eq("club_id", club_id)
         .eq("document_type", "insurance")
-        .eq("status", "active")
+        .eq("doc_status", "vigente")
         .execute()
     )
     total_active = active.count or 0
@@ -115,7 +115,7 @@ def get_regulatory_compliance_checklist() -> str:
         return json.dumps({"error": "Club no resuelto"}, ensure_ascii=False)
     client = get_supabase()
     total = client.table("athletes").select("id", count="exact").eq("club_id", club_id).eq("status", "active").execute()
-    docs = client.table("documents").select("id", count="exact").eq("club_id", club_id).eq("status", "active").execute()
+    docs = client.table("documents").select("id", count="exact").eq("club_id", club_id).eq("doc_status", "vigente").execute()
     checklist = [
         {"item": "Registro de atletas en FCP", "estado": "verificar_manualmente"},
         {"item": "Consentimientos parentales menores", "estado": "usar_herramienta_parental_consent"},

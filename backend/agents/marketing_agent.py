@@ -24,7 +24,7 @@ def get_club_overview() -> str:
     today = datetime.now().date().isoformat()
     comp_res = (
         client.table("competitions")
-        .select("name, start_date, location, competition_level")
+        .select("name, start_date, location, level")
         .eq("club_id", club_id)
         .gte("start_date", today)
         .order("start_date")

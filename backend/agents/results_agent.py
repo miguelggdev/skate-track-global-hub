@@ -32,7 +32,7 @@ def get_competition_results(competition_id: str) -> str:
         return json.dumps({"error": "Competencia no encontrada"}, ensure_ascii=False)
     result = (
         client.table("competition_results")
-        .select("position, time_seconds, medal_type, athlete_id, category, gender, event_name")
+        .select("position, time_seconds, medal_type, athlete_id, event_name")
         .eq("competition_id", competition_id)
         .order("position")
         .execute()
@@ -60,7 +60,7 @@ def get_competitions_list(year: int = 0) -> str:
     target_year = year if year > 0 else datetime.now().year
     result = (
         client.table("competitions")
-        .select("id, name, start_date, location, competition_level, status")
+        .select("id, name, start_date, location, level, status")
         .eq("club_id", club_id)
         .gte("start_date", f"{target_year}-01-01")
         .lte("start_date", f"{target_year}-12-31")
@@ -87,7 +87,7 @@ def get_athlete_results_history(athlete_id: str) -> str:
         return json.dumps({"error": "Sin permiso para ver este historial"}, ensure_ascii=False)
     result = (
         client.table("competition_results")
-        .select("position, time_seconds, medal_type, category, gender, event_name, competition_id")
+        .select("position, time_seconds, medal_type, event_name, competition_id")
         .eq("athlete_id", athlete_id)
         .order("competition_id", desc=True)
         .limit(20)

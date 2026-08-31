@@ -37,9 +37,9 @@ def get_athlete_competition_history(athlete_id: str) -> str:
         return json.dumps({"error": "Sin permiso para acceder a este atleta"}, ensure_ascii=False)
     result = (
         client.table("competition_registrations")
-        .select("id, competition_id, created_at")
+        .select("id, competition_id, registration_date")
         .eq("athlete_id", athlete_id)
-        .order("created_at", desc=True)
+        .order("registration_date", desc=True)
         .limit(10)
         .execute()
     )
@@ -60,7 +60,7 @@ def get_upcoming_competitions() -> str:
     today = datetime.now().date().isoformat()
     result = (
         client.table("competitions")
-        .select("name, start_date, location, competition_level")
+        .select("name, start_date, location, level")
         .eq("club_id", club_id)
         .gte("start_date", today)
         .order("start_date")
@@ -81,7 +81,7 @@ def get_athlete_profile(athlete_id: str) -> str:
         return json.dumps({"error": "Sin permiso para acceder a este atleta"}, ensure_ascii=False)
     result = (
         client.table("athletes")
-        .select("first_name, last_name, category, birth_date, gender")
+        .select("first_name, last_name, category, date_of_birth, gender")
         .eq("id", athlete_id)
         .limit(1)
         .execute()
@@ -90,8 +90,8 @@ def get_athlete_profile(athlete_id: str) -> str:
         return json.dumps({"error": "Atleta no encontrado"}, ensure_ascii=False)
     a = result.data[0]
     age = None
-    if a.get("birth_date"):
-        born = datetime.fromisoformat(a["birth_date"])
+    if a.get("date_of_birth"):
+        born = datetime.fromisoformat(a["date_of_birth"])
         age = (datetime.now() - born).days // 365
     return json.dumps({
         "nombre": f"{a.get('first_name','')} {a.get('last_name','')}".strip(),

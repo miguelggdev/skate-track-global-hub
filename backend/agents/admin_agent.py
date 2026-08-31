@@ -72,7 +72,7 @@ def get_upcoming_competitions() -> str:
     today = datetime.now().date().isoformat()
     result = (
         client.table("competitions")
-        .select("name, start_date, location, competition_level, max_participants")
+        .select("name, start_date, location, level, max_athletes_per_event")
         .eq("club_id", club_id)
         .gte("start_date", today)
         .order("start_date")
@@ -93,7 +93,7 @@ def get_training_sessions_summary() -> str:
     week_ahead = (datetime.now() + timedelta(days=7)).isoformat()
     result = (
         client.table("training_sessions")
-        .select("id, title, scheduled_at, status, max_participants")
+        .select("id, title, scheduled_at, max_athletes")
         .eq("club_id", club_id)
         .gte("scheduled_at", week_ago)
         .lte("scheduled_at", week_ahead)

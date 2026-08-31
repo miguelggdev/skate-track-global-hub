@@ -48,11 +48,10 @@ def training_reminder_next_day(club_id: str) -> dict:
 
     sessions = (
         db.table("training_sessions")
-        .select("id, scheduled_at, training_type, location, max_participants")
+        .select("id, scheduled_at, training_type, location, max_athletes")
         .eq("club_id", club_id)
         .gte("scheduled_at", f"{tomorrow}T00:00:00")
         .lt("scheduled_at", f"{tomorrow}T23:59:59")
-        .eq("status", "scheduled")
         .execute()
     ).data or []
 
@@ -124,7 +123,6 @@ def training_reminder_2h(club_id: str) -> dict:
         .eq("club_id", club_id)
         .gte("scheduled_at", window_start.isoformat())
         .lt("scheduled_at", window_end.isoformat())
-        .eq("status", "scheduled")
         .execute()
     ).data or []
 
@@ -190,7 +188,6 @@ def detect_schedule_gaps(club_id: str) -> dict:
         .eq("club_id", club_id)
         .gte("scheduled_at", today.isoformat())
         .lt("scheduled_at", end_date.isoformat())
-        .eq("status", "scheduled")
         .execute()
     ).data or []
 
@@ -345,42 +342,12 @@ def process_waitlist(session_id: str, freed_slot_athlete_id: str) -> dict:
     if not cfg["enabled"]:
         return {"records_found": 0, "actions_taken": 0, "summary": "Deshabilitada"}
 
-    # Find athletes marked as waitlisted (status = 'waitlisted') in attendance
-    waitlisted = (
-        db.table("training_attendance")
-        .select("athlete_id, athletes(user_id, first_name, email)")
-        .eq("training_session_id", session_id)
-        .eq("status", "waitlisted")
-        .order("created_at")
-        .limit(1)
-        .execute()
-    ).data or []
-
-    if not waitlisted:
-        log_activity("AUTO-05", "AG-11", "skipped", summary="Lista de espera vacía", club_id=club_id)
-        return {"records_found": 0, "actions_taken": 0}
-
-    next_athlete = waitlisted[0]
-    athlete = next_athlete.get("athletes") or {}
-    user_id = athlete.get("user_id")
-    dt = datetime.fromisoformat(session["scheduled_at"].replace("Z", "+00:00"))
-    training_type = session.get("training_type", "Entrenamiento").replace("_", " ").title()
-    time_str = dt.strftime("%H:%M %d/%m")
-
-    if user_id:
-        notify_user(
-            user_id,
-            "🎉 Cupo disponible",
-            f"Se liberó un cupo para {training_type} el {time_str}. "
-            f"Confirma tu asistencia en los próximos 30 minutos.",
-            "success",
-            "AUTO-05",
-            club_id=club_id,
-        )
-
-    log_activity("AUTO-05", "AG-11", "success", records_found=1, actions_taken=1,
-                 summary=f"Cupo notificado a {athlete.get('first_name', 'atleta')}", club_id=club_id)
-    return {"records_found": 1, "actions_taken": 1}
+    # training_attendance no tiene noción de lista de espera (no hay columna
+    # `status` en esa tabla): la funcionalidad no está implementada en el
+    # modelo de datos actual, así que no hay nada que hacer todavía.
+    log_activity("AUTO-05", "AG-11", "skipped",
+                  summary="Funcionalidad de lista de espera no implementada", club_id=club_id)
+    return {"records_found": 0, "actions_taken": 0, "summary": "Funcionalidad de lista de espera no implementada"}
 
 
 # ── AUTO-06: Análisis semanal de carga de entrenamiento ────────────────────
@@ -405,7 +372,7 @@ def weekly_load_analysis(club_id: str) -> dict:
 
     sessions = (
         db.table("training_sessions")
-        .select("id, scheduled_at, duration_minutes, intensity_level")
+        .select("id, scheduled_at, duration_minutes, intensity")
         .eq("club_id", club_id)
         .gte("scheduled_at", week_ago)
         .lte("scheduled_at", date.today().isoformat())

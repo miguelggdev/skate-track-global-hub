@@ -166,7 +166,7 @@ def monthly_performance_report(club_id: str) -> dict:
     # Competition results last month (Grupo C, se filtra por athlete_id del club)
     results = (
         db.table("competition_results")
-        .select("id, athlete_id, position, final_time, category, athletes(first_name, last_name)")
+        .select("id, athlete_id, position, time_seconds, event_name, athletes(first_name, last_name)")
         .in_("athlete_id", athlete_ids)
         .gte("created_at", last_month_start.isoformat())
         .lte("created_at", last_month_end.isoformat())
@@ -176,7 +176,7 @@ def monthly_performance_report(club_id: str) -> dict:
     # Time records last month
     time_records = (
         db.table("time_records")
-        .select("athlete_id, time_seconds, discipline, athletes(first_name, last_name, category)")
+        .select("athlete_id, time_ms, athletes(first_name, last_name, category)")
         .eq("club_id", club_id)
         .gte("recorded_at", last_month_start.isoformat())
         .lte("recorded_at", last_month_end.isoformat())
@@ -348,7 +348,7 @@ def predictive_analysis(club_id: str) -> dict:
         # Time trend: compare last month vs 3 months ago
         time_records = (
             db.table("time_records")
-            .select("time_seconds, recorded_at")
+            .select("time_ms, recorded_at")
             .eq("athlete_id", athlete_id)
             .gte("recorded_at", three_months_ago)
             .order("recorded_at")
@@ -368,8 +368,8 @@ def predictive_analysis(club_id: str) -> dict:
 
         # Medal potential based on time trend
         if len(time_records) >= 4:
-            first_half = [r["time_seconds"] for r in time_records[:len(time_records)//2] if r.get("time_seconds")]
-            second_half = [r["time_seconds"] for r in time_records[len(time_records)//2:] if r.get("time_seconds")]
+            first_half = [r["time_ms"] for r in time_records[:len(time_records)//2] if r.get("time_ms")]
+            second_half = [r["time_ms"] for r in time_records[len(time_records)//2:] if r.get("time_ms")]
             if first_half and second_half:
                 avg_first = sum(first_half) / len(first_half)
                 avg_second = sum(second_half) / len(second_half)

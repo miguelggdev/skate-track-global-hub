@@ -113,7 +113,7 @@ async def import_athletes_csv(
             athlete["email"] = row["email"].lower()
 
         if row.get("phone"):
-            athlete["phone"] = row["phone"]
+            athlete["personal_phone"] = row["phone"]
 
         if row.get("date_of_birth"):
             try:
@@ -140,9 +140,15 @@ async def import_athletes_csv(
             if st in _VALID_STATUSES:
                 athlete["status"] = st
 
-        for opt_col in ("gender", "nationality", "emergency_contact", "emergency_phone"):
+        _OPT_COL_TO_DB_COL = {
+            "gender": "gender",
+            "nationality": "nationality",
+            "emergency_contact": "emergency_contact_name",
+            "emergency_phone": "emergency_contact_phone",
+        }
+        for opt_col, db_col in _OPT_COL_TO_DB_COL.items():
             if row.get(opt_col):
-                athlete[opt_col] = row[opt_col]
+                athlete[db_col] = row[opt_col]
 
         try:
             db.table("athletes").insert(athlete).execute()

@@ -37,7 +37,7 @@ def get_athlete_profile(athlete_id: str) -> str:
         return json.dumps({"error": "Acceso no autorizado a este atleta."}, ensure_ascii=False)
     result = (
         client.table("athletes")
-        .select("first_name, last_name, category, birth_date, gender, weight_kg, height_cm")
+        .select("first_name, last_name, category, date_of_birth, gender, weight_kg, height_cm")
         .eq("id", athlete_id)
         .limit(1)
         .execute()
@@ -46,8 +46,8 @@ def get_athlete_profile(athlete_id: str) -> str:
         return json.dumps({"error": "Atleta no encontrado"}, ensure_ascii=False)
     a = result.data[0]
     age = None
-    if a.get("birth_date"):
-        born = datetime.fromisoformat(a["birth_date"])
+    if a.get("date_of_birth"):
+        born = datetime.fromisoformat(a["date_of_birth"])
         age = (datetime.now() - born).days // 365
     return json.dumps({
         "nombre": f"{a.get('first_name','')} {a.get('last_name','')}".strip(),
@@ -70,7 +70,7 @@ def get_upcoming_training_load() -> str:
     week_ahead = (datetime.now() + timedelta(days=7)).date().isoformat()
     result = (
         client.table("training_sessions")
-        .select("title, scheduled_at, duration_minutes, training_type, intensity_level")
+        .select("title, scheduled_at, duration_minutes, training_type, intensity")
         .eq("club_id", club_id)
         .gte("scheduled_at", today)
         .lte("scheduled_at", week_ahead)

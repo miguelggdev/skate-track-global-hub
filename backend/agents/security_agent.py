@@ -18,10 +18,10 @@ def get_recent_security_alerts() -> str:
     client = get_supabase()
     result = (
         client.table("notification_log")
-        .select("automation_id, channel, subject, body, status, created_at")
+        .select("automation_id, channel, subject, body, status, sent_at")
         .eq("club_id", club_id)
         .in_("automation_id", ["AUTO-30", "AUTO-32", "AUTO-34"])
-        .order("created_at", desc=True)
+        .order("sent_at", desc=True)
         .limit(20)
         .execute()
     )

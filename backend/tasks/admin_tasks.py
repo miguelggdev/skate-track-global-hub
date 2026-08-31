@@ -49,11 +49,10 @@ def morning_briefing(club_id: str) -> dict:
     # Sessions today
     sessions_today = (
         db.table("training_sessions")
-        .select("id, scheduled_at, training_type, max_participants")
+        .select("id, scheduled_at, training_type, max_athletes")
         .eq("club_id", club_id)
         .gte("scheduled_at", f"{today_str}T00:00:00")
         .lte("scheduled_at", f"{today_str}T23:59:59")
-        .eq("status", "scheduled")
         .execute()
     ).data or []
 
@@ -320,56 +319,37 @@ def equipment_inventory_check(club_id: str) -> dict:
     db = get_supabase()
     today = date.today().isoformat()
 
-    # Low stock items (quantity below minimum)
-    equipment = (
-        db.table("equipment")
-        .select("id, name, quantity, minimum_quantity, status")
-        .eq("club_id", club_id)
-        .execute()
-    ).data or []
-
-    low_stock = [
-        e for e in equipment
-        if e.get("quantity", 0) < (e.get("minimum_quantity") or 1)
-        and e.get("status") != "retired"
-    ]
-
-    # Overdue maintenance
+    # `equipment` modela items individuales serializados (no hay columnas de
+    # stock/cantidad en el schema real), así que el chequeo de "stock bajo"
+    # no aplica a este modelo de datos — solo se controla mantenimiento vencido.
     overdue_maintenance = (
         db.table("equipment_maintenance")
-        .select("id, equipment_id, next_maintenance_date, maintenance_type, equipment(name)")
+        .select("id, equipment_id, next_maintenance, maintenance_type, equipment(name)")
         .eq("club_id", club_id)
-        .lte("next_maintenance_date", today)
-        .eq("status", "scheduled")
+        .lte("next_maintenance", today)
         .execute()
     ).data or []
 
-    if not low_stock and not overdue_maintenance:
+    if not overdue_maintenance:
         log_activity("AUTO-19", "AG-11", "skipped", summary="Inventario en orden", club_id=club_id)
         return {"records_found": 0, "actions_taken": 0}
 
-    msg_parts = []
-    if low_stock:
-        items = ", ".join(e.get("name", "Item") for e in low_stock[:5])
-        msg_parts.append(f"📦 Stock bajo ({len(low_stock)}): {items}")
-    if overdue_maintenance:
-        items = ", ".join(
-            (m.get("equipment") or {}).get("name", "Equipo")
-            for m in overdue_maintenance[:5]
-        )
-        msg_parts.append(f"🔧 Mantenimiento vencido ({len(overdue_maintenance)}): {items}")
+    items = ", ".join(
+        (m.get("equipment") or {}).get("name", "Equipo")
+        for m in overdue_maintenance[:5]
+    )
+    msg = f"🔧 Mantenimiento vencido ({len(overdue_maintenance)}): {items}"
 
-    msg = "\n".join(msg_parts)
     actions = 0
     for uid in get_admin_user_ids(club_id):
         notify_user(uid, "🏭 Alerta de inventario", msg, "warning", "AUTO-19", club_id=club_id)
         actions += 1
 
     log_activity("AUTO-19", "AG-11", "success",
-                 records_found=len(low_stock) + len(overdue_maintenance),
+                 records_found=len(overdue_maintenance),
                  actions_taken=actions,
                  summary=msg, club_id=club_id)
-    return {"records_found": len(low_stock) + len(overdue_maintenance), "actions_taken": actions}
+    return {"records_found": len(overdue_maintenance), "actions_taken": actions}
 
 
 # ── AUTO-20: Generación de carnets y documentos de nuevo atleta (event-driven) ─

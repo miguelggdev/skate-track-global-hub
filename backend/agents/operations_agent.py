@@ -20,7 +20,7 @@ def get_training_sessions_overview() -> str:
     week_start = (today - timedelta(days=today.weekday())).isoformat()
     upcoming = (
         client.table("training_sessions")
-        .select("id, scheduled_at, session_type, location, max_athletes, status")
+        .select("id, scheduled_at, training_type, location, max_athletes")
         .eq("club_id", club_id)
         .gte("scheduled_at", today.isoformat())
         .order("scheduled_at")
@@ -29,7 +29,7 @@ def get_training_sessions_overview() -> str:
     )
     past_week = (
         client.table("training_sessions")
-        .select("id, scheduled_at, status")
+        .select("id, scheduled_at")
         .eq("club_id", club_id)
         .gte("scheduled_at", week_start)
         .lt("scheduled_at", today.isoformat())
@@ -54,19 +54,17 @@ def get_equipment_status() -> str:
     client = get_supabase()
     result = (
         client.table("equipment")
-        .select("name, category, quantity, available_quantity, condition, last_maintenance_date")
+        .select("name, equipment_type, status, condition_notes, last_maintenance_at")
         .eq("club_id", club_id)
         .execute()
     )
     items = result.data or []
-    low_stock = [i for i in items if (i.get("available_quantity") or 0) <= 2]
-    in_repair = [i for i in items if i.get("condition") == "in_repair"]
+    in_repair = [i for i in items if i.get("status") == "maintenance"]
     return json.dumps(
         {
             "total_items": len(items),
-            "stock_bajo": len(low_stock),
             "en_reparacion": len(in_repair),
-            "items_criticos": low_stock,
+            "items_en_reparacion": in_repair,
         },
         ensure_ascii=False,
         default=str,
@@ -83,9 +81,9 @@ def get_capacity_analysis() -> str:
     active = client.table("athletes").select("id", count="exact").eq("club_id", club_id).eq("status", "active").execute()
     upcoming = (
         client.table("training_sessions")
-        .select("id, session_date, max_athletes, session_type")
+        .select("id, scheduled_at, max_athletes, training_type")
         .eq("club_id", club_id)
-        .gte("session_date", datetime.now().date().isoformat())
+        .gte("scheduled_at", datetime.now().date().isoformat())
         .limit(5)
         .execute()
     )
@@ -106,9 +104,10 @@ def get_today_operations_summary() -> str:
     client = get_supabase()
     sessions = (
         client.table("training_sessions")
-        .select("id, session_type, location, status")
+        .select("id, training_type, location")
         .eq("club_id", club_id)
-        .eq("session_date", today)
+        .gte("scheduled_at", f"{today}T00:00:00")
+        .lte("scheduled_at", f"{today}T23:59:59")
         .execute()
     )
     session_ids = [s["id"] for s in (sessions.data or [])]

@@ -37,7 +37,7 @@ def get_training_sessions_week() -> str:
     week_ahead = (datetime.now() + timedelta(days=7)).date().isoformat()
     result = (
         client.table("training_sessions")
-        .select("title, scheduled_at, training_type, intensity_level, duration_minutes")
+        .select("title, scheduled_at, training_type, intensity, duration_minutes")
         .eq("club_id", club_id)
         .gte("scheduled_at", today)
         .lte("scheduled_at", week_ahead)

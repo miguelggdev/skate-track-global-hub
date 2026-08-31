@@ -25,8 +25,9 @@ def get_athlete_health_profile(athlete_id: str) -> str:
     result = (
         client.table("athletes")
         .select(
-            "first_name, last_name, category, birth_date, gender, weight_kg, height_cm, "
-            "blood_type, allergies, chronic_conditions, emergency_contact_name, emergency_contact_phone"
+            "first_name, last_name, category, date_of_birth, gender, weight_kg, height_cm, "
+            "blood_type, allergies, physical_limitations, fractures, surgeries, "
+            "emergency_contact_name, emergency_contact_phone"
         )
         .eq("id", athlete_id)
         .eq("club_id", club_id)
@@ -37,8 +38,8 @@ def get_athlete_health_profile(athlete_id: str) -> str:
         return json.dumps({"error": "Atleta no encontrado"}, ensure_ascii=False)
     a = result.data[0]
     age = None
-    if a.get("birth_date"):
-        born = datetime.fromisoformat(a["birth_date"])
+    if a.get("date_of_birth"):
+        born = datetime.fromisoformat(a["date_of_birth"])
         age = (datetime.now() - born).days // 365
     return json.dumps({
         "nombre": f"{a.get('first_name','')} {a.get('last_name','')}".strip(),
@@ -49,7 +50,9 @@ def get_athlete_health_profile(athlete_id: str) -> str:
         "talla_cm": a.get("height_cm"),
         "grupo_sanguineo": a.get("blood_type"),
         "alergias": a.get("allergies"),
-        "condiciones_cronicas": a.get("chronic_conditions"),
+        "limitaciones_fisicas": a.get("physical_limitations"),
+        "fracturas": a.get("fractures"),
+        "cirugias": a.get("surgeries"),
         "contacto_emergencia": a.get("emergency_contact_name"),
         "tel_emergencia": a.get("emergency_contact_phone"),
     }, ensure_ascii=False)
@@ -66,10 +69,10 @@ def get_athletes_requiring_medical_attention() -> str:
     client = get_supabase()
     result = (
         client.table("athletes")
-        .select("id, first_name, last_name, category, allergies, chronic_conditions, blood_type")
+        .select("id, first_name, last_name, category, allergies, physical_limitations, blood_type")
         .eq("club_id", club_id)
         .eq("status", "active")
-        .or_("chronic_conditions.not.is.null,allergies.not.is.null")
+        .or_("physical_limitations.not.is.null,allergies.not.is.null")
         .limit(50)
         .execute()
     )

@@ -203,7 +203,7 @@ def generate_monthly_fees(self, club_id: str, year: int = None, month: int = Non
     # Get all active athletes of este club con email
     athletes = (
         db.table("athletes")
-        .select("id, first_name, last_name, email, category, monthly_fee, user_id")
+        .select("id, first_name, last_name, email, category, user_id")
         .eq("club_id", club_id)
         .eq("status", "active")
         .execute()
@@ -217,7 +217,9 @@ def generate_monthly_fees(self, club_id: str, year: int = None, month: int = Non
         athlete_id = athlete["id"]
         athlete_name = f"{athlete['first_name']} {athlete.get('last_name', '')}".strip()
         athlete_email = athlete.get("email") or ""
-        fee = float(athlete.get("monthly_fee") or default_fee)
+        # No hay columna de cuota por atleta en el schema — se usa siempre
+        # el valor configurado en system_settings (o el default).
+        fee = default_fee
 
         # Skip if an invoice already exists for this period
         existing = (
